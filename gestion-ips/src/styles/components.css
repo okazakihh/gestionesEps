@@ -1,0 +1,50 @@
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Componentes personalizados para IPS */
+  .ips-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+  
+  .ips-button-primary {
+    @apply bg-ips-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  }
+  
+  .ips-button-secondary {
+    @apply bg-ips-secondary hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  }
+  
+  .ips-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ips-primary focus:border-transparent;
+  }
+  
+  .ips-sidebar {
+    @apply bg-gray-900 text-white min-h-screen w-64 fixed left-0 top-0 z-40;
+  }
+  
+  .ips-main-content {
+    @apply ml-64 p-6 bg-gray-50 min-h-screen;
+  }
+  
+  .ips-header {
+    @apply bg-white shadow-sm border-b border-gray-200 p-4 mb-6;
+  }
+
+  /* Animaciones específicas que usan keyframes definidos en utilities.css */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}

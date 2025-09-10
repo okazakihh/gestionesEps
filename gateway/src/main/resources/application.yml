@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: backend-route
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/**
+          # Sin filtros complicados - solo proxy directo
+
+logging:
+  level:
+    root: INFO
+    com.gateway: DEBUG

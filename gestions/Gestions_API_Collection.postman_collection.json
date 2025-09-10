@@ -1,0 +1,686 @@
+{
+	"info": {
+		"_postman_id": "gestions-api-collection",
+		"name": "Gestions API Collection",
+		"description": "Colección completa para probar todas las APIs del sistema de gestión de usuarios con JWT",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "test_username",
+			"value": "testuser",
+			"type": "string"
+		},
+		{
+			"key": "admin_username",
+			"value": "admin",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "1. Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{test_username}}\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\",\n    \"personalInfo\": {\n        \"nombres\": \"Juan Carlos\",\n        \"apellidos\": \"Pérez García\",\n        \"documento\": \"12345678\",\n        \"tipoDocumento\": \"CC\",\n        \"fechaNacimiento\": \"1990-01-15\",\n        \"genero\": \"M\"\n    },\n    \"contactInfo\": {\n        \"telefono\": \"+57 300 123 4567\",\n        \"direccion\": \"Calle 123 #45-67\",\n        \"ciudad\": \"Bogotá\",\n        \"departamento\": \"Cundinamarca\",\n        \"pais\": \"Colombia\",\n        \"codigoPostal\": \"110111\"\n    },\n    \"roles\": [\"USER\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registra un nuevo usuario en el sistema con información personal y de contacto"
+					}
+				},
+				{
+					"name": "2. Register Admin User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{admin_username}}\",\n    \"email\": \"admin@gestions.com\",\n    \"password\": \"admin123\",\n    \"personalInfo\": {\n        \"nombres\": \"Ana María\",\n        \"apellidos\": \"García López\",\n        \"documento\": \"87654321\",\n        \"tipoDocumento\": \"CC\",\n        \"fechaNacimiento\": \"1985-06-20\",\n        \"genero\": \"F\"\n    },\n    \"contactInfo\": {\n        \"telefono\": \"+57 310 987 6543\",\n        \"direccion\": \"Carrera 7 #12-34\",\n        \"ciudad\": \"Medellín\",\n        \"departamento\": \"Antioquia\",\n        \"pais\": \"Colombia\",\n        \"codigoPostal\": \"050001\"\n    },\n    \"roles\": [\"ADMIN\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registra un usuario administrador en el sistema"
+					}
+				},
+				{
+					"name": "3. Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Save JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data) {",
+									"        pm.collectionVariables.set(\"jwt_token\", jsonData.data);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{test_username}}\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario registrado y obtiene el JWT token"
+					}
+				},
+				{
+					"name": "4. Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Save JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data) {",
+									"        pm.collectionVariables.set(\"jwt_token\", jsonData.data);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{admin_username}}\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión como administrador y obtiene el JWT token con permisos administrativos"
+					}
+				}
+			],
+			"description": "Endpoints para autenticación: registro e inicio de sesión"
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "1. Get All Users (Admin/Moderator)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response contains users array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Obtiene la lista de todos los usuarios (solo para ADMIN o MODERATOR)"
+					}
+				},
+				{
+					"name": "2. Get User by Username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response contains user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('object');",
+									"    pm.expect(jsonData.data.username).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_username}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_username}}"
+							]
+						},
+						"description": "Obtiene información de un usuario específico por username"
+					}
+				},
+				{
+					"name": "3. Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newemail@example.com\",\n    \"personalInfo\": {\n        \"nombres\": \"Juan Carlos\",\n        \"apellidos\": \"Pérez García\",\n        \"documento\": \"12345678\",\n        \"tipoDocumento\": \"CC\",\n        \"fechaNacimiento\": \"1990-01-15\",\n        \"genero\": \"M\"\n    },\n    \"contactInfo\": {\n        \"telefono\": \"+57 300 999 8888\",\n        \"direccion\": \"Nueva Dirección 456\",\n        \"ciudad\": \"Medellín\",\n        \"departamento\": \"Antioquia\",\n        \"pais\": \"Colombia\",\n        \"codigoPostal\": \"050001\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_username}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_username}}"
+							]
+						},
+						"description": "Actualiza información de un usuario (solo el propio usuario o ADMIN)"
+					}
+				},
+				{
+					"name": "4. Delete User (Admin only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_username}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_username}}"
+							]
+						},
+						"description": "Elimina un usuario del sistema (solo ADMIN)"
+					}
+				},
+				{
+					"name": "5. Create User by Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"moderatoruser\",\n    \"email\": \"moderator@example.com\",\n    \"password\": \"moderator123\",\n    \"personalInfo\": {\n        \"nombres\": \"Ana Sofia\",\n        \"apellidos\": \"González Martínez\",\n        \"documento\": \"11223344\",\n        \"tipoDocumento\": \"CC\",\n        \"fechaNacimiento\": \"1988-03-10\",\n        \"genero\": \"F\"\n    },\n    \"contactInfo\": {\n        \"telefono\": \"+57 320 555 7777\",\n        \"direccion\": \"Avenida 80 #25-50\",\n        \"ciudad\": \"Cali\",\n        \"departamento\": \"Valle del Cauca\",\n        \"pais\": \"Colombia\",\n        \"codigoPostal\": \"760001\"\n    },\n    \"roles\": [\"MODERATOR\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/admin/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"admin",
+								"create"
+							]
+						},
+						"description": "Crea un nuevo usuario mediante un administrador (solo ADMIN)"
+					}
+				}
+			],
+			"description": "Endpoints para gestión de usuarios: consulta, actualización y eliminación"
+		},
+		{
+			"name": "Test Scenarios",
+			"item": [
+				{
+					"name": "1. Test Unauthorized Access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Prueba acceso sin autenticación (debe fallar)"
+					}
+				},
+				{
+					"name": "2. Test Invalid Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has success false\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"nonexistent\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Prueba login con credenciales incorrectas"
+					}
+				},
+				{
+					"name": "3. Test Duplicate Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has success false\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{test_username}}\",\n    \"email\": \"duplicate@example.com\",\n    \"password\": \"password123\",\n    \"roles\": [\"USER\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Prueba registro con username duplicado (debe fallar)"
+					}
+				},
+				{
+					"name": "4. Test Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "invalid.jwt.token",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Prueba acceso con token JWT inválido"
+					}
+				}
+			],
+			"description": "Casos de prueba para validar seguridad y manejo de errores"
+		}
+	]
+}

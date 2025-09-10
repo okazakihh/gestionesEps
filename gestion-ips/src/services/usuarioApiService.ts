@@ -1,0 +1,110 @@
+import { apiClient } from '@/api/apiClient';
+import { Usuario } from '@/types';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface UsuariosResponse {
+  content: Usuario[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}
+
+class UsuarioApiService {
+  private readonly baseUrl = '/users';
+
+  // Obtener todos los usuarios
+  async getAllUsuarios(): Promise<ApiResponse<Usuario[]>> {
+    try {
+      const response = await apiClient.get<Usuario[]>(this.baseUrl);
+      return response;
+    } catch (error) {
+      console.error('Error al obtener usuarios:', error);
+      return {
+        success: false,
+        error: 'Error al obtener la lista de usuarios'
+      };
+    }
+  }
+
+  // Obtener usuario por ID
+  async getUsuarioById(id: string): Promise<ApiResponse<Usuario>> {
+    try {
+      const response = await apiClient.get<Usuario>(`${this.baseUrl}/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error al obtener usuario:', error);
+      return {
+        success: false,
+        error: 'Error al obtener el usuario'
+      };
+    }
+  }
+
+  // Obtener usuario por email/username
+  async getUsuarioByEmail(email: string): Promise<ApiResponse<Usuario>> {
+    try {
+      const response = await apiClient.get<Usuario>(`${this.baseUrl}/email/${email}`);
+      return response;
+    } catch (error) {
+      console.error('Error al obtener usuario por email:', error);
+      return {
+        success: false,
+        error: 'Error al obtener el usuario'
+      };
+    }
+  }
+
+  // Crear usuario
+  async createUsuario(usuario: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
+    try {
+      const response = await apiClient.post<Usuario>(this.baseUrl, usuario);
+      return response;
+    } catch (error) {
+      console.error('Error al crear usuario:', error);
+      return {
+        success: false,
+        error: 'Error al crear el usuario'
+      };
+    }
+  }
+
+  // Actualizar usuario
+  async updateUsuario(id: string, usuario: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
+    try {
+      const response = await apiClient.put<Usuario>(`${this.baseUrl}/${id}`, usuario);
+      return response;
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      return {
+        success: false,
+        error: 'Error al actualizar el usuario'
+      };
+    }
+  }
+
+  // Eliminar usuario
+  async deleteUsuario(id: string): Promise<ApiResponse<void>> {
+    try {
+      const response = await apiClient.delete<void>(`${this.baseUrl}/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      return {
+        success: false,
+        error: 'Error al eliminar el usuario'
+      };
+    }
+  }
+}
+
+export const usuarioApiService = new UsuarioApiService();
+export default usuarioApiService;
