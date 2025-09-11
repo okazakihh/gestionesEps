@@ -70,6 +70,17 @@ export class AuthService {
       throw new Error(response.error || 'Error al cambiar contraseña');
     }
   }
+
+  /**
+   * Registra un nuevo usuario
+   */
+  static async register(userData: any): Promise<any> {
+    const response = await apiClient.post<any>('/auth/register', userData);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al registrar usuario');
+    }
+    return response.data;
+  }
 }
 
 export default AuthService;

@@ -92,9 +92,9 @@ class UsuarioApiService {
   }
 
   // Eliminar usuario
-  async deleteUsuario(id: string): Promise<ApiResponse<void>> {
+  async deleteUsuario(username: string): Promise<ApiResponse<void>> {
     try {
-      const response = await apiClient.delete<void>(`${this.baseUrl}/${id}`);
+      const response = await apiClient.delete<void>(`${this.baseUrl}/${username}`);
       return response;
     } catch (error) {
       console.error('Error al eliminar usuario:', error);

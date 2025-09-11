@@ -1,24 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/ui/MainLayout';
-import { UsuariosTable } from '@/components/ui/UsuariosTable';
-import { usuarioApiService } from '@/services/usuarioApiService';
-import { Usuario } from '@/types';
 import CreateUserForm from '@/components/auth/CreateUserForm';
+import { Modal, Table, Badge, ActionIcon, Group, Text, TextInput, Button, Stack } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { Usuario } from '@/types';
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([]);
 
   useEffect(() => {
     loadUsuarios();
   }, []);
 
+  // Effect to filter users based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredUsuarios(usuarios);
+    } else {
+      const filtered = usuarios.filter(usuario => 
+        usuario.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.personalInfo?.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.personalInfo?.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredUsuarios(filtered);
+    }
+  }, [usuarios, searchTerm]);
+
   const loadUsuarios = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Import the service dynamically to avoid circular dependency issues
+      const { usuarioApiService } = await import('@/services/usuarioApiService');
       const response = await usuarioApiService.getAllUsuarios();
 
       if (response.success && response.data) {
@@ -35,18 +60,136 @@ const UsuariosPage = () => {
   };
 
   const handleEdit = (usuario: Usuario) => {
-    // TODO: Implementar edición de usuario
-    console.log('Editar usuario:', usuario);
+    setUserToEdit(usuario);
+    setIsEditMode(true);
+    setIsModalOpen(true);
   };
 
   const handleDelete = (usuario: Usuario) => {
-    // TODO: Implementar eliminación de usuario
-    console.log('Eliminar usuario:', usuario);
+    setUserToDelete(usuario);
+    setConfirmationText('');
+    setIsDeleteModalOpen(true);
   };
 
-  const handleCreateUser = (data: any) => {
-    console.log('User data submitted:', data);
-    // TODO: Implement user creation logic here
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    const expectedUsername = userToDelete.username || userToDelete.email;
+    if (confirmationText !== expectedUsername) {
+      notifications.show({
+        title: 'Error de confirmación',
+        message: 'El texto ingresado no coincide con el nombre de usuario',
+        color: 'orange',
+        autoClose: 5000,
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const { usuarioApiService } = await import('@/services/usuarioApiService');
+      const response = await usuarioApiService.deleteUsuario(expectedUsername);
+      
+      if (response.success) {
+        notifications.show({
+          title: '¡Usuario eliminado!',
+          message: `El usuario ${expectedUsername} ha sido eliminado correctamente`,
+          color: 'green',
+          autoClose: 5000,
+        });
+        
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+        setConfirmationText('');
+        await loadUsuarios();
+      } else {
+        throw new Error(response.error || 'Error al eliminar usuario');
+      }
+    } catch (error: any) {
+      console.error('Error al eliminar usuario:', error);
+      notifications.show({
+        title: 'Error al eliminar usuario',
+        message: error.message || 'Ha ocurrido un error inesperado',
+        color: 'red',
+        autoClose: 7000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+    setConfirmationText('');
+  };
+
+  const handleCreateUser = async (data: any) => {
+    try {
+      setIsLoading(true);
+      
+      if (isEditMode && userToEdit) {
+        // Update existing user
+        const { usuarioApiService } = await import('@/services/usuarioApiService');
+        const response = await usuarioApiService.updateUsuario(userToEdit.username || userToEdit.email, data);
+        
+        if (response.success) {
+          notifications.show({
+            title: '¡Usuario actualizado!',
+            message: 'Los datos del usuario se han actualizado correctamente',
+            color: 'green',
+            autoClose: 5000,
+          });
+          
+          // Close modal and refresh user list
+          setIsModalOpen(false);
+          setIsEditMode(false);
+          setUserToEdit(null);
+          await loadUsuarios();
+        } else {
+          throw new Error(response.error || 'Error al actualizar usuario');
+        }
+      } else {
+        // Create new user
+        const { AuthService } = await import('@/services/authService');
+        const response = await AuthService.register(data);
+        
+        console.log('Usuario registrado exitosamente:', response);
+        
+        notifications.show({
+          title: '¡Éxito!',
+          message: 'Usuario registrado correctamente',
+          color: 'green',
+          autoClose: 5000,
+        });
+        
+        // Close modal and refresh user list
+        setIsModalOpen(false);
+        await loadUsuarios();
+      }
+      
+    } catch (error: any) {
+      console.error('Error al procesar usuario:', error);
+      
+      // Show error notification with API response message
+      notifications.show({
+        title: isEditMode ? 'Error al actualizar usuario' : 'Error al registrar usuario',
+        message: error.message || 'Ha ocurrido un error inesperado',
+        color: 'red',
+        autoClose: 7000,
+      });
+      
+      setError(error.message || (isEditMode ? 'Error al actualizar usuario' : 'Error al registrar usuario'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setUserToEdit(null);
   };
 
   return (
@@ -56,7 +199,7 @@ const UsuariosPage = () => {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Lista de Usuarios</h2>
             <p className="text-sm text-gray-600 mt-1">
-              {usuarios.length} usuario{usuarios.length !== 1 ? 's' : ''} encontrado{usuarios.length !== 1 ? 's' : ''}
+              {filteredUsuarios.length} de {usuarios.length} usuario{usuarios.length !== 1 ? 's' : ''} {searchTerm ? 'encontrado' : 'mostrado'}{filteredUsuarios.length !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="flex space-x-2">
@@ -76,6 +219,36 @@ const UsuariosPage = () => {
             >
               Registrar Usuario
             </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="max-w-md">
+            <TextInput
+              placeholder="Buscar por usuario, email, nombres o apellidos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              leftSection={
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              }
+              rightSection={
+                searchTerm && (
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    onClick={() => setSearchTerm('')}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </Button>
+                )
+              }
+            />
           </div>
         </div>
 
@@ -99,26 +272,134 @@ const UsuariosPage = () => {
           </div>
         )}
 
-        <UsuariosTable
-          usuarios={usuarios}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <Table striped highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Nombre</Table.Th>
+              <Table.Th>Usuario</Table.Th>
+              <Table.Th>Email</Table.Th>
+              <Table.Th>Rol</Table.Th>
+              <Table.Th>Acciones</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {isLoading ? (
+              <Table.Tr>
+                <Table.Td colSpan={5} style={{ textAlign: 'center' }}>
+                  Cargando usuarios...
+                </Table.Td>
+              </Table.Tr>
+            ) : filteredUsuarios.length === 0 ? (
+              <Table.Tr>
+                <Table.Td colSpan={5} className="text-center py-8 text-gray-500">
+                  {searchTerm ? `No se encontraron usuarios que coincidan con "${searchTerm}"` : 'No hay usuarios registrados'}
+                </Table.Td>
+              </Table.Tr>
+            ) : (
+              filteredUsuarios.map((usuario) => (
+                <Table.Tr key={usuario.id}>
+                  <Table.Td>
+                    {`${usuario.personalInfo?.nombres || usuario.nombres || ''} ${usuario.personalInfo?.apellidos || usuario.apellidos || ''}`}
+                  </Table.Td>
+                  <Table.Td>{usuario.username}</Table.Td>
+                  <Table.Td>{usuario.email}</Table.Td>
+                  <Table.Td>
+                    <Badge color={
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'ADMIN' ? 'red' : 'blue'
+                    }>
+                      {usuario.roles?.[0] || usuario.rol?.toString() || 'USER'}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <ActionIcon
+                        variant="light"
+                        color="blue"
+                        size="sm"
+                        onClick={() => handleEdit(usuario)}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="light"
+                        color="red"
+                        size="sm"
+                        onClick={() => handleDelete(usuario)}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </ActionIcon>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))
+            )}
+          </Table.Tbody>
+        </Table>
 
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        <Modal
+          opened={isModalOpen}
+          onClose={handleCloseModal}
+          title={isEditMode ? "Editar Usuario" : "Registrar Nuevo Usuario"}
+          size="xl"
+          centered
+        >
+          <CreateUserForm 
+            onSubmit={handleCreateUser} 
+            initialData={isEditMode ? userToEdit : undefined}
+            isEditMode={isEditMode}
+          />
+        </Modal>
+
+        {/* Modal de confirmación para eliminar usuario */}
+        <Modal
+          opened={isDeleteModalOpen}
+          onClose={cancelDelete}
+          title="Confirmar eliminación de usuario"
+          size="md"
+          centered
+        >
+          <Stack gap="md">
+            <Text size="sm" c="dimmed">
+              Esta acción no se puede deshacer. Para confirmar la eliminación, 
+              escriba el nombre de usuario exacto del usuario que desea eliminar.
+            </Text>
+            
+            {userToDelete && (
+              <Text fw={500} size="sm">
+                Usuario a eliminar: <Text span c="red" fw={700}>
+                  {userToDelete.username || userToDelete.email}
+                </Text>
+              </Text>
+            )}
+            
+            <TextInput
+              label="Confirme escribiendo el nombre de usuario"
+              placeholder={userToDelete?.username || userToDelete?.email || ''}
+              value={confirmationText}
+              onChange={(e) => setConfirmationText(e.target.value)}
+              error={confirmationText && confirmationText !== (userToDelete?.username || userToDelete?.email) ? 
+                'El texto no coincide' : undefined}
+            />
+            
+            <Group justify="flex-end" mt="md">
+              <Button variant="default" onClick={cancelDelete}>
+                Cancelar
+              </Button>
+              <Button 
+                color="red" 
+                onClick={confirmDelete}
+                disabled={confirmationText !== (userToDelete?.username || userToDelete?.email)}
+                loading={isLoading}
               >
-                ×
-              </button>
-              <CreateUserForm onSubmit={handleCreateUser} />
-            </div>
-          </div>
-        )}
+                Eliminar Usuario
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
       </div>
     </MainLayout>
   );
