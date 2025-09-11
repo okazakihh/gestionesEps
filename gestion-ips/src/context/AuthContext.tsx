@@ -96,9 +96,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const tokenFromBackend: string = authResponse.token;
       const userData = authResponse.user;
 
-      // Guardar en localStorage
+      // Mapear la estructura de usuario del backend a nuestro User interno
+      const mappedUser: User = {
+        id: String(userData?.id ?? userData?.userId ?? ''),
+        nombres: userData?.personalInfo?.nombres ?? userData?.nombres ?? '',
+        apellidos: userData?.personalInfo?.apellidos ?? userData?.apellidos ?? '',
+        email: userData?.email ?? '',
+        rol: Array.isArray(userData?.roles) ? (userData.roles[0] ?? '') : (userData?.rol ?? ''),
+        ips: userData?.ips ?? undefined,
+        activo: userData?.enabled ?? userData?.activo ?? true,
+        ultimoAcceso: userData?.lastLogin ?? userData?.ultimoAcceso ?? undefined,
+      };
+
+      // Guardar en localStorage el usuario MAPEADO
       localStorage.setItem('token', tokenFromBackend);
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(mappedUser));
 
       // Intentar extraer expiración del JWT (campo exp en payload)
       try {
@@ -117,18 +129,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('No se pudo parsear exp del JWT', e);
       }
 
-      // Mapear la estructura de usuario del backend a nuestro User interno
-      const mappedUser: User = {
-        id: String(userData?.id ?? userData?.userId ?? ''),
-        nombres: userData?.personalInfo?.nombres ?? userData?.nombres ?? '',
-        apellidos: userData?.personalInfo?.apellidos ?? userData?.apellidos ?? '',
-        email: userData?.email ?? '',
-        rol: Array.isArray(userData?.roles) ? (userData.roles[0] ?? '') : (userData?.rol ?? ''),
-        ips: userData?.ips ?? undefined,
-        activo: userData?.enabled ?? userData?.activo ?? true,
-        ultimoAcceso: userData?.lastLogin ?? userData?.ultimoAcceso ?? undefined,
-      };
-
       console.log('Usuario autenticado:', mappedUser);
 
       // Actualizar estado
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return {
         success: true,
         data: {
-          user: userData,
+          user: mappedUser,
           token: tokenFromBackend,
         }
       };

@@ -1,21 +1,37 @@
 import React from 'react';
-import { VerticalNavbar } from '@/components/ui/VerticalNavbar';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigationStore } from '@/stores/navigationStore';
+import { SPANavbar } from '@/components/navigation/SPANavbar';
 
-interface MainLayoutProps {
+interface SPALayoutProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({
+export const SPALayout: React.FC<SPALayoutProps> = ({
   children,
   title,
   subtitle
 }) => {
+  const { isAuthenticated } = useAuth();
+  const { currentView } = useNavigationStore();
+
+  // Si no está autenticado y no está en login, no mostrar navbar
+  if (!isAuthenticated && currentView !== 'login') {
+    return <div className="min-h-screen bg-gray-50">{children}</div>;
+  }
+
+  // Si está en login, mostrar solo el contenido
+  if (currentView === 'login') {
+    return <div className="min-h-screen bg-gray-50">{children}</div>;
+  }
+
+  // Layout principal con navbar para usuarios autenticados
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <VerticalNavbar />
+      {/* SPA Navbar */}
+      <SPANavbar />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">

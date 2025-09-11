@@ -1,10 +1,10 @@
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigationStore, ViewType } from '@/stores/navigationStore';
 
 interface NavItem {
   name: string;
-  href: string;
+  view: ViewType;
   icon: string;
   roles?: string[];
 }
@@ -12,45 +12,49 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     name: 'Dashboard',
-    href: '/dashboard',
+    view: 'dashboard',
     icon: '📊',
   },
   {
     name: 'Usuarios',
-    href: '/usuarios',
+    view: 'usuarios',
     icon: '👥',
     roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Pacientes',
-    href: '/pacientes',
+    view: 'pacientes',
     icon: '🏥',
   },
   {
     name: 'Citas',
-    href: '/citas',
+    view: 'citas',
     icon: '📅',
   },
   {
     name: 'Reportes',
-    href: '/reportes',
+    view: 'reportes',
     icon: '📈',
     roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Configuración',
-    href: '/configuracion',
+    view: 'configuracion',
     icon: '⚙️',
     roles: ['ADMIN'],
   },
 ];
 
-export const VerticalNavbar: React.FC = () => {
+export const SPANavbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const location = useLocation();
+  const { currentView, setView } = useNavigationStore();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleNavigation = (view: ViewType) => {
+    setView(view);
   };
 
   const filteredNavItems = navItems.filter(item => {
@@ -89,12 +93,12 @@ export const VerticalNavbar: React.FC = () => {
       {/* Navigation Items */}
       <nav className="flex-1 px-4 py-4 space-y-2">
         {filteredNavItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = currentView === item.view;
           return (
-            <Link
+            <button
               key={item.name}
-              to={item.href}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+              onClick={() => handleNavigation(item.view)}
+              className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                 isActive
                   ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -102,7 +106,7 @@ export const VerticalNavbar: React.FC = () => {
             >
               <span className="mr-3 text-lg">{item.icon}</span>
               {item.name}
-            </Link>
+            </button>
           );
         })}
       </nav>

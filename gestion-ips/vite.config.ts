@@ -24,7 +24,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         // Proxy directo al backend (temporalmente mientras solucionamos el gateway)
-        target: 'http://localhost:8081',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },
