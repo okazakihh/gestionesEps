@@ -39,4 +39,15 @@ public class ExamenClinico {
     public void setSignosVitales(String signosVitales) {
         this.signosVitales = signosVitales;
     }
+
+    // Método adicional
+    public void setDescripcion(String descripcion) {
+        this.examenFisico = descripcion;
+    }
+
+    // Métodos adicionales
+    public boolean isEmpty() {
+        return (examenFisico == null || examenFisico.isEmpty()) &&
+               (signosVitales == null || signosVitales.isEmpty());
+    }
 }

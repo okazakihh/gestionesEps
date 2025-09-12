@@ -1,6 +1,7 @@
-package main.java.com.gestioneps.pacientes.dto;
+package com.gestioneps.pacientes.dto;
 
-import com.gestioneps.pacientes.entity.TipoConsulta;
+import com.gestioneps.pacientes.entity.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
@@ -15,42 +16,23 @@ public class ConsultaMedicaDTO {
 
     private String pacienteNombre;
 
-    @NotNull(message = "La fecha de consulta es obligatoria")
-    private LocalDateTime fechaConsulta;
+    @Valid
+    @NotNull(message = "La información del médico es obligatoria")
+    private InformacionMedicoConsulta informacionMedico;
 
-    @NotBlank(message = "El médico tratante es obligatorio")
-    @Size(max = 100, message = "El nombre del médico no puede exceder 100 caracteres")
-    private String medicoTratante;
+    @Valid
+    @NotNull(message = "El detalle de la consulta es obligatorio")
+    private DetalleConsulta detalleConsulta;
 
-    @Size(max = 100, message = "La especialidad no puede exceder 100 caracteres")
-    private String especialidad;
+    @Valid
+    private ExamenClinicoConsulta examenClinico;
 
-    @NotBlank(message = "El motivo de consulta es obligatorio")
-    private String motivoConsulta;
+    @Valid
+    @NotNull(message = "El diagnóstico y tratamiento es obligatorio")
+    private DiagnosticoTratamientoConsulta diagnosticoTratamiento;
 
-    private String enfermedadActual;
-
-    private String examenFisico;
-
-    private String signosVitales;
-
-    @NotBlank(message = "El diagnóstico principal es obligatorio")
-    private String diagnosticoPrincipal;
-
-    private String diagnosticosSecundarios;
-
-    private String planManejo;
-
-    private String medicamentosFormulados;
-
-    private String examenesSolicitados;
-
-    private String recomendaciones;
-
-    private LocalDateTime proximaCita;
-
-    @NotNull(message = "El tipo de consulta es obligatorio")
-    private TipoConsulta tipoConsulta;
+    @Valid
+    private SeguimientoConsulta seguimiento;
 
     private LocalDateTime fechaCreacion;
 
@@ -92,124 +74,44 @@ public class ConsultaMedicaDTO {
         this.pacienteNombre = pacienteNombre;
     }
 
-    public LocalDateTime getFechaConsulta() {
-        return fechaConsulta;
+    public InformacionMedicoConsulta getInformacionMedico() {
+        return informacionMedico;
     }
 
-    public void setFechaConsulta(LocalDateTime fechaConsulta) {
-        this.fechaConsulta = fechaConsulta;
+    public void setInformacionMedico(InformacionMedicoConsulta informacionMedico) {
+        this.informacionMedico = informacionMedico;
     }
 
-    public String getMedicoTratante() {
-        return medicoTratante;
+    public DetalleConsulta getDetalleConsulta() {
+        return detalleConsulta;
     }
 
-    public void setMedicoTratante(String medicoTratante) {
-        this.medicoTratante = medicoTratante;
+    public void setDetalleConsulta(DetalleConsulta detalleConsulta) {
+        this.detalleConsulta = detalleConsulta;
     }
 
-    public String getEspecialidad() {
-        return especialidad;
+    public ExamenClinicoConsulta getExamenClinico() {
+        return examenClinico;
     }
 
-    public void setEspecialidad(String especialidad) {
-        this.especialidad = especialidad;
+    public void setExamenClinico(ExamenClinicoConsulta examenClinico) {
+        this.examenClinico = examenClinico;
     }
 
-    public String getMotivoConsulta() {
-        return motivoConsulta;
+    public DiagnosticoTratamientoConsulta getDiagnosticoTratamiento() {
+        return diagnosticoTratamiento;
     }
 
-    public void setMotivoConsulta(String motivoConsulta) {
-        this.motivoConsulta = motivoConsulta;
+    public void setDiagnosticoTratamiento(DiagnosticoTratamientoConsulta diagnosticoTratamiento) {
+        this.diagnosticoTratamiento = diagnosticoTratamiento;
     }
 
-    public String getEnfermedadActual() {
-        return enfermedadActual;
+    public SeguimientoConsulta getSeguimiento() {
+        return seguimiento;
     }
 
-    public void setEnfermedadActual(String enfermedadActual) {
-        this.enfermedadActual = enfermedadActual;
-    }
-
-    public String getExamenFisico() {
-        return examenFisico;
-    }
-
-    public void setExamenFisico(String examenFisico) {
-        this.examenFisico = examenFisico;
-    }
-
-    public String getSignosVitales() {
-        return signosVitales;
-    }
-
-    public void setSignosVitales(String signosVitales) {
-        this.signosVitales = signosVitales;
-    }
-
-    public String getDiagnosticoPrincipal() {
-        return diagnosticoPrincipal;
-    }
-
-    public void setDiagnosticoPrincipal(String diagnosticoPrincipal) {
-        this.diagnosticoPrincipal = diagnosticoPrincipal;
-    }
-
-    public String getDiagnosticosSecundarios() {
-        return diagnosticosSecundarios;
-    }
-
-    public void setDiagnosticosSecundarios(String diagnosticosSecundarios) {
-        this.diagnosticosSecundarios = diagnosticosSecundarios;
-    }
-
-    public String getPlanManejo() {
-        return planManejo;
-    }
-
-    public void setPlanManejo(String planManejo) {
-        this.planManejo = planManejo;
-    }
-
-    public String getMedicamentosFormulados() {
-        return medicamentosFormulados;
-    }
-
-    public void setMedicamentosFormulados(String medicamentosFormulados) {
-        this.medicamentosFormulados = medicamentosFormulados;
-    }
-
-    public String getExamenesSolicitados() {
-        return examenesSolicitados;
-    }
-
-    public void setExamenesSolicitados(String examenesSolicitados) {
-        this.examenesSolicitados = examenesSolicitados;
-    }
-
-    public String getRecomendaciones() {
-        return recomendaciones;
-    }
-
-    public void setRecomendaciones(String recomendaciones) {
-        this.recomendaciones = recomendaciones;
-    }
-
-    public LocalDateTime getProximaCita() {
-        return proximaCita;
-    }
-
-    public void setProximaCita(LocalDateTime proximaCita) {
-        this.proximaCita = proximaCita;
-    }
-
-    public TipoConsulta getTipoConsulta() {
-        return tipoConsulta;
-    }
-
-    public void setTipoConsulta(TipoConsulta tipoConsulta) {
-        this.tipoConsulta = tipoConsulta;
+    public void setSeguimiento(SeguimientoConsulta seguimiento) {
+        this.seguimiento = seguimiento;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -226,5 +128,171 @@ public class ConsultaMedicaDTO {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
+    }
+
+    // Métodos de compatibilidad hacia atrás
+    public LocalDateTime getFechaConsulta() {
+        return detalleConsulta != null ? detalleConsulta.getFechaConsulta() : null;
+    }
+
+    public void setFechaConsulta(LocalDateTime fechaConsulta) {
+        if (detalleConsulta == null) {
+            detalleConsulta = new DetalleConsulta();
+        }
+        detalleConsulta.setFechaConsulta(fechaConsulta);
+    }
+
+    public String getMedicoTratante() {
+        return informacionMedico != null ? informacionMedico.getMedicoTratante() : null;
+    }
+
+    public void setMedicoTratante(String medicoTratante) {
+        if (informacionMedico == null) {
+            informacionMedico = new InformacionMedicoConsulta();
+        }
+        informacionMedico.setMedicoTratante(medicoTratante);
+    }
+
+    public String getEspecialidad() {
+        return informacionMedico != null ? informacionMedico.getEspecialidad() : null;
+    }
+
+    public void setEspecialidad(String especialidad) {
+        if (informacionMedico == null) {
+            informacionMedico = new InformacionMedicoConsulta();
+        }
+        informacionMedico.setEspecialidad(especialidad);
+    }
+
+    public String getMotivoConsulta() {
+        return detalleConsulta != null ? detalleConsulta.getMotivoConsulta() : null;
+    }
+
+    public void setMotivoConsulta(String motivoConsulta) {
+        if (detalleConsulta == null) {
+            detalleConsulta = new DetalleConsulta();
+        }
+        detalleConsulta.setMotivoConsulta(motivoConsulta);
+    }
+
+    public String getEnfermedadActual() {
+        return detalleConsulta != null ? detalleConsulta.getEnfermedadActual() : null;
+    }
+
+    public void setEnfermedadActual(String enfermedadActual) {
+        if (detalleConsulta == null) {
+            detalleConsulta = new DetalleConsulta();
+        }
+        detalleConsulta.setEnfermedadActual(enfermedadActual);
+    }
+
+    public String getExamenFisico() {
+        return examenClinico != null ? examenClinico.getExamenFisico() : null;
+    }
+
+    public void setExamenFisico(String examenFisico) {
+        if (examenClinico == null) {
+            examenClinico = new ExamenClinicoConsulta();
+        }
+        examenClinico.setExamenFisico(examenFisico);
+    }
+
+    public String getSignosVitales() {
+        return examenClinico != null ? examenClinico.getSignosVitales() : null;
+    }
+
+    public void setSignosVitales(String signosVitales) {
+        if (examenClinico == null) {
+            examenClinico = new ExamenClinicoConsulta();
+        }
+        examenClinico.setSignosVitales(signosVitales);
+    }
+
+    public String getDiagnosticoPrincipal() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getDiagnosticoPrincipal() : null;
+    }
+
+    public void setDiagnosticoPrincipal(String diagnosticoPrincipal) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setDiagnosticoPrincipal(diagnosticoPrincipal);
+    }
+
+    public String getDiagnosticosSecundarios() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getDiagnosticosSecundarios() : null;
+    }
+
+    public void setDiagnosticosSecundarios(String diagnosticosSecundarios) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setDiagnosticosSecundarios(diagnosticosSecundarios);
+    }
+
+    public String getPlanManejo() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getPlanManejo() : null;
+    }
+
+    public void setPlanManejo(String planManejo) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setPlanManejo(planManejo);
+    }
+
+    public String getMedicamentosFormulados() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getMedicamentosFormulados() : null;
+    }
+
+    public void setMedicamentosFormulados(String medicamentosFormulados) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setMedicamentosFormulados(medicamentosFormulados);
+    }
+
+    public String getExamenesSolicitados() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getExamenesSolicitados() : null;
+    }
+
+    public void setExamenesSolicitados(String examenesSolicitados) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setExamenesSolicitados(examenesSolicitados);
+    }
+
+    public String getRecomendaciones() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getRecomendaciones() : null;
+    }
+
+    public void setRecomendaciones(String recomendaciones) {
+        if (diagnosticoTratamiento == null) {
+            diagnosticoTratamiento = new DiagnosticoTratamientoConsulta();
+        }
+        diagnosticoTratamiento.setRecomendaciones(recomendaciones);
+    }
+
+    public LocalDateTime getProximaCita() {
+        return seguimiento != null ? seguimiento.getProximaCita() : null;
+    }
+
+    public void setProximaCita(LocalDateTime proximaCita) {
+        if (seguimiento == null) {
+            seguimiento = new SeguimientoConsulta();
+        }
+        seguimiento.setProximaCita(proximaCita);
+    }
+
+    public TipoConsulta getTipoConsulta() {
+        return detalleConsulta != null ? detalleConsulta.getTipoConsulta() : null;
+    }
+
+    public void setTipoConsulta(TipoConsulta tipoConsulta) {
+        if (detalleConsulta == null) {
+            detalleConsulta = new DetalleConsulta();
+        }
+        detalleConsulta.setTipoConsulta(tipoConsulta);
     }
 }

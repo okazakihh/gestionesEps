@@ -39,4 +39,15 @@ public class DiagnosticoTratamiento {
     public void setPlanTratamiento(String planTratamiento) {
         this.planTratamiento = planTratamiento;
     }
+
+    // Métodos adicionales
+    public boolean isEmpty() {
+        return (diagnosticos == null || diagnosticos.isEmpty()) &&
+               (planTratamiento == null || planTratamiento.isEmpty());
+    }
+
+    // Método adicional
+    public void setDiagnostico(String diagnostico) {
+        this.diagnosticos = diagnostico;
+    }
 }

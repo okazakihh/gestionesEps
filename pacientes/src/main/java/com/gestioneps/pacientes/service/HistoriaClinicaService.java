@@ -7,31 +7,37 @@ import com.gestioneps.pacientes.repository.HistoriaClinicaRepository;
 import com.gestioneps.pacientes.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
 public class HistoriaClinicaService {
 
-    @Autowired
-    private HistoriaClinicaRepository historiaClinicaRepository;
+    private final HistoriaClinicaRepository historiaClinicaRepository;
+    private final PacienteRepository pacienteRepository;
 
     @Autowired
-    private PacienteRepository pacienteRepository;
+    public HistoriaClinicaService(HistoriaClinicaRepository historiaClinicaRepository, PacienteRepository pacienteRepository) {
+        this.historiaClinicaRepository = historiaClinicaRepository;
+        this.pacienteRepository = pacienteRepository;
+    }
 
     /**
      * Crear nueva historia clínica para un paciente
      */
     public HistoriaClinicaDTO crearHistoriaClinica(Long pacienteId, HistoriaClinicaDTO historiaDTO) {
         Paciente paciente = pacienteRepository.findById(pacienteId)
-            .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId));
+            .orElseThrow(() -> new IllegalArgumentException(PACIENTE_NO_ENCONTRADO + pacienteId));
 
         // Verificar si ya existe una historia clínica para este paciente
-        if (historiaClinicaRepository.existsByPaciente(paciente)) {
+        if (historiaClinicaRepository.existsByPacienteAndActivaTrue(paciente)) {
             throw new IllegalArgumentException("El paciente ya tiene una historia clínica asignada");
         }
 
@@ -60,7 +66,7 @@ public class HistoriaClinicaService {
      */
     public HistoriaClinicaDTO actualizarHistoriaClinica(Long id, HistoriaClinicaDTO historiaDTO) {
         HistoriaClinica historia = historiaClinicaRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + id));
+            .orElseThrow(() -> new IllegalArgumentException(HISTORIA_NO_ENCONTRADA + id));
 
         historia.setMotivoConsulta(historiaDTO.getMotivoConsulta());
         historia.setEnfermedadActual(historiaDTO.getEnfermedadActual());
@@ -81,7 +87,7 @@ public class HistoriaClinicaService {
     @Transactional(readOnly = true)
     public HistoriaClinicaDTO obtenerHistoriaClinicaPorId(Long id) {
         HistoriaClinica historia = historiaClinicaRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + id));
+            .orElseThrow(() -> new IllegalArgumentException(HISTORIA_NO_ENCONTRADA + id));
         return convertirEntidadADTO(historia);
     }
 
@@ -91,10 +97,10 @@ public class HistoriaClinicaService {
     @Transactional(readOnly = true)
     public HistoriaClinicaDTO obtenerHistoriaClinicaPorPaciente(Long pacienteId) {
         Paciente paciente = pacienteRepository.findById(pacienteId)
-            .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId));
+            .orElseThrow(() -> new IllegalArgumentException(PACIENTE_NO_ENCONTRADO + pacienteId));
 
-        HistoriaClinica historia = historiaClinicaRepository.findByPaciente(paciente)
-            .orElseThrow(() -> new IllegalArgumentException("No se encontró historia clínica para el paciente"));
+        HistoriaClinica historia = historiaClinicaRepository.findByPacienteAndActivaTrueOrderByFechaAperturaDesc(paciente)
+            .orElseThrow(() -> new IllegalArgumentException("No se encontró historia clínica activa para el paciente"));
         
         return convertirEntidadADTO(historia);
     }
@@ -114,8 +120,23 @@ public class HistoriaClinicaService {
      */
     @Transactional(readOnly = true)
     public Page<HistoriaClinicaDTO> buscarPorDiagnostico(String diagnostico, Pageable pageable) {
-        Page<HistoriaClinica> historias = historiaClinicaRepository.findByDiagnosticoContainingIgnoreCase(diagnostico, pageable);
-        return historias.map(this::convertirEntidadADTO);
+        // Usamos la implementación personalizada del repositorio
+        List<HistoriaClinica> historias = historiaClinicaRepository.findByDiagnosticoContaining(diagnostico);
+        
+        // Aplicamos paginación manualmente
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), historias.size());
+        
+        if (start > historias.size()) {
+            return Page.empty();
+        }
+        
+        List<HistoriaClinica> pageContent = historias.subList(start, end);
+        return new PageImpl<>(
+            pageContent.stream().map(this::convertirEntidadADTO).toList(),
+            pageable,
+            historias.size()
+        );
     }
 
     /**
@@ -132,8 +153,23 @@ public class HistoriaClinicaService {
      */
     @Transactional(readOnly = true)
     public Page<HistoriaClinicaDTO> obtenerHistoriasPorFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin, Pageable pageable) {
-        Page<HistoriaClinica> historias = historiaClinicaRepository.findByFechaCreacionBetween(fechaInicio, fechaFin, pageable);
-        return historias.map(this::convertirEntidadADTO);
+        // Obtener todas las historias en el rango de fechas
+        List<HistoriaClinica> historias = historiaClinicaRepository.findByFechaAperturaBetweenAndActivaTrue(fechaInicio, fechaFin);
+        
+        // Aplicar paginación manualmente
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), historias.size());
+        
+        if (start > historias.size()) {
+            return Page.empty();
+        }
+        
+        List<HistoriaClinica> pageContent = historias.subList(start, end);
+        return new PageImpl<>(
+            pageContent.stream().map(this::convertirEntidadADTO).toList(),
+            pageable,
+            historias.size()
+        );
     }
 
     /**
@@ -141,7 +177,7 @@ public class HistoriaClinicaService {
      */
     public void desactivarHistoriaClinica(Long id) {
         HistoriaClinica historia = historiaClinicaRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + id));
+            .orElseThrow(() -> new IllegalArgumentException(HISTORIA_NO_ENCONTRADA + id));
         
         historia.setActiva(false);
         historiaClinicaRepository.save(historia);
@@ -153,21 +189,17 @@ public class HistoriaClinicaService {
     @Transactional(readOnly = true)
     public boolean pacienteTieneHistoriaClinica(Long pacienteId) {
         Paciente paciente = pacienteRepository.findById(pacienteId)
-            .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId));
-        return historiaClinicaRepository.existsByPaciente(paciente);
+            .orElseThrow(() -> new IllegalArgumentException(PACIENTE_NO_ENCONTRADO + pacienteId));
+        return historiaClinicaRepository.existsByPacienteAndActivaTrue(paciente);
     }
 
     /**
      * Generar número consecutivo para historia clínica
      */
     private String generarNumeroHistoria() {
-        Long ultimoNumero = historiaClinicaRepository.findMaxNumeroConsecutivo();
-        if (ultimoNumero == null) {
-            ultimoNumero = 0L;
-        }
-        
-        Long nuevoNumero = ultimoNumero + 1;
-        return String.format("HC-%06d", nuevoNumero);
+        // Usamos el método del repositorio que genera el siguiente número de historia
+        Long siguienteNumero = historiaClinicaRepository.generarSiguienteNumeroHistoria();
+        return String.format("HC%06d", siguienteNumero);
     }
 
     /**
@@ -196,4 +228,8 @@ public class HistoriaClinicaService {
 
         return dto;
     }
+
+    // Refactorizar para usar constantes en mensajes de excepción
+    private static final String PACIENTE_NO_ENCONTRADO = "Paciente no encontrado con ID: ";
+    private static final String HISTORIA_NO_ENCONTRADA = "Historia clínica no encontrada con ID: ";
 }

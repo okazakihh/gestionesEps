@@ -1,4 +1,4 @@
-package main.java.com.gestioneps.pacientes.dto;
+package com.gestioneps.pacientes.dto;
 
 import com.gestioneps.pacientes.entity.*;
 import jakarta.validation.constraints.*;

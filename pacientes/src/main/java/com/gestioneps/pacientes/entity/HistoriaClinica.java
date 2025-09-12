@@ -80,6 +80,10 @@ public class HistoriaClinica {
     @OneToMany(mappedBy = "historiaClinica", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DocumentoMedico> documentos = new ArrayList<>();
 
+    // Agregar el campo motivoConsulta
+    @Column(name = "motivo_consulta", columnDefinition = "TEXT")
+    private String motivoConsulta;
+
     // Constructors
     public HistoriaClinica() {}
 
@@ -196,6 +200,15 @@ public class HistoriaClinica {
         this.documentos = documentos;
     }
 
+    // Getter y setter para motivoConsulta
+    public String getMotivoConsulta() {
+        return motivoConsulta;
+    }
+
+    public void setMotivoConsulta(String motivoConsulta) {
+        this.motivoConsulta = motivoConsulta;
+    }
+
     // Utility methods for backward compatibility
     public String getMedicoResponsable() {
         return informacionMedico != null ? informacionMedico.getMedicoResponsable() : null;
@@ -203,10 +216,6 @@ public class HistoriaClinica {
 
     public String getRegistroMedico() {
         return informacionMedico != null ? informacionMedico.getRegistroMedico() : null;
-    }
-
-    public String getMotivoConsulta() {
-        return informacionConsulta != null ? informacionConsulta.getMotivoConsulta() : null;
     }
 
     public String getEnfermedadActual() {
@@ -255,5 +264,55 @@ public class HistoriaClinica {
 
     public String getPlanTratamiento() {
         return diagnosticoTratamiento != null ? diagnosticoTratamiento.getPlanTratamiento() : null;
+    }
+
+    // Agregar métodos faltantes para manejar campos agrupados
+    public void setEnfermedadActual(String enfermedadActual) {
+        if (this.informacionConsulta == null) {
+            this.informacionConsulta = new InformacionConsulta();
+        }
+        this.informacionConsulta.setEnfermedadActual(enfermedadActual);
+    }
+
+    public void setAntecedentesPersonales(String antecedentesPersonales) {
+        if (this.antecedentesClinico == null) {
+            this.antecedentesClinico = new AntecedentesClinico();
+        }
+        this.antecedentesClinico.setPersonales(antecedentesPersonales);
+    }
+
+    public void setExamenFisico(String examenFisico) {
+        if (this.examenClinico == null) {
+            this.examenClinico = new ExamenClinico();
+        }
+        this.examenClinico.setDescripcion(examenFisico);
+    }
+
+    public void setDiagnostico(String diagnostico) {
+        if (this.diagnosticoTratamiento == null) {
+            this.diagnosticoTratamiento = new DiagnosticoTratamiento();
+        }
+        this.diagnosticoTratamiento.setDiagnostico(diagnostico);
+    }
+
+    public void setPlanTratamiento(String planTratamiento) {
+        if (this.diagnosticoTratamiento == null) {
+            this.diagnosticoTratamiento = new DiagnosticoTratamiento();
+        }
+        this.diagnosticoTratamiento.setPlanTratamiento(planTratamiento);
+    }
+
+    public void setObservaciones(String observaciones) {
+        if (this.informacionConsulta == null) {
+            this.informacionConsulta = new InformacionConsulta();
+        }
+        this.informacionConsulta.setObservaciones(observaciones);
+    }
+
+    // Método adicional
+    public void setAntecedentesFamiliares(String antecedentesFamiliares) {
+        if (this.antecedentesClinico != null) {
+            this.antecedentesClinico.setAntecedentesFamiliares(antecedentesFamiliares);
+        }
     }
 }

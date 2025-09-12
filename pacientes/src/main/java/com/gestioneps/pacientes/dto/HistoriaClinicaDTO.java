@@ -250,6 +250,11 @@ public class HistoriaClinicaDTO {
         return diagnosticoTratamiento != null ? diagnosticoTratamiento.getPlanTratamiento() : null;
     }
 
+    // Método adicional
+    public String getDiagnostico() {
+        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getDiagnosticos() : null;
+    }
+
     // Setter methods for backward compatibility
     public void setMedicoResponsable(String medicoResponsable) {
         if (informacionMedico == null) {

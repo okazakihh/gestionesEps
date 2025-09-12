@@ -64,4 +64,9 @@ public class AntecedentesClinico {
     public void setAntecedentesAlergicos(String antecedentesAlergicos) {
         this.antecedentesAlergicos = antecedentesAlergicos;
     }
+
+    // Método adicional
+    public void setPersonales(String personales) {
+        this.antecedentesPersonales = personales;
+    }
 }

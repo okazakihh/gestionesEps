@@ -1,4 +1,4 @@
-package main.java.com.gestioneps.pacientes.repository;
+package com.gestioneps.pacientes.repository;
 
 import com.gestioneps.pacientes.entity.HistoriaClinica;
 import com.gestioneps.pacientes.entity.Paciente;
@@ -73,4 +73,9 @@ public interface HistoriaClinicaRepository extends JpaRepository<HistoriaClinica
     @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(h.numeroHistoria, 3) AS int)), 0) + 1 " +
            "FROM HistoriaClinica h WHERE h.numeroHistoria LIKE 'HC%'")
     Long generarSiguienteNumeroHistoria();
+
+    /**
+     * Buscar historias clínicas activas con paginación
+     */
+    Page<HistoriaClinica> findByActivaTrue(Pageable pageable);
 }
