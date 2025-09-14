@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 public class HistoriaClinicaDTO {
 
@@ -50,7 +50,11 @@ public class HistoriaClinicaDTO {
     private LocalDateTime ultimaConsulta;
 
     // Constructors
-    public HistoriaClinicaDTO() {}
+    // Constructor vacío necesario para frameworks de serialización/deserialización
+    public HistoriaClinicaDTO() {
+        // Este constructor está intencionalmente vacío.
+        // Es requerido por frameworks como Hibernate o Jackson para crear instancias de la clase.
+    }
 
     // Getters and Setters
     public Long getId() {

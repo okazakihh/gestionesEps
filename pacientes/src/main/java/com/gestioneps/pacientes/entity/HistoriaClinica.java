@@ -1,8 +1,11 @@
 package com.gestioneps.pacientes.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
+import jakarta.persistence.Transient;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Type;
@@ -14,6 +17,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "historias_clinicas")
+@Access(AccessType.FIELD)
 public class HistoriaClinica {
 
     @Id
@@ -81,11 +85,14 @@ public class HistoriaClinica {
     private List<DocumentoMedico> documentos = new ArrayList<>();
 
     // Agregar el campo motivoConsulta
-    @Column(name = "motivo_consulta", columnDefinition = "TEXT")
+    @Column(name = "motivo_consulta", columnDefinition = "TEXT", unique = true)
     private String motivoConsulta;
 
     // Constructors
-    public HistoriaClinica() {}
+    public HistoriaClinica() {
+        // Constructor vacío necesario para JPA/Hibernate. No lanzar excepciones aquí
+        // porque JPA necesita crear instancias mediante reflexión.
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -201,10 +208,12 @@ public class HistoriaClinica {
     }
 
     // Getter y setter para motivoConsulta
+    @Transient
     public String getMotivoConsulta() {
         return motivoConsulta;
     }
 
+    @Transient
     public void setMotivoConsulta(String motivoConsulta) {
         this.motivoConsulta = motivoConsulta;
     }
@@ -311,8 +320,9 @@ public class HistoriaClinica {
 
     // Método adicional
     public void setAntecedentesFamiliares(String antecedentesFamiliares) {
-        if (this.antecedentesClinico != null) {
-            this.antecedentesClinico.setAntecedentesFamiliares(antecedentesFamiliares);
+        if (this.antecedentesClinico == null) {
+            this.antecedentesClinico = new AntecedentesClinico();
         }
+        this.antecedentesClinico.setAntecedentesFamiliares(antecedentesFamiliares);
     }
 }

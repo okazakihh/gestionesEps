@@ -1,12 +1,11 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.Size;
 
 /**
  * Clase embebida para agrupar información del examen clínico
  */
-@Embeddable
 public class ExamenClinico {
 
     @Size(max = 2000, message = "El examen físico no puede exceder 2000 caracteres")

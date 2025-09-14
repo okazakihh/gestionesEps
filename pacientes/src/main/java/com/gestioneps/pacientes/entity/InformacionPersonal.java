@@ -1,13 +1,12 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 
-@Embeddable
 public class InformacionPersonal {
 
     @NotBlank(message = "El primer nombre es obligatorio")

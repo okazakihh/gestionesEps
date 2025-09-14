@@ -1,0 +1,100 @@
+package com.gestioneps.pacientes.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import com.gestioneps.pacientes.dto.ApiError;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                        "/actuator/health",
+                        "/actuator/info",
+                        "/api/auth/proxy/**",
+                        "/api/auth/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt())
+                .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint(unauthorizedEntryPoint())
+                    .accessDeniedHandler(accessDeniedHandler())
+                );
+
+        return http.build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(@Value("${jwt.secret}") String secret) {
+        // Auth service (gestions) derives a 512-bit key by applying SHA-512 to the configured secret.
+        // Replicate the same derivation here so signature validation succeeds across services.
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            byte[] keyBytes = digest.digest(secret.getBytes(StandardCharsets.UTF_8));
+            SecretKeySpec key = new SecretKeySpec(keyBytes, "HmacSHA512");
+            // Log only the derived key length to aid debugging (do NOT log the key material)
+            logger.debug("Derived HMAC key length (bytes)={}", keyBytes.length);
+            return NimbusJwtDecoder.withSecretKey(key).build();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Unable to initialize JWT decoder: SHA-512 algorithm not available", e);
+        }
+    }
+
+    @Bean
+    public AuthenticationEntryPoint unauthorizedEntryPoint() {
+        return (HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            ApiError e = new ApiError();
+            e.setSuccess(false);
+            e.setMessage("Unauthorized: " + authException.getMessage());
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            response.getWriter().write(mapper.writeValueAsString(e));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json;charset=UTF-8");
+            ApiError e = new ApiError();
+            e.setSuccess(false);
+            e.setMessage("Forbidden: " + accessDeniedException.getMessage());
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            response.getWriter().write(mapper.writeValueAsString(e));
+        };
+    }
+}

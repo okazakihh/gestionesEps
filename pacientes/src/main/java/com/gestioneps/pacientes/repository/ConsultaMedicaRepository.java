@@ -3,8 +3,6 @@ package com.gestioneps.pacientes.repository;
 import com.gestioneps.pacientes.entity.ConsultaMedica;
 import com.gestioneps.pacientes.entity.HistoriaClinica;
 import com.gestioneps.pacientes.entity.TipoConsulta;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,12 +17,16 @@ public interface ConsultaMedicaRepository extends JpaRepository<ConsultaMedica, 
     /**
      * Buscar consultas por historia clínica
      */
-    List<ConsultaMedica> findByHistoriaClinicaOrderByFechaConsultaDesc(HistoriaClinica historiaClinica);
+       // detalleConsulta.fechaConsulta está dentro del JSON 'detalle_consulta' y no es un atributo mapeado
+       // en la entidad ConsultaMedica. Para ordenar/consultar por fecha usaremos fechaCreacion (columna mapeada)
+       List<ConsultaMedica> findByHistoriaClinicaOrderByFechaCreacionDesc(HistoriaClinica historiaClinica);
 
     /**
      * Buscar consultas por médico tratante
      */
-    List<ConsultaMedica> findByMedicoTratanteContainingIgnoreCase(String medicoTratante);
+    @Query(value = "SELECT * FROM consultas_medicas c WHERE LOWER(COALESCE(c.detalle_consulta->> 'medicoTratante','')) LIKE LOWER(CONCAT('%', :medico, '%')) OR LOWER(COALESCE(c.informacion_medico->> 'medicoTratante','')) LIKE LOWER(CONCAT('%', :medico, '%'))",
+           nativeQuery = true)
+    List<ConsultaMedica> findByMedicoTratanteContainingIgnoreCase(@Param("medico") String medico);
 
     /**
      * Buscar consultas por tipo
@@ -34,23 +36,30 @@ public interface ConsultaMedicaRepository extends JpaRepository<ConsultaMedica, 
     /**
      * Buscar consultas por rango de fechas
      */
-    List<ConsultaMedica> findByFechaConsultaBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
+       // Buscar por rango usando la columna mapeada fechaCreacion
+       List<ConsultaMedica> findByFechaCreacionBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
 
     /**
      * Buscar consultas por especialidad
      */
-    List<ConsultaMedica> findByEspecialidadContainingIgnoreCase(String especialidad);
+    @Query(value = "SELECT * FROM consultas_medicas c WHERE LOWER(COALESCE(c.informacion_medico->> 'especialidad','')) LIKE LOWER(CONCAT('%', :especialidad, '%'))",
+           nativeQuery = true)
+    List<ConsultaMedica> findByEspecialidadContainingIgnoreCase(@Param("especialidad") String especialidad);
 
     /**
      * Buscar última consulta de una historia clínica
      */
-    ConsultaMedica findFirstByHistoriaClinicaOrderByFechaConsultaDesc(HistoriaClinica historiaClinica);
+       // Última consulta por fecha de creación
+       ConsultaMedica findFirstByHistoriaClinicaOrderByFechaCreacionDesc(HistoriaClinica historiaClinica);
 
     /**
      * Contar consultas por médico en un período
      */
-    @Query("SELECT COUNT(c) FROM ConsultaMedica c WHERE c.medicoTratante = :medico " +
-           "AND c.fechaConsulta BETWEEN :fechaInicio AND :fechaFin")
+    // medicoTratante está dentro del JSON detalle_consulta o informacion_medico. Usamos consulta nativa
+    // para contar consultas cuyo medico coincida (búsqueda case-insensitive simple) y caigan en el rango.
+    @Query(value = "SELECT COUNT(1) FROM consultas_medicas c WHERE (LOWER(COALESCE(c.detalle_consulta->> 'medicoTratante','')) LIKE LOWER(CONCAT('%', :medico, '%')) OR LOWER(COALESCE(c.informacion_medico->> 'medicoTratante','')) LIKE LOWER(CONCAT('%', :medico, '%'))) " +
+                   "AND c.fecha_creacion BETWEEN :fechaInicio AND :fechaFin",
+           nativeQuery = true)
     long countConsultasByMedicoAndPeriodo(@Param("medico") String medico, 
                                          @Param("fechaInicio") LocalDateTime fechaInicio,
                                          @Param("fechaFin") LocalDateTime fechaFin);
@@ -67,7 +76,7 @@ public interface ConsultaMedicaRepository extends JpaRepository<ConsultaMedica, 
      * Estadísticas de consultas por tipo
      */
     @Query("SELECT c.tipoConsulta, COUNT(c) FROM ConsultaMedica c " +
-           "WHERE c.fechaConsulta BETWEEN :fechaInicio AND :fechaFin " +
+           "WHERE c.fechaCreacion BETWEEN :fechaInicio AND :fechaFin " +
            "GROUP BY c.tipoConsulta")
     List<Object[]> getEstadisticasPorTipo(@Param("fechaInicio") LocalDateTime fechaInicio,
                                          @Param("fechaFin") LocalDateTime fechaFin);

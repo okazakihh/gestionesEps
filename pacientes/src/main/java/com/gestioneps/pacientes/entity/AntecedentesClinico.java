@@ -1,12 +1,11 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.Size;
 
 /**
  * Clase embebida para agrupar información de antecedentes clínicos
  */
-@Embeddable
 public class AntecedentesClinico {
 
     @Size(max = 2000, message = "Los antecedentes personales no pueden exceder 2000 caracteres")

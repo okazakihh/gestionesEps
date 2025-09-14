@@ -1,9 +1,8 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.*;
 
-@Embeddable
 public class InformacionContacto {
 
     @Pattern(regexp = "^[0-9+\\-\\s()]*$", message = "El teléfono debe contener solo números y caracteres válidos")

@@ -5,7 +5,6 @@ import com.gestioneps.pacientes.entity.HistoriaClinica;
 import com.gestioneps.pacientes.entity.Paciente;
 import com.gestioneps.pacientes.repository.HistoriaClinicaRepository;
 import com.gestioneps.pacientes.repository.PacienteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -23,7 +21,6 @@ public class HistoriaClinicaService {
     private final HistoriaClinicaRepository historiaClinicaRepository;
     private final PacienteRepository pacienteRepository;
 
-    @Autowired
     public HistoriaClinicaService(HistoriaClinicaRepository historiaClinicaRepository, PacienteRepository pacienteRepository) {
         this.historiaClinicaRepository = historiaClinicaRepository;
         this.pacienteRepository = pacienteRepository;

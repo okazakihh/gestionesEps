@@ -1,12 +1,11 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.Size;
 
 /**
  * Clase embebida para agrupar información relacionada con la consulta médica
  */
-@Embeddable
 public class InformacionConsulta {
 
     @Size(max = 2000, message = "El motivo de consulta no puede exceder 2000 caracteres")

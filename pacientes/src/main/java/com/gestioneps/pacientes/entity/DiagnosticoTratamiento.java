@@ -1,12 +1,11 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.Size;
 
 /**
  * Clase embebida para agrupar información de diagnóstico y tratamiento
  */
-@Embeddable
 public class DiagnosticoTratamiento {
 
     @Size(max = 2000, message = "Los diagnósticos no pueden exceder 2000 caracteres")

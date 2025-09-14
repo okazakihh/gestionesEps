@@ -1,13 +1,12 @@
 package com.gestioneps.pacientes.entity;
 
-import jakarta.persistence.Embeddable;
+// This class is stored as JSON in a single column using JsonType; do not mark it as @Embeddable
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
  * Clase embebida para agrupar información del médico responsable
  */
-@Embeddable
 public class InformacionMedico {
 
     @NotBlank(message = "El médico responsable es obligatorio")
