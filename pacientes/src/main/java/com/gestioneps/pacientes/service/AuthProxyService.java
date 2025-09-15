@@ -43,9 +43,8 @@ public class AuthProxyService {
         } else {
             // Otherwise, assume decoded bytes represent IV (first 16 bytes) + ciphertext; perform AES-CBC decryption
             try {
-                if (credentialsSecret == null || credentialsSecret.isBlank()) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server not configured to decrypt credentials");
-                }
+                // Use configured secret or fallback to the provided default so testing works immediately.
+                String secretToUse = (credentialsSecret == null || credentialsSecret.isBlank()) ? "u5u4r101$" : credentialsSecret;
                 byte[] allBytes = Base64.getDecoder().decode(credentialsBase64);
                 if (allBytes.length <= 16) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid encrypted payload");
@@ -55,9 +54,9 @@ public class AuthProxyService {
                 byte[] cipherBytes = new byte[allBytes.length - 16];
                 System.arraycopy(allBytes, 16, cipherBytes, 0, cipherBytes.length);
 
-                // Derive AES-256 key from credentialsSecret using SHA-256
+                // Derive AES-256 key from secretToUse using SHA-256
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] keyBytes = digest.digest(credentialsSecret.getBytes(StandardCharsets.UTF_8));
+                byte[] keyBytes = digest.digest(secretToUse.getBytes(StandardCharsets.UTF_8));
                 SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
 
                 Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -71,7 +70,9 @@ public class AuthProxyService {
                 username = parts[0];
                 password = parts[1];
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unable to decrypt credentials: " + e.getMessage());
+                // Include cause message but avoid leaking stack traces in HTTP body
+                String msg = e.getMessage() != null ? e.getMessage() : "decryption error";
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unable to decrypt credentials: " + msg);
             }
         }
 

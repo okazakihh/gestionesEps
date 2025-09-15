@@ -29,6 +29,35 @@
       }
     },
     {
+      "name": "Proxy Login (auth)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"credentialsBase64\": \"<base64_username:password>\" }"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/proxy/login", "host": ["{{base_url}}"], "path": ["api","auth","proxy","login"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData && jsonData.data && jsonData.data.token) {",
+              "    pm.environment.set('jwt_token', jsonData.data.token);",
+              "    console.log('Saved jwt_token');",
+              "} else if (jsonData && jsonData.token) {",
+              "    pm.environment.set('jwt_token', jsonData.token);",
+              "    console.log('Saved jwt_token');",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "Actualizar Paciente",
       "request": {
         "method": "PUT",

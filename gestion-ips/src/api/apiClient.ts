@@ -2,9 +2,8 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiResponse } from '@/types';
 
 // Configuración base del cliente API.
-// En desarrollo preferimos usar la ruta relativa '/api' para que Vite haga proxy y evitar problemas CORS.
-// En producción se puede definir VITE_API_URL (por ejemplo: https://api.mi-dominio.com/api)
-const API_BASE_URL = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '/api') : (import.meta.env.VITE_API_URL || 'http://localhost:8081/api');
+// Temporalmente apuntando directamente al backend para solucionar problemas de proxy
+const API_BASE_URL = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:8080') : (import.meta.env.VITE_API_URL || 'http://localhost:8081');
 
 class ApiClient {
   private readonly client: AxiosInstance;
@@ -60,6 +59,13 @@ class ApiClient {
     console.error('Error en response interceptor:', error);
     const originalRequest: any = error.config || {};
     const status = error.response?.status;
+
+    // Si es un error de red (sin respuesta del servidor), no redirigir al login
+    if (!error.response && error.code) {
+      console.warn('Error de conexión con el servidor:', error.message);
+      // No procesar como 401, permitir que el componente maneje el error
+      return Promise.reject(error instanceof Error ? error : new Error('Network error'));
+    }
 
     if (status === 401 && !originalRequest._retry) {
       return this.process401(originalRequest, error);

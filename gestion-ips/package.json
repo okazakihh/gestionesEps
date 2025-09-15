@@ -13,6 +13,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.3.1",
     "@mantine/carousel": "^8.3.1",
     "@mantine/core": "^8.3.1",

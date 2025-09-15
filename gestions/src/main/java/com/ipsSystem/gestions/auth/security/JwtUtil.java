@@ -112,6 +112,7 @@ public class JwtUtil {
         }
         return Jwts.builder()
                 .setClaims(claims)
+                .setIssuer("http://localhost:8080/api/auth")
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))

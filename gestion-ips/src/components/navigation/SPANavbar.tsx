@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigationStore, ViewType } from '@/stores/navigationStore';
 
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
     name: 'Pacientes',
     view: 'pacientes',
     icon: '🏥',
+    roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Citas',
@@ -48,14 +50,61 @@ const navItems: NavItem[] = [
 export const SPANavbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { currentView, setView } = useNavigationStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Sincronizar el estado de navegación con la ruta actual
+  useEffect(() => {
+    const pathToView: Record<string, ViewType> = {
+      '/dashboard': 'dashboard',
+      '/usuarios': 'usuarios',
+      '/pacientes': 'pacientes',
+      '/citas': 'citas',
+      '/reportes': 'reportes',
+      '/configuracion': 'configuracion',
+    };
+
+    const currentPath = location.pathname;
+    const view = pathToView[currentPath] || 'dashboard';
+    setView(view);
+  }, [location.pathname, setView]);
 
   const handleLogout = () => {
     logout();
   };
 
   const handleNavigation = (view: ViewType) => {
-    setView(view);
+    // Map view types to React Router paths
+    const viewToPath: Record<ViewType, string> = {
+      login: '/login',
+      dashboard: '/dashboard',
+      usuarios: '/usuarios',
+      pacientes: '/pacientes',
+      citas: '/citas',
+      reportes: '/reportes',
+      configuracion: '/configuracion',
+    };
+
+    const path = viewToPath[view];
+    if (path) {
+      navigate(path);
+    }
   };
+
+  // Determinar qué elemento está activo basado en la ruta actual
+  const getCurrentViewFromPath = (pathname: string): ViewType => {
+    const pathToView: Record<string, ViewType> = {
+      '/dashboard': 'dashboard',
+      '/usuarios': 'usuarios',
+      '/pacientes': 'pacientes',
+      '/citas': 'citas',
+      '/reportes': 'reportes',
+      '/configuracion': 'configuracion',
+    };
+    return pathToView[pathname] || 'dashboard';
+  };
+
+  const currentViewFromPath = getCurrentViewFromPath(location.pathname);
 
   const filteredNavItems = navItems.filter(item => {
     if (!item.roles) return true;
@@ -93,7 +142,7 @@ export const SPANavbar: React.FC = () => {
       {/* Navigation Items */}
       <nav className="flex-1 px-4 py-4 space-y-2">
         {filteredNavItems.map((item) => {
-          const isActive = currentView === item.view;
+          const isActive = currentViewFromPath === item.view;
           return (
             <button
               key={item.name}

@@ -7,13 +7,48 @@ spring:
   cloud:
     gateway:
       routes:
+        # Rutas específicas primero (orden importa)
+        - id: auth_route
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+        - id: pacientes_route
+          uri: lb://PACIENTES-SERVICE
+          predicates:
+            - Path=/api/pacientes/**
+          filters:
+            - StripPrefix=1
+        # Ruta genérica al final
         - id: backend-route
           uri: http://localhost:8080
           predicates:
             - Path=/api/**
-          # Sin filtros complicados - solo proxy directo
+          filters:
+            - StripPrefix=1
+      default-filters:
+        - StripPrefix=0
+        - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}
+        - AddRequestHeader=Authorization, #{request.headers.Authorization}
+  # Redis configuration for blacklist
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 
 logging:
   level:
     root: INFO
-    com.gateway: DEBUG
+  '[com.gateway]': DEBUG

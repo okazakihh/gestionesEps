@@ -3,18 +3,8 @@ import { useNavigationStore, ViewType } from '@/stores/navigationStore';
 import { SPALoginPage } from '@/pages/SPALoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import UsuariosPage from '@/pages/UsersPage';
+import PacientesPage from '@/pages/pacientes/PacientesPage';
 import { SPALayout } from '@/components/layouts/SPALayout';
-
-// Páginas temporales en desarrollo
-const PacientesPage = () => (
-  <SPALayout title="Gestión de Pacientes" subtitle="Administrar información de pacientes">
-    <div className="p-6">
-      <div className="text-center text-gray-500 py-12">
-        <p className="text-lg">Página de gestión de pacientes en desarrollo...</p>
-      </div>
-    </div>
-  </SPALayout>
-);
 
 const CitasPage = () => (
   <SPALayout title="Gestión de Citas" subtitle="Administrar citas médicas">

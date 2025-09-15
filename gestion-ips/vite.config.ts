@@ -23,7 +23,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        // Proxy directo al backend (temporalmente mientras solucionamos el gateway)
+        // Proxy directo al servicio de gestions para login (temporal)
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,

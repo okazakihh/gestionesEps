@@ -1,9 +1,15 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { LoginPage } from '@/pages/LoginPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import UsuariosPage from '@/pages/UsersPage';
+import { useAuth } from '../context/AuthContext';
+import { LoginPage } from '../pages/LoginPage';
+import { DashboardPage } from '../pages/DashboardPage';
+import UsuariosPage from '../pages/UsersPage';
+import PacientesPage from '../pages/pacientes/PacientesPage';
+import PacienteForm from '../pages/pacientes/PacienteForm';
+import GestionPacientesPage from '../pages/pacientes/GestionPacientesPage';
+import HistoriasClinicasPage from '../pages/pacientes/HistoriasClinicasPage';
+import ConsultasMedicasPage from '../pages/pacientes/ConsultasMedicasPage';
+import DocumentosMedicosPage from '../pages/pacientes/DocumentosMedicosPage';
 
 // Componente para rutas protegidas
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -57,13 +63,77 @@ const AppRouter: React.FC = () => {
         } 
       />
       
-      <Route 
-        path="/usuarios" 
+      <Route
+        path="/usuarios"
         element={
           <ProtectedRoute>
             <UsuariosPage />
           </ProtectedRoute>
-        } 
+        }
+      />
+
+      <Route
+        path="/pacientes"
+        element={
+          <ProtectedRoute>
+            <PacientesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Submodulos de Pacientes - ahora manejados por PacientesPage con pestañas */}
+      <Route
+        path="/pacientes/gestion"
+        element={
+          <ProtectedRoute>
+            <PacientesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pacientes/historias"
+        element={
+          <ProtectedRoute>
+            <PacientesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pacientes/consultas"
+        element={
+          <ProtectedRoute>
+            <PacientesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pacientes/documentos"
+        element={
+          <ProtectedRoute>
+            <PacientesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pacientes/nuevo"
+        element={
+          <ProtectedRoute>
+            <PacienteForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pacientes/:id/editar"
+        element={
+          <ProtectedRoute>
+            <PacienteForm />
+          </ProtectedRoute>
+        }
       />
       
       {/* Redirección por defecto */}
