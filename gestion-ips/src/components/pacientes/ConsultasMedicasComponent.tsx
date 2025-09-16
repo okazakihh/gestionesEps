@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ConsultaMedicaDTO, ConsultaSearchParams } from '../../types/pacientes';
 import { consultasApiService } from '../../services/pacientesApiService';
 import ServiceAlert from '../ui/ServiceAlert';
+import { Modal, Button, TextInput, Group, Text, Stack, Select } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 const ConsultasMedicasComponent: React.FC = () => {
   const [consultas, setConsultas] = useState<ConsultaMedicaDTO[]>([]);
@@ -11,6 +13,32 @@ const ConsultasMedicasComponent: React.FC = () => {
   const [searchParams, setSearchParams] = useState<ConsultaSearchParams>({
     page: 0,
     size: 10
+  });
+
+  // Estados para el modal de creación de consulta médica
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [consultaToEdit, setConsultaToEdit] = useState<ConsultaMedicaDTO | null>(null);
+
+  // Estados para el formulario de consulta médica
+  const [formData, setFormData] = useState({
+    historiaClinicaId: '',
+    medicoTratante: '',
+    especialidad: '',
+    registroMedico: '',
+    fechaConsulta: '',
+    motivoConsulta: '',
+    enfermedadActual: '',
+    tipoConsulta: 'GENERAL',
+    examenFisico: '',
+    signosVitales: '',
+    diagnosticoPrincipal: '',
+    diagnosticosSecundarios: '',
+    planManejo: '',
+    medicamentosFormulados: '',
+    examenesSolicitados: '',
+    recomendaciones: '',
+    proximaCita: ''
   });
 
   useEffect(() => {
@@ -44,6 +72,96 @@ const ConsultasMedicasComponent: React.FC = () => {
     }));
   };
 
+  const handleOpenCreateModal = () => {
+    setFormData({
+      historiaClinicaId: '',
+      medicoTratante: '',
+      especialidad: '',
+      registroMedico: '',
+      fechaConsulta: new Date().toISOString().split('T')[0],
+      motivoConsulta: '',
+      enfermedadActual: '',
+      tipoConsulta: 'GENERAL',
+      examenFisico: '',
+      signosVitales: '',
+      diagnosticoPrincipal: '',
+      diagnosticosSecundarios: '',
+      planManejo: '',
+      medicamentosFormulados: '',
+      examenesSolicitados: '',
+      recomendaciones: '',
+      proximaCita: ''
+    });
+    setIsEditMode(false);
+    setConsultaToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setConsultaToEdit(null);
+  };
+
+  const handleCreateConsulta = async () => {
+    try {
+      setLoading(true);
+
+      const consultaData = {
+        historiaClinicaId: parseInt(formData.historiaClinicaId),
+        informacionMedico: {
+          medicoTratante: formData.medicoTratante,
+          especialidad: formData.especialidad,
+          registroMedico: formData.registroMedico
+        },
+        detalleConsulta: {
+          fechaConsulta: formData.fechaConsulta,
+          motivoConsulta: formData.motivoConsulta,
+          enfermedadActual: formData.enfermedadActual,
+          tipoConsulta: formData.tipoConsulta
+        },
+        examenClinico: {
+          examenFisico: formData.examenFisico,
+          signosVitales: formData.signosVitales
+        },
+        diagnosticoTratamiento: {
+          diagnosticoPrincipal: formData.diagnosticoPrincipal,
+          diagnosticosSecundarios: formData.diagnosticosSecundarios,
+          planManejo: formData.planManejo,
+          medicamentosFormulados: formData.medicamentosFormulados,
+          examenesSolicitados: formData.examenesSolicitados,
+          recomendaciones: formData.recomendaciones
+        },
+        seguimiento: {
+          proximaCita: formData.proximaCita || undefined
+        }
+      };
+
+      await consultasApiService.createConsulta(consultaData);
+
+      notifications.show({
+        title: '¡Consulta creada!',
+        message: 'La consulta médica ha sido registrada correctamente',
+        color: 'purple',
+        autoClose: 5000,
+      });
+
+      setIsModalOpen(false);
+      await loadConsultas();
+
+    } catch (error: any) {
+      console.error('Error al crear consulta:', error);
+      notifications.show({
+        title: 'Error al crear consulta',
+        message: error.message || 'Ha ocurrido un error inesperado',
+        color: 'red',
+        autoClose: 7000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,9 +170,12 @@ const ConsultasMedicasComponent: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Consultas Médicas</h2>
           <p className="mt-1 text-sm text-gray-600">Registro y seguimiento de consultas médicas</p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+        <Button
+          onClick={handleOpenCreateModal}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
           Nueva Consulta
-        </button>
+        </Button>
       </div>
 
       {/* Service Alert */}
@@ -153,6 +274,167 @@ const ConsultasMedicasComponent: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Creación de Consulta Médica */}
+      <Modal
+        opened={isModalOpen}
+        onClose={handleCloseModal}
+        title="Registrar Nueva Consulta Médica"
+        size="xl"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="ID de Historia Clínica"
+            placeholder="Ingrese el ID de la historia clínica"
+            value={formData.historiaClinicaId}
+            onChange={(e) => setFormData({...formData, historiaClinicaId: e.target.value})}
+            required
+          />
+
+          <Group grow>
+            <TextInput
+              label="Médico Tratante"
+              placeholder="Nombre del médico"
+              value={formData.medicoTratante}
+              onChange={(e) => setFormData({...formData, medicoTratante: e.target.value})}
+              required
+            />
+            <TextInput
+              label="Especialidad"
+              placeholder="Especialidad médica"
+              value={formData.especialidad}
+              onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+              required
+            />
+          </Group>
+
+          <Group grow>
+            <TextInput
+              label="Registro Médico"
+              placeholder="Número de registro"
+              value={formData.registroMedico}
+              onChange={(e) => setFormData({...formData, registroMedico: e.target.value})}
+            />
+            <TextInput
+              label="Fecha de Consulta"
+              type="date"
+              value={formData.fechaConsulta}
+              onChange={(e) => setFormData({...formData, fechaConsulta: e.target.value})}
+              required
+            />
+          </Group>
+
+          <TextInput
+            label="Motivo de Consulta"
+            placeholder="Motivo de la consulta"
+            value={formData.motivoConsulta}
+            onChange={(e) => setFormData({...formData, motivoConsulta: e.target.value})}
+            required
+          />
+
+          <TextInput
+            label="Enfermedad Actual"
+            placeholder="Descripción de la enfermedad actual"
+            value={formData.enfermedadActual}
+            onChange={(e) => setFormData({...formData, enfermedadActual: e.target.value})}
+          />
+
+          <Select
+            label="Tipo de Consulta"
+            placeholder="Seleccione el tipo"
+            data={[
+              { value: 'GENERAL', label: 'General' },
+              { value: 'ESPECIALIZADA', label: 'Especializada' },
+              { value: 'URGENCIA', label: 'Urgencia' },
+              { value: 'CONTROL', label: 'Control' }
+            ]}
+            value={formData.tipoConsulta}
+            onChange={(value) => setFormData({...formData, tipoConsulta: value || 'GENERAL'})}
+            required
+          />
+
+          <Group grow>
+            <TextInput
+              label="Examen Físico"
+              placeholder="Resultados del examen físico"
+              value={formData.examenFisico}
+              onChange={(e) => setFormData({...formData, examenFisico: e.target.value})}
+            />
+            <TextInput
+              label="Signos Vitales"
+              placeholder="Presión, temperatura, etc."
+              value={formData.signosVitales}
+              onChange={(e) => setFormData({...formData, signosVitales: e.target.value})}
+            />
+          </Group>
+
+          <TextInput
+            label="Diagnóstico Principal"
+            placeholder="Diagnóstico principal"
+            value={formData.diagnosticoPrincipal}
+            onChange={(e) => setFormData({...formData, diagnosticoPrincipal: e.target.value})}
+            required
+          />
+
+          <TextInput
+            label="Diagnósticos Secundarios"
+            placeholder="Diagnósticos adicionales (opcional)"
+            value={formData.diagnosticosSecundarios}
+            onChange={(e) => setFormData({...formData, diagnosticosSecundarios: e.target.value})}
+          />
+
+          <TextInput
+            label="Plan de Manejo"
+            placeholder="Plan de tratamiento recomendado"
+            value={formData.planManejo}
+            onChange={(e) => setFormData({...formData, planManejo: e.target.value})}
+          />
+
+          <TextInput
+            label="Medicamentos Formulados"
+            placeholder="Medicamentos prescritos"
+            value={formData.medicamentosFormulados}
+            onChange={(e) => setFormData({...formData, medicamentosFormulados: e.target.value})}
+          />
+
+          <TextInput
+            label="Exámenes Solicitados"
+            placeholder="Exámenes médicos solicitados"
+            value={formData.examenesSolicitados}
+            onChange={(e) => setFormData({...formData, examenesSolicitados: e.target.value})}
+          />
+
+          <TextInput
+            label="Recomendaciones"
+            placeholder="Recomendaciones adicionales"
+            value={formData.recomendaciones}
+            onChange={(e) => setFormData({...formData, recomendaciones: e.target.value})}
+          />
+
+          <TextInput
+            label="Próxima Cita"
+            type="date"
+            placeholder="Fecha de la próxima cita (opcional)"
+            value={formData.proximaCita}
+            onChange={(e) => setFormData({...formData, proximaCita: e.target.value})}
+          />
+
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button
+              color="purple"
+              onClick={handleCreateConsulta}
+              loading={loading}
+              disabled={!formData.historiaClinicaId || !formData.medicoTratante || !formData.especialidad || !formData.fechaConsulta || !formData.motivoConsulta || !formData.diagnosticoPrincipal}
+            >
+              Crear Consulta
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </div>
   );
 };

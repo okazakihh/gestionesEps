@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiResponse } from '@/types';
 
 // Configuración base del cliente API.
-// Temporalmente apuntando directamente al backend para solucionar problemas de proxy
-const API_BASE_URL = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:8080') : (import.meta.env.VITE_API_URL || 'http://localhost:8081');
+// Apuntando al Gateway para todas las peticiones (desarrollo y producción)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 class ApiClient {
   private readonly client: AxiosInstance;
@@ -68,7 +68,23 @@ class ApiClient {
     }
 
     if (status === 401 && !originalRequest._retry) {
-      return this.process401(originalRequest, error);
+      // Check if this is a JWT validation error (not a missing token)
+      const isJwtError = error.response?.data?.message?.includes('Token JWT') ||
+                        error.response?.data?.message?.includes('JWT') ||
+                        error.response?.data?.error?.includes('JWT') ||
+                        error.response?.data?.message?.includes('Signed JWT rejected');
+
+      if (isJwtError) {
+        // JWT validation failed - this might be a service configuration issue
+        // Don't force logout, just return the error with a user-friendly message
+        console.error('JWT validation failed - check service configuration:', error.response?.data);
+        const jwtError = new Error('Error de configuración del servicio. Contacte al administrador.');
+        jwtError.name = 'JWT_CONFIG_ERROR';
+        return Promise.reject(jwtError);
+      } else {
+        // Missing or expired token - try refresh or logout
+        return this.process401(originalRequest, error);
+      }
     }
     if (status === 403) {
       console.error('Acceso denegado');

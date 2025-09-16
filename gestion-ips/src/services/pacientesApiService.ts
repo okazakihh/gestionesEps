@@ -11,11 +11,11 @@ import {
   ApiResponse
 } from '../types/pacientes';
 
-// Base URL for pacientes service - pointing directly to pacientes service
-const PACIENTES_BASE_URL = 'http://localhost:8082/api/pacientes';
-const HISTORIAS_BASE_URL = 'http://localhost:8082/api/historias-clinicas';
-const CONSULTAS_BASE_URL = 'http://localhost:8082/api/consultas';
-const DOCUMENTOS_BASE_URL = 'http://localhost:8082/api/documentos';
+// Base URL for pacientes service - using Gateway (apiClient handles the base URL)
+const PACIENTES_BASE_URL = '/pacientes';
+const HISTORIAS_BASE_URL = '/historias-clinicas';
+const CONSULTAS_BASE_URL = '/consultas';
+const DOCUMENTOS_BASE_URL = '/documentos';
 
 // Pacientes API Service
 export const pacientesApiService = {

@@ -13,24 +13,16 @@ spring:
           predicates:
             - Path=/api/auth/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
         - id: pacientes_route
           uri: lb://PACIENTES-SERVICE
           predicates:
             - Path=/api/pacientes/**
           filters:
-            - StripPrefix=1
-        # Ruta genérica al final
-        - id: backend-route
-          uri: http://localhost:8080
-          predicates:
-            - Path=/api/**
-          filters:
-            - StripPrefix=1
+            - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}
-        - AddRequestHeader=Authorization, #{request.headers.Authorization}
   # Redis configuration for blacklist
   data:
     redis:

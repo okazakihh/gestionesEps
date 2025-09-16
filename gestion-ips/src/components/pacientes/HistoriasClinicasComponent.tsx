@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { HistoriaClinicaDTO, HistoriaClinicaSearchParams } from '../../types/pacientes';
 import { historiasClinicasApiService } from '../../services/pacientesApiService';
 import ServiceAlert from '../ui/ServiceAlert';
+import { Modal, Button, TextInput, Group, Text, Stack, Select } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 const HistoriasClinicasComponent: React.FC = () => {
   const [historias, setHistorias] = useState<HistoriaClinicaDTO[]>([]);
@@ -12,6 +14,29 @@ const HistoriasClinicasComponent: React.FC = () => {
   const [searchParams, setSearchParams] = useState<HistoriaClinicaSearchParams>({
     page: 0,
     size: 10
+  });
+
+  // Estados para el modal de creación de historia clínica
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [historiaToEdit, setHistoriaToEdit] = useState<HistoriaClinicaDTO | null>(null);
+
+  // Estados para el formulario de historia clínica
+  const [formData, setFormData] = useState({
+    pacienteId: '',
+    medicoResponsable: '',
+    registroMedico: '',
+    especialidad: '',
+    enfermedadActual: '',
+    antecedentesPersonales: '',
+    antecedentesFamiliares: '',
+    antecedentesQuirurgicos: '',
+    antecedentesAlergicos: '',
+    examenFisico: '',
+    signosVitales: '',
+    diagnostico: '',
+    planTratamiento: '',
+    observaciones: ''
   });
 
   useEffect(() => {
@@ -45,6 +70,93 @@ const HistoriasClinicasComponent: React.FC = () => {
     }));
   };
 
+  const handleOpenCreateModal = () => {
+    setFormData({
+      pacienteId: '',
+      medicoResponsable: '',
+      registroMedico: '',
+      especialidad: '',
+      enfermedadActual: '',
+      antecedentesPersonales: '',
+      antecedentesFamiliares: '',
+      antecedentesQuirurgicos: '',
+      antecedentesAlergicos: '',
+      examenFisico: '',
+      signosVitales: '',
+      diagnostico: '',
+      planTratamiento: '',
+      observaciones: ''
+    });
+    setIsEditMode(false);
+    setHistoriaToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setHistoriaToEdit(null);
+  };
+
+  const handleCreateHistoriaClinica = async () => {
+    try {
+      setLoading(true);
+
+      const historiaData = {
+        pacienteId: parseInt(formData.pacienteId),
+        fechaApertura: new Date().toISOString(),
+        activa: true,
+        informacionMedico: {
+          medicoResponsable: formData.medicoResponsable,
+          registroMedico: formData.registroMedico,
+          especialidad: formData.especialidad
+        },
+        informacionConsulta: {
+          motivoConsulta: 'Consulta inicial',
+          enfermedadActual: formData.enfermedadActual,
+          observaciones: formData.observaciones
+        },
+        antecedentesClinico: {
+          antecedentesPersonales: formData.antecedentesPersonales,
+          antecedentesFamiliares: formData.antecedentesFamiliares,
+          antecedentesQuirurgicos: formData.antecedentesQuirurgicos,
+          antecedentesAlergicos: formData.antecedentesAlergicos
+        },
+        examenClinico: {
+          examenFisico: formData.examenFisico,
+          signosVitales: formData.signosVitales
+        },
+        diagnosticoTratamiento: {
+          diagnosticos: formData.diagnostico,
+          planTratamiento: formData.planTratamiento
+        }
+      };
+
+      await historiasClinicasApiService.createHistoriaClinica(historiaData);
+
+      notifications.show({
+        title: '¡Historia Clínica creada!',
+        message: 'La historia clínica ha sido registrada correctamente',
+        color: 'green',
+        autoClose: 5000,
+      });
+
+      setIsModalOpen(false);
+      await loadHistorias();
+
+    } catch (error: any) {
+      console.error('Error al crear historia clínica:', error);
+      notifications.show({
+        title: 'Error al crear historia clínica',
+        message: error.message || 'Ha ocurrido un error inesperado',
+        color: 'red',
+        autoClose: 7000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -53,9 +165,12 @@ const HistoriasClinicasComponent: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Historias Clínicas</h2>
           <p className="mt-1 text-sm text-gray-600">Gestión de historias clínicas electrónicas</p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        <Button
+          onClick={handleOpenCreateModal}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
           Nueva Historia
-        </button>
+        </Button>
       </div>
 
       {/* Service Alert */}
@@ -160,6 +275,136 @@ const HistoriasClinicasComponent: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Creación de Historia Clínica */}
+      <Modal
+        opened={isModalOpen}
+        onClose={handleCloseModal}
+        title="Crear Nueva Historia Clínica"
+        size="xl"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="ID del Paciente"
+            placeholder="Ingrese el ID del paciente"
+            value={formData.pacienteId}
+            onChange={(e) => setFormData({...formData, pacienteId: e.target.value})}
+            required
+          />
+
+          <Group grow>
+            <TextInput
+              label="Médico Responsable"
+              placeholder="Nombre del médico"
+              value={formData.medicoResponsable}
+              onChange={(e) => setFormData({...formData, medicoResponsable: e.target.value})}
+              required
+            />
+            <TextInput
+              label="Registro Médico"
+              placeholder="Número de registro"
+              value={formData.registroMedico}
+              onChange={(e) => setFormData({...formData, registroMedico: e.target.value})}
+              required
+            />
+          </Group>
+
+          <TextInput
+            label="Especialidad"
+            placeholder="Especialidad médica"
+            value={formData.especialidad}
+            onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+            required
+          />
+
+          <TextInput
+            label="Enfermedad Actual"
+            placeholder="Descripción de la enfermedad actual"
+            value={formData.enfermedadActual}
+            onChange={(e) => setFormData({...formData, enfermedadActual: e.target.value})}
+          />
+
+          <TextInput
+            label="Antecedentes Personales"
+            placeholder="Antecedentes médicos personales"
+            value={formData.antecedentesPersonales}
+            onChange={(e) => setFormData({...formData, antecedentesPersonales: e.target.value})}
+          />
+
+          <TextInput
+            label="Antecedentes Familiares"
+            placeholder="Antecedentes médicos familiares"
+            value={formData.antecedentesFamiliares}
+            onChange={(e) => setFormData({...formData, antecedentesFamiliares: e.target.value})}
+          />
+
+          <Group grow>
+            <TextInput
+              label="Antecedentes Quirúrgicos"
+              placeholder="Cirugías previas"
+              value={formData.antecedentesQuirurgicos}
+              onChange={(e) => setFormData({...formData, antecedentesQuirurgicos: e.target.value})}
+            />
+            <TextInput
+              label="Antecedentes Alérgicos"
+              placeholder="Alergias conocidas"
+              value={formData.antecedentesAlergicos}
+              onChange={(e) => setFormData({...formData, antecedentesAlergicos: e.target.value})}
+            />
+          </Group>
+
+          <Group grow>
+            <TextInput
+              label="Examen Físico"
+              placeholder="Resultados del examen físico"
+              value={formData.examenFisico}
+              onChange={(e) => setFormData({...formData, examenFisico: e.target.value})}
+            />
+            <TextInput
+              label="Signos Vitales"
+              placeholder="Presión, temperatura, etc."
+              value={formData.signosVitales}
+              onChange={(e) => setFormData({...formData, signosVitales: e.target.value})}
+            />
+          </Group>
+
+          <TextInput
+            label="Diagnóstico"
+            placeholder="Diagnóstico médico"
+            value={formData.diagnostico}
+            onChange={(e) => setFormData({...formData, diagnostico: e.target.value})}
+          />
+
+          <TextInput
+            label="Plan de Tratamiento"
+            placeholder="Plan de tratamiento recomendado"
+            value={formData.planTratamiento}
+            onChange={(e) => setFormData({...formData, planTratamiento: e.target.value})}
+          />
+
+          <TextInput
+            label="Observaciones"
+            placeholder="Observaciones adicionales"
+            value={formData.observaciones}
+            onChange={(e) => setFormData({...formData, observaciones: e.target.value})}
+          />
+
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button
+              color="green"
+              onClick={handleCreateHistoriaClinica}
+              loading={loading}
+              disabled={!formData.pacienteId || !formData.medicoResponsable || !formData.registroMedico || !formData.especialidad}
+            >
+              Crear Historia Clínica
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </div>
   );
 };

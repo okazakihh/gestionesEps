@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { useNavigationStore, ViewType } from '@/stores/navigationStore';
 
 interface NavItem {

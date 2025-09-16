@@ -10,10 +10,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.context.annotation.Primary;
+import java.util.Arrays;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import java.util.Arrays;
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.spec.SecretKeySpec;
@@ -41,20 +42,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.disable()) // Deshabilitar CORS aquí - lo maneja el gateway
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                         "/actuator/health",
-                        "/actuator/info",
-                        "/api/auth/proxy/**",
-                        "/api/auth/**"
+                        "/actuator/info"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                    .jwt(jwt -> jwt.decoder(jwtDecoder(null))))
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint(unauthorizedEntryPoint())
                     .accessDeniedHandler(accessDeniedHandler())
@@ -64,6 +64,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Primary
     public JwtDecoder jwtDecoder(@Value("${jwt.secret}") String secret) {
         // Auth service (gestions) derives a 512-bit key by applying SHA-512 to the configured secret.
         // Replicate the same derivation here so signature validation succeeds across services.
@@ -73,6 +74,8 @@ public class SecurityConfig {
             SecretKeySpec key = new SecretKeySpec(keyBytes, "HmacSHA512");
             // Log only the derived key length to aid debugging (do NOT log the key material)
             logger.debug("Derived HMAC key length (bytes)={}", keyBytes.length);
+
+            // Use NimbusJwtDecoder with the secret key
             NimbusJwtDecoder baseDecoder = NimbusJwtDecoder.withSecretKey(key).build();
 
             // Wrap the decoder to log token header/payload on decode failures to aid debugging
