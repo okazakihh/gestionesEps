@@ -1,15 +1,10 @@
 package com.gestioneps.pacientes.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Access;
-import jakarta.persistence.AccessType;
 import jakarta.validation.constraints.*;
-import jakarta.validation.Valid;
-import jakarta.persistence.Transient;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.Type;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,7 +12,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "historias_clinicas")
-@Access(AccessType.FIELD)
 public class HistoriaClinica {
 
     @Id
@@ -37,35 +31,9 @@ public class HistoriaClinica {
     @NotNull(message = "La fecha de apertura es obligatoria")
     private LocalDateTime fechaApertura;
 
-    // Información del médico agrupada en JSON
-    @Type(JsonType.class)
-    @Column(name = "informacion_medico", columnDefinition = "TEXT")
-    @Valid
-    private InformacionMedico informacionMedico;
-
-    // Información de la consulta agrupada en JSON
-    @Type(JsonType.class)
-    @Column(name = "informacion_consulta", columnDefinition = "TEXT")
-    @Valid
-    private InformacionConsulta informacionConsulta;
-
-    // Antecedentes clínicos agrupados en JSON
-    @Type(JsonType.class)
-    @Column(name = "antecedentes_clinico", columnDefinition = "TEXT")
-    @Valid
-    private AntecedentesClinico antecedentesClinico;
-
-    // Examen clínico agrupado en JSON
-    @Type(JsonType.class)
-    @Column(name = "examen_clinico", columnDefinition = "TEXT")
-    @Valid
-    private ExamenClinico examenClinico;
-
-    // Diagnóstico y tratamiento agrupados en JSON
-    @Type(JsonType.class)
-    @Column(name = "diagnostico_tratamiento", columnDefinition = "TEXT")
-    @Valid
-    private DiagnosticoTratamiento diagnosticoTratamiento;
+    // Campo único para almacenar toda la información de la historia clínica como JSON crudo
+    @Column(name = "datos_json", columnDefinition = "TEXT")
+    private String datosJson;
 
     @Column(name = "activa", nullable = false)
     private Boolean activa = true;
@@ -79,14 +47,11 @@ public class HistoriaClinica {
     private LocalDateTime fechaActualizacion;
 
     @OneToMany(mappedBy = "historiaClinica", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ConsultaMedica> consultas = new ArrayList<>();
 
     @OneToMany(mappedBy = "historiaClinica", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DocumentoMedico> documentos = new ArrayList<>();
-
-    // Agregar el campo motivoConsulta
-    @Column(name = "motivo_consulta", columnDefinition = "TEXT", unique = true)
-    private String motivoConsulta;
 
     // Constructors
     public HistoriaClinica() {
@@ -127,44 +92,12 @@ public class HistoriaClinica {
         this.fechaApertura = fechaApertura;
     }
 
-    public InformacionMedico getInformacionMedico() {
-        return informacionMedico;
+    public String getDatosJson() {
+        return datosJson;
     }
 
-    public void setInformacionMedico(InformacionMedico informacionMedico) {
-        this.informacionMedico = informacionMedico;
-    }
-
-    public InformacionConsulta getInformacionConsulta() {
-        return informacionConsulta;
-    }
-
-    public void setInformacionConsulta(InformacionConsulta informacionConsulta) {
-        this.informacionConsulta = informacionConsulta;
-    }
-
-    public AntecedentesClinico getAntecedentesClinico() {
-        return antecedentesClinico;
-    }
-
-    public void setAntecedentesClinico(AntecedentesClinico antecedentesClinico) {
-        this.antecedentesClinico = antecedentesClinico;
-    }
-
-    public ExamenClinico getExamenClinico() {
-        return examenClinico;
-    }
-
-    public void setExamenClinico(ExamenClinico examenClinico) {
-        this.examenClinico = examenClinico;
-    }
-
-    public DiagnosticoTratamiento getDiagnosticoTratamiento() {
-        return diagnosticoTratamiento;
-    }
-
-    public void setDiagnosticoTratamiento(DiagnosticoTratamiento diagnosticoTratamiento) {
-        this.diagnosticoTratamiento = diagnosticoTratamiento;
+    public void setDatosJson(String datosJson) {
+        this.datosJson = datosJson;
     }
 
     public Boolean getActiva() {
@@ -205,124 +138,5 @@ public class HistoriaClinica {
 
     public void setDocumentos(List<DocumentoMedico> documentos) {
         this.documentos = documentos;
-    }
-
-    // Getter y setter para motivoConsulta
-    @Transient
-    public String getMotivoConsulta() {
-        return motivoConsulta;
-    }
-
-    @Transient
-    public void setMotivoConsulta(String motivoConsulta) {
-        this.motivoConsulta = motivoConsulta;
-    }
-
-    // Utility methods for backward compatibility
-    public String getMedicoResponsable() {
-        return informacionMedico != null ? informacionMedico.getMedicoResponsable() : null;
-    }
-
-    public String getRegistroMedico() {
-        return informacionMedico != null ? informacionMedico.getRegistroMedico() : null;
-    }
-
-    public String getEnfermedadActual() {
-        return informacionConsulta != null ? informacionConsulta.getEnfermedadActual() : null;
-    }
-
-    public String getRevisionSistemas() {
-        return informacionConsulta != null ? informacionConsulta.getRevisionSistemas() : null;
-    }
-
-    public String getMedicamentosActuales() {
-        return informacionConsulta != null ? informacionConsulta.getMedicamentosActuales() : null;
-    }
-
-    public String getObservaciones() {
-        return informacionConsulta != null ? informacionConsulta.getObservaciones() : null;
-    }
-
-    public String getAntecedentesPersonales() {
-        return antecedentesClinico != null ? antecedentesClinico.getAntecedentesPersonales() : null;
-    }
-
-    public String getAntecedentesFamiliares() {
-        return antecedentesClinico != null ? antecedentesClinico.getAntecedentesFamiliares() : null;
-    }
-
-    public String getAntecedentesQuirurgicos() {
-        return antecedentesClinico != null ? antecedentesClinico.getAntecedentesQuirurgicos() : null;
-    }
-
-    public String getAntecedentesAlergicos() {
-        return antecedentesClinico != null ? antecedentesClinico.getAntecedentesAlergicos() : null;
-    }
-
-    public String getExamenFisico() {
-        return examenClinico != null ? examenClinico.getExamenFisico() : null;
-    }
-
-    public String getSignosVitales() {
-        return examenClinico != null ? examenClinico.getSignosVitales() : null;
-    }
-
-    public String getDiagnosticos() {
-        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getDiagnosticos() : null;
-    }
-
-    public String getPlanTratamiento() {
-        return diagnosticoTratamiento != null ? diagnosticoTratamiento.getPlanTratamiento() : null;
-    }
-
-    // Agregar métodos faltantes para manejar campos agrupados
-    public void setEnfermedadActual(String enfermedadActual) {
-        if (this.informacionConsulta == null) {
-            this.informacionConsulta = new InformacionConsulta();
-        }
-        this.informacionConsulta.setEnfermedadActual(enfermedadActual);
-    }
-
-    public void setAntecedentesPersonales(String antecedentesPersonales) {
-        if (this.antecedentesClinico == null) {
-            this.antecedentesClinico = new AntecedentesClinico();
-        }
-        this.antecedentesClinico.setPersonales(antecedentesPersonales);
-    }
-
-    public void setExamenFisico(String examenFisico) {
-        if (this.examenClinico == null) {
-            this.examenClinico = new ExamenClinico();
-        }
-        this.examenClinico.setDescripcion(examenFisico);
-    }
-
-    public void setDiagnostico(String diagnostico) {
-        if (this.diagnosticoTratamiento == null) {
-            this.diagnosticoTratamiento = new DiagnosticoTratamiento();
-        }
-        this.diagnosticoTratamiento.setDiagnostico(diagnostico);
-    }
-
-    public void setPlanTratamiento(String planTratamiento) {
-        if (this.diagnosticoTratamiento == null) {
-            this.diagnosticoTratamiento = new DiagnosticoTratamiento();
-        }
-        this.diagnosticoTratamiento.setPlanTratamiento(planTratamiento);
-    }
-
-    public void setObservaciones(String observaciones) {
-        if (this.informacionConsulta == null) {
-            this.informacionConsulta = new InformacionConsulta();
-        }
-        this.informacionConsulta.setObservaciones(observaciones);
-    }
-
-    // Método adicional
-    public void setAntecedentesFamiliares(String antecedentesFamiliares) {
-        if (this.antecedentesClinico == null) {
-            this.antecedentesClinico = new AntecedentesClinico();
-        }
-        this.antecedentesClinico.setAntecedentesFamiliares(antecedentesFamiliares);
     }
 }

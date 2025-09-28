@@ -1,6 +1,7 @@
 package com.gestioneps.pacientes.entity;
 
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 public class DetalleConsulta {
@@ -10,8 +11,10 @@ public class DetalleConsulta {
 
     private String enfermedadActual;
 
+    private String revisionSistemas;
+
     @NotNull(message = "La fecha de consulta es obligatoria")
-    private LocalDateTime fechaConsulta;
+    private String fechaConsulta;
 
     @NotNull(message = "El tipo de consulta es obligatorio")
     private TipoConsulta tipoConsulta;
@@ -19,8 +22,8 @@ public class DetalleConsulta {
     // Constructors
     public DetalleConsulta() {}
 
-    public DetalleConsulta(String motivoConsulta, String enfermedadActual, 
-                          LocalDateTime fechaConsulta, TipoConsulta tipoConsulta) {
+    public DetalleConsulta(String motivoConsulta, String enfermedadActual,
+                          String fechaConsulta, TipoConsulta tipoConsulta) {
         this.motivoConsulta = motivoConsulta;
         this.enfermedadActual = enfermedadActual;
         this.fechaConsulta = fechaConsulta;
@@ -44,11 +47,19 @@ public class DetalleConsulta {
         this.enfermedadActual = enfermedadActual;
     }
 
-    public LocalDateTime getFechaConsulta() {
+    public String getRevisionSistemas() {
+        return revisionSistemas;
+    }
+
+    public void setRevisionSistemas(String revisionSistemas) {
+        this.revisionSistemas = revisionSistemas;
+    }
+
+    public String getFechaConsulta() {
         return fechaConsulta;
     }
 
-    public void setFechaConsulta(LocalDateTime fechaConsulta) {
+    public void setFechaConsulta(String fechaConsulta) {
         this.fechaConsulta = fechaConsulta;
     }
 

@@ -38,7 +38,7 @@ public interface HistoriaClinicaRepository extends JpaRepository<HistoriaClinica
        // por lo que no se puede usar una query derivada. Usamos una consulta nativa que extrae el valor
        // del JSON y realiza un LIKE case-insensitive.
        @Query(value = "SELECT DISTINCT h.* FROM historias_clinicas h " +
-                               "WHERE h.activa = true AND LOWER(COALESCE(h.informacion_medico ->> 'medicoResponsable', '')) LIKE LOWER(CONCAT('%', :medico, '%'))",
+                               "WHERE h.activa = true AND LOWER(COALESCE(h.informacion_medico, '')) LIKE LOWER(CONCAT('%', :medico, '%'))",
                  nativeQuery = true)
        List<HistoriaClinica> findByMedicoResponsableContainingIgnoreCaseAndActivaTrue(@Param("medico") String medico);
 

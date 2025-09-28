@@ -4,6 +4,7 @@ package com.gestioneps.pacientes.entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 
@@ -106,6 +107,7 @@ public class InformacionPersonal {
     }
 
     // Utility methods
+    @JsonIgnore
     public String getNombreCompleto() {
         StringBuilder nombre = new StringBuilder();
         nombre.append(primerNombre);
@@ -119,6 +121,7 @@ public class InformacionPersonal {
         return nombre.toString();
     }
 
+    @JsonIgnore
     public int getEdad() {
         if (fechaNacimiento == null) return 0;
         return LocalDate.now().getYear() - fechaNacimiento.getYear();

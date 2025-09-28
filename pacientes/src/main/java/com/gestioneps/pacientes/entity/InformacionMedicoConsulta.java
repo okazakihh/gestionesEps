@@ -8,6 +8,9 @@ public class InformacionMedicoConsulta {
     @Size(max = 100, message = "El nombre del médico no puede exceder 100 caracteres")
     private String medicoTratante;
 
+    @Size(max = 50, message = "El registro médico no puede exceder 50 caracteres")
+    private String registroMedico;
+
     @Size(max = 100, message = "La especialidad no puede exceder 100 caracteres")
     private String especialidad;
 
@@ -26,6 +29,14 @@ public class InformacionMedicoConsulta {
 
     public void setMedicoTratante(String medicoTratante) {
         this.medicoTratante = medicoTratante;
+    }
+
+    public String getRegistroMedico() {
+        return registroMedico;
+    }
+
+    public void setRegistroMedico(String registroMedico) {
+        this.registroMedico = registroMedico;
     }
 
     public String getEspecialidad() {

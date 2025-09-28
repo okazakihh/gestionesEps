@@ -6,6 +6,28 @@ spring:
     name: gateway
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "*"
+            allowedMethods:
+              - "GET"
+              - "POST"
+              - "PUT"
+              - "DELETE"
+              - "OPTIONS"
+              - "PATCH"
+              - "HEAD"
+            allowedHeaders:
+              - "*"
+            exposedHeaders:
+              - "Authorization"
+              - "Content-Type"
+              - "Content-Disposition"
+              - "X-Requested-With"
+            allowCredentials: true
+            maxAge: 3600
       routes:
         # Rutas específicas primero (orden importa)
         - id: auth_route
@@ -14,31 +36,59 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=0
+        - id: users_route
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
         - id: pacientes_route
-          uri: lb://PACIENTES-SERVICE
+          uri: http://localhost:8082
           predicates:
             - Path=/api/pacientes/**
+          filters:
+            - StripPrefix=0
+        - id: historias_route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/historias-clinicas/**
+          filters:
+            - StripPrefix=0
+        - id: consultas_route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/consultas/**
+          filters:
+            - StripPrefix=0
+        - id: documentos_route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/documentos/**
           filters:
             - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}
-  # Redis configuration for blacklist
-  data:
-    redis:
-      host: localhost
-      port: 6379
+  # Redis configuration for blacklist - commented out
+  # data:
+  #   redis:
+  #     host: redis
+  #     port: 6379
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+# eureka:
+#   client:
+#     enabled: false
+#     service-url:
+#       defaultZone: http://eureka-server:8761/eureka/
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+  health:
+    redis:
+      enabled: false
 
 logging:
   level:

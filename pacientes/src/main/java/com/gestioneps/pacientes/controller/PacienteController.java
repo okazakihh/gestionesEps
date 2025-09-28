@@ -2,6 +2,7 @@ package com.gestioneps.pacientes.controller;
 
 import com.gestioneps.pacientes.dto.PacienteDTO;
 import com.gestioneps.pacientes.service.PacienteService;
+import com.gestioneps.pacientes.entity.TipoDocumento;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,15 +14,18 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Tag(name = "Pacientes", description = "Gestión de pacientes")
 @RestController
-@RequestMapping("/api/pacientes")
-@CrossOrigin(origins = "*")
+@RequestMapping("/pacientes")
 public class PacienteController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PacienteController.class);
 
     private final PacienteService pacienteService;
 
@@ -34,18 +38,18 @@ public class PacienteController {
     private static final String ERROR = "error";
 
     /**
-     * Crear nuevo paciente
+     * Crear nuevo paciente desde JSON crudo
      */
-    @Operation(summary = "Crear un nuevo paciente", description = "Crea un nuevo paciente en el sistema.")
+    @Operation(summary = "Crear un nuevo paciente desde JSON", description = "Crea un nuevo paciente enviando JSON crudo con toda la información.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Paciente creado exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud")
     })
     @PostMapping
-    public ResponseEntity<Map<String, Object>> crearPaciente(@Valid @RequestBody PacienteDTO pacienteDTO) {
+    public ResponseEntity<Map<String, Object>> crearPacienteDesdeJson(@RequestBody String datosJson) {
         Map<String, Object> response = new HashMap<>();
         try {
-            PacienteDTO pacienteCreado = pacienteService.crearPaciente(pacienteDTO);
+            PacienteDTO pacienteCreado = pacienteService.crearPacienteDesdeJson(datosJson);
             response.put(SUCCESS, true);
             response.put("data", pacienteCreado);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -57,27 +61,50 @@ public class PacienteController {
     }
 
     /**
-     * Actualizar paciente existente
+     * Actualizar paciente desde JSON
      */
-    @Operation(summary = "Actualizar paciente", description = "Actualiza los datos de un paciente existente en el sistema.")
+    @Operation(summary = "Actualizar paciente desde JSON", description = "Actualiza un paciente existente enviando JSON crudo.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Paciente actualizado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Paciente no encontrado")
     })
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> actualizarPaciente(
-            @PathVariable Long id, 
-            @Valid @RequestBody PacienteDTO pacienteDTO) {
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> requestBody) {
         Map<String, Object> response = new HashMap<>();
         try {
-            PacienteDTO pacienteActualizado = pacienteService.actualizarPaciente(id, pacienteDTO);
+            LOGGER.info("Actualizando paciente con ID {}", id);
+
+            // Extraer datos del request
+            String numeroDocumento = (String) requestBody.get("numeroDocumento");
+            String tipoDocumentoStr = (String) requestBody.get("tipoDocumento");
+            String datosJson = (String) requestBody.get("datosJson");
+            Boolean activo = (Boolean) requestBody.get("activo");
+
+            // Validar datos requeridos
+            if (numeroDocumento == null || tipoDocumentoStr == null || datosJson == null) {
+                response.put(SUCCESS, false);
+                response.put(ERROR, "Datos requeridos faltantes: numeroDocumento, tipoDocumento, datosJson");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            // Actualizar paciente
+            PacienteDTO pacienteActualizado = pacienteService.actualizarPacienteDesdeJson(id, datosJson);
+
             response.put(SUCCESS, true);
             response.put("data", pacienteActualizado);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            LOGGER.error("Error actualizando paciente: {}", e.getMessage());
             response.put(SUCCESS, false);
             response.put(ERROR, PACIENTE_NO_ENCONTRADO + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            LOGGER.error("Error inesperado actualizando paciente: {}", e.getMessage(), e);
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

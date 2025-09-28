@@ -16,18 +16,8 @@ public class PacienteDTO {
     @NotNull(message = "El tipo de documento es obligatorio")
     private TipoDocumento tipoDocumento;
 
-    @Valid
-    @NotNull(message = "La información personal es obligatoria")
-    private InformacionPersonal informacionPersonal;
-
-    @Valid
-    private InformacionContacto informacionContacto;
-
-    @Valid
-    private InformacionMedica informacionMedica;
-
-    @Valid
-    private ContactoEmergencia contactoEmergencia;
+    // JSON crudo de la base de datos
+    private String datosJson;
 
     private Boolean activo;
 
@@ -68,36 +58,12 @@ public class PacienteDTO {
         this.tipoDocumento = tipoDocumento;
     }
 
-    public InformacionPersonal getInformacionPersonal() {
-        return informacionPersonal;
+    public String getDatosJson() {
+        return datosJson;
     }
 
-    public void setInformacionPersonal(InformacionPersonal informacionPersonal) {
-        this.informacionPersonal = informacionPersonal;
-    }
-
-    public InformacionContacto getInformacionContacto() {
-        return informacionContacto;
-    }
-
-    public void setInformacionContacto(InformacionContacto informacionContacto) {
-        this.informacionContacto = informacionContacto;
-    }
-
-    public InformacionMedica getInformacionMedica() {
-        return informacionMedica;
-    }
-
-    public void setInformacionMedica(InformacionMedica informacionMedica) {
-        this.informacionMedica = informacionMedica;
-    }
-
-    public ContactoEmergencia getContactoEmergencia() {
-        return contactoEmergencia;
-    }
-
-    public void setContactoEmergencia(ContactoEmergencia contactoEmergencia) {
-        this.contactoEmergencia = contactoEmergencia;
+    public void setDatosJson(String datosJson) {
+        this.datosJson = datosJson;
     }
 
     public Boolean getActivo() {

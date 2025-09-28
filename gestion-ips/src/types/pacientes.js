@@ -1,0 +1,24 @@
+// Empty exports for JS compatibility
+export const InformacionPersonal = {};
+export const InformacionContacto = {};
+export const InformacionMedica = {};
+export const ContactoEmergencia = {};
+export const PacienteDTO = {};
+export const InformacionMedico = {};
+export const InformacionConsulta = {};
+export const AntecedentesClinico = {};
+export const ExamenClinico = {};
+export const DiagnosticoTratamiento = {};
+export const HistoriaClinicaDTO = {};
+export const InformacionMedicoConsulta = {};
+export const DetalleConsulta = {};
+export const ExamenClinicoConsulta = {};
+export const DiagnosticoTratamientoConsulta = {};
+export const SeguimientoConsulta = {};
+export const ConsultaMedicaDTO = {};
+export const DocumentoMedicoDTO = {};
+export const ApiResponse = {};
+export const PageResponse = {};
+export const PacienteSearchParams = {};
+export const HistoriaClinicaSearchParams = {};
+export const ConsultaSearchParams = {};

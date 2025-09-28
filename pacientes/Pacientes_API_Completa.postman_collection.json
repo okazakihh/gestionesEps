@@ -1,0 +1,172 @@
+{
+  "info": {
+    "_postman_id": "pacientes-full-api-collection",
+    "name": "Pacientes API Completa - Gestions",
+    "description": "Colección completa de Postman con todos los endpoints del microservicio de Pacientes (Pacientes CRUD, Historias Clínicas, Auth Proxy)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://72.60.127.243:8082" },
+    { "key": "jwt_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Proxy Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"credentialsBase64\": \"<base64_username:password>\" }"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/proxy/login", "host": ["{{base_url}}"], "path": ["api","auth","proxy","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('jwt_token', jsonData.data.token);",
+                  "    console.log('Saved jwt_token');",
+                  "} else if (jsonData && jsonData.token) {",
+                  "    pm.environment.set('jwt_token', jsonData.token);",
+                  "    console.log('Saved jwt_token');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Crear Paciente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroDocumento\": \"12345678\",\n  \"tipoDocumento\": \"CC\",\n  \"informacionPersonal\": {\n    \"primerNombre\": \"Juan\",\n    \"segundoNombre\": \"Carlos\",\n    \"primerApellido\": \"Pérez\",\n    \"segundoApellido\": \"Gómez\",\n    \"fechaNacimiento\": \"1990-01-15\",\n    \"genero\": \"MASCULINO\"\n  },\n  \"informacionContacto\": {\n    \"telefono\": \"+57 300 123 4567\",\n    \"direccion\": \"Calle 123 #45-67\",\n    \"ciudad\": \"Bogotá\"\n  },\n  \"informacionMedica\": {\n    \"eps\": \"MiEPS\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/pacientes", "host": ["{{base_url}}"], "path": ["api","pacientes"] }
+          }
+        },
+        {
+          "name": "Actualizar Paciente",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"informacionContacto\": { \"telefono\": \"+57 300 999 8888\" } }" },
+            "url": { "raw": "{{base_url}}/api/pacientes/:id", "host": ["{{base_url}}"], "path": ["api","pacientes",":id"] }
+          }
+        },
+        {
+          "name": "Obtener Paciente por ID",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/:id", "host": ["{{base_url}}"], "path": ["api","pacientes",":id"] } }
+        },
+        {
+          "name": "Obtener Paciente por Documento",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/documento/:numeroDocumento", "host": ["{{base_url}}"], "path": ["api","pacientes","documento",":numeroDocumento"] } }
+        },
+        {
+          "name": "Listar Pacientes Activos",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes?page=0&size=20", "host": ["{{base_url}}"], "path": ["api","pacientes"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Buscar por Nombre",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/buscar/nombre?nombre=Juan&page=0&size=20", "host": ["{{base_url}}"], "path": ["api","pacientes","buscar","nombre"], "query": [{ "key": "nombre", "value": "Juan" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Buscar por EPS",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/buscar/eps?eps=MiEPS&page=0&size=20", "host": ["{{base_url}}"], "path": ["api","pacientes","buscar","eps"], "query": [{ "key": "eps", "value": "MiEPS" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Buscar por Edad",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/buscar/edad?edadMinima=20&edadMaxima=40&page=0&size=20", "host": ["{{base_url}}"], "path": ["api","pacientes","buscar","edad"], "query": [{ "key": "edadMinima", "value": "20" }, { "key": "edadMaxima", "value": "40" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Desactivar Paciente",
+          "request": { "method": "DELETE", "url": { "raw": "{{base_url}}/api/pacientes/:id", "host": ["{{base_url}}"], "path": ["api","pacientes",":id"] } }
+        },
+        {
+          "name": "Reactivar Paciente",
+          "request": { "method": "PATCH", "url": { "raw": "{{base_url}}/api/pacientes/:id/reactivar", "host": ["{{base_url}}"], "path": ["api","pacientes",":id","reactivar"] } }
+        },
+        {
+          "name": "Existe por Documento",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/existe/:numeroDocumento", "host": ["{{base_url}}"], "path": ["api","pacientes","existe",":numeroDocumento"] } }
+        },
+        {
+          "name": "Estadisticas",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/estadisticas", "host": ["{{base_url}}"], "path": ["api","pacientes","estadisticas"] } }
+        }
+      ]
+    },
+    {
+      "name": "Historias Clínicas",
+      "item": [
+        {
+          "name": "Crear Historia Clínica",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroHistoria\": \"HC-001\",\n  \"fechaApertura\": \"2025-01-15T10:00:00\",\n  \"antecedentesClinicos\": {\n    \"alergias\": \"Ninguna\",\n    \"medicamentosActuales\": \"Ninguno\",\n    \"enfermedadesCronicas\": \"Ninguna\"\n  },\n  \"informacionMedica\": {\n    \"peso\": 70.5,\n    \"altura\": 175.0,\n    \"imc\": 23.0,\n    \"presionArterial\": \"120/80\",\n    \"temperatura\": 36.5\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/historias-clinicas/paciente/:pacienteId", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","paciente",":pacienteId"] }
+          }
+        },
+        {
+          "name": "Actualizar Historia Clínica",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"informacionMedica\": { \"peso\": 72.0 } }" },
+            "url": { "raw": "{{base_url}}/api/historias-clinicas/:id", "host": ["{{base_url}}"], "path": ["api","historias-clinicas",":id"] }
+          }
+        },
+        {
+          "name": "Obtener Historia por ID",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/:id", "host": ["{{base_url}}"], "path": ["api","historias-clinicas",":id"] } }
+        },
+        {
+          "name": "Obtener Historia por Paciente",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/paciente/:pacienteId", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","paciente",":pacienteId"] } }
+        },
+        {
+          "name": "Obtener Historia por Número",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/numero/:numeroHistoria", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","numero",":numeroHistoria"] } }
+        },
+        {
+          "name": "Listar Historias Activas",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas?page=0&size=20", "host": ["{{base_url}}"], "path": ["api","historias-clinicas"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Buscar por Diagnóstico",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/buscar/diagnostico?diagnostico=gripe&page=0&size=20", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","buscar","diagnostico"], "query": [{ "key": "diagnostico", "value": "gripe" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Buscar por Rango de Fechas",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/buscar/fechas?fechaInicio=2025-01-01T00:00:00&fechaFin=2025-12-31T23:59:59&page=0&size=20", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","buscar","fechas"], "query": [{ "key": "fechaInicio", "value": "2025-01-01T00:00:00" }, { "key": "fechaFin", "value": "2025-12-31T23:59:59" }, { "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        },
+        {
+          "name": "Desactivar Historia Clínica",
+          "request": { "method": "DELETE", "url": { "raw": "{{base_url}}/api/historias-clinicas/:id", "host": ["{{base_url}}"], "path": ["api","historias-clinicas",":id"] } }
+        },
+        {
+          "name": "Paciente Tiene Historia",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/paciente/:pacienteId/existe", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","paciente",":pacienteId","existe"] } }
+        }
+      ]
+    }
+  ]
+}

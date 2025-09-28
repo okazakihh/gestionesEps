@@ -1,0 +1,127 @@
+{
+  "info": {
+    "_postman_id": "pacientes-simplified-api-collection",
+    "name": "Pacientes API Simplificada - JSON Directo",
+    "description": "Colección simplificada de Postman con endpoints que aceptan JSON crudo directamente",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://72.60.127.243:8082" },
+    { "key": "jwt_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Proxy Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"credentialsBase64\": \"<base64_username:password>\" }"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/proxy/login", "host": ["{{base_url}}"], "path": ["api","auth","proxy","login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set('jwt_token', jsonData.data.token);",
+                  "    console.log('Saved jwt_token');",
+                  "} else if (jsonData && jsonData.token) {",
+                  "    pm.environment.set('jwt_token', jsonData.token);",
+                  "    console.log('Saved jwt_token');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pacientes - JSON Simplificado",
+      "item": [
+        {
+          "name": "Crear Paciente (JSON Directo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroDocumento\": \"12345678\",\n  \"tipoDocumento\": \"CC\",\n  \"informacionPersonal\": {\n    \"primerNombre\": \"Juan\",\n    \"segundoNombre\": \"Carlos\",\n    \"primerApellido\": \"Pérez\",\n    \"segundoApellido\": \"Gómez\",\n    \"fechaNacimiento\": \"1990-01-15\",\n    \"genero\": \"MASCULINO\"\n  },\n  \"informacionContacto\": {\n    \"telefono\": \"+57 300 123 4567\",\n    \"direccion\": \"Calle 123 #45-67\",\n    \"ciudad\": \"Bogotá\"\n  },\n  \"informacionMedica\": {\n    \"eps\": \"MiEPS\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/pacientes", "host": ["{{base_url}}"], "path": ["api","pacientes"] }
+          }
+        },
+        {
+          "name": "Actualizar Paciente (JSON Directo)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"informacionPersonal\": {\n    \"primerNombre\": \"Juan\",\n    \"segundoNombre\": \"Carlos\",\n    \"primerApellido\": \"Pérez\",\n    \"segundoApellido\": \"Gómez\",\n    \"fechaNacimiento\": \"1990-01-15\",\n    \"genero\": \"MASCULINO\"\n  },\n  \"informacionContacto\": {\n    \"telefono\": \"+57 300 999 8888\",\n    \"direccion\": \"Nueva Calle 456 #78-90\",\n    \"ciudad\": \"Medellín\"\n  },\n  \"informacionMedica\": {\n    \"eps\": \"NuevaEPS\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/pacientes/:id", "host": ["{{base_url}}"], "path": ["api","pacientes",":id"] }
+          }
+        },
+        {
+          "name": "Obtener Paciente por ID",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes/:id", "host": ["{{base_url}}"], "path": ["api","pacientes",":id"] } }
+        },
+        {
+          "name": "Listar Pacientes Activos",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/pacientes?page=0&size=20", "host": ["{{base_url}}"], "path": ["api","pacientes"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        }
+      ]
+    },
+    {
+      "name": "Historias Clínicas - JSON Simplificado",
+      "item": [
+        {
+          "name": "Crear Historia Clínica (JSON Directo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"informacionMedico\": {\n    \"medicoResponsable\": \"Dra. Ana María Rodríguez\",\n    \"registroMedico\": \"RM-12345\"\n  },\n  \"informacionConsulta\": {\n    \"motivoConsulta\": \"Control anual de hipertensión arterial\",\n    \"enfermedadActual\": \"Paciente refiere buen control tensional...\",\n    \"revisionSistemas\": \"Cardiovascular: TA controlada...\",\n    \"medicamentosActuales\": \"Losartán 50mg 1 tableta cada 24 horas\",\n    \"observaciones\": \"Paciente colaborador...\"\n  },\n  \"antecedentesClinico\": {\n    \"antecedentesPersonales\": \"Hipertensión arterial diagnosticada...\",\n    \"antecedentesFamiliares\": \"Padre con HTA...\",\n    \"antecedentesQuirurgicos\": \"Apendicectomía...\",\n    \"antecedentesAlergicos\": \"Penicilina...\"\n  },\n  \"examenClinico\": {\n    \"examenFisico\": \"Paciente en buen estado general...\",\n    \"signosVitales\": \"TA: 125/80 mmHg...\",\n    \"descripcion\": \"Examen físico dentro de límites normales...\"\n  },\n  \"diagnosticoTratamiento\": {\n    \"diagnosticos\": \"I10 - Hipertensión esencial...\",\n    \"planTratamiento\": \"Continuar con Losartán...\",\n    \"diagnostico\": \"Hipertensión arterial esencial...\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/historias-clinicas/paciente/:pacienteId", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","paciente",":pacienteId"] }
+          }
+        },
+        {
+          "name": "Obtener Historia por Paciente",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/historias-clinicas/paciente/:pacienteId", "host": ["{{base_url}}"], "path": ["api","historias-clinicas","paciente",":pacienteId"] } }
+        }
+      ]
+    },
+    {
+      "name": "Consultas Médicas - JSON Simplificado",
+      "item": [
+        {
+          "name": "Crear Consulta Médica (JSON Directo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoConsulta\": \"CONTROL\",\n  \"motivoConsulta\": \"Seguimiento de hipertensión arterial\",\n  \"sintomas\": \"Paciente refiere cefalea leve\",\n  \"diagnostico\": \"Hipertensión arterial controlada\",\n  \"tratamiento\": \"Continuar Losartán 50mg/día\",\n  \"notasMedico\": \"Paciente estable, buen cumplimiento terapéutico\",\n  \"examenFisico\": {\n    \"peso\": 72.5,\n    \"altura\": 175,\n    \"imc\": 23.7,\n    \"presionArterial\": \"128/82\",\n    \"frecuenciaCardiaca\": 72,\n    \"temperatura\": 36.8\n  },\n  \"laboratorios\": {\n    \"colesterolTotal\": 180,\n    \"hdl\": 45,\n    \"ldl\": 110,\n    \"trigliceridos\": 150,\n    \"glicemia\": 95\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consultas/historia/:historiaId", "host": ["{{base_url}}"], "path": ["api","consultas","historia",":historiaId"] }
+          }
+        },
+        {
+          "name": "Obtener Consultas por Historia",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/consultas/historia/:historiaId?page=0&size=20", "host": ["{{base_url}}"], "path": ["api","consultas","historia",":historiaId"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] } }
+        }
+      ]
+    }
+  ]
+}

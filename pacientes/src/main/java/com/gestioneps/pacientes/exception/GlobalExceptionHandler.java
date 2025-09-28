@@ -1,6 +1,8 @@
 package com.gestioneps.pacientes.exception;
 
 import com.gestioneps.pacientes.dto.ApiError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,19 +18,22 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatusCode status,
-                                                                  WebRequest request) {
+                                                                   HttpHeaders headers,
+                                                                   HttpStatusCode status,
+                                                                   WebRequest request) {
         String errors = ex.getBindingResult().getFieldErrors()
                 .stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         ApiError apiError = new ApiError();
         apiError.setSuccess(false);
-        apiError.setMessage(errors);
+        apiError.setError(errors);
         apiError.setData(null);
+        LOGGER.error("Validation error: {}", errors);
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
@@ -36,8 +41,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
         ApiError apiError = new ApiError();
         apiError.setSuccess(false);
-        apiError.setMessage(ex.getMessage());
+        apiError.setError(ex.getMessage());
         apiError.setData(null);
+        LOGGER.error("IllegalArgumentException: {}", ex.getMessage());
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
@@ -45,8 +51,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiError> handleAll(Exception ex) {
         ApiError apiError = new ApiError();
         apiError.setSuccess(false);
-        apiError.setMessage(ex.getMessage());
+        apiError.setError(ex.getMessage());
         apiError.setData(null);
+        LOGGER.error("Unhandled exception: {}", ex.getMessage(), ex);
         return new ResponseEntity<>(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

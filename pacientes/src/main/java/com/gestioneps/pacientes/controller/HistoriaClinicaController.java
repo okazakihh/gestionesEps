@@ -14,6 +14,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -21,9 +23,10 @@ import java.util.Map;
 
 @Tag(name = "Historias Clínicas", description = "Gestión de historias clínicas")
 @RestController
-@RequestMapping("/api/historias-clinicas")
-@CrossOrigin(origins = "*")
+@RequestMapping("/historias-clinicas")
 public class HistoriaClinicaController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HistoriaClinicaController.class);
 
     private final HistoriaClinicaService historiaClinicaService;
 
@@ -36,54 +39,37 @@ public class HistoriaClinicaController {
     }
 
     /**
-     * Crear nueva historia clínica para un paciente
+     * Crear nueva historia clínica para un paciente desde JSON crudo
      */
-    @Operation(summary = "Crear nueva historia clínica", description = "Crea una nueva historia clínica para un paciente específico.")
+    @Operation(summary = "Crear nueva historia clínica desde JSON", description = "Crea una nueva historia clínica para un paciente específico enviando JSON crudo.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Historia clínica creada exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud")
     })
     @PostMapping("/paciente/{pacienteId}")
-    public ResponseEntity<Map<String, Object>> crearHistoriaClinica(
+    public ResponseEntity<Map<String, Object>> crearHistoriaClinicaDesdeJson(
             @PathVariable Long pacienteId,
-            @Valid @RequestBody HistoriaClinicaDTO historiaDTO) {
+            @RequestBody String jsonData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            HistoriaClinicaDTO historiaCreada = historiaClinicaService.crearHistoriaClinica(pacienteId, historiaDTO);
+            LOGGER.info("Creando historia clinica para paciente {} con JSON crudo", pacienteId);
+            HistoriaClinicaDTO historiaCreada = historiaClinicaService.crearHistoriaClinicaDesdeJson(pacienteId, jsonData);
             response.put(SUCCESS, true);
             response.put("data", historiaCreada);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
+            LOGGER.error("Error creando historia clinica desde JSON: {}", e.getMessage());
             response.put(SUCCESS, false);
             response.put(ERROR, "Datos inválidos: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            LOGGER.error("Error inesperado creando historia clinica desde JSON: {}", e.getMessage(), e);
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    /**
-     * Actualizar historia clínica existente
-     */
-    @Operation(summary = "Actualizar historia clínica", description = "Actualiza los datos de una historia clínica existente.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Historia clínica actualizada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Historia clínica no encontrada")
-    })
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> actualizarHistoriaClinica(
-            @PathVariable Long id,
-            @Valid @RequestBody HistoriaClinicaDTO historiaDTO) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            HistoriaClinicaDTO historiaActualizada = historiaClinicaService.actualizarHistoriaClinica(id, historiaDTO);
-            response.put(SUCCESS, true);
-            response.put("data", historiaActualizada);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            response.put(SUCCESS, false);
-            response.put(ERROR, HISTORIA_NO_ENCONTRADA + e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-    }
 
     /**
      * Obtener historia clínica por ID
@@ -230,6 +216,7 @@ public class HistoriaClinicaController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
+
 
     /**
      * Verificar si un paciente tiene historia clínica

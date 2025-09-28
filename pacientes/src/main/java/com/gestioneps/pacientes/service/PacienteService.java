@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Optional;
 
@@ -19,51 +21,48 @@ public class PacienteService {
     private PacienteRepository pacienteRepository;
 
     /**
-     * Crear un nuevo paciente
+     * Crear un nuevo paciente desde JSON crudo
      */
-    public PacienteDTO crearPaciente(PacienteDTO pacienteDTO) {
-        // Validar que no exista un paciente con el mismo documento
-        if (pacienteRepository.existsByNumeroDocumento(pacienteDTO.getNumeroDocumento())) {
-            throw new IllegalArgumentException("Ya existe un paciente con el documento: " + pacienteDTO.getNumeroDocumento());
-        }
+    public PacienteDTO crearPacienteDesdeJson(String datosJson) {
+        try {
+            // Parsear el JSON para extraer numeroDocumento y tipoDocumento
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(datosJson);
 
-        Paciente paciente = convertirDTOAEntidad(pacienteDTO);
-        paciente.setActivo(true);
-        
-        Paciente pacienteGuardado = pacienteRepository.save(paciente);
-        return convertirEntidadADTO(pacienteGuardado);
+            String numeroDocumento = jsonNode.get("numeroDocumento").asText();
+            String tipoDocumentoStr = jsonNode.get("tipoDocumento").asText();
+            TipoDocumento tipoDocumento = TipoDocumento.valueOf(tipoDocumentoStr);
+
+            // Validar que no exista un paciente con el mismo documento
+            if (pacienteRepository.existsByNumeroDocumento(numeroDocumento)) {
+                throw new IllegalArgumentException("Ya existe un paciente con el documento: " + numeroDocumento);
+            }
+
+            Paciente paciente = new Paciente();
+            paciente.setNumeroDocumento(numeroDocumento);
+            paciente.setTipoDocumento(tipoDocumento);
+            paciente.setDatosJson(datosJson);
+            paciente.setActivo(true);
+
+            Paciente pacienteGuardado = pacienteRepository.save(paciente);
+            return convertirEntidadADTO(pacienteGuardado);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error al procesar el JSON: " + e.getMessage());
+        }
     }
 
     /**
-     * Actualizar un paciente existente
+     * Actualizar un paciente existente desde JSON crudo
      */
-    public PacienteDTO actualizarPaciente(Long id, PacienteDTO pacienteDTO) {
+    public PacienteDTO actualizarPacienteDesdeJson(Long id, String datosJson) {
         Paciente pacienteExistente = pacienteRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con ID: " + id));
 
-        // Validar que no exista otro paciente con el mismo documento
-        Optional<Paciente> pacienteConMismoDocumento = pacienteRepository.findByNumeroDocumento(pacienteDTO.getNumeroDocumento());
-        if (pacienteConMismoDocumento.isPresent() && !pacienteConMismoDocumento.get().getId().equals(id)) {
-            throw new IllegalArgumentException("Ya existe otro paciente con el documento: " + pacienteDTO.getNumeroDocumento());
-        }
-
-        // Actualizar campos básicos
-        pacienteExistente.setNumeroDocumento(pacienteDTO.getNumeroDocumento());
-        pacienteExistente.setTipoDocumento(pacienteDTO.getTipoDocumento());
-        
-        // Actualizar información agrupada
-        pacienteExistente.setInformacionPersonal(pacienteDTO.getInformacionPersonal());
-        pacienteExistente.setInformacionContacto(pacienteDTO.getInformacionContacto());
-        pacienteExistente.setInformacionMedica(pacienteDTO.getInformacionMedica());
-        pacienteExistente.setContactoEmergencia(pacienteDTO.getContactoEmergencia());
-
-        if (pacienteDTO.getActivo() != null) {
-            pacienteExistente.setActivo(pacienteDTO.getActivo());
-        }
-
+        pacienteExistente.setDatosJson(datosJson);
         Paciente pacienteActualizado = pacienteRepository.save(pacienteExistente);
         return convertirEntidadADTO(pacienteActualizado);
     }
+
 
     /**
      * Obtener paciente por ID
@@ -166,14 +165,13 @@ public class PacienteService {
     // Métodos de conversión
     private Paciente convertirDTOAEntidad(PacienteDTO dto) {
         Paciente paciente = new Paciente();
-        
+
         paciente.setNumeroDocumento(dto.getNumeroDocumento());
         paciente.setTipoDocumento(dto.getTipoDocumento());
-        paciente.setInformacionPersonal(dto.getInformacionPersonal());
-        paciente.setInformacionContacto(dto.getInformacionContacto());
-        paciente.setInformacionMedica(dto.getInformacionMedica());
-        paciente.setContactoEmergencia(dto.getContactoEmergencia());
-        
+
+        // Usar el JSON crudo directamente
+        paciente.setDatosJson(dto.getDatosJson());
+
         if (dto.getActivo() != null) {
             paciente.setActivo(dto.getActivo());
         }
@@ -183,18 +181,18 @@ public class PacienteService {
 
     private PacienteDTO convertirEntidadADTO(Paciente paciente) {
         PacienteDTO dto = new PacienteDTO();
-        
+
         dto.setId(paciente.getId());
         dto.setNumeroDocumento(paciente.getNumeroDocumento());
         dto.setTipoDocumento(paciente.getTipoDocumento());
-        dto.setInformacionPersonal(paciente.getInformacionPersonal());
-        dto.setInformacionContacto(paciente.getInformacionContacto());
-        dto.setInformacionMedica(paciente.getInformacionMedica());
-        dto.setContactoEmergencia(paciente.getContactoEmergencia());
+
+        // Pasar el JSON crudo directamente sin transformación
+        dto.setDatosJson(paciente.getDatosJson());
+
         dto.setActivo(paciente.getActivo());
         dto.setFechaCreacion(paciente.getFechaCreacion());
         dto.setFechaActualizacion(paciente.getFechaActualizacion());
-        
+
         // Campos calculados
         dto.setNombreCompleto(paciente.getNombreCompleto());
         dto.setEdad(paciente.getEdad());

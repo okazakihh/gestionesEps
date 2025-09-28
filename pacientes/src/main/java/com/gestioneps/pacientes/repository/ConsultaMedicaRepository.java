@@ -31,7 +31,9 @@ public interface ConsultaMedicaRepository extends JpaRepository<ConsultaMedica, 
     /**
      * Buscar consultas por tipo
      */
-    List<ConsultaMedica> findByTipoConsulta(TipoConsulta tipoConsulta);
+    @Query(value = "SELECT * FROM consultas_medicas c WHERE LOWER(COALESCE(c.datos_json->> 'tipoConsulta','')) = LOWER(:tipoConsulta)",
+           nativeQuery = true)
+    List<ConsultaMedica> findByTipoConsulta(@Param("tipoConsulta") String tipoConsulta);
 
     /**
      * Buscar consultas por rango de fechas
@@ -67,17 +69,19 @@ public interface ConsultaMedicaRepository extends JpaRepository<ConsultaMedica, 
     /**
      * Buscar consultas con próximas citas programadas
      */
-    @Query("SELECT c FROM ConsultaMedica c WHERE c.proximaCita IS NOT NULL " +
-           "AND c.proximaCita BETWEEN :fechaInicio AND :fechaFin")
+    @Query(value = "SELECT * FROM consultas_medicas c WHERE c.datos_json->>'proximaCita' IS NOT NULL " +
+            "AND (c.datos_json->>'proximaCita')::timestamp BETWEEN :fechaInicio AND :fechaFin",
+           nativeQuery = true)
     List<ConsultaMedica> findConsultasConProximasCitas(@Param("fechaInicio") LocalDateTime fechaInicio,
-                                                       @Param("fechaFin") LocalDateTime fechaFin);
+                                                        @Param("fechaFin") LocalDateTime fechaFin);
 
     /**
      * Estadísticas de consultas por tipo
      */
-    @Query("SELECT c.tipoConsulta, COUNT(c) FROM ConsultaMedica c " +
-           "WHERE c.fechaCreacion BETWEEN :fechaInicio AND :fechaFin " +
-           "GROUP BY c.tipoConsulta")
+    @Query(value = "SELECT c.datos_json->>'tipoConsulta', COUNT(1) FROM consultas_medicas c " +
+            "WHERE c.fecha_creacion BETWEEN :fechaInicio AND :fechaFin " +
+            "GROUP BY c.datos_json->>'tipoConsulta'",
+           nativeQuery = true)
     List<Object[]> getEstadisticasPorTipo(@Param("fechaInicio") LocalDateTime fechaInicio,
-                                         @Param("fechaFin") LocalDateTime fechaFin);
+                                          @Param("fechaFin") LocalDateTime fechaFin);
 }

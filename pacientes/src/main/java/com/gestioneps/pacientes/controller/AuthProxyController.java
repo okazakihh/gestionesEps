@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth/proxy")
+@RequestMapping("/auth/proxy")
 public class AuthProxyController {
 
     private final AuthProxyService authProxyService;
