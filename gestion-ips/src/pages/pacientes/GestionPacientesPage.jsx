@@ -181,7 +181,28 @@ const GestionPacientesPage = () => {
                           {paciente.nombreCompleto}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {paciente.edad} años
+                          {(() => {
+                            try {
+                              const datosCompletos = JSON.parse(paciente.datosJson || '{}');
+                              if (datosCompletos.datosJson) {
+                                const datosInternos = JSON.parse(datosCompletos.datosJson);
+                                const infoPersonal = datosInternos.informacionPersonal || {};
+                                if (infoPersonal.fechaNacimiento) {
+                                  const fechaNacimiento = new Date(infoPersonal.fechaNacimiento);
+                                  const hoy = new Date();
+                                  let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+                                  const mesDiff = hoy.getMonth() - fechaNacimiento.getMonth();
+                                  if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+                                    edad--;
+                                  }
+                                  return `${edad} años`;
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error calculando edad:', error);
+                            }
+                            return 'N/A años';
+                          })()}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {parseJsonSafely(paciente.informacionContactoJson)?.telefono || 'N/A'}

@@ -161,45 +161,61 @@ const HistoriasClinicasPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {historias.map((historia) => (
-                      <tr key={historia.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {historia.numeroHistoria}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {historia.pacienteNombre}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {historia.fechaCreacion ? new Date(historia.fechaCreacion).toLocaleDateString() : 'N/A'}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {historia.informacionMedico?.medicoResponsable || 'N/A'}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            historia.activa
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {historia.activa ? 'Activa' : 'Inactiva'}
-                          </span>
-                        </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <Link
-                            to={`/pacientes/historias/${historia.id}`}
-                            className="text-green-600 hover:text-green-900 mr-4"
-                          >
-                            Ver
-                          </Link>
-                          <Link
-                            to={`/pacientes/historias/${historia.id}/editar`}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Editar
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {historias.map((historia) => {
+                      // Parsear informacionMedico del JSON crudo (como pacientes)
+                      let informacionMedico = {};
+                      try {
+                        if (historia.datosJson) {
+                          const datosCompletos = JSON.parse(historia.datosJson);
+                          if (datosCompletos.datosJson) {
+                            const datosInternos = JSON.parse(datosCompletos.datosJson);
+                            informacionMedico = datosInternos.informacionMedico || {};
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error parsing historia datosJson:', error);
+                      }
+
+                      return (
+                        <tr key={historia.id}>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                            {historia.numeroHistoria}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {historia.pacienteNombre || 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {historia.fechaCreacion ? new Date(historia.fechaCreacion).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {informacionMedico.medicoResponsable || 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                              historia.activa
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {historia.activa ? 'Activa' : 'Inactiva'}
+                            </span>
+                          </td>
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                            <Link
+                              to={`/pacientes/historias/${historia.id}`}
+                              className="text-green-600 hover:text-green-900 mr-4"
+                            >
+                              Ver
+                            </Link>
+                            <Link
+                              to={`/pacientes/historias/${historia.id}/editar`}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              Editar
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -486,12 +486,25 @@ const GestionPacientesComponent = () => {
                      // Parsear el JSON crudo del paciente
                      let informacionPersonal = {};
                      let informacionContacto = {};
+                     let edad = 'N/A';
                      try {
                        const datosCompletos = JSON.parse(paciente.datosJson || '{}');
                        if (datosCompletos.datosJson) {
                          const datosInternos = JSON.parse(datosCompletos.datosJson);
                          informacionPersonal = datosInternos.informacionPersonal || {};
                          informacionContacto = datosInternos.informacionContacto || {};
+
+                         // Calcular edad
+                         if (informacionPersonal.fechaNacimiento) {
+                           const fechaNacimiento = new Date(informacionPersonal.fechaNacimiento);
+                           const hoy = new Date();
+                           let edadCalculada = hoy.getFullYear() - fechaNacimiento.getFullYear();
+                           const mesDiff = hoy.getMonth() - fechaNacimiento.getMonth();
+                           if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+                             edadCalculada--;
+                           }
+                           edad = `${edadCalculada} años`;
+                         }
                        }
                      } catch (error) {
                        console.error('Error parsing paciente datosJson for table:', error);
@@ -506,7 +519,7 @@ const GestionPacientesComponent = () => {
                           {informacionPersonal.primerNombre || ''} {informacionPersonal.primerApellido || ''}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {paciente.edad || 'N/A'} años
+                          {edad}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {informacionContacto.telefono || 'N/A'}

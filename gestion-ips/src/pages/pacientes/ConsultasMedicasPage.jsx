@@ -152,39 +152,52 @@ const ConsultasMedicasPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {consultas.map((consulta) => (
-                      <tr key={consulta.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {consulta.fechaCreacion ? new Date(consulta.fechaCreacion).toLocaleDateString() : 'N/A'}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          Consulta #{consulta.id}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {consulta.informacionMedico?.medicoTratante || 'N/A'}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {consulta.informacionMedico?.especialidad || 'N/A'}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          General
-                        </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <Link
-                            to={`/pacientes/consultas/${consulta.id}`}
-                            className="text-purple-600 hover:text-purple-900 mr-4"
-                          >
-                            Ver
-                          </Link>
-                          <Link
-                            to={`/pacientes/consultas/${consulta.id}/editar`}
-                            className="text-purple-600 hover:text-purple-900"
-                          >
-                            Editar
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {consultas.map((consulta) => {
+                      // Parsear informacionMedico del JSON string
+                      let informacionMedico = {};
+                      try {
+                        if (consulta.datosJson) {
+                          const datosParsed = JSON.parse(consulta.datosJson);
+                          informacionMedico = datosParsed.informacionMedico || {};
+                        }
+                      } catch (error) {
+                        console.error('Error parsing consulta datosJson:', error);
+                      }
+
+                      return (
+                        <tr key={consulta.id}>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                            {consulta.fechaCreacion ? new Date(consulta.fechaCreacion).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {consulta.pacienteNombre || `Consulta #${consulta.id}`}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {informacionMedico.medicoTratante || 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {informacionMedico.especialidad || 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            General
+                          </td>
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                            <Link
+                              to={`/pacientes/consultas/${consulta.id}`}
+                              className="text-purple-600 hover:text-purple-900 mr-4"
+                            >
+                              Ver
+                            </Link>
+                            <Link
+                              to={`/pacientes/consultas/${consulta.id}/editar`}
+                              className="text-purple-600 hover:text-purple-900"
+                            >
+                              Editar
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

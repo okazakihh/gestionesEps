@@ -27,12 +27,8 @@ public class HistoriaClinicaDTO {
     @NotNull(message = "La fecha de apertura es obligatoria")
     private String fechaApertura;
 
-    // Información como JSON strings para evitar anidamiento
-    private String informacionMedicoJson;
-    private String informacionConsultaJson;
-    private String antecedentesClinicoJson;
-    private String examenClinicoJson;
-    private String diagnosticoTratamientoJson;
+    // JSON crudo sin procesar (como pacientes)
+    private String datosJson;
 
     private Boolean activa;
 
@@ -103,44 +99,12 @@ public class HistoriaClinicaDTO {
         this.fechaApertura = fechaApertura;
     }
 
-    public String getInformacionMedicoJson() {
-        return informacionMedicoJson;
+    public String getDatosJson() {
+        return datosJson;
     }
 
-    public void setInformacionMedicoJson(String informacionMedicoJson) {
-        this.informacionMedicoJson = informacionMedicoJson;
-    }
-
-    public String getInformacionConsultaJson() {
-        return informacionConsultaJson;
-    }
-
-    public void setInformacionConsultaJson(String informacionConsultaJson) {
-        this.informacionConsultaJson = informacionConsultaJson;
-    }
-
-    public String getAntecedentesClinicoJson() {
-        return antecedentesClinicoJson;
-    }
-
-    public void setAntecedentesClinicoJson(String antecedentesClinicoJson) {
-        this.antecedentesClinicoJson = antecedentesClinicoJson;
-    }
-
-    public String getExamenClinicoJson() {
-        return examenClinicoJson;
-    }
-
-    public void setExamenClinicoJson(String examenClinicoJson) {
-        this.examenClinicoJson = examenClinicoJson;
-    }
-
-    public String getDiagnosticoTratamientoJson() {
-        return diagnosticoTratamientoJson;
-    }
-
-    public void setDiagnosticoTratamientoJson(String diagnosticoTratamientoJson) {
-        this.diagnosticoTratamientoJson = diagnosticoTratamientoJson;
+    public void setDatosJson(String datosJson) {
+        this.datosJson = datosJson;
     }
 
     public Boolean getActiva() {

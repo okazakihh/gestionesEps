@@ -4,7 +4,7 @@ import { HistoriaClinicaDTO, HistoriaClinicaSearchParams } from '../../types/pac
 import { historiasClinicasApiService } from '../../services/pacientesApiService.js';
 import { useClinicalHistory } from '../../context/ClinicalHistoryContext.jsx';
 import ServiceAlert from '../ui/ServiceAlert.jsx';
-import { Modal, Button, TextInput, Group, Text, Stack, Select } from '@mantine/core';
+import { Modal, Button, TextInput, Textarea, Group, Text, Stack, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
 const HistoriasClinicasComponent = () => {
@@ -56,6 +56,11 @@ const HistoriasClinicasComponent = () => {
     indicaciones: '',
     proximaCita: '',
     observaciones: '',
+    // Fórmula médica
+    formulaMedica: '',
+    // Incapacidad
+    incapacidad: '',
+    diasIncapacidad: '',
     // Solo para historia inicial
     antecedentesPersonales: '',
     antecedentesFamiliares: '',
@@ -128,6 +133,11 @@ const HistoriasClinicasComponent = () => {
       indicaciones: '',
       proximaCita: '',
       observaciones: '',
+      // Fórmula médica
+      formulaMedica: '',
+      // Incapacidad
+      incapacidad: '',
+      diasIncapacidad: '',
       // Solo para historia inicial
       antecedentesPersonales: isInitialHistory ? '' : undefined,
       antecedentesFamiliares: isInitialHistory ? '' : undefined,
@@ -217,6 +227,13 @@ const HistoriasClinicasComponent = () => {
             planManejo: formData.planTratamiento,
             medicamentosFormulados: formData.medicamentosActuales,
             recomendaciones: formData.observaciones
+          },
+          formulaMedica: {
+            medicamentos: formData.formulaMedica
+          },
+          incapacidad: {
+            tipo: formData.incapacidad,
+            dias: formData.diasIncapacidad ? parseInt(formData.diasIncapacidad) : null
           },
           seguimiento: {
             indicaciones: formData.indicaciones,
@@ -308,20 +325,24 @@ const HistoriasClinicasComponent = () => {
             </div>
           ) : pacienteData ? (
             <>
-              {/* Información Básica */}
+              {/* Información Básica del Paciente */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
-                  <span className="mr-2">📋</span>
-                  Información Básica
+                  <span className="mr-2">👤</span>
+                  Información del Paciente
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Documento:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.numeroDocumento} ({pacienteData.tipoDocumento})</p>
-                  </div>
-                  <div>
                     <span className="text-sm font-medium text-gray-600">Nombre Completo:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionPersonal?.nombreCompleto || 'N/A'}</p>
+                    <p className="text-sm text-gray-900">
+                      {(() => {
+                        // Calcular nombre completo desde campos individuales
+                        const info = pacienteData.informacionPersonal || {};
+                        const nombres = [info.primerNombre, info.segundoNombre].filter(Boolean).join(' ');
+                        const apellidos = [info.primerApellido, info.segundoApellido].filter(Boolean).join(' ');
+                        return [nombres, apellidos].filter(Boolean).join(' ') || 'N/A';
+                      })()}
+                    </p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Fecha de Nacimiento:</span>
@@ -329,45 +350,33 @@ const HistoriasClinicasComponent = () => {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Edad:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.edad ? `${pacienteData.edad} años` : 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Género:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionPersonal?.genero || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Estado Civil:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionPersonal?.estadoCivil || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
+                    <p className="text-sm text-gray-900">
+                      {(() => {
+                        // Calcular edad desde fecha de nacimiento
+                        const fechaNacimiento = pacienteData.informacionPersonal?.fechaNacimiento;
+                        if (!fechaNacimiento) return 'N/A';
 
-              {/* Información de Contacto */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-green-900 mb-3 flex items-center">
-                  <span className="mr-2">📞</span>
-                  Información de Contacto
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Teléfono:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionContacto?.telefono || 'N/A'}</p>
+                        try {
+                          const nacimiento = new Date(fechaNacimiento);
+                          const hoy = new Date();
+                          let edad = hoy.getFullYear() - nacimiento.getFullYear();
+                          const mes = hoy.getMonth() - nacimiento.getMonth();
+
+                          if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                            edad--;
+                          }
+
+                          return `${edad} años`;
+                        } catch (error) {
+                          console.error('Error calculando edad:', error);
+                          return 'N/A';
+                        }
+                      })()}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Email:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionContacto?.email || 'N/A'}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <span className="text-sm font-medium text-gray-600">Dirección:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionContacto?.direccion || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Ciudad:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionContacto?.ciudad || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Departamento:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.informacionContacto?.departamento || 'N/A'}</p>
+                    <span className="text-sm font-medium text-gray-600">Sexo:</span>
+                    <p className="text-sm text-gray-900">{pacienteData.informacionPersonal?.genero || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -381,61 +390,15 @@ const HistoriasClinicasComponent = () => {
                 <div className="space-y-4">
                   <div>
                     <span className="text-sm font-medium text-gray-600">Alergias:</span>
-                    <p className="text-sm text-gray-900 mt-1 p-2 bg-white rounded border">{pacienteData.informacionMedica?.alergias || 'Ninguna'}</p>
+                    <span className="text-sm text-gray-900 ml-2">{pacienteData.informacionMedica?.alergias || 'Ninguna'}</span>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Medicamentos Actuales:</span>
-                    <p className="text-sm text-gray-900 mt-1 p-2 bg-white rounded border">{pacienteData.informacionMedica?.medicamentosActuales || 'Ninguno'}</p>
+                    <span className="text-sm text-gray-900 ml-2">{pacienteData.informacionMedica?.medicamentosActuales || 'Ninguno'}</span>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Observaciones Médicas:</span>
-                    <p className="text-sm text-gray-900 mt-1 p-2 bg-white rounded border">{pacienteData.informacionMedica?.observacionesMedicas || 'Ninguna'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contacto de Emergencia */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-3 flex items-center">
-                  <span className="mr-2">🚨</span>
-                  Contacto de Emergencia
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Nombre:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.contactoEmergencia?.nombreContacto || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Teléfono:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.contactoEmergencia?.telefonoContacto || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Relación:</span>
-                    <p className="text-sm text-gray-900">{pacienteData.contactoEmergencia?.relacion || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Estado del Paciente */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <span className="mr-2">📊</span>
-                  Estado del Paciente
-                </h3>
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Estado:</span>
-                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                      pacienteData.activo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {pacienteData.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">Fecha de Registro:</span>
-                    <p className="text-sm text-gray-900 ml-2">{pacienteData.fechaCreacion ? new Date(pacienteData.fechaCreacion).toLocaleDateString() : 'N/A'}</p>
+                    <span className="text-sm text-gray-900 ml-2">{pacienteData.informacionMedica?.observacionesMedicas || 'Ninguna'}</span>
                   </div>
                 </div>
               </div>
@@ -518,7 +481,7 @@ const HistoriasClinicasComponent = () => {
                              id: consulta.id,
                              numero: index + 2,
                              tipo: 'Consulta Médica',
-                             fecha: consulta.fechaCreacion,
+                             fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
                              medico: consultaData.informacionMedico?.medicoTratante,
                              especialidad: consultaData.informacionMedico?.especialidad,
                              motivo: consultaData.detalleConsulta?.motivoConsulta,
@@ -527,6 +490,8 @@ const HistoriasClinicasComponent = () => {
                              planTratamiento: consultaData.diagnosticoTratamiento?.planManejo,
                              examenFisico: consultaData.examenClinico?.examenFisico,
                              signosVitales: consultaData.examenClinico?.signosVitales,
+                             formulaMedica: consultaData.formulaMedica?.medicamentos,
+                             incapacidad: consultaData.incapacidad,
                              indicaciones: consultaData.seguimiento?.indicaciones,
                              proximaCita: consultaData.seguimiento?.proximaCita,
                              observaciones: consultaData.diagnosticoTratamiento?.recomendaciones
@@ -642,6 +607,27 @@ const HistoriasClinicasComponent = () => {
                                       )}
                                       {consulta.planTratamiento && (
                                         <p className="text-green-800 text-sm mt-1"><strong>Plan:</strong> {consulta.planTratamiento}</p>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Fórmula Médica */}
+                                  {consulta.formulaMedica && (
+                                    <div className="mb-3 p-3 bg-blue-50 rounded">
+                                      <span className="font-medium text-blue-900 text-sm">💊 Fórmula Médica:</span>
+                                      <p className="text-blue-800 text-sm mt-1">{consulta.formulaMedica}</p>
+                                    </div>
+                                  )}
+
+                                  {/* Incapacidad */}
+                                  {consulta.incapacidad && (consulta.incapacidad.tipo || consulta.incapacidad.dias) && (
+                                    <div className="mb-3 p-3 bg-orange-50 rounded">
+                                      <span className="font-medium text-orange-900 text-sm">📄 Incapacidad:</span>
+                                      {consulta.incapacidad.tipo && (
+                                        <p className="text-orange-800 text-sm mt-1"><strong>Tipo:</strong> {consulta.incapacidad.tipo}</p>
+                                      )}
+                                      {consulta.incapacidad.dias && (
+                                        <p className="text-orange-800 text-sm mt-1"><strong>Días:</strong> {consulta.incapacidad.dias}</p>
                                       )}
                                     </div>
                                   )}
@@ -898,33 +884,37 @@ const HistoriasClinicasComponent = () => {
           {/* Información de la Consulta */}
           <div className="border-t pt-4">
             <h4 className="text-md font-semibold text-gray-900 mb-3">📋 Información de la Consulta</h4>
-            <TextInput
+            <Textarea
               label="Motivo de Consulta"
               placeholder="¿Por qué viene el paciente?"
               value={formData.motivoConsulta}
               onChange={(e) => setFormData({...formData, motivoConsulta: e.target.value})}
               required
+              minRows={2}
             />
 
-            <TextInput
+            <Textarea
               label="Enfermedad Actual"
               placeholder="Descripción detallada de la enfermedad actual"
               value={formData.enfermedadActual}
               onChange={(e) => setFormData({...formData, enfermedadActual: e.target.value})}
+              minRows={3}
             />
 
-            <TextInput
+            <Textarea
               label="Revisión por Sistemas"
               placeholder="Revisión de sistemas (cardiovascular, respiratorio, etc.)"
               value={formData.revisionSistemas}
               onChange={(e) => setFormData({...formData, revisionSistemas: e.target.value})}
+              minRows={3}
             />
 
-            <TextInput
+            <Textarea
               label="Medicamentos Actuales"
               placeholder="Medicamentos que toma actualmente el paciente"
               value={formData.medicamentosActuales}
               onChange={(e) => setFormData({...formData, medicamentosActuales: e.target.value})}
+              minRows={2}
             />
           </div>
 
@@ -932,17 +922,19 @@ const HistoriasClinicasComponent = () => {
           <div className="border-t pt-4">
             <h4 className="text-md font-semibold text-gray-900 mb-3">🔍 Examen Clínico</h4>
             <Group grow>
-              <TextInput
+              <Textarea
                 label="Examen Físico"
                 placeholder="Resultados del examen físico"
                 value={formData.examenFisico}
                 onChange={(e) => setFormData({...formData, examenFisico: e.target.value})}
+                minRows={3}
               />
-              <TextInput
+              <Textarea
                 label="Signos Vitales"
                 placeholder="TA, FC, FR, Temp, SatO2, etc."
                 value={formData.signosVitales}
                 onChange={(e) => setFormData({...formData, signosVitales: e.target.value})}
+                minRows={3}
               />
             </Group>
           </div>
@@ -950,25 +942,28 @@ const HistoriasClinicasComponent = () => {
           {/* Diagnóstico y Tratamiento */}
           <div className="border-t pt-4">
             <h4 className="text-md font-semibold text-gray-900 mb-3">💊 Diagnóstico y Tratamiento</h4>
-            <TextInput
+            <Textarea
               label="Diagnósticos"
               placeholder="Diagnósticos médicos identificados"
               value={formData.diagnosticos}
               onChange={(e) => setFormData({...formData, diagnosticos: e.target.value})}
+              minRows={2}
             />
 
-            <TextInput
+            <Textarea
               label="Plan de Tratamiento"
               placeholder="Tratamientos y procedimientos recomendados"
               value={formData.planTratamiento}
               onChange={(e) => setFormData({...formData, planTratamiento: e.target.value})}
+              minRows={3}
             />
 
-            <TextInput
+            <Textarea
               label="Indicaciones"
               placeholder="Indicaciones específicas para el paciente"
               value={formData.indicaciones}
               onChange={(e) => setFormData({...formData, indicaciones: e.target.value})}
+              minRows={2}
             />
 
             <TextInput
@@ -979,36 +974,73 @@ const HistoriasClinicasComponent = () => {
             />
           </div>
 
+          {/* Fórmula Médica */}
+          <div className="border-t pt-4">
+            <h4 className="text-md font-semibold text-gray-900 mb-3">💊 Fórmula Médica</h4>
+            <Textarea
+              label="Medicamentos Formulados"
+              placeholder="Detalle los medicamentos prescritos (nombre, dosis, frecuencia, duración)"
+              value={formData.formulaMedica}
+              onChange={(e) => setFormData({...formData, formulaMedica: e.target.value})}
+              minRows={3}
+            />
+          </div>
+
+          {/* Incapacidad */}
+          <div className="border-t pt-4">
+            <h4 className="text-md font-semibold text-gray-900 mb-3">📄 Incapacidad (si aplica)</h4>
+            <Group grow>
+              <Textarea
+                label="Tipo de Incapacidad"
+                placeholder="Ej: Enfermedad general, Accidente laboral, etc."
+                value={formData.incapacidad}
+                onChange={(e) => setFormData({...formData, incapacidad: e.target.value})}
+                minRows={2}
+              />
+              <TextInput
+                label="Días de Incapacidad"
+                type="number"
+                placeholder="Número de días"
+                value={formData.diasIncapacidad}
+                onChange={(e) => setFormData({...formData, diasIncapacidad: e.target.value})}
+              />
+            </Group>
+          </div>
+
           {/* Antecedentes (solo para historia inicial) */}
           {!historiaClinicaData && (
             <div className="border-t pt-4">
               <h4 className="text-md font-semibold text-gray-900 mb-3">📚 Antecedentes Médicos</h4>
-              <TextInput
+              <Textarea
                 label="Antecedentes Personales"
                 placeholder="Enfermedades previas, cirugías, etc."
                 value={formData.antecedentesPersonales}
                 onChange={(e) => setFormData({...formData, antecedentesPersonales: e.target.value})}
+                minRows={2}
               />
 
-              <TextInput
+              <Textarea
                 label="Antecedentes Familiares"
                 placeholder="Enfermedades en familiares directos"
                 value={formData.antecedentesFamiliares}
                 onChange={(e) => setFormData({...formData, antecedentesFamiliares: e.target.value})}
+                minRows={2}
               />
 
               <Group grow>
-                <TextInput
+                <Textarea
                   label="Antecedentes Quirúrgicos"
                   placeholder="Cirugías previas"
                   value={formData.antecedentesQuirurgicos}
                   onChange={(e) => setFormData({...formData, antecedentesQuirurgicos: e.target.value})}
+                  minRows={2}
                 />
-                <TextInput
+                <Textarea
                   label="Antecedentes Alérgicos"
                   placeholder="Alergias conocidas"
                   value={formData.antecedentesAlergicos}
                   onChange={(e) => setFormData({...formData, antecedentesAlergicos: e.target.value})}
+                  minRows={2}
                 />
               </Group>
             </div>
@@ -1016,11 +1048,12 @@ const HistoriasClinicasComponent = () => {
 
           {/* Observaciones */}
           <div className="border-t pt-4">
-            <TextInput
+            <Textarea
               label="Observaciones"
               placeholder="Observaciones adicionales de la consulta"
               value={formData.observaciones}
               onChange={(e) => setFormData({...formData, observaciones: e.target.value})}
+              minRows={2}
             />
           </div>
 

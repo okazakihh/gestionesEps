@@ -201,31 +201,8 @@ public class HistoriaClinicaService {
         dto.setNumeroConsultas((long) historia.getConsultas().size());
         dto.setNumeroDocumentos((long) historia.getDocumentos().size());
 
-        // Extraer JSON strings del datosJson almacenado
-        try {
-            if (historia.getDatosJson() != null && !historia.getDatosJson().trim().isEmpty()) {
-                var jsonData = objectMapper.readTree(historia.getDatosJson());
-
-                if (jsonData.has("informacionMedico")) {
-                    dto.setInformacionMedicoJson(objectMapper.writeValueAsString(jsonData.get("informacionMedico")));
-                }
-                if (jsonData.has("informacionConsulta")) {
-                    dto.setInformacionConsultaJson(objectMapper.writeValueAsString(jsonData.get("informacionConsulta")));
-                }
-                if (jsonData.has("antecedentesClinico")) {
-                    dto.setAntecedentesClinicoJson(objectMapper.writeValueAsString(jsonData.get("antecedentesClinico")));
-                }
-                if (jsonData.has("examenClinico")) {
-                    dto.setExamenClinicoJson(objectMapper.writeValueAsString(jsonData.get("examenClinico")));
-                }
-                if (jsonData.has("diagnosticoTratamiento")) {
-                    dto.setDiagnosticoTratamientoJson(objectMapper.writeValueAsString(jsonData.get("diagnosticoTratamiento")));
-                }
-            }
-        } catch (Exception e) {
-            // Log error but continue with empty strings
-            System.err.println("Error extracting historia clinica JSON: " + e.getMessage());
-        }
+        // Asignar JSON crudo sin procesar (como pacientes)
+        dto.setDatosJson(historia.getDatosJson());
 
         // Set ultimaConsulta to the latest consultation date if exists
         if (!historia.getConsultas().isEmpty()) {

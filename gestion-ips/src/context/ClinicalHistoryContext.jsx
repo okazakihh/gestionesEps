@@ -69,7 +69,24 @@ export const ClinicalHistoryProvider = ({ children }) => {
       const { pacientesApiService, historiasClinicasApiService } = await import('../services/pacientesApiService.js');
 
       // Cargar datos del paciente
-      const paciente = await pacientesApiService.getPacienteById(pacienteId);
+      const pacienteRaw = await pacientesApiService.getPacienteById(pacienteId);
+
+      // Procesar el JSON del paciente para extraer informacionPersonal e informacionMedica
+      let paciente = { ...pacienteRaw };
+      try {
+        if (pacienteRaw.datosJson) {
+          const datosCompletos = JSON.parse(pacienteRaw.datosJson);
+          if (datosCompletos.datosJson) {
+            const datosInternos = JSON.parse(datosCompletos.datosJson);
+            paciente.informacionPersonal = datosInternos.informacionPersonal || {};
+            paciente.informacionContacto = datosInternos.informacionContacto || {};
+            paciente.informacionMedica = datosInternos.informacionMedica || {};
+            paciente.contactoEmergencia = datosInternos.contactoEmergencia || {};
+          }
+        }
+      } catch (error) {
+        console.error('Error procesando JSON del paciente:', error);
+      }
 
       // Intentar cargar historia clínica
       let historiaClinica = null;

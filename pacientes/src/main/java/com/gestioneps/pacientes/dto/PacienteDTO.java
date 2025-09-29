@@ -19,6 +19,12 @@ public class PacienteDTO {
     // JSON crudo de la base de datos
     private String datosJson;
 
+    // Campos JSON individuales para el frontend
+    private String informacionPersonalJson;
+    private String informacionContactoJson;
+    private String informacionMedicaJson;
+    private String contactoEmergenciaJson;
+
     private Boolean activo;
 
     private LocalDateTime fechaCreacion;
@@ -112,5 +118,37 @@ public class PacienteDTO {
 
     public void setNumeroHistoriasClinicas(Long numeroHistoriasClinicas) {
         this.numeroHistoriasClinicas = numeroHistoriasClinicas;
+    }
+
+    public String getInformacionPersonalJson() {
+        return informacionPersonalJson;
+    }
+
+    public void setInformacionPersonalJson(String informacionPersonalJson) {
+        this.informacionPersonalJson = informacionPersonalJson;
+    }
+
+    public String getInformacionContactoJson() {
+        return informacionContactoJson;
+    }
+
+    public void setInformacionContactoJson(String informacionContactoJson) {
+        this.informacionContactoJson = informacionContactoJson;
+    }
+
+    public String getInformacionMedicaJson() {
+        return informacionMedicaJson;
+    }
+
+    public void setInformacionMedicaJson(String informacionMedicaJson) {
+        this.informacionMedicaJson = informacionMedicaJson;
+    }
+
+    public String getContactoEmergenciaJson() {
+        return contactoEmergenciaJson;
+    }
+
+    public void setContactoEmergenciaJson(String contactoEmergenciaJson) {
+        this.contactoEmergenciaJson = contactoEmergenciaJson;
     }
 }
