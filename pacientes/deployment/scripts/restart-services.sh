@@ -1,38 +1,24 @@
 #!/bin/bash
 
 # Script de reinicio seguro de servicios
-# Hace backup automático antes de reiniciar
+# SOLO reinicia servicios - NO toca bases de datos
 
 set -e
 
-echo "🔄 Reiniciando servicios de forma segura..."
+echo "🔄 Reiniciando servicios (sin tocar bases de datos)..."
 
 # Crear directorios necesarios
-mkdir -p /home/ubuntu/logs /home/ubuntu/backups
+mkdir -p /home/ubuntu/logs
 
-# Verificar estado de PostgreSQL
+# Verificar estado de PostgreSQL (solo verificar, no iniciar)
 if ! sudo systemctl is-active --quiet postgresql; then
-    echo "🐘 PostgreSQL no está corriendo, iniciándolo..."
-    sudo systemctl start postgresql
-    sudo systemctl enable postgresql
-    echo "✅ PostgreSQL iniciado"
+    echo "🐘 PostgreSQL no está corriendo. Inícielo manualmente si es necesario."
+    echo "💡 Comando: sudo systemctl start postgresql"
 else
     echo "✅ PostgreSQL ya está corriendo"
 fi
 
-# Hacer backup automático
-echo "💾 Creando backup automático..."
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_DIR="~/backups/auto_backup_$TIMESTAMP"
-mkdir -p "$BACKUP_DIR"
-
-# Backup de bases de datos
-sudo -u postgres pg_dump gestions_db > ~/backups/gestions_auto_$TIMESTAMP.sql 2>/dev/null || echo "No se pudo hacer backup de gestions_db"
-sudo -u postgres pg_dump pacientes_db > ~/backups/pacientes_auto_$TIMESTAMP.sql 2>/dev/null || echo "No se pudo hacer backup de pacientes_db"
-
-echo "✅ Backup creado: ~/backups/*_auto_$TIMESTAMP.sql"
-
-# Verificar datos antes de reinicio
+# Verificar datos existentes antes de reinicio
 echo "📊 Verificando datos existentes antes del reinicio..."
 GESTIONS_TABLES=$(sudo -u postgres psql -d gestions_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
 PACIENTES_TABLES=$(sudo -u postgres psql -d pacientes_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
@@ -47,7 +33,7 @@ pkill -f "java.*pacientes" 2>/dev/null || echo "Pacientes no estaba corriendo"
 sleep 3
 echo "✅ Servicios detenidos"
 
-# Ejecutar script de inicio
+# Ejecutar script de inicio (sin configuración de BD)
 echo "🚀 Iniciando servicios..."
 ./run-services-ec2.sh
 

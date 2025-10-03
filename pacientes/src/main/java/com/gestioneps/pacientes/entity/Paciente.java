@@ -46,6 +46,9 @@ public class Paciente {
     @OneToMany(mappedBy = "paciente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HistoriaClinica> historiasClinicas = new ArrayList<>();
 
+    @OneToMany(mappedBy = "paciente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<CitaMedica> citasMedicas = new ArrayList<>();
+
     // Constructors
     public Paciente() {
         // Empty constructor required by JPA for entity instantiation.
@@ -115,6 +118,14 @@ public class Paciente {
 
     public void setHistoriasClinicas(List<HistoriaClinica> historiasClinicas) {
         this.historiasClinicas = historiasClinicas;
+    }
+
+    public List<CitaMedica> getCitasMedicas() {
+        return citasMedicas;
+    }
+
+    public void setCitasMedicas(List<CitaMedica> citasMedicas) {
+        this.citasMedicas = citasMedicas;
     }
 
     // Utility methods for backward compatibility - parse JSON data

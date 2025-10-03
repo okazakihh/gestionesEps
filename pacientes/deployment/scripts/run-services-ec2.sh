@@ -5,26 +5,15 @@
 
 set -e
 
-echo "🐳 Configurando PostgreSQL..."
+echo "🐳 Verificando PostgreSQL..."
 
-# Instalar PostgreSQL si no está instalado
-if ! command -v psql &> /dev/null; then
-    sudo apt update
-    sudo apt install -y postgresql postgresql-contrib
+# Verificar que PostgreSQL esté corriendo
+if ! sudo systemctl is-active --quiet postgresql; then
+    echo "❌ PostgreSQL no está corriendo. Inícielo con: sudo systemctl start postgresql"
+    exit 1
 fi
 
-# Iniciar PostgreSQL
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-
-# Crear bases de datos
-sudo -u postgres psql -c "CREATE DATABASE IF NOT EXISTS gestions_db;" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE DATABASE IF NOT EXISTS pacientes_db;" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE USER IF NOT EXISTS postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE gestions_db TO postgres;" 2>/dev/null || true
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pacientes_db TO postgres;" 2>/dev/null || true
-
-echo "✅ PostgreSQL configurado"
+echo "✅ PostgreSQL está corriendo"
 
 # Verificar datos existentes en las bases de datos
 echo "📊 Verificando datos existentes..."

@@ -1,17 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { useNavigationStore, ViewType } from '@/stores/navigationStore';
+import { useAuth } from '../../hooks/useAuth';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { useNavigationStore } from '../../stores/navigationStore';
 
-interface NavItem {
-  name: string;
-  view: ViewType;
-  icon: string;
-  roles?: string[];
-}
-
-const navItems: NavItem[] = [
+const navItems = [
   {
     name: 'Dashboard',
     view: 'dashboard',
@@ -48,7 +41,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export const SPANavbar: React.FC = () => {
+export const SPANavbar = () => {
   const { user, logout } = useAuth();
   const { currentView, setView } = useNavigationStore();
   const navigate = useNavigate();
@@ -56,7 +49,7 @@ export const SPANavbar: React.FC = () => {
 
   // Sincronizar el estado de navegación con la ruta actual
   useEffect(() => {
-    const pathToView: Record<string, ViewType> = {
+    const pathToView = {
       '/dashboard': 'dashboard',
       '/usuarios': 'usuarios',
       '/pacientes': 'pacientes',
@@ -74,9 +67,9 @@ export const SPANavbar: React.FC = () => {
     logout();
   };
 
-  const handleNavigation = (view: ViewType) => {
+  const handleNavigation = (view) => {
     // Map view types to React Router paths
-    const viewToPath: Record<ViewType, string> = {
+    const viewToPath = {
       login: '/login',
       dashboard: '/dashboard',
       usuarios: '/usuarios',
@@ -93,8 +86,8 @@ export const SPANavbar: React.FC = () => {
   };
 
   // Determinar qué elemento está activo basado en la ruta actual
-  const getCurrentViewFromPath = (pathname: string): ViewType => {
-    const pathToView: Record<string, ViewType> = {
+  const getCurrentViewFromPath = (pathname) => {
+    const pathToView = {
       '/dashboard': 'dashboard',
       '/usuarios': 'usuarios',
       '/pacientes': 'pacientes',

@@ -16,6 +16,7 @@ const PACIENTES_BASE_URL = '/api/pacientes';
 const HISTORIAS_BASE_URL = '/api/historias-clinicas';
 const CONSULTAS_BASE_URL = '/api/consultas';
 const DOCUMENTOS_BASE_URL = '/api/documentos';
+const CITAS_BASE_URL = '/api/citas';
 
 // Pacientes API Service
 export const pacientesApiService = {
@@ -96,6 +97,82 @@ export const pacientesApiService = {
     const response = await apiClient.get(`${PACIENTES_BASE_URL}/${pacienteId}/historia-clinica`);
     if (!response.success) {
       throw new Error(response.error || 'Error al obtener historia clínica');
+    }
+    return response.data;
+  },
+
+  // Create appointment for patient
+  createAppointment: async (pacienteId, appointmentJson) => {
+    const response = await apiClient.post(`${CITAS_BASE_URL}/paciente/${pacienteId}`, appointmentJson, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al crear cita médica');
+    }
+    return response.data;
+  },
+
+  // Get all appointments
+  getCitas: async (params) => {
+    const response = await apiClient.get(CITAS_BASE_URL, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener citas médicas');
+    }
+    return response.data;
+  },
+
+  // Get appointment by ID
+  getCitaById: async (id) => {
+    const response = await apiClient.get(`${CITAS_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener cita médica');
+    }
+    return response.data;
+  },
+
+  // Get pending appointments
+  getCitasPendientes: async (params) => {
+    const response = await apiClient.get(`${CITAS_BASE_URL}/pendientes`, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener citas pendientes');
+    }
+    return response.data;
+  },
+
+  // Get appointments by patient
+  getCitasByPaciente: async (pacienteId, params) => {
+    const response = await apiClient.get(`${CITAS_BASE_URL}/paciente/${pacienteId}`, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener citas del paciente');
+    }
+    return response.data;
+  },
+
+  // Update appointment
+  updateCita: async (id, citaData) => {
+    const response = await apiClient.put(`${CITAS_BASE_URL}/${id}`, citaData);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar cita médica');
+    }
+    return response.data;
+  },
+
+  // Cancel appointment
+  cancelCita: async (id) => {
+    const response = await apiClient.patch(`${CITAS_BASE_URL}/${id}/cancelar`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al cancelar cita médica');
+    }
+    return response.data;
+  },
+
+  // Update appointment status
+  actualizarEstadoCita: async (id, estado) => {
+    const response = await apiClient.patch(`${CITAS_BASE_URL}/${id}/estado?estado=${estado}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar estado de cita médica');
     }
     return response.data;
   }

@@ -5,6 +5,7 @@ import { LoginPage } from '../pages/LoginPage.jsx';
 import { DashboardPage } from '../pages/DashboardPage.jsx';
 import UsuariosPage from '../pages/UsersPage.jsx';
 import PacientesPage from '../pages/pacientes/PacientesPage.jsx';
+import PatientDashboard from '../pages/pacientes/PatientDashboard.jsx';
 import PacienteForm from '../pages/pacientes/PacienteForm.jsx';
 import HistoriaClinicaForm from '../pages/pacientes/HistoriaClinicaForm.jsx';
 import ConsultaMedicaForm from '../pages/pacientes/ConsultaMedicaForm.jsx';
@@ -75,10 +76,19 @@ const AppRouter = () => {
       />
 
       <Route
+        path="/pacientes/dashboard"
+        element={
+          <ProtectedRoute>
+            <PatientDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/pacientes"
         element={
           <ProtectedRoute>
-            <PacientesPage />
+            <PatientDashboard />
           </ProtectedRoute>
         }
       />

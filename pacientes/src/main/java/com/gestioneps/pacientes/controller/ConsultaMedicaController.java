@@ -68,6 +68,39 @@ public class ConsultaMedicaController {
         }
     }
 
+    /**
+     * Crear nueva consulta médica desde una cita
+     */
+    @Operation(summary = "Crear nueva consulta médica desde una cita", description = "Crea una nueva consulta médica para una historia clínica específica vinculada a una cita enviando JSON crudo.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Consulta médica creada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud")
+    })
+    @PostMapping("/cita/{citaId}/historia/{historiaId}")
+    public ResponseEntity<Map<String, Object>> crearConsultaDesdeCita(
+            @PathVariable Long citaId,
+            @PathVariable Long historiaId,
+            @RequestBody String jsonData) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            LOGGER.info("Creando consulta medica para historia {} desde cita {} con JSON crudo", historiaId, citaId);
+            ConsultaMedicaDTO consultaCreada = consultaMedicaService.crearConsultaDesdeCita(citaId, historiaId, jsonData);
+            response.put(SUCCESS, true);
+            response.put("data", consultaCreada);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Error creando consulta medica desde cita: {}", e.getMessage());
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Datos inválidos: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            LOGGER.error("Error inesperado creando consulta medica desde cita: {}", e.getMessage(), e);
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     /**
      * Obtener consulta por ID

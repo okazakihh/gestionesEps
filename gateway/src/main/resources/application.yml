@@ -66,6 +66,12 @@ spring:
             - Path=/api/documentos/**
           filters:
             - StripPrefix=0
+        - id: citas_route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/citas/**
+          filters:
+            - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}

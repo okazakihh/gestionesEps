@@ -4,28 +4,29 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "consultas_medicas")
-public class ConsultaMedica {
+@Table(name = "citas_medicas")
+public class CitaMedica {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "historia_clinica_id", nullable = false)
-    @NotNull(message = "La historia clínica es obligatoria")
-    @JsonIgnore
-    private HistoriaClinica historiaClinica;
+    @JoinColumn(name = "paciente_id", nullable = false)
+    @NotNull(message = "El paciente es obligatorio")
+    private Paciente paciente;
 
-    // Campo para almacenar toda la información de la consulta como JSON crudo
+    // Campo único para almacenar toda la información de la cita como JSON crudo
     @Column(name = "datos_json", columnDefinition = "TEXT")
-    @NotNull(message = "Los datos de la consulta son obligatorios")
+    @NotNull(message = "Los datos de la cita son obligatorios")
     private String datosJson;
+
+    @Column(name = "activa", nullable = false)
+    private Boolean activa = true;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
@@ -35,11 +36,8 @@ public class ConsultaMedica {
     @Column(name = "fecha_actualizacion", nullable = false)
     private LocalDateTime fechaActualizacion;
 
-    @Column(name = "cita_id")
-    private Long citaId;
-
     // Constructors
-    public ConsultaMedica() {
+    public CitaMedica() {
         // Empty constructor required by JPA
     }
 
@@ -52,12 +50,12 @@ public class ConsultaMedica {
         this.id = id;
     }
 
-    public HistoriaClinica getHistoriaClinica() {
-        return historiaClinica;
+    public Paciente getPaciente() {
+        return paciente;
     }
 
-    public void setHistoriaClinica(HistoriaClinica historiaClinica) {
-        this.historiaClinica = historiaClinica;
+    public void setPaciente(Paciente paciente) {
+        this.paciente = paciente;
     }
 
     public String getDatosJson() {
@@ -66,6 +64,14 @@ public class ConsultaMedica {
 
     public void setDatosJson(String datosJson) {
         this.datosJson = datosJson;
+    }
+
+    public Boolean getActiva() {
+        return activa;
+    }
+
+    public void setActiva(Boolean activa) {
+        this.activa = activa;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -82,13 +88,5 @@ public class ConsultaMedica {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public Long getCitaId() {
-        return citaId;
-    }
-
-    public void setCitaId(Long citaId) {
-        this.citaId = citaId;
     }
 }

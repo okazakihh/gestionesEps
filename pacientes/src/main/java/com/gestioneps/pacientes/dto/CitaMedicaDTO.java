@@ -1,31 +1,27 @@
 package com.gestioneps.pacientes.dto;
 
-import com.gestioneps.pacientes.entity.*;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 
-public class ConsultaMedicaDTO {
+public class CitaMedicaDTO {
 
     private Long id;
 
-    private Long historiaClinicaId;
-
-    private String numeroHistoria;
+    private Long pacienteId;
 
     private String pacienteNombre;
 
     private String datosJson;
 
+    private Boolean activa;
+
     private LocalDateTime fechaCreacion;
 
     private LocalDateTime fechaActualizacion;
 
-    private Long citaId;
-
     // Constructors
-    public ConsultaMedicaDTO() {}
+    public CitaMedicaDTO() {}
 
     // Getters and Setters
     public Long getId() {
@@ -36,20 +32,12 @@ public class ConsultaMedicaDTO {
         this.id = id;
     }
 
-    public Long getHistoriaClinicaId() {
-        return historiaClinicaId;
+    public Long getPacienteId() {
+        return pacienteId;
     }
 
-    public void setHistoriaClinicaId(Long historiaClinicaId) {
-        this.historiaClinicaId = historiaClinicaId;
-    }
-
-    public String getNumeroHistoria() {
-        return numeroHistoria;
-    }
-
-    public void setNumeroHistoria(String numeroHistoria) {
-        this.numeroHistoria = numeroHistoria;
+    public void setPacienteId(Long pacienteId) {
+        this.pacienteId = pacienteId;
     }
 
     public String getPacienteNombre() {
@@ -68,6 +56,14 @@ public class ConsultaMedicaDTO {
         this.datosJson = datosJson;
     }
 
+    public Boolean getActiva() {
+        return activa;
+    }
+
+    public void setActiva(Boolean activa) {
+        this.activa = activa;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
@@ -82,13 +78,5 @@ public class ConsultaMedicaDTO {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public Long getCitaId() {
-        return citaId;
-    }
-
-    public void setCitaId(Long citaId) {
-        this.citaId = citaId;
     }
 }

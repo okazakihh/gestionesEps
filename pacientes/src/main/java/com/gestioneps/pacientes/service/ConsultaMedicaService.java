@@ -45,6 +45,22 @@ public class ConsultaMedicaService {
     }
 
     /**
+     * Crear nueva consulta médica desde una cita
+     */
+    public ConsultaMedicaDTO crearConsultaDesdeCita(Long citaId, Long historiaId, String jsonData) {
+        HistoriaClinica historia = historiaClinicaRepository.findById(historiaId)
+            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + historiaId));
+
+        ConsultaMedica consulta = new ConsultaMedica();
+        consulta.setDatosJson(jsonData);
+        consulta.setHistoriaClinica(historia);
+        consulta.setCitaId(citaId);
+
+        ConsultaMedica consultaGuardada = consultaMedicaRepository.save(consulta);
+        return convertirEntidadADto(consultaGuardada);
+    }
+
+    /**
      * Obtener consulta por ID
      */
     @Transactional(readOnly = true)
@@ -104,6 +120,7 @@ public class ConsultaMedicaService {
         dto.setDatosJson(consulta.getDatosJson());
         dto.setFechaCreacion(consulta.getFechaCreacion());
         dto.setFechaActualizacion(consulta.getFechaActualizacion());
+        dto.setCitaId(consulta.getCitaId());
 
         return dto;
     }

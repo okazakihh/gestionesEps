@@ -1,0 +1,488 @@
+import React, { useState } from 'react';
+import {
+  XMarkIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+  UserIcon,
+  DocumentTextIcon,
+  CheckIcon
+} from '@heroicons/react/24/outline';
+import { pacientesApiService } from '../../../services/pacientesApiService.js';
+import { notifications } from '@mantine/notifications';
+
+const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onAppointmentCreated }) => {
+  const [formData, setFormData] = useState({
+    fechaHoraCita: '',
+    motivo: '',
+    medicoAsignado: '',
+    estado: 'PROGRAMADA',
+    notas: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.fechaHoraCita) {
+      newErrors.fechaHoraCita = 'La fecha y hora son obligatorias';
+    } else {
+      const selectedDate = new Date(formData.fechaHoraCita);
+      const now = new Date();
+      if (selectedDate <= now) {
+        newErrors.fechaHoraCita = 'La cita debe ser en el futuro';
+      }
+    }
+
+    if (!formData.motivo.trim()) {
+      newErrors.motivo = 'El motivo de la consulta es obligatorio';
+    }
+
+    if (!formData.medicoAsignado.trim()) {
+      newErrors.medicoAsignado = 'El médico asignado es obligatorio';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setSubmitError(null); // Clear previous errors
+    setDebugInfo(null); // Clear previous debug info
+    let appointmentCreated = false;
+
+    try {
+      // Format the appointment data as JSON
+      const appointmentData = {
+        fechaHoraCita: formData.fechaHoraCita,
+        motivo: formData.motivo.trim(),
+        medicoAsignado: formData.medicoAsignado.trim(),
+        estado: formData.estado,
+        notas: formData.notas.trim()
+      };
+
+      const jsonData = JSON.stringify(appointmentData);
+      console.log('📤 Enviando datos de cita:', appointmentData);
+
+      // Store debug info for potential error display
+      setDebugInfo({
+        url: `POST /api/citas/paciente/${patientId}`,
+        requestData: appointmentData,
+        jsonData: jsonData
+      });
+
+      // Call the API to create the appointment
+      const response = await pacientesApiService.createAppointment(patientId, jsonData);
+      console.log('📥 Respuesta del servidor:', response);
+
+      // Check if response indicates success
+      // Backend returns either: {success: true, data: {...}} or just the data object directly
+      const isSuccess = response && (
+        response.success === true ||
+        (response.id && response.pacienteId && response.datosJson) // Direct data object
+      );
+
+      if (isSuccess) {
+        appointmentCreated = true;
+        const appointmentData = response.data || response; // Handle both formats
+        console.log('✅ Cita creada exitosamente:', appointmentData);
+
+        // Reset form
+        setFormData({
+          fechaHoraCita: '',
+          motivo: '',
+          medicoAsignado: '',
+          estado: 'PROGRAMADA',
+          notas: ''
+        });
+
+        // Close modal and notify parent
+        onClose();
+        if (onAppointmentCreated) {
+          onAppointmentCreated();
+        }
+
+        // Show success notification after modal is closed
+        setTimeout(() => {
+          try {
+            notifications.show({
+              title: '¡Cita agendada!',
+              message: `Cita médica agendada exitosamente para ${patientName}`,
+              color: 'green',
+              autoClose: 5000,
+            });
+          } catch (notificationError) {
+            console.log('Cita creada exitosamente (notificación no disponible)');
+          }
+        }, 100);
+
+        return; // Exit early to prevent going to catch block
+      } else {
+        // Handle API error response
+        const errorMessage = response?.error || response?.message || 'Error desconocido del servidor';
+        console.error('❌ Error en respuesta del servidor:', response);
+        throw new Error(`Error del servidor: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error('💥 Error completo al crear cita:', error);
+
+      // Determine error type and message
+      let errorTitle = 'Error al agendar cita';
+      let errorMessage = 'Ha ocurrido un error inesperado';
+
+      if (error.message?.includes('Network Error') || error.message?.includes('fetch')) {
+        errorTitle = 'Error de conexión';
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+      } else if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+        errorTitle = 'Acceso denegado';
+        errorMessage = 'No tienes permisos para agendar citas. Contacta al administrador.';
+      } else if (error.message?.includes('404') || error.message?.includes('Not Found')) {
+        errorTitle = 'Servicio no disponible';
+        errorMessage = 'El servicio de citas no está disponible. Inténtalo más tarde.';
+      } else if (error.message?.includes('500') || error.message?.includes('Internal Server Error')) {
+        errorTitle = 'Error del servidor';
+        errorMessage = 'Error interno del servidor. Los administradores han sido notificados.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Set error state for visual display
+      setSubmitError({
+        title: errorTitle,
+        message: errorMessage
+      });
+
+      // Update debug info with error details
+      setDebugInfo(prev => prev ? {
+        ...prev,
+        error: error.message,
+        response: response
+      } : {
+        url: `POST /api/citas/paciente/${patientId}`,
+        requestData: formData,
+        error: error.message,
+        response: response || 'No response received'
+      });
+
+      // Also show notification for additional feedback
+      try {
+        notifications.show({
+          title: errorTitle,
+          message: errorMessage,
+          color: 'red',
+          autoClose: 10000,
+        });
+      } catch (notificationError) {
+        console.error('Error mostrando notificación:', notificationError);
+      }
+
+      // Keep modal open on error
+      console.log('🔄 Modal permanece abierto debido al error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30); // At least 30 minutes from now
+    return now.toISOString().slice(0, 16); // Format for datetime-local input
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
+        </div>
+
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-11/12 max-w-4xl h-5/6">
+          {/* Header */}
+          <div className="bg-blue-600 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                  <CalendarDaysIcon className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-xl font-semibold text-white">
+                      Agendar Cita Médica
+                    </h3>
+                    {loading && (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span className="ml-2 text-sm text-blue-100">Agendando...</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-blue-100">
+                    Paciente: {patientName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-white hover:text-gray-200 transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              {/* Fecha y Hora */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CalendarDaysIcon className="h-4 w-4 inline mr-2" />
+                    Fecha y Hora de la Cita *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.fechaHoraCita}
+                    onChange={(e) => handleInputChange('fechaHoraCita', e.target.value)}
+                    min={getMinDateTime()}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.fechaHoraCita ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.fechaHoraCita && (
+                    <p className="mt-1 text-sm text-red-600">{errors.fechaHoraCita}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <UserIcon className="h-4 w-4 inline mr-2" />
+                    Médico Asignado *
+                  </label>
+                  <select
+                    value={formData.medicoAsignado}
+                    onChange={(e) => handleInputChange('medicoAsignado', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.medicoAsignado ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    required
+                  >
+                    <option value="">Seleccionar médico</option>
+                    <option value="Dra. Ana María Rodríguez">Dra. Ana María Rodríguez</option>
+                    <option value="Dr. Carlos Mendoza">Dr. Carlos Mendoza</option>
+                    <option value="Dra. María González">Dra. María González</option>
+                    <option value="Dr. Juan Pérez">Dr. Juan Pérez</option>
+                    <option value="Dra. Laura Sánchez">Dra. Laura Sánchez</option>
+                  </select>
+                  {errors.medicoAsignado && (
+                    <p className="mt-1 text-sm text-red-600">{errors.medicoAsignado}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Motivo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <DocumentTextIcon className="h-4 w-4 inline mr-2" />
+                  Motivo de la Consulta *
+                </label>
+                <textarea
+                  value={formData.motivo}
+                  onChange={(e) => handleInputChange('motivo', e.target.value)}
+                  rows={3}
+                  placeholder="Describa el motivo de la consulta médica..."
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.motivo ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  required
+                />
+                {errors.motivo && (
+                  <p className="mt-1 text-sm text-red-600">{errors.motivo}</p>
+                )}
+              </div>
+
+              {/* Estado y Notas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <CheckIcon className="h-4 w-4 inline mr-2" />
+                    Estado de la Cita
+                  </label>
+                  <select
+                    value={formData.estado}
+                    onChange={(e) => handleInputChange('estado', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="PROGRAMADA">Programada</option>
+                    <option value="CONFIRMADA">Confirmada</option>
+                    <option value="CANCELADA">Cancelada</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <ClockIcon className="h-4 w-4 inline mr-2" />
+                    Duración Estimada
+                  </label>
+                  <select
+                    value={formData.duracion || '30'}
+                    onChange={(e) => handleInputChange('duracion', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="15">15 minutos</option>
+                    <option value="30">30 minutos</option>
+                    <option value="45">45 minutos</option>
+                    <option value="60">1 hora</option>
+                    <option value="90">1.5 horas</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notas adicionales */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notas Adicionales
+                </label>
+                <textarea
+                  value={formData.notas}
+                  onChange={(e) => handleInputChange('notas', e.target.value)}
+                  rows={3}
+                  placeholder="Información adicional, instrucciones especiales, etc..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Error Display */}
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">
+                        {submitError.title}
+                      </h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        <p>{submitError.message}</p>
+                      </div>
+                      <div className="mt-3">
+                        <div className="flex space-x-3">
+                          <button
+                            type="button"
+                            onClick={() => setSubmitError(null)}
+                            className="text-sm font-medium text-red-800 hover:text-red-600"
+                          >
+                            Entendido
+                          </button>
+                          <details className="text-sm">
+                            <summary className="cursor-pointer text-red-700 hover:text-red-900 font-medium">
+                              Ver detalles técnicos
+                            </summary>
+                            <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono text-red-900">
+                              {debugInfo && (
+                                <>
+                                  <div className="mb-2">
+                                    <strong>URL:</strong> {debugInfo.url}
+                                  </div>
+                                  <div className="mb-2">
+                                    <strong>Datos enviados:</strong>
+                                    <pre className="mt-1 whitespace-pre-wrap">
+                                      {JSON.stringify(debugInfo.requestData, null, 2)}
+                                    </pre>
+                                  </div>
+                                  {debugInfo.error && (
+                                    <div className="mb-2">
+                                      <strong>Error del cliente:</strong> {debugInfo.error}
+                                    </div>
+                                  )}
+                                  {debugInfo.response && (
+                                    <div>
+                                      <strong>Respuesta del servidor:</strong>
+                                      <pre className="mt-1 whitespace-pre-wrap">
+                                        {JSON.stringify(debugInfo.response, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Información del paciente */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Información del Paciente</h4>
+                <div className="text-sm text-gray-600">
+                  <p><strong>Paciente:</strong> {patientName}</p>
+                  <p><strong>Fecha de solicitud:</strong> {new Date().toLocaleDateString('es-CO')}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Agendando...
+                  </div>
+                ) : (
+                  'Agendar Cita'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ScheduleAppointmentModal;

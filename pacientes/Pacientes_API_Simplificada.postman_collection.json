@@ -11,7 +11,8 @@
     { "key": "jwt_token", "value": "" },
     { "key": "paciente_id", "value": "" },
     { "key": "historia_id", "value": "" },
-    { "key": "consulta_id", "value": "" }
+    { "key": "consulta_id", "value": "" },
+    { "key": "cita_id", "value": "" }
   ],
   "item": [
     {
@@ -444,6 +445,179 @@
             },
             "description": "Lista documentos de una historia clínica. Respuesta: success: true, data: {page, content[]}, timestamp."
           }
+        }
+      ]
+    },
+    {
+      "name": "📅 Citas Médicas",
+      "item": [
+        {
+          "name": "Crear Cita Médica",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaHoraCita\": \"2024-12-15T10:30:00\",\n  \"motivo\": \"Consulta de control de hipertensión arterial\",\n  \"medicoAsignado\": \"Dra. Ana María Rodríguez\",\n  \"estado\": \"PROGRAMADA\",\n  \"notas\": \"Paciente refiere cefalea ocasional. Traer registros de TA casera.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/citas/paciente/{{paciente_id}}", "host": ["{{base_url}}"], "path": ["api","citas","paciente","{{paciente_id}}"] },
+            "description": "Crea nueva cita médica para un paciente. Respuesta: success: true, data: {...}, timestamp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.success && jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set('cita_id', jsonData.data.id);",
+                  "    console.log('✅ Cita creada con ID:', jsonData.data.id);",
+                  "}",
+                  "pm.test('Respuesta exitosa', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Cita creada', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener Cita por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/citas/{{cita_id}}", "host": ["{{base_url}}"], "path": ["api","citas","{{cita_id}}"] },
+            "description": "Obtiene cita médica específica por ID. Respuesta: success: true, data: {...}, timestamp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Datos de la cita correctos', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener Citas por Paciente",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/citas/paciente/{{paciente_id}}?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api","citas","paciente","{{paciente_id}}"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            },
+            "description": "Lista citas médicas de un paciente con paginación. Respuesta: success: true, data: {page, content[]}, timestamp."
+          }
+        },
+        {
+          "name": "Obtener Citas Activas por Paciente",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/citas/paciente/{{paciente_id}}/activas", "host": ["{{base_url}}"], "path": ["api","citas","paciente","{{paciente_id}}","activas"] },
+            "description": "Lista citas médicas activas de un paciente. Respuesta: success: true, data: [...], timestamp."
+          }
+        },
+        {
+          "name": "Actualizar Cita Médica",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaHoraCita\": \"2024-12-15T11:00:00\",\n  \"motivo\": \"Consulta de control de hipertensión arterial\",\n  \"medicoAsignado\": \"Dra. Ana María Rodríguez\",\n  \"estado\": \"CONFIRMADA\",\n  \"notas\": \"Cita confirmada. Paciente refiere cefalea ocasional. Traer registros de TA casera.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/citas/{{cita_id}}", "host": ["{{base_url}}"], "path": ["api","citas","{{cita_id}}"] },
+            "description": "Actualiza cita médica existente. Respuesta: success: true, data: {...}, timestamp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Cita actualizada', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar Cita Médica",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "{{base_url}}/api/citas/{{cita_id}}", "host": ["{{base_url}}"], "path": ["api","citas","{{cita_id}}"] },
+            "description": "Elimina cita médica (soft delete). Respuesta: success: true, message: '...', timestamp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear Consulta desde Cita",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"informacionMedico\": {\n    \"medicoTratante\": \"Dra. Ana María Rodríguez\",\n    \"registroMedico\": \"RM-12345\",\n    \"especialidad\": \"Medicina Interna\"\n  },\n  \"detalleConsulta\": {\n    \"fechaConsulta\": \"2024-12-15T11:00:00\",\n    \"motivoConsulta\": \"Consulta programada - Seguimiento de hipertensión arterial\",\n    \"enfermedadActual\": \"Paciente refiere cefalea leve ocasional\",\n    \"revisionSistemas\": \"Cardiovascular: TA elevada en mediciones caseras. Respiratorio: Normal.\",\n    \"tipoConsulta\": \"CONTROL\"\n  },\n  \"examenClinico\": {\n    \"examenFisico\": \"Paciente en buen estado general, normopeso\",\n    \"signosVitales\": \"TA: 135/85 mmHg, FC: 75 lpm, FR: 16 rpm, Temp: 36.7°C\"\n  },\n  \"diagnosticoTratamiento\": {\n    \"diagnosticoPrincipal\": \"I10 - Hipertensión esencial\",\n    \"planManejo\": \"Ajustar dosis de Losartán a 100mg/día. Control en 15 días.\",\n    \"medicamentosFormulados\": \"Losartán 100mg 1 tableta cada 24 horas\",\n    \"recomendaciones\": \"Tomar medicación en la mañana. Medir TA diariamente.\"\n  },\n  \"seguimiento\": {\n    \"indicaciones\": \"Medir TA diariamente y registrar valores. Acudir a urgencias si TA > 180/110.\",\n    \"proximaCita\": \"2024-12-30T11:00:00\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/consultas/cita/{{cita_id}}/historia/{{historia_id}}", "host": ["{{base_url}}"], "path": ["api","consultas","cita","{{cita_id}}","historia","{{historia_id}}"] },
+            "description": "Crea consulta médica vinculada a una cita existente. Respuesta: success: true, data: {...}, timestamp."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Respuesta exitosa', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Consulta creada desde cita', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('citaId', parseInt(pm.environment.get('cita_id')));",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
