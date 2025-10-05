@@ -213,37 +213,47 @@ public class CitaMedicaController {
 
     /**
      * Actualizar estado de cita médica
-     */
-    @Operation(summary = "Actualizar estado de cita médica", description = "Actualiza el estado de una cita médica específica.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Estado de cita médica actualizado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Transición de estado no permitida"),
-        @ApiResponse(responseCode = "404", description = "Cita médica no encontrada")
-    })
-    @PatchMapping("/{id}/estado")
-    public ResponseEntity<Map<String, Object>> actualizarEstadoCita(
-            @PathVariable Long id,
-            @RequestParam String estado) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            LOGGER.info("Actualizando estado de cita {} a {}", id, estado);
-            CitaMedicaDTO citaActualizada = citaMedicaService.actualizarEstadoCita(id, estado);
-            response.put(SUCCESS, true);
-            response.put("data", citaActualizada);
-            response.put("message", "Estado de cita médica actualizado exitosamente.");
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            LOGGER.error("Error actualizando estado de cita: {}", e.getMessage());
-            response.put(SUCCESS, false);
-            response.put(ERROR, e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            LOGGER.error("Error inesperado actualizando estado de cita: {}", e.getMessage(), e);
-            response.put(SUCCESS, false);
-            response.put(ERROR, "Error interno: " + e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+      */
+     @Operation(summary = "Actualizar estado de cita médica", description = "Actualiza el estado de una cita médica específica enviando el nuevo estado en el body.")
+     @ApiResponses(value = {
+         @ApiResponse(responseCode = "200", description = "Estado de cita médica actualizado exitosamente"),
+         @ApiResponse(responseCode = "400", description = "Transición de estado no permitida"),
+         @ApiResponse(responseCode = "404", description = "Cita médica no encontrada")
+     })
+     @PatchMapping("/{id}/estado")
+     public ResponseEntity<Map<String, Object>> actualizarEstadoCita(
+             @PathVariable Long id,
+             @RequestBody Map<String, String> requestBody) {
+         Map<String, Object> response = new HashMap<>();
+         try {
+             String estado = requestBody.get("estado");
+             if (estado == null || estado.trim().isEmpty()) {
+                 LOGGER.warn("Campo 'estado' requerido pero no proporcionado para cita {}", id);
+                 response.put(SUCCESS, false);
+                 response.put(ERROR, "El campo 'estado' es requerido");
+                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+             }
+
+             LOGGER.info("📡 Controller: Actualizando estado de cita {} a '{}'", id, estado);
+             CitaMedicaDTO citaActualizada = citaMedicaService.actualizarEstadoCita(id, estado);
+             LOGGER.info("✅ Controller: Estado de cita {} actualizado exitosamente", id);
+
+             response.put(SUCCESS, true);
+             response.put("data", citaActualizada);
+             response.put("message", "Estado de cita médica actualizado exitosamente.");
+             return ResponseEntity.ok(response);
+         } catch (IllegalArgumentException e) {
+             LOGGER.error("❌ Controller: Error de validación actualizando estado de cita {}: {}", id, e.getMessage());
+             response.put(SUCCESS, false);
+             response.put(ERROR, e.getMessage());
+             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+         } catch (Exception e) {
+             LOGGER.error("💥 Controller: Error inesperado actualizando estado de cita {}: {}", id, e.getMessage(), e);
+             response.put(SUCCESS, false);
+             response.put(ERROR, "Error interno: " + e.getMessage());
+             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+         }
+     }
 
     /**
      * Eliminar cita médica (soft delete)

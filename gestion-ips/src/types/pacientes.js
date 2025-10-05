@@ -22,3 +22,7 @@ export const PageResponse = {};
 export const PacienteSearchParams = {};
 export const HistoriaClinicaSearchParams = {};
 export const ConsultaSearchParams = {};
+
+// Códigos CUPS types
+export const CodigosCupsDTO = {};
+export const CodigosCupsSearchParams = {};

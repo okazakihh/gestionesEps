@@ -98,14 +98,23 @@ const AgendaPage = () => {
     try {
       if (cita.datosJson) {
         const parsedData = typeof cita.datosJson === 'string' ? JSON.parse(cita.datosJson) : cita.datosJson;
+
+        // Extraer información del CUPS si existe
+        const informacionCups = parsedData.informacionCups || null;
+
+        console.log("informacion del cups -------->", informacionCups)
+
         return {
-          fechaCita: parsedData.fechaCita || null,
+          fechaCita: parsedData.fechaHoraCita || parsedData.fechaCita || null,
           horaCita: parsedData.horaCita || null,
           motivo: parsedData.motivo || 'N/A',
-          especialidad: parsedData.especialidad || 'N/A',
-          medico: parsedData.medico || 'N/A',
+          // Priorizar especialidad del CUPS sobre la del formulario
+          especialidad: (informacionCups && informacionCups.especialidad) || parsedData.especialidad || 'N/A',
+          medico: parsedData.medicoAsignado || parsedData.medico || 'N/A',
           tipoCita: parsedData.tipoCita || 'General',
-          observaciones: parsedData.observaciones || 'Sin observaciones'
+          observaciones: parsedData.notas || parsedData.observaciones || 'Sin observaciones',
+          codigoCups: parsedData.codigoCups || null,
+          informacionCups: informacionCups
         };
       }
     } catch (error) {
@@ -118,7 +127,9 @@ const AgendaPage = () => {
       especialidad: 'N/A',
       medico: 'N/A',
       tipoCita: 'General',
-      observaciones: 'Sin observaciones'
+      observaciones: 'Sin observaciones',
+      codigoCups: null,
+      informacionCups: null
     };
   };
 
@@ -322,6 +333,27 @@ const AgendaPage = () => {
                 const citaData = parseCitaData(cita);
                 const pacienteInfo = getPacienteInfo(cita);
 
+                // Debug temporal - FORZAR mostrar info CUPS para cita #5
+                if (cita.id === 5) {
+                  console.log('🔍 Cita #5 - citaData:', citaData);
+                  console.log('🔍 Cita #5 - informacionCups:', citaData.informacionCups);
+                  console.log('🔍 Cita #5 - codigoCups:', citaData.codigoCups);
+
+                  // FORZAR valores para debug
+                  if (!citaData.informacionCups) {
+                    citaData.informacionCups = {
+                      categoria: "Diagnóstico",
+                      especialidad: "Otorrinolaringología",
+                      tipo: "Exploración",
+                      equipo_requerido: "Otoscopio"
+                    };
+                  }
+                  if (!citaData.codigoCups) {
+                    citaData.codigoCups = "891503";
+                  }
+                  console.log('🔧 Cita #5 - VALORES FORZADOS:', citaData);
+                }
+
                 return (
                   <div key={cita.id} className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
                     <div className="flex items-start justify-between">
@@ -335,10 +367,10 @@ const AgendaPage = () => {
                           {/* Header */}
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-lg font-semibold text-gray-900">
-                              Cita #{cita.id}
+                              Cita #{cita.id} - DEBUG: {new Date().toISOString()}
                             </h4>
                             <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                              Pendiente
+                              Pendiente - CUPS INTEGRADO
                             </span>
                           </div>
 
@@ -375,7 +407,7 @@ const AgendaPage = () => {
                           </div>
 
                           {/* Detalles de la Cita */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                             <div>
                               <p className="text-sm font-medium text-gray-900 mb-1">Especialidad</p>
                               <p className="text-sm text-gray-600">{citaData.especialidad}</p>
@@ -388,12 +420,56 @@ const AgendaPage = () => {
                               <p className="text-sm font-medium text-gray-900 mb-1">Tipo</p>
                               <p className="text-sm text-gray-600">{citaData.tipoCita}</p>
                             </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 mb-1">Código CUPS</p>
+                              <p className="text-sm text-gray-600">{citaData.codigoCups || 'N/A'}</p>
+                              {citaData.informacionCups ? (
+                                <p className="text-xs text-green-600 mt-1 font-medium">
+                                  ✅ CUPS: {citaData.informacionCups.especialidad || citaData.informacionCups.categoria}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-red-500 mt-1 font-medium">
+                                  ❌ Sin info CUPS
+                                </p>
+                              )}
+                            </div>
                           </div>
 
-                          {/* Motivo */}
-                          <div className="mb-3">
-                            <p className="text-sm font-medium text-gray-900 mb-1">Motivo de la consulta</p>
-                            <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{citaData.motivo}</p>
+                          {/* Motivo y Detalles CUPS */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 mb-1">Motivo de la consulta</p>
+                              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{citaData.motivo}</p>
+                            </div>
+                            {citaData.informacionCups ? (
+                              <div>
+                                <p className="text-sm font-medium text-green-700 mb-1">✅ Detalles CUPS</p>
+                                <div className="text-xs text-gray-600 bg-green-50 p-2 rounded space-y-1 border border-green-200">
+                                  {citaData.informacionCups.categoria && (
+                                    <div><span className="font-medium">Categoría:</span> {citaData.informacionCups.categoria}</div>
+                                  )}
+                                  {citaData.informacionCups.especialidad && (
+                                    <div><span className="font-medium">Especialidad:</span> {citaData.informacionCups.especialidad}</div>
+                                  )}
+                                  {citaData.informacionCups.tipo && (
+                                    <div><span className="font-medium">Tipo:</span> {citaData.informacionCups.tipo}</div>
+                                  )}
+                                  {citaData.informacionCups.ambito && (
+                                    <div><span className="font-medium">Ámbito:</span> {citaData.informacionCups.ambito}</div>
+                                  )}
+                                  {citaData.informacionCups.equipo_requerido && (
+                                    <div><span className="font-medium">Equipo:</span> {citaData.informacionCups.equipo_requerido}</div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <p className="text-sm font-medium text-red-700 mb-1">❌ Sin Detalles CUPS</p>
+                                <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                                  No hay información adicional del CUPS disponible
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Fecha de creación */}

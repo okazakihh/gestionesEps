@@ -7,8 +7,10 @@ import {
   DocumentTextIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
-import { pacientesApiService } from '../../../services/pacientesApiService.js';
+import { pacientesApiService, codigosCupsApiService } from '../../../services/pacientesApiService.js';
 import { notifications } from '@mantine/notifications';
+import { Select } from '@mantine/core';
+import Swal from 'sweetalert2';
 
 const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onAppointmentCreated }) => {
   const [formData, setFormData] = useState({
@@ -16,12 +18,16 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
     motivo: '',
     medicoAsignado: '',
     estado: 'PROGRAMADA',
-    notas: ''
+    notas: '',
+    codigoCups: ''
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [codigosCups, setCodigosCups] = useState([]);
+  const [loadingCodigosCups, setLoadingCodigosCups] = useState(false);
+  const [selectedCupData, setSelectedCupData] = useState(null);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -35,7 +41,55 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         [field]: ''
       }));
     }
+
+    // Auto-fill fields based on CUPS code selection
+    if (field === 'codigoCups' && value) {
+      const selectedCup = codigosCups.find(cup => cup.codigoCup === value);
+      if (selectedCup && selectedCup.datosJson) {
+        try {
+          const cupData = JSON.parse(selectedCup.datosJson);
+          setSelectedCupData(cupData); // Store CUPS data for display
+
+          const updatedData = {
+            ...formData,
+            [field]: value,
+            // Auto-fill especialidad if available in CUPS data
+            medicoAsignado: cupData.especialidad ?
+              `${cupData.especialidad} - ${formData.medicoAsignado || ''}`.replace(/^ - /, '') :
+              formData.medicoAsignado
+          };
+
+          setFormData(updatedData);
+        } catch (error) {
+          console.warn('Error parsing CUPS data:', error);
+          setSelectedCupData(null);
+        }
+      } else {
+        setSelectedCupData(null);
+      }
+    }
   };
+
+  // Load CUPS codes when modal opens
+  const loadCodigosCups = async () => {
+    try {
+      setLoadingCodigosCups(true);
+      const response = await codigosCupsApiService.getCodigosCups({ size: 1000 }); // Load all codes
+      setCodigosCups(response.content || []);
+    } catch (error) {
+      console.error('Error loading CUPS codes:', error);
+      // Don't show error to user, just log it
+    } finally {
+      setLoadingCodigosCups(false);
+    }
+  };
+
+  // Load CUPS codes when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      loadCodigosCups();
+    }
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -56,6 +110,10 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
 
     if (!formData.medicoAsignado.trim()) {
       newErrors.medicoAsignado = 'El médico asignado es obligatorio';
+    }
+
+    if (!formData.codigoCups) {
+      newErrors.codigoCups = 'El código CUPS es obligatorio';
     }
 
     setErrors(newErrors);
@@ -81,7 +139,12 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         motivo: formData.motivo.trim(),
         medicoAsignado: formData.medicoAsignado.trim(),
         estado: formData.estado,
-        notas: formData.notas.trim()
+        notas: formData.notas.trim(),
+        codigoCups: formData.codigoCups,
+        // Include complete CUPS information if selected
+        ...(selectedCupData && {
+          informacionCups: selectedCupData
+        })
       };
 
       const jsonData = JSON.stringify(appointmentData);
@@ -116,8 +179,10 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
           motivo: '',
           medicoAsignado: '',
           estado: 'PROGRAMADA',
-          notas: ''
+          notas: '',
+          codigoCups: ''
         });
+        setSelectedCupData(null);
 
         // Close modal and notify parent
         onClose();
@@ -125,18 +190,17 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
           onAppointmentCreated();
         }
 
-        // Show success notification after modal is closed
+        // Show success SweetAlert after modal is closed
         setTimeout(() => {
-          try {
-            notifications.show({
-              title: '¡Cita agendada!',
-              message: `Cita médica agendada exitosamente para ${patientName}`,
-              color: 'green',
-              autoClose: 5000,
-            });
-          } catch (notificationError) {
-            console.log('Cita creada exitosamente (notificación no disponible)');
-          }
+          Swal.fire({
+            icon: 'success',
+            title: '¡Cita agendada!',
+            text: `Cita médica agendada exitosamente para ${patientName}`,
+            confirmButtonColor: '#10B981',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
         }, 100);
 
         return; // Exit early to prevent going to catch block
@@ -187,17 +251,13 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         response: response || 'No response received'
       });
 
-      // Also show notification for additional feedback
-      try {
-        notifications.show({
-          title: errorTitle,
-          message: errorMessage,
-          color: 'red',
-          autoClose: 10000,
-        });
-      } catch (notificationError) {
-        console.error('Error mostrando notificación:', notificationError);
-      }
+      // Also show SweetAlert for additional feedback
+      Swal.fire({
+        icon: 'error',
+        title: errorTitle,
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
 
       // Keep modal open on error
       console.log('🔄 Modal permanece abierto debido al error');
@@ -304,7 +364,86 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
                     <p className="mt-1 text-sm text-red-600">{errors.medicoAsignado}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código CUPS *
+                  </label>
+                  <Select
+                    placeholder="Buscar código CUPS..."
+                    data={codigosCups.map((codigo) => ({
+                      value: codigo.codigoCup,
+                      label: `${codigo.codigoCup} - ${codigo.nombreCup}`
+                    }))}
+                    value={formData.codigoCups}
+                    onChange={(value) => handleInputChange('codigoCups', value)}
+                    searchable
+                    clearable={false}
+                    disabled={loadingCodigosCups}
+                    required
+                    error={errors.codigoCups}
+                  />
+                  {loadingCodigosCups && (
+                    <p className="mt-1 text-sm text-gray-500">Cargando códigos CUPS...</p>
+                  )}
+                  {errors.codigoCups && (
+                    <p className="mt-1 text-sm text-red-600">{errors.codigoCups}</p>
+                  )}
+                </div>
               </div>
+
+              {/* Información del Código CUPS seleccionado */}
+              {selectedCupData && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Información del Código CUPS</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedCupData.categoria && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Categoría</label>
+                        <input
+                          type="text"
+                          value={selectedCupData.categoria}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
+                        />
+                      </div>
+                    )}
+                    {selectedCupData.especialidad && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Especialidad</label>
+                        <input
+                          type="text"
+                          value={selectedCupData.especialidad}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
+                        />
+                      </div>
+                    )}
+                    {selectedCupData.tipo && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                        <input
+                          type="text"
+                          value={selectedCupData.tipo}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
+                        />
+                      </div>
+                    )}
+                    {selectedCupData.ambito && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Ámbito</label>
+                        <input
+                          type="text"
+                          value={selectedCupData.ambito}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Motivo */}
               <div>

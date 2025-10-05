@@ -336,13 +336,15 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="text-sm text-red-700">{error}</div>
-              </div>
-            )}
+            <div className="flex items-center justify-center min-h-full">
+              <div className="w-full max-w-4xl">
+                {error && (
+                  <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
+                    <div className="text-sm text-red-700">{error}</div>
+                  </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
               {/* Información Básica */}
               <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
                 <div className="px-4 py-6 sm:p-8">
@@ -725,9 +727,11 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Guardando...' : 'Crear Paciente'}
-                </button>
+                  </button>
+                </div>
+              </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

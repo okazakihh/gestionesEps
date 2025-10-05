@@ -72,6 +72,12 @@ spring:
             - Path=/api/citas/**
           filters:
             - StripPrefix=0
+        - id: codigos_cups_route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/codigos-cups/**
+          filters:
+            - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}

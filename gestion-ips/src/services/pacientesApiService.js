@@ -17,6 +17,7 @@ const HISTORIAS_BASE_URL = '/api/historias-clinicas';
 const CONSULTAS_BASE_URL = '/api/consultas';
 const DOCUMENTOS_BASE_URL = '/api/documentos';
 const CITAS_BASE_URL = '/api/citas';
+const CODIGOS_CUPS_BASE_URL = '/api/codigos-cups';
 
 // Pacientes API Service
 export const pacientesApiService = {
@@ -170,7 +171,7 @@ export const pacientesApiService = {
 
   // Update appointment status
   actualizarEstadoCita: async (id, estado) => {
-    const response = await apiClient.patch(`${CITAS_BASE_URL}/${id}/estado?estado=${estado}`);
+    const response = await apiClient.patch(`${CITAS_BASE_URL}/${id}/estado`, { estado });
     if (!response.success) {
       throw new Error(response.error || 'Error al actualizar estado de cita médica');
     }
@@ -511,5 +512,103 @@ export const documentosApiService = {
     if (!response.success) {
       throw new Error(response.error || 'Error al eliminar documento');
     }
+  }
+};
+
+// Códigos CUPS API Service
+export const codigosCupsApiService = {
+  // Get all CUPS codes with pagination
+  getCodigosCups: async (params) => {
+    const response = await apiClient.get(CODIGOS_CUPS_BASE_URL, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener códigos CUPS');
+    }
+    return response.data;
+  },
+
+  // Get CUPS code by ID
+  getCodigoCupsById: async (id) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener código CUP');
+    }
+    return response.data;
+  },
+
+  // Get CUPS code by code
+  getCodigoCupsByCodigo: async (codigoCup) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/codigo/${codigoCup}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener código CUP por código');
+    }
+    return response.data;
+  },
+
+  // Create new CUPS code
+  createCodigoCups: async (codigoCups) => {
+    const response = await apiClient.post(CODIGOS_CUPS_BASE_URL, codigoCups);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al crear código CUP');
+    }
+    return response.data;
+  },
+
+  // Update CUPS code
+  updateCodigoCups: async (id, codigoCups) => {
+    const response = await apiClient.put(`${CODIGOS_CUPS_BASE_URL}/${id}`, codigoCups);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar código CUP');
+    }
+    return response.data;
+  },
+
+  // Delete CUPS code
+  deleteCodigoCups: async (id) => {
+    const response = await apiClient.delete(`${CODIGOS_CUPS_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al eliminar código CUP');
+    }
+  },
+
+  // Search CUPS codes by name
+  searchByNombre: async (nombre, params) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/buscar/nombre`, {
+      params: { nombre, ...params }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar códigos CUP por nombre');
+    }
+    return response.data;
+  },
+
+  // Search CUPS codes by code
+  searchByCodigo: async (codigo, params) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/buscar/codigo`, {
+      params: { codigo, ...params }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar códigos CUP por código');
+    }
+    return response.data;
+  },
+
+  // General search for CUPS codes
+  searchGeneral: async (termino, params) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/buscar`, {
+      params: { termino, ...params }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar códigos CUP');
+    }
+    return response.data;
+  },
+
+  // Check if CUPS code exists
+  existeCodigoCups: async (codigoCup) => {
+    const response = await apiClient.get(`${CODIGOS_CUPS_BASE_URL}/existe/${codigoCup}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al verificar existencia del código CUP');
+    }
+    return response.data;
   }
 };

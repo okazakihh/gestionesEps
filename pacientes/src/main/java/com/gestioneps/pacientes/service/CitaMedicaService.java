@@ -10,6 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,6 +81,7 @@ public class CitaMedicaService {
 
         // Validar transiciones de estado permitidas
         String estadoActual = obtenerEstadoActual(cita);
+        System.out.println("🔄 Actualizando estado de cita " + id + " de '" + estadoActual + "' a '" + nuevoEstado + "'");
         validarTransicionEstado(estadoActual, nuevoEstado);
 
         // Actualizar el estado en datosJson
@@ -85,19 +89,50 @@ public class CitaMedicaService {
         cita.setDatosJson(datosJsonActualizados);
 
         CitaMedica citaActualizada = citaMedicaRepository.save(cita);
+        System.out.println("✅ Estado de cita " + id + " actualizado exitosamente a '" + nuevoEstado + "'");
         return mapToDTO(citaActualizada);
     }
 
     private String obtenerEstadoActual(CitaMedica cita) {
         try {
             if (cita.getDatosJson() != null) {
-                var data = new com.fasterxml.jackson.databind.ObjectMapper().readTree(cita.getDatosJson());
-                return data.get("estado").asText("PROGRAMADO");
+                var data = new ObjectMapper().readTree(cita.getDatosJson());
+                String estadoCrudo = data.get("estado").asText("PROGRAMADO");
+
+                // Normalizar estado para manejar variaciones (con/sin acentos, mayúsculas/minúsculas)
+                return normalizarEstado(estadoCrudo);
             }
         } catch (Exception e) {
             // Fallback
         }
         return "PROGRAMADO";
+    }
+
+    private String normalizarEstado(String estado) {
+        if (estado == null) return "PROGRAMADO";
+
+        // Convertir a mayúsculas y normalizar
+        String estadoNormalizado = estado.toUpperCase().trim();
+
+        // Mapear variaciones comunes
+        switch (estadoNormalizado) {
+            case "PROGRAMADO":
+            case "PROGRAMADA": // forma femenina
+                return "PROGRAMADO";
+            case "EN_SALA":
+            case "EN SALA":
+                return "EN_SALA";
+            case "ATENDIDO":
+            case "ATENDIDA": // forma femenina
+                return "ATENDIDO";
+            case "NO_SE_PRESENTO":
+            case "NO SE PRESENTO":
+            case "NO_SE_PRESENTÓ":
+            case "NO SE PRESENTÓ":
+                return "NO_SE_PRESENTO";
+            default:
+                return "PROGRAMADO"; // fallback
+        }
     }
 
     private void validarTransicionEstado(String estadoActual, String nuevoEstado) {
@@ -123,16 +158,18 @@ public class CitaMedicaService {
 
     private String actualizarEstadoEnJson(String datosJson, String nuevoEstado) {
         try {
-            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.node.ObjectNode data;
+            var mapper = new ObjectMapper();
+            ObjectNode data;
 
             if (datosJson != null && !datosJson.trim().isEmpty()) {
-                data = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.readTree(datosJson);
+                data = (ObjectNode) mapper.readTree(datosJson);
             } else {
                 data = mapper.createObjectNode();
             }
 
-            data.put("estado", nuevoEstado);
+            // Normalizar el estado antes de guardarlo
+            String estadoNormalizado = normalizarEstado(nuevoEstado);
+            data.put("estado", estadoNormalizado);
             return mapper.writeValueAsString(data);
         } catch (Exception e) {
             throw new RuntimeException("Error al actualizar estado en JSON", e);

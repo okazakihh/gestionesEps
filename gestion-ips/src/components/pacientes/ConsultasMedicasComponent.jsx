@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ConsultaMedicaDTO, ConsultaSearchParams } from '../../types/pacientes.js';
-import { consultasApiService } from '../../services/pacientesApiService.js';
+import { consultasApiService, codigosCupsApiService } from '../../services/pacientesApiService.js';
 import ServiceAlert from '../ui/ServiceAlert.jsx';
 import { Modal, Button, TextInput, Group, Text, Stack, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import Swal from 'sweetalert2';
 
 const ConsultasMedicasComponent = () => {
   const [consultas, setConsultas] = useState([]);
@@ -19,6 +20,11 @@ const ConsultasMedicasComponent = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [consultaToEdit, setConsultaToEdit] = useState(null);
+
+  // Estados para códigos CUPS
+  const [codigosCups, setCodigosCups] = useState([]);
+  const [loadingCodigosCups, setLoadingCodigosCups] = useState(false);
+  const [selectedCupData, setSelectedCupData] = useState(null);
 
   // Estados para el formulario de consulta médica
   const [formData, setFormData] = useState({
@@ -38,12 +44,26 @@ const ConsultasMedicasComponent = () => {
     medicamentosFormulados: '',
     examenesSolicitados: '',
     recomendaciones: '',
-    proximaCita: ''
+    proximaCita: '',
+    codigoCups: ''
   });
 
   useEffect(() => {
     loadConsultas();
+    loadCodigosCups();
   }, [searchParams]);
+
+  const loadCodigosCups = async () => {
+    try {
+      setLoadingCodigosCups(true);
+      const response = await codigosCupsApiService.getCodigosCups({ size: 1000 });
+      setCodigosCups(response.content || []);
+    } catch (error) {
+      console.error('Error loading CUPS codes:', error);
+    } finally {
+      setLoadingCodigosCups(false);
+    }
+  };
 
   const loadConsultas = async () => {
     try {
@@ -90,11 +110,57 @@ const ConsultasMedicasComponent = () => {
       medicamentosFormulados: '',
       examenesSolicitados: '',
       recomendaciones: '',
-      proximaCita: ''
+      proximaCita: '',
+      codigoCups: ''
     });
+    setSelectedCupData(null);
     setIsEditMode(false);
     setConsultaToEdit(null);
     setIsModalOpen(true);
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Auto-fill fields based on CUPS code selection
+    if (field === 'codigoCups' && value) {
+      const selectedCup = codigosCups.find(cup => cup.codigoCup === value);
+      if (selectedCup && selectedCup.datosJson) {
+        try {
+          const cupData = JSON.parse(selectedCup.datosJson);
+          setSelectedCupData(cupData); // Store CUPS data for display
+
+          const updatedData = {
+            ...formData,
+            [field]: value,
+            // Auto-fill especialidad
+            especialidad: cupData.especialidad || formData.especialidad,
+            // Auto-fill tipo de consulta basado en el tipo del CUPS
+            tipoConsulta: cupData.tipo ? mapCupTypeToConsultaType(cupData.tipo) : formData.tipoConsulta
+          };
+
+          setFormData(updatedData);
+        } catch (error) {
+          console.warn('Error parsing CUPS data:', error);
+          setSelectedCupData(null);
+        }
+      } else {
+        setSelectedCupData(null);
+      }
+    }
+  };
+
+  const mapCupTypeToConsultaType = (cupType) => {
+    const typeMapping = {
+      'Primera vez': 'GENERAL',
+      'Control': 'CONTROL',
+      'Urgencia': 'URGENCIA',
+      'Especializada': 'ESPECIALIZADA'
+    };
+    return typeMapping[cupType] || 'GENERAL';
   };
 
   const handleCloseModal = () => {
@@ -118,7 +184,12 @@ const ConsultasMedicasComponent = () => {
           fechaConsulta: formData.fechaConsulta,
           motivoConsulta: formData.motivoConsulta,
           enfermedadActual: formData.enfermedadActual,
-          tipoConsulta: formData.tipoConsulta
+          tipoConsulta: formData.tipoConsulta,
+          codigoCups: formData.codigoCups,
+          // Include complete CUPS information if selected
+          ...(selectedCupData && {
+            informacionCups: selectedCupData
+          })
         },
         examenClinico: {
           examenFisico: formData.examenFisico,
@@ -139,11 +210,14 @@ const ConsultasMedicasComponent = () => {
 
       await consultasApiService.createConsulta(consultaData);
 
-      notifications.show({
+      Swal.fire({
+        icon: 'success',
         title: '¡Consulta creada!',
-        message: 'La consulta médica ha sido registrada correctamente',
-        color: 'purple',
-        autoClose: 5000,
+        text: 'La consulta médica ha sido registrada correctamente',
+        confirmButtonColor: '#8B5CF6',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
       });
 
       setIsModalOpen(false);
@@ -151,11 +225,11 @@ const ConsultasMedicasComponent = () => {
 
     } catch (error) {
       console.error('Error al crear consulta:', error);
-      notifications.show({
+      Swal.fire({
+        icon: 'error',
         title: 'Error al crear consulta',
-        message: error.message || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+        text: error.message || 'Ha ocurrido un error inesperado',
+        confirmButtonColor: '#EF4444'
       });
     } finally {
       setLoading(false);
@@ -304,7 +378,7 @@ const ConsultasMedicasComponent = () => {
               label="Especialidad"
               placeholder="Especialidad médica"
               value={formData.especialidad}
-              onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+              onChange={(e) => handleInputChange('especialidad', e.target.value)}
               required
             />
           </Group>
@@ -350,9 +424,80 @@ const ConsultasMedicasComponent = () => {
               { value: 'CONTROL', label: 'Control' }
             ]}
             value={formData.tipoConsulta}
-            onChange={(value) => setFormData({...formData, tipoConsulta: value || 'GENERAL'})}
+            onChange={(value) => handleInputChange('tipoConsulta', value || 'GENERAL')}
             required
           />
+
+          <Select
+            label="Código CUPS *"
+            placeholder="Buscar código CUPS..."
+            data={codigosCups.map(codigo => ({
+              value: codigo.codigoCup,
+              label: `${codigo.codigoCup} - ${codigo.nombreCup}`
+            }))}
+            value={formData.codigoCups}
+            onChange={(value) => handleInputChange('codigoCups', value || '')}
+            searchable
+            clearable={false}
+            disabled={loadingCodigosCups}
+            required
+          />
+          {loadingCodigosCups && (
+            <Text size="sm" c="dimmed">Cargando códigos CUPS...</Text>
+          )}
+
+          {/* Información del Código CUPS seleccionado */}
+          {selectedCupData && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Información del Código CUPS</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedCupData.categoria && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Categoría</label>
+                    <TextInput
+                      value={selectedCupData.categoria}
+                      readOnly
+                      className="bg-white"
+                      size="sm"
+                    />
+                  </div>
+                )}
+                {selectedCupData.especialidad && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Especialidad</label>
+                    <TextInput
+                      value={selectedCupData.especialidad}
+                      readOnly
+                      className="bg-white"
+                      size="sm"
+                    />
+                  </div>
+                )}
+                {selectedCupData.tipo && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                    <TextInput
+                      value={selectedCupData.tipo}
+                      readOnly
+                      className="bg-white"
+                      size="sm"
+                    />
+                  </div>
+                )}
+                {selectedCupData.ambito && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Ámbito</label>
+                    <TextInput
+                      value={selectedCupData.ambito}
+                      readOnly
+                      className="bg-white"
+                      size="sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <Group grow>
             <TextInput
@@ -428,7 +573,7 @@ const ConsultasMedicasComponent = () => {
               color="purple"
               onClick={handleCreateConsulta}
               loading={loading}
-              disabled={!formData.historiaClinicaId || !formData.medicoTratante || !formData.especialidad || !formData.fechaConsulta || !formData.motivoConsulta || !formData.diagnosticoPrincipal}
+              disabled={!formData.historiaClinicaId || !formData.medicoTratante || !formData.especialidad || !formData.fechaConsulta || !formData.motivoConsulta || !formData.diagnosticoPrincipal || !formData.codigoCups}
             >
               Crear Consulta
             </Button>
