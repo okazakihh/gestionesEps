@@ -204,6 +204,10 @@ const AgendaModal = ({ isOpen, onClose }) => {
         const citaData = typeof cita.datosJson === 'string' ? JSON.parse(cita.datosJson) : cita.datosJson;
         console.log('Parsed citaData for cita', cita.id, ':', citaData);
 
+        // Extraer información del CUPS si existe
+        const informacionCups = citaData.informacionCups || null;
+        console.log('Información CUPS para cita', cita.id, ':', informacionCups);
+
         // Handle different possible estado formats
         let estado = citaData.estado || 'PROGRAMADO';
         console.log('Raw estado for cita', cita.id, ':', estado);
@@ -235,8 +239,11 @@ const AgendaModal = ({ isOpen, onClose }) => {
           medicoAsignado: citaData.medicoAsignado || 'N/A',
           estado: estado,
           notas: citaData.notas || 'Sin notas',
-          especialidad: citaData.especialidad || 'N/A',
-          tipoCita: citaData.tipoCita || 'General'
+          // Priorizar especialidad del CUPS sobre la del formulario
+          especialidad: (informacionCups && informacionCups.especialidad) || citaData.especialidad || 'N/A',
+          tipoCita: citaData.tipoCita || 'General',
+          codigoCups: citaData.codigoCups || null,
+          informacionCups: informacionCups
         };
       }
     } catch (error) {
@@ -251,7 +258,9 @@ const AgendaModal = ({ isOpen, onClose }) => {
       estado: 'PROGRAMADO',
       notas: 'Sin notas',
       especialidad: 'N/A',
-      tipoCita: 'General'
+      tipoCita: 'General',
+      codigoCups: null,
+      informacionCups: null
     };
   };
 
@@ -750,8 +759,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                         </div>
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between mb-2">
+                                        {/* Header con ID y Estado */}
+                                        <div className="flex items-center justify-between mb-3">
                                           <h4 className="text-lg font-semibold text-gray-900">
                                             Cita #{cita.id}
                                           </h4>
@@ -761,7 +770,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                         </div>
 
                                         {/* Fecha y Hora */}
-                                        <div className="mb-3">
+                                        <div className="mb-4">
                                           <div className="flex items-center text-sm text-gray-600 mb-1">
                                             <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
                                             <span className="font-medium">Fecha programada:</span>
@@ -769,8 +778,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                           </div>
                                         </div>
 
-                                        {/* Información del Paciente */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3" style={{ maxWidth: 'none' }}>
+                                        {/* Información del Paciente y Contacto */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg">
                                           <div>
                                             <p className="text-sm font-medium text-gray-900 mb-1">Paciente</p>
                                             <p className="text-sm text-gray-600">{pacienteInfo.nombre}</p>
@@ -785,8 +794,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                           </div>
                                         </div>
 
-                                        {/* Detalles de la Cita */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3" style={{ maxWidth: 'none' }}>
+                                        {/* Información de la Cita */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                           <div>
                                             <p className="text-sm font-medium text-gray-900 mb-1">Especialidad</p>
                                             <p className="text-sm text-gray-600">{citaInfo.especialidad}</p>
@@ -801,21 +810,59 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                           </div>
                                         </div>
 
+                                        {/* Información CUPS */}
+                                        {citaInfo.codigoCups && (
+                                          <div className="mb-4 border-l-4 border-blue-500 pl-4 bg-blue-50 py-2 rounded-r-lg">
+                                            <div className="flex items-center mb-2">
+                                              <span className="text-sm font-medium text-blue-900">Código CUPS:</span>
+                                              <span className="ml-2 text-sm text-blue-700 font-mono">{citaInfo.codigoCups}</span>
+                                            </div>
+                                            {citaInfo.informacionCups && (
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {citaInfo.informacionCups.categoria && (
+                                                  <div>
+                                                    <span className="text-xs font-medium text-blue-800">Categoría:</span>
+                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.categoria}</span>
+                                                  </div>
+                                                )}
+                                                {citaInfo.informacionCups.tipo && (
+                                                  <div>
+                                                    <span className="text-xs font-medium text-blue-800">Tipo:</span>
+                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.tipo}</span>
+                                                  </div>
+                                                )}
+                                                {citaInfo.informacionCups.ambito && (
+                                                  <div>
+                                                    <span className="text-xs font-medium text-blue-800">Ámbito:</span>
+                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.ambito}</span>
+                                                  </div>
+                                                )}
+                                                {citaInfo.informacionCups.equipo_requerido && (
+                                                  <div>
+                                                    <span className="text-xs font-medium text-blue-800">Equipo:</span>
+                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.equipo_requerido}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
                                         {/* Motivo */}
-                                        <div className="mb-3">
-                                          <p className="text-sm font-medium text-gray-900 mb-1">Motivo de la consulta</p>
-                                          <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{citaInfo.motivo}</p>
+                                        <div className="mb-4">
+                                          <p className="text-sm font-medium text-gray-900 mb-2">Motivo de la consulta</p>
+                                          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border-l-4 border-gray-300">{citaInfo.motivo}</p>
                                         </div>
 
                                         {/* Fecha de creación */}
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-xs text-gray-500 border-t pt-2">
                                           Creada: {formatDate(cita.fechaCreacion)}
                                         </div>
                                       </div>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center space-x-2 ml-4">
+                                    <div className="flex flex-col items-end space-y-2 ml-4">
                                       <button
                                         onClick={() => handleViewPatient(cita.pacienteId)}
                                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
@@ -848,9 +895,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                         >
                                           {updatingStatus[cita.id] ? (
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                          ) : (
-                                            <CalendarDaysIcon className="h-4 w-4 mr-2" />
-                                          )}
+                                          ) : null}
                                           {getStatusLabel(newStatus)}
                                         </button>
                                       ))}
