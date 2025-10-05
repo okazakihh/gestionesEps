@@ -199,7 +199,7 @@ public class HistoriaClinicaService {
         dto.setFechaCreacion(historia.getFechaCreacion().toLocalDate().toString());
         dto.setFechaActualizacion(historia.getFechaActualizacion().toLocalDate().toString());
         dto.setNumeroConsultas((long) historia.getConsultas().size());
-        dto.setNumeroDocumentos((long) historia.getDocumentos().size());
+        dto.setNumeroDocumentos(0L);
 
         // Asignar JSON crudo sin procesar (como pacientes)
         dto.setDatosJson(historia.getDatosJson());

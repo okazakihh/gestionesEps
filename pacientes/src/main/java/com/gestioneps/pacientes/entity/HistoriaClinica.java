@@ -50,8 +50,6 @@ public class HistoriaClinica {
     @JsonIgnore
     private List<ConsultaMedica> consultas = new ArrayList<>();
 
-    @OneToMany(mappedBy = "historiaClinica", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DocumentoMedico> documentos = new ArrayList<>();
 
     // Constructors
     public HistoriaClinica() {
@@ -132,11 +130,4 @@ public class HistoriaClinica {
         this.consultas = consultas;
     }
 
-    public List<DocumentoMedico> getDocumentos() {
-        return documentos;
-    }
-
-    public void setDocumentos(List<DocumentoMedico> documentos) {
-        this.documentos = documentos;
-    }
 }
