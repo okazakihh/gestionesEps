@@ -39,19 +39,19 @@ public class DocumentoMedicaController {
     /**
      * Crear nuevo documento médico
      */
-    @Operation(summary = "Crear nuevo documento médico", description = "Crea un nuevo documento médico para una historia clínica específica.")
+    @Operation(summary = "Crear nuevo documento médico", description = "Crea un nuevo documento médico para una cita médica específica.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Documento médico creado exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud")
     })
-    @PostMapping("/historia/{historiaId}")
+    @PostMapping("/cita/{citaId}")
     public ResponseEntity<Map<String, Object>> crearDocumento(
-            @PathVariable Long historiaId,
+            @PathVariable Long citaId,
             @Valid @RequestBody DocumentoMedicoDTO documentoDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            LOGGER.info("Creando documento médico para historia {}: {}", historiaId, documentoDTO);
-            DocumentoMedicoDTO documentoCreado = documentoMedicoService.crearDocumento(historiaId, documentoDTO);
+            LOGGER.info("Creando documento médico para cita {}: {}", citaId, documentoDTO);
+            DocumentoMedicoDTO documentoCreado = documentoMedicoService.crearDocumento(citaId, documentoDTO);
             response.put(SUCCESS, true);
             response.put("data", documentoCreado);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -92,25 +92,25 @@ public class DocumentoMedicaController {
     }
 
     /**
-     * Obtener documentos por historia clínica
+     * Obtener documentos por cita médica
      */
-    @Operation(summary = "Obtener documentos por historia clínica", description = "Devuelve una lista paginada de documentos médicos para una historia clínica específica.")
+    @Operation(summary = "Obtener documentos por cita médica", description = "Devuelve una lista paginada de documentos médicos para una cita médica específica.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Documentos médicos obtenidos exitosamente")
     })
-    @GetMapping("/historia/{historiaId}")
-    public ResponseEntity<Map<String, Object>> obtenerDocumentosPorHistoria(
-            @PathVariable Long historiaId,
+    @GetMapping("/cita/{citaId}")
+    public ResponseEntity<Map<String, Object>> obtenerDocumentosPorCita(
+            @PathVariable Long citaId,
             @PageableDefault(size = 20) Pageable pageable) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Page<DocumentoMedicoDTO> documentos = documentoMedicoService.obtenerDocumentosPorHistoria(historiaId, pageable);
+            Page<DocumentoMedicoDTO> documentos = documentoMedicoService.obtenerDocumentosPorCita(citaId, pageable);
             response.put(SUCCESS, true);
             response.put("data", documentos);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
-            response.put(ERROR, "Historia clínica no encontrada: " + e.getMessage());
+            response.put(ERROR, "Cita médica no encontrada: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }

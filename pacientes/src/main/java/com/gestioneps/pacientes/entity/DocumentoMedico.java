@@ -16,44 +16,26 @@ public class DocumentoMedico {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "historia_clinica_id", nullable = false)
-    @NotNull(message = "La historia clínica es obligatoria")
-    private HistoriaClinica historiaClinica;
+    @JoinColumn(name = "cita_medica_id", nullable = false)
+    @NotNull(message = "La cita médica es obligatoria")
+    private CitaMedica citaMedica;
 
     @Column(name = "nombre_archivo", nullable = false)
     @NotBlank(message = "El nombre del archivo es obligatorio")
     @Size(max = 255, message = "El nombre del archivo no puede exceder 255 caracteres")
     private String nombreArchivo;
 
-    @Column(name = "tipo_documento", nullable = false)
-    @Enumerated(EnumType.STRING)
-    @NotNull(message = "El tipo de documento es obligatorio")
-    private TipoDocumentoMedico tipoDocumento;
+    @Column(name = "tipo_archivo", nullable = false)
+    @NotBlank(message = "El tipo de archivo es obligatorio")
+    @Size(max = 100, message = "El tipo de archivo no puede exceder 100 caracteres")
+    private String tipoArchivo;
 
-    @Column(name = "descripcion")
-    @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
-    private String descripcion;
+    @Column(name = "archivo_base64", columnDefinition = "TEXT")
+    private String archivoBase64;
 
-    @Column(name = "ruta_archivo", nullable = false)
-    @NotBlank(message = "La ruta del archivo es obligatoria")
-    private String rutaArchivo;
-
-    @Column(name = "tamaño_archivo")
-    private Long tamañoArchivo;
-
-    @Column(name = "tipo_mime")
-    @Size(max = 100, message = "El tipo MIME no puede exceder 100 caracteres")
-    private String tipoMime;
-
-    @Column(name = "medico_responsable")
-    @Size(max = 100, message = "El nombre del médico no puede exceder 100 caracteres")
-    private String medicoResponsable;
-
-    @Column(name = "fecha_documento")
-    private LocalDateTime fechaDocumento;
-
-    @Column(name = "activo", nullable = false)
-    private Boolean activo = true;
+    @Column(name = "documento")
+    @Size(max = 500, message = "El documento no puede exceder 500 caracteres")
+    private String documento;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
@@ -75,12 +57,12 @@ public class DocumentoMedico {
         this.id = id;
     }
 
-    public HistoriaClinica getHistoriaClinica() {
-        return historiaClinica;
+    public CitaMedica getCitaMedica() {
+        return citaMedica;
     }
 
-    public void setHistoriaClinica(HistoriaClinica historiaClinica) {
-        this.historiaClinica = historiaClinica;
+    public void setCitaMedica(CitaMedica citaMedica) {
+        this.citaMedica = citaMedica;
     }
 
     public String getNombreArchivo() {
@@ -91,68 +73,28 @@ public class DocumentoMedico {
         this.nombreArchivo = nombreArchivo;
     }
 
-    public TipoDocumentoMedico getTipoDocumento() {
-        return tipoDocumento;
+    public String getTipoArchivo() {
+        return tipoArchivo;
     }
 
-    public void setTipoDocumento(TipoDocumentoMedico tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
+    public void setTipoArchivo(String tipoArchivo) {
+        this.tipoArchivo = tipoArchivo;
     }
 
-    public String getDescripcion() {
-        return descripcion;
+    public String getArchivoBase64() {
+        return archivoBase64;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public void setArchivoBase64(String archivoBase64) {
+        this.archivoBase64 = archivoBase64;
     }
 
-    public String getRutaArchivo() {
-        return rutaArchivo;
+    public String getDocumento() {
+        return documento;
     }
 
-    public void setRutaArchivo(String rutaArchivo) {
-        this.rutaArchivo = rutaArchivo;
-    }
-
-    public Long getTamañoArchivo() {
-        return tamañoArchivo;
-    }
-
-    public void setTamañoArchivo(Long tamañoArchivo) {
-        this.tamañoArchivo = tamañoArchivo;
-    }
-
-    public String getTipoMime() {
-        return tipoMime;
-    }
-
-    public void setTipoMime(String tipoMime) {
-        this.tipoMime = tipoMime;
-    }
-
-    public String getMedicoResponsable() {
-        return medicoResponsable;
-    }
-
-    public void setMedicoResponsable(String medicoResponsable) {
-        this.medicoResponsable = medicoResponsable;
-    }
-
-    public LocalDateTime getFechaDocumento() {
-        return fechaDocumento;
-    }
-
-    public void setFechaDocumento(LocalDateTime fechaDocumento) {
-        this.fechaDocumento = fechaDocumento;
-    }
-
-    public Boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
+    public void setDocumento(String documento) {
+        this.documento = documento;
     }
 
     public LocalDateTime getFechaCreacion() {

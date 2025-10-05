@@ -1,6 +1,5 @@
 package com.gestioneps.pacientes.dto;
 
-import com.gestioneps.pacientes.entity.TipoDocumentoMedico;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
@@ -9,7 +8,7 @@ public class DocumentoMedicoDTO {
 
     private Long id;
 
-    private Long historiaClinicaId;
+    private Long citaMedicaId;
 
     private String numeroHistoria;
 
@@ -19,32 +18,18 @@ public class DocumentoMedicoDTO {
     @Size(max = 255, message = "El nombre del archivo no puede exceder 255 caracteres")
     private String nombreArchivo;
 
-    @NotNull(message = "El tipo de documento es obligatorio")
-    private TipoDocumentoMedico tipoDocumento;
+    @NotBlank(message = "El tipo de archivo es obligatorio")
+    @Size(max = 100, message = "El tipo de archivo no puede exceder 100 caracteres")
+    private String tipoArchivo;
 
-    @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
-    private String descripcion;
+    private String archivoBase64;
 
-    private String rutaArchivo;
-
-    private Long tamañoArchivo;
-
-    private String tipoMime;
-
-    @Size(max = 100, message = "El nombre del médico no puede exceder 100 caracteres")
-    private String medicoResponsable;
-
-    private LocalDateTime fechaDocumento;
-
-    private Boolean activo;
+    @Size(max = 500, message = "El documento no puede exceder 500 caracteres")
+    private String documento;
 
     private LocalDateTime fechaCreacion;
 
     private LocalDateTime fechaActualizacion;
-
-    // Campos calculados
-    private String tamañoFormateado;
-    private String urlDescarga;
 
     // Constructors
     public DocumentoMedicoDTO() {}
@@ -58,12 +43,12 @@ public class DocumentoMedicoDTO {
         this.id = id;
     }
 
-    public Long getHistoriaClinicaId() {
-        return historiaClinicaId;
+    public Long getCitaMedicaId() {
+        return citaMedicaId;
     }
 
-    public void setHistoriaClinicaId(Long historiaClinicaId) {
-        this.historiaClinicaId = historiaClinicaId;
+    public void setCitaMedicaId(Long citaMedicaId) {
+        this.citaMedicaId = citaMedicaId;
     }
 
     public String getNumeroHistoria() {
@@ -90,68 +75,28 @@ public class DocumentoMedicoDTO {
         this.nombreArchivo = nombreArchivo;
     }
 
-    public TipoDocumentoMedico getTipoDocumento() {
-        return tipoDocumento;
+    public String getTipoArchivo() {
+        return tipoArchivo;
     }
 
-    public void setTipoDocumento(TipoDocumentoMedico tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
+    public void setTipoArchivo(String tipoArchivo) {
+        this.tipoArchivo = tipoArchivo;
     }
 
-    public String getDescripcion() {
-        return descripcion;
+    public String getArchivoBase64() {
+        return archivoBase64;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public void setArchivoBase64(String archivoBase64) {
+        this.archivoBase64 = archivoBase64;
     }
 
-    public String getRutaArchivo() {
-        return rutaArchivo;
+    public String getDocumento() {
+        return documento;
     }
 
-    public void setRutaArchivo(String rutaArchivo) {
-        this.rutaArchivo = rutaArchivo;
-    }
-
-    public Long getTamañoArchivo() {
-        return tamañoArchivo;
-    }
-
-    public void setTamañoArchivo(Long tamañoArchivo) {
-        this.tamañoArchivo = tamañoArchivo;
-    }
-
-    public String getTipoMime() {
-        return tipoMime;
-    }
-
-    public void setTipoMime(String tipoMime) {
-        this.tipoMime = tipoMime;
-    }
-
-    public String getMedicoResponsable() {
-        return medicoResponsable;
-    }
-
-    public void setMedicoResponsable(String medicoResponsable) {
-        this.medicoResponsable = medicoResponsable;
-    }
-
-    public LocalDateTime getFechaDocumento() {
-        return fechaDocumento;
-    }
-
-    public void setFechaDocumento(LocalDateTime fechaDocumento) {
-        this.fechaDocumento = fechaDocumento;
-    }
-
-    public Boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
+    public void setDocumento(String documento) {
+        this.documento = documento;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -168,21 +113,5 @@ public class DocumentoMedicoDTO {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public String getTamañoFormateado() {
-        return tamañoFormateado;
-    }
-
-    public void setTamañoFormateado(String tamañoFormateado) {
-        this.tamañoFormateado = tamañoFormateado;
-    }
-
-    public String getUrlDescarga() {
-        return urlDescarga;
-    }
-
-    public void setUrlDescarga(String urlDescarga) {
-        this.urlDescarga = urlDescarga;
     }
 }

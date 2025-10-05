@@ -1,10 +1,10 @@
 package com.gestioneps.pacientes.service;
 
 import com.gestioneps.pacientes.dto.DocumentoMedicoDTO;
+import com.gestioneps.pacientes.entity.CitaMedica;
 import com.gestioneps.pacientes.entity.DocumentoMedico;
-import com.gestioneps.pacientes.entity.HistoriaClinica;
+import com.gestioneps.pacientes.repository.CitaMedicaRepository;
 import com.gestioneps.pacientes.repository.DocumentoMedicoRepository;
-import com.gestioneps.pacientes.repository.HistoriaClinicaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -19,23 +19,23 @@ import java.util.stream.Collectors;
 public class DocumentoMedicoService {
 
     private final DocumentoMedicoRepository documentoMedicoRepository;
-    private final HistoriaClinicaRepository historiaClinicaRepository;
+    private final CitaMedicaRepository citaMedicaRepository;
 
     public DocumentoMedicoService(DocumentoMedicoRepository documentoMedicoRepository,
-                                 HistoriaClinicaRepository historiaClinicaRepository) {
+                                 CitaMedicaRepository citaMedicaRepository) {
         this.documentoMedicoRepository = documentoMedicoRepository;
-        this.historiaClinicaRepository = historiaClinicaRepository;
+        this.citaMedicaRepository = citaMedicaRepository;
     }
 
     /**
      * Crear nuevo documento médico
      */
-    public DocumentoMedicoDTO crearDocumento(Long historiaId, DocumentoMedicoDTO documentoDTO) {
-        HistoriaClinica historia = historiaClinicaRepository.findById(historiaId)
-            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + historiaId));
+    public DocumentoMedicoDTO crearDocumento(Long citaId, DocumentoMedicoDTO documentoDTO) {
+        CitaMedica cita = citaMedicaRepository.findById(citaId)
+            .orElseThrow(() -> new IllegalArgumentException("Cita médica no encontrada con ID: " + citaId));
 
         DocumentoMedico documento = convertirDtoAEntidad(documentoDTO);
-        documento.setHistoriaClinica(historia);
+        documento.setCitaMedica(cita);
 
         DocumentoMedico documentoGuardado = documentoMedicoRepository.save(documento);
         return convertirEntidadADto(documentoGuardado);
@@ -52,14 +52,14 @@ public class DocumentoMedicoService {
     }
 
     /**
-     * Obtener documentos por historia clínica
+     * Obtener documentos por cita médica
      */
     @Transactional(readOnly = true)
-    public Page<DocumentoMedicoDTO> obtenerDocumentosPorHistoria(Long historiaId, Pageable pageable) {
-        HistoriaClinica historia = historiaClinicaRepository.findById(historiaId)
-            .orElseThrow(() -> new IllegalArgumentException("Historia clínica no encontrada con ID: " + historiaId));
+    public Page<DocumentoMedicoDTO> obtenerDocumentosPorCita(Long citaId, Pageable pageable) {
+        CitaMedica cita = citaMedicaRepository.findById(citaId)
+            .orElseThrow(() -> new IllegalArgumentException("Cita médica no encontrada con ID: " + citaId));
 
-        List<DocumentoMedico> documentos = documentoMedicoRepository.findByHistoriaClinicaAndActivoTrueOrderByFechaCreacionDesc(historia);
+        List<DocumentoMedico> documentos = documentoMedicoRepository.findByCitaMedicaOrderByFechaCreacionDesc(cita);
 
         // Aplicar paginación manualmente
         int start = (int) pageable.getOffset();
@@ -86,27 +86,22 @@ public class DocumentoMedicoService {
 
         // Actualizar campos
         documento.setNombreArchivo(documentoDTO.getNombreArchivo());
-        documento.setTipoDocumento(documentoDTO.getTipoDocumento());
-        documento.setDescripcion(documentoDTO.getDescripcion());
-        documento.setRutaArchivo(documentoDTO.getRutaArchivo());
-        documento.setTamañoArchivo(documentoDTO.getTamañoArchivo());
-        documento.setTipoMime(documentoDTO.getTipoMime());
-        documento.setMedicoResponsable(documentoDTO.getMedicoResponsable());
-        documento.setFechaDocumento(documentoDTO.getFechaDocumento());
+        documento.setTipoArchivo(documentoDTO.getTipoArchivo());
+        documento.setArchivoBase64(documentoDTO.getArchivoBase64());
+        documento.setDocumento(documentoDTO.getDocumento());
 
         DocumentoMedico documentoActualizado = documentoMedicoRepository.save(documento);
         return convertirEntidadADto(documentoActualizado);
     }
 
     /**
-     * Eliminar documento médico (desactivar)
+     * Eliminar documento médico
      */
     public void eliminarDocumento(Long id) {
         DocumentoMedico documento = documentoMedicoRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Documento médico no encontrado con ID: " + id));
 
-        documento.setActivo(false);
-        documentoMedicoRepository.save(documento);
+        documentoMedicoRepository.delete(documento);
     }
 
     /**
@@ -116,18 +111,13 @@ public class DocumentoMedicoService {
         DocumentoMedicoDTO dto = new DocumentoMedicoDTO();
 
         dto.setId(documento.getId());
-        dto.setHistoriaClinicaId(documento.getHistoriaClinica().getId());
-        dto.setNumeroHistoria(documento.getHistoriaClinica().getNumeroHistoria());
-        dto.setPacienteNombre(documento.getHistoriaClinica().getPaciente().getNombreCompleto());
+        dto.setCitaMedicaId(documento.getCitaMedica().getId());
+        dto.setNumeroHistoria(String.valueOf(documento.getCitaMedica().getId())); // Using cita ID as numeroHistoria
+        dto.setPacienteNombre(documento.getCitaMedica().getPaciente().getNombreCompleto());
         dto.setNombreArchivo(documento.getNombreArchivo());
-        dto.setTipoDocumento(documento.getTipoDocumento());
-        dto.setDescripcion(documento.getDescripcion());
-        dto.setRutaArchivo(documento.getRutaArchivo());
-        dto.setTamañoArchivo(documento.getTamañoArchivo());
-        dto.setTipoMime(documento.getTipoMime());
-        dto.setMedicoResponsable(documento.getMedicoResponsable());
-        dto.setFechaDocumento(documento.getFechaDocumento());
-        dto.setActivo(documento.getActivo());
+        dto.setTipoArchivo(documento.getTipoArchivo());
+        dto.setArchivoBase64(documento.getArchivoBase64());
+        dto.setDocumento(documento.getDocumento());
         dto.setFechaCreacion(documento.getFechaCreacion());
         dto.setFechaActualizacion(documento.getFechaActualizacion());
 
@@ -141,14 +131,9 @@ public class DocumentoMedicoService {
         DocumentoMedico documento = new DocumentoMedico();
 
         documento.setNombreArchivo(dto.getNombreArchivo());
-        documento.setTipoDocumento(dto.getTipoDocumento());
-        documento.setDescripcion(dto.getDescripcion());
-        documento.setRutaArchivo(dto.getRutaArchivo());
-        documento.setTamañoArchivo(dto.getTamañoArchivo());
-        documento.setTipoMime(dto.getTipoMime());
-        documento.setMedicoResponsable(dto.getMedicoResponsable());
-        documento.setFechaDocumento(dto.getFechaDocumento());
-        documento.setActivo(dto.getActivo() != null ? dto.getActivo() : true);
+        documento.setTipoArchivo(dto.getTipoArchivo());
+        documento.setArchivoBase64(dto.getArchivoBase64());
+        documento.setDocumento(dto.getDocumento());
 
         return documento;
     }
