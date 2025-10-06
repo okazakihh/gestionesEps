@@ -26,10 +26,12 @@ show_menu() {
     echo "5) 🔄 Reiniciar Gateway"
     echo "6) 🔄 Reiniciar Gestions"
     echo "7) 🔄 Reiniciar Pacientes"
-    echo "8) 📋 Ver logs de Gateway"
-    echo "9) 📋 Ver logs de Gestions"
-    echo "10) 📋 Ver logs de Pacientes"
-    echo "11) 🐳 Configurar base de datos (solo inicial)"
+    echo "8) 🔄 Reiniciar Administrative"
+    echo "9) � Ver logs de Gateway"
+    echo "10) 📋 Ver logs de Gestions"
+    echo "11) 📋 Ver logs de Pacientes"
+    echo "12) 📋 Ver logs de Administrative"
+    echo "13) 🐳 Configurar base de datos (solo inicial)"
     echo "0) ❌ Salir"
     echo ""
 }
@@ -46,7 +48,7 @@ run_command() {
 main() {
     while true; do
         show_menu
-        read -p "Seleccione una opción (0-11): " choice
+        read -p "Seleccione una opción (0-13): " choice
         echo ""
 
         case $choice in
@@ -78,15 +80,22 @@ main() {
                 run_command "restart pacientes"
                 ;;
             8)
-                run_command "logs gateway"
+                echo -e "${YELLOW}🔄 Reiniciando Administrative...${NC}"
+                run_command "restart administrative"
                 ;;
             9)
-                run_command "logs gestions"
+                run_command "logs gateway"
                 ;;
             10)
-                run_command "logs pacientes"
+                run_command "logs gestions"
                 ;;
             11)
+                run_command "logs pacientes"
+                ;;
+            12)
+                run_command "logs administrative"
+                ;;
+            13)
                 echo -e "${YELLOW}🐳 Configurando base de datos...${NC}"
                 run_command "setup-db"
                 ;;

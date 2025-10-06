@@ -78,6 +78,18 @@ spring:
             - Path=/api/codigos-cups/**
           filters:
             - StripPrefix=0
+        - id: empleados_route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/empleados/**
+          filters:
+            - StripPrefix=0
+        - id: nomina_route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/nomina/**
+          filters:
+            - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}
@@ -87,11 +99,6 @@ spring:
   #     host: redis
   #     port: 6379
 
-# eureka:
-#   client:
-#     enabled: false
-#     service-url:
-#       defaultZone: http://eureka-server:8761/eureka/
 
 management:
   endpoints:

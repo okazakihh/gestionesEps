@@ -16,9 +16,9 @@ NC='\033[0m' # No Color
 # Configuración
 JARS_DIR="/home/ubuntu/jars"
 LOGS_DIR="/home/ubuntu/logs"
-SERVICES=("gateway" "gestions" "pacientes")
-PORTS=("8081" "8080" "8082")
-DATABASES=("" "gestions_db" "pacientes_db")
+SERVICES=("gateway" "gestions" "pacientes" "administrative")
+PORTS=("8081" "8080" "8082" "8084")
+DATABASES=("" "gestions_db" "pacientes_db" "administrative_db")
 
 # Función para mostrar ayuda
 show_help() {
@@ -37,7 +37,7 @@ show_help() {
     echo "  logs [servicio]      - Ver logs de un servicio"
     echo "  setup-db            - Configurar bases de datos PostgreSQL"
     echo ""
-    echo "Servicios disponibles: gateway, gestions, pacientes"
+    echo "Servicios disponibles: gateway, gestions, pacientes, administrative"
     echo ""
     echo "Ejemplos:"
     echo "  $0 start pacientes     # Iniciar solo pacientes"
@@ -116,9 +116,11 @@ setup_database() {
     echo "Creando bases de datos..."
     sudo -u postgres psql -c "CREATE DATABASE IF NOT EXISTS gestions_db;" 2>/dev/null || true
     sudo -u postgres psql -c "CREATE DATABASE IF NOT EXISTS pacientes_db;" 2>/dev/null || true
+    sudo -u postgres psql -c "CREATE DATABASE IF NOT EXISTS administrative_db;" 2>/dev/null || true
     sudo -u postgres psql -c "CREATE USER IF NOT EXISTS postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE gestions_db TO postgres;" 2>/dev/null || true
     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE pacientes_db TO postgres;" 2>/dev/null || true
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE administrative_db TO postgres;" 2>/dev/null || true
 
     echo -e "${GREEN}✅ PostgreSQL configurado${NC}"
 }
@@ -160,6 +162,14 @@ start_service() {
             ;;
         "pacientes")
             export DB_URL="jdbc:postgresql://localhost:5432/pacientes_db"
+            export DB_USERNAME="postgres"
+            export DB_PASSWORD="postgres"
+            export JAVA_OPTS="-Xmx200m -Xms100m"
+            # NO establecer SPRING_JPA_HIBERNATE_DDL_AUTO para usar configuración del application.properties
+            nohup java $JAVA_OPTS -jar "$jar_file" > "${LOGS_DIR}/${service}.log" 2>&1 &
+            ;;
+        "administrative")
+            export DB_URL="jdbc:postgresql://localhost:5432/administrative_db"
             export DB_USERNAME="postgres"
             export DB_PASSWORD="postgres"
             export JAVA_OPTS="-Xmx200m -Xms100m"
