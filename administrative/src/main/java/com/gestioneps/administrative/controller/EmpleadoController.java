@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/empleados")
 @Tag(name = "Empleados", description = "API para gestión de empleados")
@@ -22,68 +25,112 @@ public class EmpleadoController {
         this.empleadoService = empleadoService;
     }
 
+    // Constantes para mensajes de respuesta
+    private static final String SUCCESS = "success";
+    private static final String ERROR = "error";
+    private static final String DATA = "data";
+    private static final String EMPLEADO_NO_ENCONTRADO = "Empleado no encontrado con ID: ";
+
     @PostMapping
     @Operation(summary = "Crear empleado", description = "Crea un nuevo empleado desde JSON crudo")
-    public ResponseEntity<EmpleadoDTO> crearEmpleado(@RequestBody String jsonData) {
+    public ResponseEntity<Map<String, Object>> crearEmpleado(@RequestBody String jsonData) {
+        Map<String, Object> response = new HashMap<>();
         try {
             EmpleadoDTO empleado = empleadoService.crearEmpleadoDesdeJson(jsonData);
-            return ResponseEntity.status(HttpStatus.CREATED).body(empleado);
+            response.put(SUCCESS, true);
+            response.put(DATA, empleado);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Datos inválidos: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener empleado por ID", description = "Obtiene un empleado específico por su ID")
-    public ResponseEntity<EmpleadoDTO> obtenerEmpleado(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> obtenerEmpleado(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
         try {
             EmpleadoDTO empleado = empleadoService.obtenerEmpleadoPorId(id);
-            return ResponseEntity.ok(empleado);
+            response.put(SUCCESS, true);
+            response.put(DATA, empleado);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            response.put(SUCCESS, false);
+            response.put(ERROR, EMPLEADO_NO_ENCONTRADO + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping
     @Operation(summary = "Obtener empleados activos", description = "Obtiene una lista paginada de empleados activos")
-    public ResponseEntity<Page<EmpleadoDTO>> obtenerEmpleadosActivos(
+    public ResponseEntity<Map<String, Object>> obtenerEmpleadosActivos(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> response = new HashMap<>();
         Pageable pageable = PageRequest.of(page, size);
         Page<EmpleadoDTO> empleados = empleadoService.obtenerEmpleadosActivos(pageable);
-        return ResponseEntity.ok(empleados);
+        response.put(SUCCESS, true);
+        response.put(DATA, empleados);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar empleado", description = "Actualiza un empleado existente")
-    public ResponseEntity<EmpleadoDTO> actualizarEmpleado(@PathVariable Long id, @RequestBody String jsonData) {
+    public ResponseEntity<Map<String, Object>> actualizarEmpleado(@PathVariable Long id, @RequestBody String jsonData) {
+        Map<String, Object> response = new HashMap<>();
         try {
             EmpleadoDTO empleado = empleadoService.actualizarEmpleado(id, jsonData);
-            return ResponseEntity.ok(empleado);
+            response.put(SUCCESS, true);
+            response.put(DATA, empleado);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            response.put(SUCCESS, false);
+            response.put(ERROR, EMPLEADO_NO_ENCONTRADO + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PatchMapping("/{id}/desactivar")
     @Operation(summary = "Desactivar empleado", description = "Desactiva un empleado (soft delete)")
-    public ResponseEntity<Void> desactivarEmpleado(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> desactivarEmpleado(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
         try {
             empleadoService.desactivarEmpleado(id);
-            return ResponseEntity.noContent().build();
+            response.put(SUCCESS, true);
+            response.put(DATA, null);
+            response.put("message", "Empleado desactivado");
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            response.put(SUCCESS, false);
+            response.put("message", EMPLEADO_NO_ENCONTRADO + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar empleado", description = "Elimina permanentemente un empleado")
-    public ResponseEntity<Void> eliminarEmpleado(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> eliminarEmpleado(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
         try {
             empleadoService.eliminarEmpleado(id);
-            return ResponseEntity.noContent().build();
+            response.put(SUCCESS, true);
+            response.put(DATA, null);
+            response.put("message", "Empleado eliminado");
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            response.put(SUCCESS, false);
+            response.put("message", EMPLEADO_NO_ENCONTRADO + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 }

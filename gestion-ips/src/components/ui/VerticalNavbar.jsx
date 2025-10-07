@@ -20,9 +20,9 @@ const navItems = [
     icon: '🏥',
   },
   {
-    name: 'Citas',
-    href: '/citas',
-    icon: '📅',
+    name: 'Empleados',
+    href: '/empleados',
+    icon: '👷',
   },
   {
     name: 'Reportes',

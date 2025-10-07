@@ -5,6 +5,7 @@ import CreateHistoriaClinicaModal from './CreateHistoriaClinicaModal.jsx';
 import CreateConsultaMedicaModal from './CreateConsultaMedicaModal.jsx';
 import PatientDetailModal from './PatientDetailModal.jsx';
 import Swal from 'sweetalert2';
+import { ActionIcon, Group } from '@mantine/core';
 
 const AgendaModal = ({ isOpen, onClose }) => {
   const [citas, setCitas] = useState([]);
@@ -31,6 +32,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
   });
   const [filteredCitas, setFilteredCitas] = useState([]);
   const [showCitasCards, setShowCitasCards] = useState(true);
+  const [selectedCitaForDetail, setSelectedCitaForDetail] = useState(null);
+  const [isCitaDetailModalOpen, setIsCitaDetailModalOpen] = useState(false);
 
   // Estado para manejar diferentes vistas del modal
   const [currentView, setCurrentView] = useState('agenda'); // 'agenda', 'create_historia', 'create_consulta', 'view_patient'
@@ -479,6 +482,18 @@ const AgendaModal = ({ isOpen, onClose }) => {
     setCurrentView('view_patient');
   };
 
+  // Función para manejar el clic en "Detalle de la Cita"
+  const handleViewCitaDetail = (cita) => {
+    setSelectedCitaForDetail(cita);
+    setIsCitaDetailModalOpen(true);
+  };
+
+  // Función para cerrar el modal de detalle de cita
+  const handleCloseCitaDetailModal = () => {
+    setIsCitaDetailModalOpen(false);
+    setSelectedCitaForDetail(null);
+  };
+
   // Función para volver a la agenda desde los formularios
   const handleBackToAgenda = () => {
     setCurrentView('agenda');
@@ -727,7 +742,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                       </button>
                     </div>
 
-                    {/* Citas List */}
+                    {/* Citas Table */}
                     {showCitasCards && (
                       <>
                         {filteredCitas.length === 0 ? (
@@ -744,166 +759,129 @@ const AgendaModal = ({ isOpen, onClose }) => {
                             </p>
                           </div>
                         ) : (
-                          <div className="space-y-4">
-                            {filteredCitas.map((cita) => {
-                              const citaInfo = getCitaInfo(cita);
-                              const pacienteInfo = getPacienteInfo(cita);
+                          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                            <div className="px-4 py-5 sm:p-6">
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                  <thead className="bg-gray-50">
+                                    <tr>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID Cita
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Paciente
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Fecha/Hora
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Especialidad
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado
+                                      </th>
+                                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredCitas.map((cita) => {
+                                      const citaInfo = getCitaInfo(cita);
+                                      const pacienteInfo = getPacienteInfo(cita);
 
-                              return (
-                                <div key={cita.id} className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow duration-200 border">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-4 flex-1">
-                                      <div className="flex-shrink-0">
-                                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                          <CalendarDaysIcon className="h-6 w-6 text-green-600" />
-                                        </div>
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        {/* Header con ID y Estado */}
-                                        <div className="flex items-center justify-between mb-3">
-                                          <h4 className="text-lg font-semibold text-gray-900">
-                                            Cita #{cita.id}
-                                          </h4>
-                                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(citaInfo.estado)}`}>
-                                            {getStatusLabel(citaInfo.estado)}
-                                          </span>
-                                        </div>
-
-                                        {/* Fecha y Hora */}
-                                        <div className="mb-4">
-                                          <div className="flex items-center text-sm text-gray-600 mb-1">
-                                            <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                            <span className="font-medium">Fecha programada:</span>
-                                            <span className="ml-2">{citaInfo.fechaHoraCita ? formatDate(citaInfo.fechaHoraCita) : 'N/A'}</span>
-                                          </div>
-                                        </div>
-
-                                        {/* Información del Paciente y Contacto */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-lg">
-                                          <div>
-                                            <p className="text-sm font-medium text-gray-900 mb-1">Paciente</p>
-                                            <p className="text-sm text-gray-600">{pacienteInfo.nombre}</p>
-                                            <p className="text-sm text-gray-500">{pacienteInfo.documento}</p>
-                                          </div>
-                                          <div>
-                                            <p className="text-sm font-medium text-gray-900 mb-1">Contacto</p>
-                                            <div className="flex items-center text-sm text-gray-600">
-                                              <PhoneIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                              {pacienteInfo.telefono}
+                                      return (
+                                        <tr key={cita.id} className="hover:bg-gray-50">
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            #{cita.id}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <div>
+                                              <div className="font-medium">{pacienteInfo.nombre}</div>
+                                              <div className="text-gray-500 text-xs">{pacienteInfo.documento}</div>
                                             </div>
-                                          </div>
-                                        </div>
-
-                                        {/* Información de la Cita */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                          <div>
-                                            <p className="text-sm font-medium text-gray-900 mb-1">Especialidad</p>
-                                            <p className="text-sm text-gray-600">{citaInfo.especialidad}</p>
-                                          </div>
-                                          <div>
-                                            <p className="text-sm font-medium text-gray-900 mb-1">Médico</p>
-                                            <p className="text-sm text-gray-600">{citaInfo.medicoAsignado}</p>
-                                          </div>
-                                          <div>
-                                            <p className="text-sm font-medium text-gray-900 mb-1">Tipo</p>
-                                            <p className="text-sm text-gray-600">{citaInfo.tipoCita}</p>
-                                          </div>
-                                        </div>
-
-                                        {/* Información CUPS */}
-                                        {citaInfo.codigoCups && (
-                                          <div className="mb-4 border-l-4 border-blue-500 pl-4 bg-blue-50 py-2 rounded-r-lg">
-                                            <div className="flex items-center mb-2">
-                                              <span className="text-sm font-medium text-blue-900">Código CUPS:</span>
-                                              <span className="ml-2 text-sm text-blue-700 font-mono">{citaInfo.codigoCups}</span>
-                                            </div>
-                                            {citaInfo.informacionCups && (
-                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {citaInfo.informacionCups.categoria && (
-                                                  <div>
-                                                    <span className="text-xs font-medium text-blue-800">Categoría:</span>
-                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.categoria}</span>
-                                                  </div>
-                                                )}
-                                                {citaInfo.informacionCups.tipo && (
-                                                  <div>
-                                                    <span className="text-xs font-medium text-blue-800">Tipo:</span>
-                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.tipo}</span>
-                                                  </div>
-                                                )}
-                                                {citaInfo.informacionCups.ambito && (
-                                                  <div>
-                                                    <span className="text-xs font-medium text-blue-800">Ámbito:</span>
-                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.ambito}</span>
-                                                  </div>
-                                                )}
-                                                {citaInfo.informacionCups.equipo_requerido && (
-                                                  <div>
-                                                    <span className="text-xs font-medium text-blue-800">Equipo:</span>
-                                                    <span className="ml-1 text-xs text-blue-700">{citaInfo.informacionCups.equipo_requerido}</span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        {/* Motivo */}
-                                        <div className="mb-4">
-                                          <p className="text-sm font-medium text-gray-900 mb-2">Motivo de la consulta</p>
-                                          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border-l-4 border-gray-300">{citaInfo.motivo}</p>
-                                        </div>
-
-                                        {/* Fecha de creación */}
-                                        <div className="text-xs text-gray-500 border-t pt-2">
-                                          Creada: {formatDate(cita.fechaCreacion)}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex flex-col items-end space-y-2 ml-4">
-                                      <button
-                                        onClick={() => handleViewPatient(cita.pacienteId)}
-                                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-                                      >
-                                        <UserIcon className="h-4 w-4 mr-2" />
-                                        Ver Paciente
-                                      </button>
-
-                                      {/* Status Change Buttons */}
-                                      {getAvailableStatusTransitions(citaInfo.estado).map((newStatus) => (
-                                        <button
-                                          key={newStatus}
-                                          onClick={() => {
-                                            if (newStatus === 'ATENDIDO') {
-                                              handleAtendidoClick(cita);
-                                            } else {
-                                              updateAppointmentStatus(cita.id, newStatus);
-                                            }
-                                          }}
-                                          disabled={updatingStatus[cita.id]}
-                                          className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
-                                            newStatus === 'EN_SALA'
-                                              ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
-                                              : newStatus === 'ATENDIDO'
-                                              ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                                              : newStatus === 'NO_SE_PRESENTO'
-                                              ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                                              : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                        >
-                                          {updatingStatus[cita.id] ? (
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                          ) : null}
-                                          {getStatusLabel(newStatus)}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {citaInfo.fechaHoraCita ? formatDate(citaInfo.fechaHoraCita) : 'N/A'}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {citaInfo.especialidad}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(citaInfo.estado)}`}>
+                                              {getStatusLabel(citaInfo.estado)}
+                                            </span>
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <Group gap="xs">
+                                              <ActionIcon
+                                                variant="light"
+                                                color="gray"
+                                                size="sm"
+                                                onClick={() => handleViewPatient(cita.pacienteId)}
+                                                title="Ver paciente"
+                                              >
+                                                <UserIcon className="w-4 h-4" />
+                                              </ActionIcon>
+                                              <ActionIcon
+                                                variant="light"
+                                                color="blue"
+                                                size="sm"
+                                                onClick={() => handleViewCitaDetail(cita)}
+                                                title="Detalle de la cita"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                              </ActionIcon>
+                                              {/* Status Change Buttons */}
+                                              {getAvailableStatusTransitions(citaInfo.estado).map((newStatus) => (
+                                                <ActionIcon
+                                                  key={newStatus}
+                                                  variant="light"
+                                                  color={
+                                                    newStatus === 'EN_SALA' ? 'yellow' :
+                                                    newStatus === 'ATENDIDO' ? 'green' :
+                                                    newStatus === 'NO_SE_PRESENTO' ? 'red' : 'blue'
+                                                  }
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    if (newStatus === 'ATENDIDO') {
+                                                      handleAtendidoClick(cita);
+                                                    } else {
+                                                      updateAppointmentStatus(cita.id, newStatus);
+                                                    }
+                                                  }}
+                                                  disabled={updatingStatus[cita.id]}
+                                                  title={getStatusLabel(newStatus)}
+                                                  loading={updatingStatus[cita.id]}
+                                                >
+                                                  {newStatus === 'EN_SALA' && (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                  )}
+                                                  {newStatus === 'ATENDIDO' && (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                  )}
+                                                  {newStatus === 'NO_SE_PRESENTO' && (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                  )}
+                                                </ActionIcon>
+                                              ))}
+                                            </Group>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </>
@@ -951,6 +929,205 @@ const AgendaModal = ({ isOpen, onClose }) => {
           onClose={handleBackToAgenda}
         />
       )}
+
+      {/* Modal de Detalle de Cita */}
+      {isCitaDetailModalOpen && selectedCitaForDetail && (() => {
+        const citaInfo = getCitaInfo(selectedCitaForDetail);
+        const pacienteInfo = getPacienteInfo(selectedCitaForDetail);
+
+        return (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={handleCloseCitaDetailModal}></div>
+              </div>
+
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-4xl">
+                {/* Header */}
+                <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-white">
+                    Detalle de la Cita #{selectedCitaForDetail.id}
+                  </h3>
+                  <button
+                    onClick={handleCloseCitaDetailModal}
+                    className="text-white hover:text-gray-200 transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {/* Estado y Fecha */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(citaInfo.estado)}`}>
+                          {getStatusLabel(citaInfo.estado)}
+                        </span>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
+                          <span>{citaInfo.fechaHoraCita ? formatDate(citaInfo.fechaHoraCita) : 'Fecha no disponible'}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Creada: {formatDate(selectedCitaForDetail.fechaCreacion)}
+                      </div>
+                    </div>
+
+                    {/* Información del Paciente */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                        <UserIcon className="h-5 w-5 mr-2 text-gray-600" />
+                        Información del Paciente
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 mb-1">Nombre Completo</p>
+                          <p className="text-sm text-gray-600">{pacienteInfo.nombre}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 mb-1">Documento</p>
+                          <p className="text-sm text-gray-600">{pacienteInfo.documento}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 mb-1">Teléfono</p>
+                          <p className="text-sm text-gray-600">{pacienteInfo.telefono}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 mb-1">Estado</p>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${selectedCitaForDetail.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {selectedCitaForDetail.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Información de la Cita */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                        <CalendarDaysIcon className="h-5 w-5 mr-2 text-blue-600" />
+                        Información de la Cita
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 mb-1">Especialidad</p>
+                          <p className="text-sm text-blue-700">{citaInfo.especialidad}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 mb-1">Médico Asignado</p>
+                          <p className="text-sm text-blue-700">{citaInfo.medicoAsignado}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 mb-1">Tipo de Cita</p>
+                          <p className="text-sm text-blue-700">{citaInfo.tipoCita}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 mb-1">Motivo</p>
+                          <p className="text-sm text-blue-700">{citaInfo.motivo}</p>
+                        </div>
+                      </div>
+
+                      {/* Notas adicionales */}
+                      {citaInfo.notas && citaInfo.notas !== 'Sin notas' && (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium text-blue-900 mb-2">Notas Adicionales</p>
+                          <p className="text-sm text-blue-700 bg-blue-100 p-3 rounded-lg border-l-4 border-blue-500">{citaInfo.notas}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Información CUPS */}
+                    {citaInfo.codigoCups && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 className="text-lg font-semibold text-green-900 mb-3 flex items-center">
+                          <svg className="h-5 w-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Código CUPS
+                        </h4>
+                        <div className="flex items-center mb-2">
+                          <span className="text-sm font-medium text-green-900">Código:</span>
+                          <span className="ml-2 text-sm text-green-700 font-mono bg-green-100 px-2 py-1 rounded">{citaInfo.codigoCups}</span>
+                        </div>
+                        {citaInfo.informacionCups && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {citaInfo.informacionCups.categoria && (
+                              <div>
+                                <span className="text-xs font-medium text-green-800">Categoría:</span>
+                                <span className="ml-1 text-xs text-green-700">{citaInfo.informacionCups.categoria}</span>
+                              </div>
+                            )}
+                            {citaInfo.informacionCups.tipo && (
+                              <div>
+                                <span className="text-xs font-medium text-green-800">Tipo:</span>
+                                <span className="ml-1 text-xs text-green-700">{citaInfo.informacionCups.tipo}</span>
+                              </div>
+                            )}
+                            {citaInfo.informacionCups.ambito && (
+                              <div>
+                                <span className="text-xs font-medium text-green-800">Ámbito:</span>
+                                <span className="ml-1 text-xs text-green-700">{citaInfo.informacionCups.ambito}</span>
+                              </div>
+                            )}
+                            {citaInfo.informacionCups.equipo_requerido && (
+                              <div>
+                                <span className="text-xs font-medium text-green-800">Equipo Requerido:</span>
+                                <span className="ml-1 text-xs text-green-700">{citaInfo.informacionCups.equipo_requerido}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Acciones disponibles */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {getAvailableStatusTransitions(citaInfo.estado).map((newStatus) => (
+                          <button
+                            key={newStatus}
+                            onClick={() => {
+                              updateAppointmentStatus(selectedCitaForDetail.id, newStatus);
+                              handleCloseCitaDetailModal();
+                            }}
+                            disabled={updatingStatus[selectedCitaForDetail.id]}
+                            className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
+                              newStatus === 'EN_SALA'
+                                ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                                : newStatus === 'ATENDIDO'
+                                ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                                : newStatus === 'NO_SE_PRESENTO'
+                                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {updatingStatus[selectedCitaForDetail.id] ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            ) : null}
+                            {getStatusLabel(newStatus)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={handleCloseCitaDetailModal}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

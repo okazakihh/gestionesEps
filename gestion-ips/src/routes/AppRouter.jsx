@@ -13,6 +13,7 @@ import GestionPacientesPage from '../pages/pacientes/GestionPacientesPage.jsx';
 import HistoriasClinicasPage from '../pages/pacientes/HistoriasClinicasPage.jsx';
 import ConsultasMedicasPage from '../pages/pacientes/ConsultasMedicasPage.jsx';
 import DocumentosMedicosPage from '../pages/pacientes/DocumentosMedicosPage.jsx';
+import EmpleadosPage from '../pages/empleados/EmpleadosPage.jsx';
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -71,6 +72,15 @@ const AppRouter = () => {
         element={
           <ProtectedRoute>
             <UsuariosPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/empleados"
+        element={
+          <ProtectedRoute>
+            <EmpleadosPage />
           </ProtectedRoute>
         }
       />

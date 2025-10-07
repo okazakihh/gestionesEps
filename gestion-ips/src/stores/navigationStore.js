@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ViewType = 
+export type ViewType =
   | 'login'
   | 'dashboard'
   | 'usuarios'
   | 'pacientes'
-  | 'citas'
+  | 'empleados'
   | 'reportes'
   | 'configuracion';
 

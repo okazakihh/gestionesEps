@@ -4,17 +4,9 @@ import { SPALoginPage } from '@/pages/SPALoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import UsuariosPage from '@/pages/UsersPage';
 import PacientesPage from '@/pages/pacientes/PacientesPage';
+import EmpleadosPage from '@/pages/empleados/EmpleadosPage';
 import { SPALayout } from '@/components/layouts/SPALayout';
 
-const CitasPage = () => (
-  <SPALayout title="Gestión de Citas" subtitle="Administrar citas médicas">
-    <div className="p-6">
-      <div className="text-center text-gray-500 py-12">
-        <p className="text-lg">Página de gestión de citas en desarrollo...</p>
-      </div>
-    </div>
-  </SPALayout>
-);
 
 const ReportesPage = () => (
   <SPALayout title="Reportes" subtitle="Generar y visualizar reportes del sistema">
@@ -41,7 +33,7 @@ const viewComponents: Record<ViewType, React.ComponentType> = {
   dashboard: DashboardPage,
   usuarios: UsuariosPage,
   pacientes: PacientesPage,
-  citas: CitasPage,
+  empleados: EmpleadosPage,
   reportes: ReportesPage,
   configuracion: ConfiguracionPage,
 };
