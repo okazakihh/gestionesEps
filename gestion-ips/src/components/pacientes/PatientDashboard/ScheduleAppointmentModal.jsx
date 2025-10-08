@@ -8,6 +8,7 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { pacientesApiService, codigosCupsApiService } from '../../../services/pacientesApiService.js';
+import { empleadosApiService } from '../../../services/empleadosApiService.js';
 import { notifications } from '@mantine/notifications';
 import { Select } from '@mantine/core';
 import Swal from 'sweetalert2';
@@ -17,6 +18,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
     fechaHoraCita: '',
     motivo: '',
     medicoAsignado: '',
+    medicoId: '',
     estado: 'PROGRAMADA',
     notas: '',
     codigoCups: ''
@@ -28,6 +30,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
   const [codigosCups, setCodigosCups] = useState([]);
   const [loadingCodigosCups, setLoadingCodigosCups] = useState(false);
   const [selectedCupData, setSelectedCupData] = useState(null);
+  const [medicos, setMedicos] = useState([]);
+  const [loadingMedicos, setLoadingMedicos] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -68,6 +72,19 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         setSelectedCupData(null);
       }
     }
+
+    // Handle doctor selection - store both name and ID
+    if (field === 'medicoAsignado' && value) {
+      const selectedMedico = medicos.find(medico => getNombreCompletoMedico(medico) === value);
+      if (selectedMedico) {
+        setFormData(prev => ({
+          ...prev,
+          medicoAsignado: value,
+          medicoId: selectedMedico.id
+        }));
+        return; // Exit early to avoid the default setFormData
+      }
+    }
   };
 
   // Load CUPS codes when modal opens
@@ -84,10 +101,68 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
     }
   };
 
-  // Load CUPS codes when modal opens
+  // Load doctors when modal opens
+  const loadMedicos = async () => {
+    try {
+      setLoadingMedicos(true);
+      const response = await empleadosApiService.getEmpleados({ size: 1000 }); // Load all employees
+      const empleados = response.content || [];
+
+      // Filter employees that are medical doctors
+      const medicosFiltrados = empleados.filter(empleado => {
+        try {
+          const datosCompletos = JSON.parse(empleado.jsonData || '{}');
+          if (datosCompletos.jsonData) {
+            const datosInternos = JSON.parse(datosCompletos.jsonData);
+            const informacionLaboral = datosInternos.informacionLaboral || {};
+            return informacionLaboral.tipoPersonal === 'MEDICO' && informacionLaboral.tipoMedico === 'DOCTOR';
+          }
+          return false;
+        } catch (error) {
+          console.error('Error parsing employee data:', error);
+          return false;
+        }
+      });
+
+      setMedicos(medicosFiltrados);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+      // Don't show error to user, just log it
+    } finally {
+      setLoadingMedicos(false);
+    }
+  };
+
+  // Get full name of a doctor
+  const getNombreCompletoMedico = (medico) => {
+    try {
+      const datosCompletos = JSON.parse(medico.jsonData || '{}');
+      if (datosCompletos.jsonData) {
+        const datosInternos = JSON.parse(datosCompletos.jsonData);
+        const informacionPersonal = datosInternos.informacionPersonal || {};
+        const informacionLaboral = datosInternos.informacionLaboral || {};
+
+        const primerNombre = informacionPersonal.primerNombre || '';
+        const segundoNombre = informacionPersonal.segundoNombre || '';
+        const primerApellido = informacionPersonal.primerApellido || '';
+        const segundoApellido = informacionPersonal.segundoApellido || '';
+        const especialidad = informacionLaboral.especialidad || '';
+
+        const nombreCompleto = `${primerNombre} ${segundoNombre} ${primerApellido} ${segundoApellido}`.trim();
+        return especialidad ? `${nombreCompleto} - ${especialidad}` : nombreCompleto;
+      }
+      return `Doctor ID: ${medico.id}`;
+    } catch (error) {
+      console.error('Error getting doctor name:', error);
+      return `Doctor ID: ${medico.id}`;
+    }
+  };
+
+  // Load CUPS codes and doctors when modal opens
   React.useEffect(() => {
     if (isOpen) {
       loadCodigosCups();
+      loadMedicos();
     }
   }, [isOpen]);
 
@@ -138,6 +213,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         fechaHoraCita: formData.fechaHoraCita,
         motivo: formData.motivo.trim(),
         medicoAsignado: formData.medicoAsignado.trim(),
+        medicoId: formData.medicoId,
         estado: formData.estado,
         notas: formData.notas.trim(),
         codigoCups: formData.codigoCups,
@@ -178,6 +254,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
           fechaHoraCita: '',
           motivo: '',
           medicoAsignado: '',
+          medicoId: '',
           estado: 'PROGRAMADA',
           notas: '',
           codigoCups: ''
@@ -352,14 +429,20 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
                       errors.medicoAsignado ? 'border-red-300' : 'border-gray-300'
                     }`}
                     required
+                    disabled={loadingMedicos}
                   >
-                    <option value="">Seleccionar médico</option>
-                    <option value="Dra. Ana María Rodríguez">Dra. Ana María Rodríguez</option>
-                    <option value="Dr. Carlos Mendoza">Dr. Carlos Mendoza</option>
-                    <option value="Dra. María González">Dra. María González</option>
-                    <option value="Dr. Juan Pérez">Dr. Juan Pérez</option>
-                    <option value="Dra. Laura Sánchez">Dra. Laura Sánchez</option>
+                    <option value="">
+                      {loadingMedicos ? 'Cargando médicos...' : 'Seleccionar médico'}
+                    </option>
+                    {medicos.map((medico) => (
+                      <option key={medico.id} value={getNombreCompletoMedico(medico)}>
+                        {getNombreCompletoMedico(medico)}
+                      </option>
+                    ))}
                   </select>
+                  {loadingMedicos && (
+                    <p className="mt-1 text-sm text-gray-500">Cargando lista de médicos...</p>
+                  )}
                   {errors.medicoAsignado && (
                     <p className="mt-1 text-sm text-red-600">{errors.medicoAsignado}</p>
                   )}

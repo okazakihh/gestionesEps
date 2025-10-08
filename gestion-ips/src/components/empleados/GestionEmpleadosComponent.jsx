@@ -39,6 +39,10 @@ const GestionEmpleadosComponent = () => {
     ciudad: '',
     departamento: '',
     pais: 'Colombia',
+    tipoPersonal: '', // 'MEDICO' o 'ADMINISTRATIVO'
+    tipoMedico: '', // 'DOCTOR' o 'AUXILIAR' (solo si es MEDICO)
+    especialidad: '', // solo si es MEDICO
+    dependencia: '', // solo si es ADMINISTRATIVO
     cargo: '',
     salario: '',
     fechaContratacion: '',
@@ -141,6 +145,10 @@ const GestionEmpleadosComponent = () => {
       ciudad: '',
       departamento: '',
       pais: 'Colombia',
+      tipoPersonal: '',
+      tipoMedico: '',
+      especialidad: '',
+      dependencia: '',
       cargo: '',
       salario: '',
       fechaContratacion: '',
@@ -205,6 +213,10 @@ const GestionEmpleadosComponent = () => {
           ciudad: informacionContacto.ciudad || '',
           departamento: informacionContacto.departamento || '',
           pais: informacionContacto.pais || 'Colombia',
+          tipoPersonal: informacionLaboral.tipoPersonal || '',
+          tipoMedico: informacionLaboral.tipoMedico || '',
+          especialidad: informacionLaboral.especialidad || '',
+          dependencia: informacionLaboral.dependencia || '',
           cargo: informacionLaboral.cargo || '',
           salario: informacionLaboral.salario || '',
           fechaContratacion: informacionLaboral.fechaContratacion || '',
@@ -260,6 +272,10 @@ const GestionEmpleadosComponent = () => {
           pais: formData.pais
         },
         informacionLaboral: {
+          tipoPersonal: formData.tipoPersonal,
+          tipoMedico: formData.tipoPersonal === 'MEDICO' ? formData.tipoMedico : null,
+          especialidad: formData.tipoPersonal === 'MEDICO' ? formData.especialidad : null,
+          dependencia: formData.tipoPersonal === 'ADMINISTRATIVO' ? formData.dependencia : null,
           cargo: formData.cargo,
           salario: formData.salario,
           fechaContratacion: formData.fechaContratacion,
@@ -273,6 +289,9 @@ const GestionEmpleadosComponent = () => {
         jsonData: datosInternosJson,
         activo: true
       });
+
+      console.log('🔍 DEBUG - JSON interno que se va a enviar:', datosInternosJson);
+      console.log('🔍 DEBUG - JSON completo que se va a enviar:', datosCompletosJson);
 
       await empleadosApiService.createEmpleado(datosCompletosJson);
 
@@ -321,6 +340,10 @@ const GestionEmpleadosComponent = () => {
           pais: formData.pais
         },
         informacionLaboral: {
+          tipoPersonal: formData.tipoPersonal,
+          tipoMedico: formData.tipoPersonal === 'MEDICO' ? formData.tipoMedico : null,
+          especialidad: formData.tipoPersonal === 'MEDICO' ? formData.especialidad : null,
+          dependencia: formData.tipoPersonal === 'ADMINISTRATIVO' ? formData.dependencia : null,
           cargo: formData.cargo,
           salario: formData.salario,
           fechaContratacion: formData.fechaContratacion,
@@ -728,6 +751,56 @@ const GestionEmpleadosComponent = () => {
             />
           </Group>
 
+          {/* Tipo de Personal */}
+          <Select
+            label="Tipo de Personal"
+            placeholder="Seleccione el tipo de personal"
+            data={[
+              { value: 'MEDICO', label: 'Personal Médico' },
+              { value: 'ADMINISTRATIVO', label: 'Personal Administrativo' }
+            ]}
+            value={formData.tipoPersonal}
+            onChange={(value) => setFormData({...formData, tipoPersonal: value, tipoMedico: '', especialidad: '', dependencia: ''})}
+            required
+          />
+
+          {/* Campos condicionales para Personal Médico */}
+          {formData.tipoPersonal === 'MEDICO' && (
+            <>
+              <Group grow>
+                <Select
+                  label="Tipo de Médico"
+                  placeholder="Seleccione el tipo"
+                  data={[
+                    { value: 'DOCTOR', label: 'Doctor' },
+                    { value: 'AUXILIAR', label: 'Auxiliar' }
+                  ]}
+                  value={formData.tipoMedico}
+                  onChange={(value) => setFormData({...formData, tipoMedico: value})}
+                  required
+                />
+                <TextInput
+                  label="Especialidad"
+                  placeholder="Especialidad médica"
+                  value={formData.especialidad}
+                  onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+                  required
+                />
+              </Group>
+            </>
+          )}
+
+          {/* Campo condicional para Personal Administrativo */}
+          {formData.tipoPersonal === 'ADMINISTRATIVO' && (
+            <TextInput
+              label="Dependencia"
+              placeholder="Dependencia administrativa"
+              value={formData.dependencia}
+              onChange={(e) => setFormData({...formData, dependencia: e.target.value})}
+              required
+            />
+          )}
+
           <Group grow>
             <TextInput
               label="Cargo"
@@ -772,7 +845,7 @@ const GestionEmpleadosComponent = () => {
               color="blue"
               onClick={handleCreateEmpleado}
               loading={loading}
-              disabled={!formData.numeroDocumento || !formData.primerNombre || !formData.primerApellido || !formData.fechaNacimiento || !formData.telefono}
+              disabled={!formData.numeroDocumento || !formData.primerNombre || !formData.primerApellido || !formData.fechaNacimiento || !formData.telefono || !formData.tipoPersonal || (formData.tipoPersonal === 'MEDICO' && (!formData.tipoMedico || !formData.especialidad)) || (formData.tipoPersonal === 'ADMINISTRATIVO' && !formData.dependencia)}
             >
               Crear Empleado
             </Button>
@@ -842,6 +915,16 @@ const GestionEmpleadosComponent = () => {
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-purple-900 mb-3">Información Laboral</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><span className="text-sm font-medium text-gray-600">Tipo de Personal:</span><p className="text-sm text-gray-900">{informacionLaboral.tipoPersonal === 'MEDICO' ? 'Personal Médico' : informacionLaboral.tipoPersonal === 'ADMINISTRATIVO' ? 'Personal Administrativo' : 'N/A'}</p></div>
+                    {informacionLaboral.tipoPersonal === 'MEDICO' && (
+                      <>
+                        <div><span className="text-sm font-medium text-gray-600">Tipo de Médico:</span><p className="text-sm text-gray-900">{informacionLaboral.tipoMedico === 'DOCTOR' ? 'Doctor' : informacionLaboral.tipoMedico === 'AUXILIAR' ? 'Auxiliar' : 'N/A'}</p></div>
+                        <div><span className="text-sm font-medium text-gray-600">Especialidad:</span><p className="text-sm text-gray-900">{informacionLaboral.especialidad || 'N/A'}</p></div>
+                      </>
+                    )}
+                    {informacionLaboral.tipoPersonal === 'ADMINISTRATIVO' && (
+                      <div><span className="text-sm font-medium text-gray-600">Dependencia:</span><p className="text-sm text-gray-900">{informacionLaboral.dependencia || 'N/A'}</p></div>
+                    )}
                     <div><span className="text-sm font-medium text-gray-600">Cargo:</span><p className="text-sm text-gray-900">{informacionLaboral.cargo || 'N/A'}</p></div>
                     <div><span className="text-sm font-medium text-gray-600">Salario:</span><p className="text-sm text-gray-900">{informacionLaboral.salario ? `$${informacionLaboral.salario}` : 'N/A'}</p></div>
                     <div><span className="text-sm font-medium text-gray-600">Fecha de Contratación:</span><p className="text-sm text-gray-900">{informacionLaboral.fechaContratacion || 'N/A'}</p></div>
@@ -979,6 +1062,56 @@ const GestionEmpleadosComponent = () => {
             />
           </Group>
 
+          {/* Tipo de Personal */}
+          <Select
+            label="Tipo de Personal"
+            placeholder="Seleccione el tipo de personal"
+            data={[
+              { value: 'MEDICO', label: 'Personal Médico' },
+              { value: 'ADMINISTRATIVO', label: 'Personal Administrativo' }
+            ]}
+            value={formData.tipoPersonal}
+            onChange={(value) => setFormData({...formData, tipoPersonal: value, tipoMedico: '', especialidad: '', dependencia: ''})}
+            required
+          />
+
+          {/* Campos condicionales para Personal Médico */}
+          {formData.tipoPersonal === 'MEDICO' && (
+            <>
+              <Group grow>
+                <Select
+                  label="Tipo de Médico"
+                  placeholder="Seleccione el tipo"
+                  data={[
+                    { value: 'DOCTOR', label: 'Doctor' },
+                    { value: 'AUXILIAR', label: 'Auxiliar' }
+                  ]}
+                  value={formData.tipoMedico}
+                  onChange={(value) => setFormData({...formData, tipoMedico: value})}
+                  required
+                />
+                <TextInput
+                  label="Especialidad"
+                  placeholder="Especialidad médica"
+                  value={formData.especialidad}
+                  onChange={(e) => setFormData({...formData, especialidad: e.target.value})}
+                  required
+                />
+              </Group>
+            </>
+          )}
+
+          {/* Campo condicional para Personal Administrativo */}
+          {formData.tipoPersonal === 'ADMINISTRATIVO' && (
+            <TextInput
+              label="Dependencia"
+              placeholder="Dependencia administrativa"
+              value={formData.dependencia}
+              onChange={(e) => setFormData({...formData, dependencia: e.target.value})}
+              required
+            />
+          )}
+
           <Group grow>
             <TextInput
               label="Cargo"
@@ -1023,7 +1156,7 @@ const GestionEmpleadosComponent = () => {
               color="blue"
               onClick={handleUpdateEmpleado}
               loading={loading}
-              disabled={!formData.numeroDocumento || !formData.primerNombre || !formData.primerApellido || !formData.fechaNacimiento || !formData.telefono}
+              disabled={!formData.numeroDocumento || !formData.primerNombre || !formData.primerApellido || !formData.fechaNacimiento || !formData.telefono || !formData.tipoPersonal || (formData.tipoPersonal === 'MEDICO' && (!formData.tipoMedico || !formData.especialidad)) || (formData.tipoPersonal === 'ADMINISTRATIVO' && !formData.dependencia)}
             >
               Actualizar Empleado
             </Button>
