@@ -7,12 +7,13 @@ import {
   MapPinIcon,
   CalendarDaysIcon,
   EyeIcon,
-  ClockIcon
+  ClockIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import { pacientesApiService } from '../../../services/pacientesApiService.js';
 import { ActionIcon, Group, Button } from '@mantine/core';
 
-const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppointment, refreshTrigger }) => {
+const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppointment, onEditPatient, refreshTrigger }) => {
   const [allPatients, setAllPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -337,6 +338,15 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
                                 title="Agendar cita"
                               >
                                 <ClockIcon className="w-4 h-4" />
+                              </ActionIcon>
+                              <ActionIcon
+                                variant="light"
+                                color="green"
+                                size="sm"
+                                onClick={() => onEditPatient && onEditPatient(patient)}
+                                title="Editar paciente"
+                              >
+                                <PencilIcon className="w-4 h-4" />
                               </ActionIcon>
                               <ActionIcon
                                 variant="light"

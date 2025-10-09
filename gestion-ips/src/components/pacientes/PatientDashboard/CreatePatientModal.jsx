@@ -25,7 +25,7 @@ const stringifyJsonSafely = (obj) => {
   }
 };
 
-const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
+const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocumentNumber, editingPatient }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
@@ -136,63 +136,98 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
 
       console.log('Enviando datos del paciente:', JSON.stringify(dataToSend, null, 2));
 
-      const result = await pacientesApiService.createPaciente(dataToSend);
+      let result;
+      let processedResult;
+
+      if (editingPatient) {
+        // For update, we need to send data in a different format
+        // The backend expects: numeroDocumento, tipoDocumento, datosJson (single JSON string)
+        const updateData = {
+          numeroDocumento: dataToSend.numeroDocumento,
+          tipoDocumento: dataToSend.tipoDocumento,
+          activo: dataToSend.activo,
+          // Create a single datosJson field containing all the nested JSON data
+          datosJson: stringifyJsonSafely({
+            informacionPersonalJson: dataToSend.informacionPersonalJson,
+            informacionContactoJson: dataToSend.informacionContactoJson,
+            informacionMedicaJson: dataToSend.informacionMedicaJson,
+            contactoEmergenciaJson: dataToSend.contactoEmergenciaJson
+          })
+        };
+
+        console.log('Enviando datos de actualización:', JSON.stringify(updateData, null, 2));
+
+        result = await pacientesApiService.updatePaciente(editingPatient.id, updateData);
+        processedResult = processApiResponse(result);
+
+        // Mostrar SweetAlert de éxito para actualización
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Paciente actualizado exitosamente!',
+          text: `Los datos del paciente ${processedResult.nombreCompleto || 'han sido actualizados'}`,
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#10B981'
+        });
+      } else {
+        // Create new patient
+        result = await pacientesApiService.createPaciente(dataToSend);
+        processedResult = processApiResponse(result);
+
+        // Mostrar SweetAlert de éxito para creación
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Paciente creado exitosamente!',
+          text: `El paciente ${processedResult.nombreCompleto || 'ha sido registrado'} con ID: ${processedResult.id}`,
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#3B82F6'
+        });
+      }
 
       console.log('Respuesta del backend:', result);
 
-      // Procesar la respuesta para mergear los datos correctamente
-      const processedResult = processApiResponse(result);
+      // Reset form only for creation, not for editing
+      if (!editingPatient) {
+        setFormData({
+          numeroDocumento: '',
+          tipoDocumento: 'CC',
+          informacionPersonalJson: null,
+          informacionContactoJson: null,
+          informacionMedicaJson: null,
+          contactoEmergenciaJson: null,
+          activo: true
+        });
 
-      // Mostrar SweetAlert de éxito
-      await Swal.fire({
-        icon: 'success',
-        title: '¡Paciente creado exitosamente!',
-        text: `El paciente ${processedResult.nombreCompleto || 'ha sido registrado'} con ID: ${processedResult.id}`,
-        confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#3B82F6'
-      });
-
-      // Reset form
-      setFormData({
-        numeroDocumento: '',
-        tipoDocumento: 'CC',
-        informacionPersonalJson: null,
-        informacionContactoJson: null,
-        informacionMedicaJson: null,
-        contactoEmergenciaJson: null,
-        activo: true
-      });
-
-      setParsedData({
-        informacionPersonal: {
-          primerNombre: '',
-          segundoNombre: '',
-          primerApellido: '',
-          segundoApellido: '',
-          fechaNacimiento: '',
-          genero: '',
-          estadoCivil: '',
-          tipoSangre: ''
-        },
-        informacionContacto: {
-          telefono: '',
-          email: '',
-          direccion: '',
-          ciudad: '',
-          departamento: ''
-        },
-        informacionMedica: {
-          eps: '',
-          alergias: 'Ninguna',
-          medicamentosActuales: 'Ninguno',
-          observacionesMedicas: 'Ninguna'
-        },
-        contactoEmergencia: {
-          nombreContacto: '',
-          telefonoContacto: '',
-          relacion: ''
-        }
-      });
+        setParsedData({
+          informacionPersonal: {
+            primerNombre: '',
+            segundoNombre: '',
+            primerApellido: '',
+            segundoApellido: '',
+            fechaNacimiento: '',
+            genero: '',
+            estadoCivil: '',
+            tipoSangre: ''
+          },
+          informacionContacto: {
+            telefono: '',
+            email: '',
+            direccion: '',
+            ciudad: '',
+            departamento: ''
+          },
+          informacionMedica: {
+            eps: '',
+            alergias: 'Ninguna',
+            medicamentosActuales: 'Ninguno',
+            observacionesMedicas: 'Ninguna'
+          },
+          contactoEmergencia: {
+            nombreContacto: '',
+            telefonoContacto: '',
+            relacion: ''
+          }
+        });
+      }
 
       onPatientCreated && onPatientCreated(processedResult);
       onClose();
@@ -296,6 +331,124 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
     }
   };
 
+  // Función para parsear datos del paciente para edición
+  const parsePatientDataForEdit = (patient) => {
+    try {
+      if (patient.datosJson) {
+        const firstLevel = typeof patient.datosJson === 'string' ? JSON.parse(patient.datosJson) : patient.datosJson;
+
+        // Intentar formato anidado primero
+        if (firstLevel.datosJson) {
+          const secondLevel = typeof firstLevel.datosJson === 'string' ? JSON.parse(firstLevel.datosJson) : firstLevel.datosJson;
+
+          return {
+            informacionPersonal: {
+              primerNombre: secondLevel.informacionPersonal?.primerNombre || '',
+              segundoNombre: secondLevel.informacionPersonal?.segundoNombre || '',
+              primerApellido: secondLevel.informacionPersonal?.primerApellido || '',
+              segundoApellido: secondLevel.informacionPersonal?.segundoApellido || '',
+              fechaNacimiento: secondLevel.informacionPersonal?.fechaNacimiento || '',
+              genero: secondLevel.informacionPersonal?.genero || '',
+              estadoCivil: secondLevel.informacionPersonal?.estadoCivil || '',
+              tipoSangre: secondLevel.informacionPersonal?.tipoSangre || ''
+            },
+            informacionContacto: {
+              telefono: secondLevel.informacionContacto?.telefono || '',
+              email: secondLevel.informacionContacto?.email || '',
+              direccion: secondLevel.informacionContacto?.direccion || '',
+              ciudad: secondLevel.informacionContacto?.ciudad || '',
+              departamento: secondLevel.informacionContacto?.departamento || ''
+            },
+            informacionMedica: {
+              eps: secondLevel.informacionMedica?.eps || '',
+              alergias: secondLevel.informacionMedica?.alergias || 'Ninguna',
+              medicamentosActuales: secondLevel.informacionMedica?.medicamentosActuales || 'Ninguno',
+              observacionesMedicas: secondLevel.informacionMedica?.observacionesMedicas || 'Ninguna'
+            },
+            contactoEmergencia: {
+              nombreContacto: secondLevel.contactoEmergencia?.nombreContacto || '',
+              telefonoContacto: secondLevel.contactoEmergencia?.telefonoContacto || '',
+              relacion: secondLevel.contactoEmergencia?.relacion || ''
+            }
+          };
+        }
+
+        // Intentar formato plano
+        if (firstLevel.informacionPersonalJson || firstLevel.informacionContactoJson) {
+          const infoPersonal = firstLevel.informacionPersonalJson ? JSON.parse(firstLevel.informacionPersonalJson) : {};
+          const infoContacto = firstLevel.informacionContactoJson ? JSON.parse(firstLevel.informacionContactoJson) : {};
+          const infoMedica = firstLevel.informacionMedicaJson ? JSON.parse(firstLevel.informacionMedicaJson) : {};
+          const contactoEmergencia = firstLevel.contactoEmergenciaJson ? JSON.parse(firstLevel.contactoEmergenciaJson) : {};
+
+          return {
+            informacionPersonal: {
+              primerNombre: infoPersonal.primerNombre || '',
+              segundoNombre: infoPersonal.segundoNombre || '',
+              primerApellido: infoPersonal.primerApellido || '',
+              segundoApellido: infoPersonal.segundoApellido || '',
+              fechaNacimiento: infoPersonal.fechaNacimiento || '',
+              genero: infoPersonal.genero || '',
+              estadoCivil: infoPersonal.estadoCivil || '',
+              tipoSangre: infoPersonal.tipoSangre || ''
+            },
+            informacionContacto: {
+              telefono: infoContacto.telefono || '',
+              email: infoContacto.email || '',
+              direccion: infoContacto.direccion || '',
+              ciudad: infoContacto.ciudad || '',
+              departamento: infoContacto.departamento || ''
+            },
+            informacionMedica: {
+              eps: infoMedica.eps || '',
+              alergias: infoMedica.alergias || 'Ninguna',
+              medicamentosActuales: infoMedica.medicamentosActuales || 'Ninguno',
+              observacionesMedicas: infoMedica.observacionesMedicas || 'Ninguna'
+            },
+            contactoEmergencia: {
+              nombreContacto: contactoEmergencia.nombreContacto || '',
+              telefonoContacto: contactoEmergencia.telefonoContacto || '',
+              relacion: contactoEmergencia.relacion || ''
+            }
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing patient data for edit:', error);
+    }
+
+    // Valores por defecto si no se puede parsear
+    return {
+      informacionPersonal: {
+        primerNombre: '',
+        segundoNombre: '',
+        primerApellido: '',
+        segundoApellido: '',
+        fechaNacimiento: '',
+        genero: '',
+        estadoCivil: '',
+        tipoSangre: ''
+      },
+      informacionContacto: {
+        telefono: '',
+        email: '',
+        direccion: '',
+        ciudad: '',
+        departamento: ''
+      },
+      informacionMedica: {
+        eps: '',
+        alergias: 'Ninguna',
+        medicamentosActuales: 'Ninguno',
+        observacionesMedicas: 'Ninguna'
+      },
+      contactoEmergencia: {
+        nombreContacto: '',
+        telefonoContacto: '',
+        relacion: ''
+      }
+    };
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -313,6 +466,45 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
     }));
   };
 
+  // Pre-fill document number when modal opens
+  React.useEffect(() => {
+    if (isOpen && prefillDocumentNumber) {
+      setFormData(prev => ({
+        ...prev,
+        numeroDocumento: prefillDocumentNumber
+      }));
+    }
+  }, [isOpen, prefillDocumentNumber]);
+
+  // Pre-fill form when editing a patient
+  React.useEffect(() => {
+    if (isOpen && editingPatient) {
+      try {
+        // Parse patient data and populate form
+        const patientData = parsePatientDataForEdit(editingPatient);
+
+        setFormData({
+          numeroDocumento: editingPatient.numeroDocumento || '',
+          tipoDocumento: editingPatient.tipoDocumento || 'CC',
+          informacionPersonalJson: null,
+          informacionContactoJson: null,
+          informacionMedicaJson: null,
+          contactoEmergenciaJson: null,
+          activo: editingPatient.activo !== undefined ? editingPatient.activo : true
+        });
+
+        setParsedData({
+          informacionPersonal: patientData.informacionPersonal,
+          informacionContacto: patientData.informacionContacto,
+          informacionMedica: patientData.informacionMedica,
+          contactoEmergencia: patientData.contactoEmergencia
+        });
+      } catch (error) {
+        console.error('Error pre-filling edit form:', error);
+      }
+    }
+  }, [isOpen, editingPatient]);
+
   if (!isOpen) return null;
 
   return (
@@ -325,7 +517,9 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-4/5 h-4/5">
           {/* Header */}
           <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white">Nuevo Paciente</h3>
+            <h3 className="text-xl font-semibold text-white">
+              {editingPatient ? 'Editar Paciente' : 'Nuevo Paciente'}
+            </h3>
             <button
               onClick={onClose}
               className="text-white hover:text-gray-200 transition-colors"
@@ -726,7 +920,7 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
                   disabled={saving}
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? 'Guardando...' : 'Crear Paciente'}
+                  {saving ? 'Guardando...' : (editingPatient ? 'Actualizar Paciente' : 'Crear Paciente')}
                   </button>
                 </div>
               </form>

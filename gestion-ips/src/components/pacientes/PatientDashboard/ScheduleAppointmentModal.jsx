@@ -13,7 +13,7 @@ import { notifications } from '@mantine/notifications';
 import { Select } from '@mantine/core';
 import Swal from 'sweetalert2';
 
-const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onAppointmentCreated }) => {
+const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, selectedDoctor, isOpen, onClose, onAppointmentCreated }) => {
   const [formData, setFormData] = useState({
     fechaHoraCita: '',
     motivo: '',
@@ -21,7 +21,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
     medicoId: '',
     estado: 'PROGRAMADA',
     notas: '',
-    codigoCups: ''
+    codigoCups: '',
+    duracion: '30' // Duración por defecto en minutos
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -57,10 +58,10 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
           const updatedData = {
             ...formData,
             [field]: value,
-            // Auto-fill especialidad if available in CUPS data
-            medicoAsignado: cupData.especialidad ?
-              `${cupData.especialidad} - ${formData.medicoAsignado || ''}`.replace(/^ - /, '') :
-              formData.medicoAsignado
+            // Only auto-fill doctor if no doctor is selected yet and CUPS has specialty
+            ...(cupData.especialidad && !formData.medicoAsignado && {
+              medicoAsignado: cupData.especialidad
+            })
           };
 
           setFormData(updatedData);
@@ -166,6 +167,49 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
     }
   }, [isOpen]);
 
+  // Pre-fill date and time when slot changes
+  React.useEffect(() => {
+    if (isOpen && selectedSlot) {
+      // Create date in local timezone to avoid timezone issues
+      const year = selectedSlot.date.getFullYear();
+      const month = selectedSlot.date.getMonth();
+      const day = selectedSlot.date.getDate();
+      const [hours, minutes] = selectedSlot.time.split(':').map(Number);
+
+      console.log('Debugging time:', { selectedSlot, year, month, day, hours, minutes });
+
+      const slotDateTime = new Date(year, month, day, hours, minutes);
+      // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+      const formattedDateTime = slotDateTime.getFullYear() + '-' +
+        String(slotDateTime.getMonth() + 1).padStart(2, '0') + '-' +
+        String(slotDateTime.getDate()).padStart(2, '0') + 'T' +
+        String(slotDateTime.getHours()).padStart(2, '0') + ':' +
+        String(slotDateTime.getMinutes()).padStart(2, '0');
+
+      console.log('Formatted datetime:', formattedDateTime);
+
+      setFormData(prev => ({
+        ...prev,
+        fechaHoraCita: formattedDateTime
+      }));
+    }
+  }, [isOpen, selectedSlot]);
+
+  // Pre-fill doctor when doctors are loaded and doctor is selected
+  React.useEffect(() => {
+    if (isOpen && selectedDoctor && medicos.length > 0) {
+      // Find the doctor to get the ID
+      const doctor = medicos.find(m => getNombreCompletoMedico(m) === selectedDoctor);
+      if (doctor) {
+        setFormData(prev => ({
+          ...prev,
+          medicoAsignado: selectedDoctor,
+          medicoId: doctor.id
+        }));
+      }
+    }
+  }, [isOpen, selectedDoctor, medicos]);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -217,6 +261,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
         estado: formData.estado,
         notas: formData.notas.trim(),
         codigoCups: formData.codigoCups,
+        duracion: parseInt(formData.duracion || '30'), // Duración en minutos
         // Include complete CUPS information if selected
         ...(selectedCupData && {
           informacionCups: selectedCupData
@@ -257,7 +302,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, isOpen, onClose, onA
           medicoId: '',
           estado: 'PROGRAMADA',
           notas: '',
-          codigoCups: ''
+          codigoCups: '',
+          duracion: '30'
         });
         setSelectedCupData(null);
 
