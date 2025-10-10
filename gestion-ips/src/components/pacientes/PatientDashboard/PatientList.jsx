@@ -17,23 +17,14 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
   const [allPatients, setAllPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const pageSize = 10;
 
   useEffect(() => {
     loadPatients();
   }, [refreshTrigger]);
 
   useEffect(() => {
-    setCurrentPage(0); // Resetear a primera página cuando cambian los filtros
     applyFilters();
   }, [searchTerm, filterStatus, allPatients]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [currentPage]);
 
   const loadPatients = async () => {
     setLoading(true);
@@ -82,14 +73,7 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
       filtered = filtered.filter(patient => patient.activo === isActive);
     }
 
-    // Aplicar paginación
-    const startIndex = currentPage * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginatedPatients = filtered.slice(startIndex, endIndex);
-
-    setFilteredPatients(paginatedPatients);
-    setTotalElements(filtered.length);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setFilteredPatients(filtered);
   };
 
   const formatDate = (dateString) => {
@@ -264,7 +248,7 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
           {/* Header con botón de crear */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900">
-              Lista de Pacientes ({filteredPatients.length} encontrados)
+              Lista de Pacientes ({filteredPatients.length})
             </h3>
             <Button
               onClick={() => window.location.href = '/pacientes/gestion'}
@@ -278,7 +262,7 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
           {/* Table */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <div className="px-4 py-5 sm:p-6">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-80">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -378,30 +362,6 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
             </div>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Página {currentPage + 1} de {totalPages}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                  disabled={currentPage === 0}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                  disabled={currentPage === totalPages - 1}
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

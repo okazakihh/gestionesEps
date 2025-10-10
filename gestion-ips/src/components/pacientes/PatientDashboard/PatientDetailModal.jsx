@@ -147,6 +147,473 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
     }
   };
 
+  const printHistoriaClinica = () => {
+    // Create print-friendly content for the complete clinical history
+    const allConsultas = [];
+
+    // Parsear datos JSON de la historia clínica
+    let historiaData = null;
+    try {
+      historiaData = JSON.parse(historiaClinica.datosJson || '{}');
+    } catch (error) {
+      console.error('Error parsing historia clinica JSON:', error);
+      historiaData = null;
+    }
+
+    // Agregar consulta inicial
+    allConsultas.push({
+      id: `initial-${historiaClinica.id}`,
+      numero: 1,
+      tipo: 'Consulta Inicial',
+      fecha: historiaClinica.fechaApertura,
+      medico: (historiaData && historiaData.informacionMedico?.medicoResponsable) || 'N/A',
+      especialidad: (historiaData && historiaData.informacionMedico?.especialidad) || 'N/A',
+      motivo: (historiaData && historiaData.informacionConsulta?.motivoConsulta) || 'Apertura de historia clínica',
+      enfermedadActual: (historiaData && historiaData.informacionConsulta?.enfermedadActual) || 'N/A',
+      diagnosticos: (historiaData && historiaData.diagnosticoTratamiento?.diagnosticos) || 'N/A',
+      planTratamiento: (historiaData && historiaData.diagnosticoTratamiento?.planTratamiento) || 'N/A',
+      examenFisico: (historiaData && historiaData.examenClinico?.examenFisico) || 'N/A',
+      signosVitales: (historiaData && historiaData.examenClinico?.signosVitales) || 'N/A',
+      formulaMedica: 'N/A',
+      incapacidad: null,
+      indicaciones: 'N/A',
+      proximaCita: 'N/A',
+      observaciones: (historiaData && historiaData.informacionConsulta?.observaciones) || 'N/A'
+    });
+
+    // Agregar consultas posteriores
+    consultas.forEach((consulta, index) => {
+      try {
+        const consultaData = JSON.parse(consulta.datosJson || '{}');
+        allConsultas.push({
+          id: consulta.id,
+          numero: index + 2,
+          tipo: 'Consulta Médica',
+          fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
+          medico: consultaData.informacionMedico?.medicoTratante || consultaData.detalleConsulta?.medicoTratante || 'N/A',
+          especialidad: consultaData.informacionMedico?.especialidad || consultaData.detalleConsulta?.especialidad || 'N/A',
+          motivo: consultaData.detalleConsulta?.motivoConsulta || consultaData.informacionConsulta?.motivoConsulta || 'N/A',
+          enfermedadActual: consultaData.detalleConsulta?.enfermedadActual || consultaData.informacionConsulta?.enfermedadActual || 'N/A',
+          diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || consultaData.diagnosticoTratamiento?.diagnosticos || 'N/A',
+          planTratamiento: consultaData.diagnosticoTratamiento?.planManejo || consultaData.diagnosticoTratamiento?.planTratamiento || 'N/A',
+          examenFisico: consultaData.examenClinico?.examenFisico || 'N/A',
+          signosVitales: consultaData.examenClinico?.signosVitales || 'N/A',
+          formulaMedica: consultaData.formulaMedica?.medicamentos || 'N/A',
+          incapacidad: consultaData.incapacidad || null,
+          indicaciones: consultaData.seguimiento?.indicaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
+          proximaCita: consultaData.seguimiento?.proximaCita || consultaData.detalleConsulta?.proximaCita || 'N/A',
+          observaciones: consultaData.diagnosticoTratamiento?.recomendaciones || consultaData.informacionConsulta?.observaciones || 'N/A'
+        });
+      } catch (error) {
+        console.error('Error parsing consulta JSON:', error);
+      }
+    });
+
+    const printContent = createPrintContent(allConsultas, false, historiaData);
+    printDocument(printContent);
+  };
+
+  const printConsulta = (consulta) => {
+    // Parsear datos JSON de la historia clínica para obtener información del médico
+    let historiaData = null;
+    try {
+      historiaData = JSON.parse(historiaClinica.datosJson || '{}');
+    } catch (error) {
+      console.error('Error parsing historia clinica JSON:', error);
+      historiaData = null;
+    }
+
+    // Parsear datos JSON de la consulta específica
+    let consultaParsed = {};
+    try {
+      consultaParsed = JSON.parse(consulta.datosJson || '{}');
+    } catch (error) {
+      console.error('Error parsing consulta JSON:', error);
+    }
+
+    // Create print-friendly content for a specific consultation
+    const consultaData = {
+      id: consulta.id,
+      numero: 1,
+      tipo: 'Consulta Médica Individual',
+      fecha: consultaParsed.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
+      medico: consultaParsed.informacionMedico?.medicoTratante || consultaParsed.detalleConsulta?.medicoTratante || 'N/A',
+      especialidad: consultaParsed.informacionMedico?.especialidad || consultaParsed.detalleConsulta?.especialidad || 'N/A',
+      motivo: consultaParsed.detalleConsulta?.motivoConsulta || consultaParsed.informacionConsulta?.motivoConsulta || 'N/A',
+      enfermedadActual: consultaParsed.detalleConsulta?.enfermedadActual || consultaParsed.informacionConsulta?.enfermedadActual || 'N/A',
+      diagnosticos: consultaParsed.diagnosticoTratamiento?.diagnosticoPrincipal || consultaParsed.diagnosticoTratamiento?.diagnosticos || 'N/A',
+      planTratamiento: consultaParsed.diagnosticoTratamiento?.planManejo || consultaParsed.diagnosticoTratamiento?.planTratamiento || 'N/A',
+      examenFisico: consultaParsed.examenClinico?.examenFisico || 'N/A',
+      signosVitales: consultaParsed.examenClinico?.signosVitales || 'N/A',
+      formulaMedica: consultaParsed.formulaMedica?.medicamentos || 'N/A',
+      incapacidad: consultaParsed.incapacidad || null,
+      indicaciones: consultaParsed.seguimiento?.indicaciones || consultaParsed.seguimientoConsulta?.indicaciones || 'N/A',
+      proximaCita: consultaParsed.seguimiento?.proximaCita || consultaParsed.detalleConsulta?.proximaCita || 'N/A',
+      observaciones: consultaParsed.diagnosticoTratamiento?.recomendaciones || consultaParsed.informacionConsulta?.observaciones || 'N/A'
+    };
+
+    const printContent = createPrintContent([consultaData], true, historiaData);
+    printDocument(printContent);
+  };
+
+  const createPrintContent = (consultas, isSingleConsulta = false, historiaData = null) => {
+    const patientInfo = patientData?.informacionPersonal || {};
+    const patientContact = patientData?.informacionContacto || {};
+    const patientMedical = patientData?.informacionMedica || {};
+    const patientName = [patientInfo.primerNombre, patientInfo.segundoNombre, patientInfo.primerApellido, patientInfo.segundoApellido]
+      .filter(Boolean).join(' ') || 'N/A';
+
+    let html = `
+      <html>
+        <head>
+          <title>Historia Clínica - ${patientName}</title>
+          <style>
+            @media print {
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 11px; line-height: 1.4; }
+              .header { border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
+              .institution-info { background: #f0f9ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+              .patient-info { background: #f8fafc; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 2px solid #e5e7eb; }
+              .medical-antecedents { background: #fef3c7; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #f59e0b; }
+              .consulta { border: 1px solid #e5e7eb; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+              .consulta-header { background: #f3f4f6; padding: 8px; margin: -15px -15px 10px -15px; border-radius: 5px 5px 0 0; border-bottom: 1px solid #d1d5db; }
+              .section { margin-bottom: 10px; }
+              .section-title { font-weight: bold; color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; font-size: 12px; }
+              .field { margin-bottom: 5px; }
+              .field-label { font-weight: bold; display: inline-block; min-width: 120px; color: #6b7280; }
+              .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #e5e7eb; font-size: 9px; color: #6b7280; }
+              .signature { margin-top: 40px; text-align: center; }
+              .signature-line { border-top: 1px solid #000; width: 200px; margin: 0 auto; margin-top: 40px; }
+              .consent-section { background: #ecfdf5; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #d1fae5; }
+              .rights-section { background: #fefce8; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #fde68a; }
+              .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+              .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+              .important-note { background: #fee2e2; border: 1px solid #fecaca; padding: 8px; border-radius: 3px; margin: 5px 0; }
+              @page { margin: 1.5cm; size: A4; }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Institutional Header -->
+          <div class="header">
+            <div class="institution-info">
+              <h1 style="color: #2563eb; margin: 0; font-size: 20px; font-weight: bold;">INSTITUCIÓN PRESTADORA DE SALUD IPS</h1>
+              <p style="margin: 5px 0; color: #374151; font-size: 14px;">Sistema de Gestión Médica Integral</p>
+              <p style="margin: 2px 0; color: #6b7280;">NIT: 901.234.567-8 • Dirección: Calle 123 # 45-67, Bogotá D.C.</p>
+              <p style="margin: 2px 0; color: #6b7280;">Teléfonos: (601) 123-4567 • Email: info@ips.com.co</p>
+            </div>
+            <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">HISTORIA CLÍNICA ELECTRÓNICA</h2>
+            <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Número de Historia Clínica: ${historiaClinica.numeroHistoria}</p>
+            <p style="margin: 2px 0; color: #6b7280;">Fecha de Impresión: ${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}</p>
+          </div>
+
+          <!-- Patient Information -->
+          <div class="patient-info">
+            <h3 style="margin-top: 0; color: #1f2937; font-size: 14px; border-bottom: 2px solid #2563eb; padding-bottom: 5px;">INFORMACIÓN DEL PACIENTE</h3>
+            <div class="grid-2">
+              <div><strong>Nombre Completo:</strong> ${patientName}</div>
+              <div><strong>Tipo y Número de Documento:</strong> ${patient?.tipoDocumento || 'N/A'} ${patient?.numeroDocumento || 'N/A'}</div>
+              <div><strong>Fecha de Nacimiento:</strong> ${patientInfo.fechaNacimiento ? new Date(patientInfo.fechaNacimiento).toLocaleDateString('es-CO') : 'N/A'}</div>
+              <div><strong>Edad:</strong> ${(() => {
+                if (!patientInfo.fechaNacimiento) return 'N/A';
+                try {
+                  const nacimiento = new Date(patientInfo.fechaNacimiento);
+                  const hoy = new Date();
+                  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+                  const mes = hoy.getMonth() - nacimiento.getMonth();
+                  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+                  return `${edad} años`;
+                } catch { return 'N/A'; }
+              })()}</div>
+              <div><strong>Sexo:</strong> ${patientInfo.genero || 'N/A'}</div>
+              <div><strong>Estado Civil:</strong> ${patientInfo.estadoCivil || 'N/A'}</div>
+              <div><strong>Dirección:</strong> ${patientContact.direccion || 'N/A'}</div>
+              <div><strong>Ciudad:</strong> ${patientContact.ciudad || 'N/A'}, ${patientContact.departamento || 'N/A'}</div>
+              <div><strong>Teléfono:</strong> ${patientContact.telefono || 'N/A'}</div>
+              <div><strong>Email:</strong> ${patientContact.email || 'N/A'}</div>
+              <div><strong>Ocupación:</strong> ${patientInfo.ocupacion || 'N/A'}</div>
+              <div><strong>Nivel Educativo:</strong> ${patientInfo.nivelEducativo || 'N/A'}</div>
+            </div>
+          </div>
+
+          <!-- Medical Information -->
+          <div class="patient-info">
+            <h3 style="margin-top: 0; color: #1f2937; font-size: 14px; border-bottom: 2px solid #dc2626; padding-bottom: 5px;">INFORMACIÓN MÉDICA BÁSICA</h3>
+            <div class="grid-3">
+              <div><strong>Tipo de Sangre:</strong> ${patientMedical.tipoSangre || 'N/A'}</div>
+              <div><strong>EPS:</strong> ${patientMedical.eps || 'N/A'}</div>
+              <div><strong>Tipo de Seguro:</strong> ${patientMedical.tipoSeguro || 'N/A'}</div>
+            </div>
+            <div style="margin-top: 10px;">
+              <div><strong>Alergias:</strong> ${patientMedical.alergias || 'Ninguna registrada'}</div>
+              <div style="margin-top: 5px;"><strong>Medicamentos Actuales:</strong> ${patientMedical.medicamentosActuales || 'Ninguno registrado'}</div>
+            </div>
+          </div>
+
+          <!-- Medical Antecedents -->
+          <div class="medical-antecedents">
+            <h3 style="margin-top: 0; color: #92400e; font-size: 14px; border-bottom: 2px solid #f59e0b; padding-bottom: 5px;">ANTECEDENTES MÉDICOS</h3>
+            ${historiaData && historiaData.antecedentesClinico ? `
+            <div class="grid-2">
+              <div>
+                <strong>Antecedentes Personales:</strong><br>
+                ${historiaData.antecedentesClinico.antecedentesPersonales || 'No registrados'}
+              </div>
+              <div>
+                <strong>Antecedentes Familiares:</strong><br>
+                ${historiaData.antecedentesClinico.antecedentesFamiliares || 'No registrados'}
+              </div>
+              <div>
+                <strong>Antecedentes Quirúrgicos:</strong><br>
+                ${historiaData.antecedentesClinico.antecedentesQuirurgicos || 'No registrados'}
+              </div>
+              <div>
+                <strong>Antecedentes Alérgicos:</strong><br>
+                ${historiaData.antecedentesClinico.antecedentesAlergicos || 'No registrados'}
+              </div>
+            </div>
+            ` : '<p>No se encontraron antecedentes médicos registrados.</p>'}
+          </div>
+
+          <!-- Legal Information -->
+          <div class="consent-section">
+            <h4 style="margin: 0 0 10px 0; color: #065f46; font-size: 12px;">CONSENTIMIENTO INFORMADO Y DERECHOS DEL PACIENTE</h4>
+            <p style="margin: 5px 0; font-size: 10px;">
+              <strong>Consentimiento:</strong> El paciente ha sido informado sobre los procedimientos médicos, riesgos, beneficios y alternativas.
+              Ha autorizado el tratamiento y manejo de su información médica conforme a la Ley 1581 de 2012.
+            </p>
+            <p style="margin: 5px 0; font-size: 10px;">
+              <strong>Derechos del Paciente:</strong> Conoce sus derechos a la privacidad, confidencialidad, acceso a su historia clínica,
+              segunda opinión médica y atención digna según la normatividad colombiana.
+            </p>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #a7f3d0;">
+              <div style="display: inline-block; margin-right: 50px;">
+                <div style="border-bottom: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
+                <p style="font-size: 9px; text-align: center;">Firma del Paciente/Acudiente</p>
+              </div>
+              <div style="display: inline-block;">
+                <div style="border-bottom: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
+                <p style="font-size: 9px; text-align: center;">Firma del Profesional</p>
+              </div>
+            </div>
+          </div>
+    `;
+
+    // Add consultations
+    consultas.forEach(consulta => {
+      html += `
+        <div class="consulta">
+          <div class="consulta-header">
+            <h4 style="margin: 0; color: #1f2937; font-size: 14px;">${consulta.tipo} #${consulta.numero}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+              <p style="margin: 0; color: #6b7280; font-size: 11px;">
+                <strong>Fecha:</strong> ${consulta.fecha ? new Date(consulta.fecha).toLocaleDateString('es-CO') : 'N/A'}
+                ${consulta.fecha ? ` | <strong>Hora:</strong> ${new Date(consulta.fecha).toLocaleTimeString('es-CO')}` : ''}
+              </p>
+              <p style="margin: 0; color: #6b7280; font-size: 10px;">
+                <strong>Historia Clínica:</strong> ${historiaClinica.numeroHistoria}
+              </p>
+            </div>
+          </div>
+
+          <!-- Información del Médico -->
+          <div class="section">
+            <div class="section-title">👨‍⚕️ INFORMACIÓN DEL PROFESIONAL DE LA SALUD</div>
+            <div class="grid-2">
+              <div><span class="field-label">Médico Tratante:</span> ${consulta.medico || 'N/A'}</div>
+              <div><span class="field-label">Especialidad:</span> ${consulta.especialidad || 'N/A'}</div>
+              <div><span class="field-label">Registro Médico:</span> ${((historiaData && historiaData.informacionMedico) ? historiaData.informacionMedico.registroMedico : null) || 'N/A'}</div>
+              <div><span class="field-label">Tipo de Consulta:</span> ${consulta.tipo || 'Consulta General'}</div>
+            </div>
+          </div>
+
+          <!-- Anamnesis -->
+          <div class="section">
+            <div class="section-title">📝 ANAMNESIS</div>
+            ${consulta.motivo ? `
+            <div class="field">
+              <span class="field-label">Motivo de Consulta:</span>
+              <div style="margin-top: 3px; padding: 6px; background: #f8fafc; border-radius: 3px; border-left: 3px solid #3b82f6;">${consulta.motivo}</div>
+            </div>
+            ` : ''}
+
+            ${consulta.enfermedadActual ? `
+            <div class="field">
+              <span class="field-label">Enfermedad Actual:</span>
+              <div style="margin-top: 3px; padding: 6px; background: #fef3c7; border-radius: 3px; border-left: 3px solid #f59e0b;">${consulta.enfermedadActual}</div>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Examen Clínico -->
+          ${(consulta.examenFisico || consulta.signosVitales) ? `
+          <div class="section">
+            <div class="section-title">🔍 EXAMEN CLÍNICO</div>
+            <div class="grid-2">
+              ${consulta.examenFisico ? `<div><span class="field-label">Examen Físico:</span><br><span style="padding: 4px; background: #ecfdf5; border-radius: 3px; display: inline-block; margin-top: 2px;">${consulta.examenFisico}</span></div>` : '<div></div>'}
+              ${consulta.signosVitales ? `<div><span class="field-label">Signos Vitales:</span><br><span style="padding: 4px; background: #ecfdf5; border-radius: 3px; display: inline-block; margin-top: 2px;">${consulta.signosVitales}</span></div>` : '<div></div>'}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Diagnóstico -->
+          ${(consulta.diagnosticos || consulta.planTratamiento) ? `
+          <div class="section">
+            <div class="section-title">💊 DIAGNÓSTICO Y TRATAMIENTO</div>
+            ${consulta.diagnosticos ? `
+            <div class="field">
+              <span class="field-label">Diagnósticos CIE-10:</span>
+              <div style="margin-top: 3px; padding: 8px; background: #fee2e2; border-radius: 3px; border-left: 4px solid #dc2626; font-family: monospace;">${consulta.diagnosticos}</div>
+            </div>
+            ` : ''}
+
+            ${consulta.planTratamiento ? `
+            <div class="field">
+              <span class="field-label">Plan de Manejo:</span>
+              <div style="margin-top: 3px; padding: 8px; background: #f0f9ff; border-radius: 3px; border-left: 4px solid #2563eb;">${consulta.planTratamiento}</div>
+            </div>
+            ` : ''}
+          </div>
+          ` : ''}
+
+          <!-- Órdenes Médicas -->
+          ${consulta.formulaMedica ? `
+          <div class="section">
+            <div class="section-title">📋 ÓRDENES MÉDICAS</div>
+            <div style="padding: 10px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 5px;">
+              <strong style="color: #dc2626;">💊 FORMULA MÉDICA:</strong><br>
+              <div style="margin-top: 5px; padding: 8px; background: white; border-radius: 3px; font-family: monospace; white-space: pre-line;">${consulta.formulaMedica}</div>
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Incapacidad -->
+          ${(consulta.incapacidad?.tipo || consulta.incapacidad?.dias) ? `
+          <div class="section">
+            <div class="section-title">📄 INCAPACIDAD MÉDICA</div>
+            <div class="important-note">
+              <strong>⚠️ INCAPACIDAD CERTIFICADA</strong><br>
+              ${consulta.incapacidad.tipo ? `<strong>Tipo:</strong> ${consulta.incapacidad.tipo}<br>` : ''}
+              ${consulta.incapacidad.dias ? `<strong>Días:</strong> ${consulta.incapacidad.dias}` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Seguimiento y Recomendaciones -->
+          ${(consulta.indicaciones || consulta.proximaCita || consulta.observaciones) ? `
+          <div class="section">
+            <div class="section-title">📅 SEGUIMIENTO Y RECOMENDACIONES</div>
+            <div class="grid-2">
+              ${consulta.indicaciones ? `<div><span class="field-label">Indicaciones:</span><br><span style="padding: 4px; background: #f0fdf4; border-radius: 3px; display: inline-block; margin-top: 2px;">${consulta.indicaciones}</span></div>` : '<div></div>'}
+              ${consulta.proximaCita ? `<div><span class="field-label">Próxima Cita:</span><br><span style="padding: 4px; background: #fef3c7; border-radius: 3px; display: inline-block; margin-top: 2px; font-weight: bold;">${consulta.proximaCita}</span></div>` : '<div></div>'}
+            </div>
+
+            ${consulta.observaciones ? `
+            <div class="field" style="margin-top: 10px;">
+              <span class="field-label">Observaciones:</span>
+              <div style="margin-top: 3px; padding: 8px; background: #f9fafb; border-radius: 3px; border: 1px solid #e5e7eb;">${consulta.observaciones}</div>
+            </div>
+            ` : ''}
+          </div>
+          ` : ''}
+
+          <!-- Firma y Sello -->
+          <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 5px; border: 1px solid #d1d5db;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+              <div style="flex: 1;">
+                <div class="signature">
+                  <div class="signature-line"></div>
+                  <p style="margin-top: 5px; font-size: 11px; font-weight: bold;">Firma del Profesional de la Salud</p>
+                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">${consulta.medico || 'N/A'}</p>
+                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">Registro Médico: ${((historiaData && historiaData.informacionMedico) ? historiaData.informacionMedico.registroMedico : null) || 'N/A'}</p>
+                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">Fecha: ${consulta.fecha ? new Date(consulta.fecha).toLocaleDateString('es-CO') : 'N/A'}</p>
+                </div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white;">
+                  <p style="margin: 0; font-size: 9px; color: #6b7280;">SELLO DE LA INSTITUCIÓN</p>
+                  <div style="margin: 10px 0; width: 80px; height: 60px; border: 1px dashed #9ca3af; margin: 10px auto;"></div>
+                  <p style="margin: 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+          <!-- Footer Legal -->
+          <div class="footer">
+            <div style="border-top: 2px solid #2563eb; padding-top: 10px; margin-bottom: 15px;">
+              <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
+            </div>
+
+            <div class="rights-section" style="margin-bottom: 15px;">
+              <h5 style="margin: 0 0 8px 0; color: #92400e; font-size: 10px;">📋 DERECHOS DEL PACIENTE (Ley 100 de 1993, Ley 1751 de 2015)</h5>
+              <ul style="margin: 0; padding-left: 15px; font-size: 9px; line-height: 1.3;">
+                <li>Recibir atención médica oportuna y de calidad</li>
+                <li>Conocer información clara sobre su estado de salud</li>
+                <li>Acceder a su historia clínica completa</li>
+                <li>Recibir segunda opinión médica</li>
+                <li>Autorizar o negar procedimientos médicos</li>
+                <li>Recibir atención digna y respetuosa</li>
+              </ul>
+            </div>
+
+            <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
+              <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🔒 PROTECCIÓN DE DATOS PERSONALES</h5>
+              <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+                Esta historia clínica está protegida por la Ley 1581 de 2012 y el Decreto 1377 de 2013.
+                Los datos personales solo pueden ser utilizados para fines médicos y con autorización del titular.
+              </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+              <div>
+                <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
+                <p style="margin: 2px 0; font-size: 9px;">Sistema de Gestión Médica IPS</p>
+                <p style="margin: 2px 0; font-size: 9px;">Versión 2.1.0</p>
+              </div>
+              <div>
+                <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
+                <p style="margin: 2px 0; font-size: 9px;">${new Date().toLocaleString('es-CO')}</p>
+                <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
+              </div>
+            </div>
+
+            <div style="background: #fef2f2; padding: 8px; border-radius: 3px; border: 1px solid #fecaca;">
+              <h5 style="margin: 0 0 5px 0; color: #dc2626; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
+              <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+                <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
+                <strong>Ley 1581 de 2012:</strong> Protección de Datos Personales<br>
+                <strong>Decreto 1377 de 2013:</strong> Reglamentación de la Ley 1581<br>
+                <strong>Ley 1751 de 2015:</strong> Derechos y deberes de los usuarios en salud<br>
+                <strong>Resolución 1995 de 1999:</strong> Historia Clínica<br>
+                <strong>Decreto 780 de 2016:</strong> Historia Clínica Electrónica
+              </p>
+            </div>
+
+            <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 8px; color: #9ca3af;">
+                Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a historias clínicas.
+                Cualquier modificación debe ser autorizada por el profesional responsable.
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return html;
+  };
+
+  const printDocument = (content) => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const patientData = patient ? parsePatientData(patient) : {};
 
   const tabs = [
@@ -154,6 +621,7 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
     { id: 'contacto', name: 'Contacto', icon: PhoneIcon },
     { id: 'medica', name: 'Información Médica', icon: HeartIcon },
     { id: 'emergencia', name: 'Contacto Emergencia', icon: IdentificationIcon },
+    { id: 'consentimiento', name: 'Consentimiento', icon: DocumentTextIcon },
     { id: 'clinica', name: 'Historia Clínica', icon: DocumentTextIcon },
   ];
 
@@ -266,6 +734,34 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                           <span className="text-gray-600">Estado Civil:</span>
                           <span className="font-medium">{patientData.informacionPersonal?.estadoCivil || 'N/A'}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tipo de Sangre:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.tipoSangre || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nacionalidad:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.nacionalidad || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Estrato Socioeconómico:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.estratoSocioeconomico || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Grupo Étnico:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.grupoEtnico || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Discapacidad:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.discapacidad || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Ocupación:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.ocupacion || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nivel Educativo:</span>
+                          <span className="font-medium">{patientData.informacionPersonal?.nivelEducativo || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -311,8 +807,15 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                         <div className="flex items-center space-x-3">
                           <PhoneIcon className="h-5 w-5 text-gray-400" />
                           <div>
-                            <p className="text-sm text-gray-600">Teléfono</p>
+                            <p className="text-sm text-gray-600">Teléfono Principal</p>
                             <p className="font-medium">{patientData.informacionContacto?.telefono || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <PhoneIcon className="h-5 w-5 text-blue-400" />
+                          <div>
+                            <p className="text-sm text-gray-600">Teléfono Móvil</p>
+                            <p className="font-medium">{patientData.informacionPersonal?.telefonoMovil || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-3">
@@ -346,8 +849,9 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                 {activeTab === 'medica' && (
                   <div className="space-y-6">
                     <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Información Médica</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ maxWidth: 'none' }}>
-                      <div className="space-y-4">
+                    <div className="space-y-6">
+                      {/* Información básica médica */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ maxWidth: 'none' }}>
                         <div className="flex items-center space-x-3">
                           <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
                           <div>
@@ -358,12 +862,52 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                         <div className="flex items-center space-x-3">
                           <HeartIcon className="h-5 w-5 text-gray-400" />
                           <div>
-                            <p className="text-sm text-gray-600">Tipo de Seguro</p>
-                            <p className="font-medium">{patientData.informacionMedica?.tipoSeguro || 'N/A'}</p>
+                            <p className="text-sm text-gray-600">Régimen de Afiliación</p>
+                            <p className="font-medium">{patientData.informacionMedica?.regimenAfiliacion || 'N/A'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <HeartIcon className="h-5 w-5 text-red-400" />
+                          <div>
+                            <p className="text-sm text-gray-600">Tipo de Sangre</p>
+                            <p className="font-medium">{patientData.informacionPersonal?.tipoSangre || 'N/A'}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="space-y-4">
+
+                      {/* Antecedentes médicos */}
+                      <div className="bg-gray-50 p-4 rounded-lg border">
+                        <h5 className="font-semibold text-gray-900 mb-3">Antecedentes Médicos</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Antecedentes Personales</p>
+                            <p className="font-medium bg-white p-3 rounded border min-h-[80px]">
+                              {patientData.informacionMedica?.antecedentesPersonales || 'No registrados'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Antecedentes Familiares</p>
+                            <p className="font-medium bg-white p-3 rounded border min-h-[80px]">
+                              {patientData.informacionMedica?.antecedentesFamiliares || 'No registrados'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Enfermedades Crónicas</p>
+                            <p className="font-medium bg-white p-3 rounded border min-h-[60px]">
+                              {patientData.informacionMedica?.enfermedadesCronicas || 'Ninguna registrada'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Vacunas e Inmunizaciones</p>
+                            <p className="font-medium bg-white p-3 rounded border min-h-[60px]">
+                              {patientData.informacionMedica?.vacunas || 'No registradas'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información actual */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <p className="text-sm text-gray-600 mb-2">Alergias</p>
                           <p className="font-medium bg-yellow-50 p-3 rounded-md border">
@@ -377,12 +921,46 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                           </p>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Observaciones Médicas</p>
-                      <p className="font-medium bg-gray-50 p-4 rounded-md border min-h-[100px]">
-                        {patientData.informacionMedica?.observacionesMedicas || 'Sin observaciones registradas'}
-                      </p>
+
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Observaciones Médicas Adicionales</p>
+                        <p className="font-medium bg-gray-50 p-4 rounded-md border min-h-[100px]">
+                          {patientData.informacionMedica?.observacionesMedicas || 'Sin observaciones registradas'}
+                        </p>
+                      </div>
+
+                      {/* Hábitos */}
+                      {patientData.informacionMedica?.habitos && (
+                        <div className="bg-green-50 p-4 rounded-lg border">
+                          <h5 className="font-semibold text-green-900 mb-3">Hábitos y Estilo de Vida</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <span className="text-green-700 font-medium">Tabaquismo:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.tabaquismo || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-green-700 font-medium">Alcoholismo:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.alcoholismo || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-green-700 font-medium">Ejercicio:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.ejercicio || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-green-700 font-medium">Alimentación:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.alimentacion || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-green-700 font-medium">Sueño:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.sueno || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-green-700 font-medium">Higiene:</span>
+                              <p className="text-green-800">{patientData.informacionMedica.habitos.higiene || 'N/A'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -391,23 +969,139 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                 {activeTab === 'emergencia' && (
                   <div className="space-y-6">
                     <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Contacto de Emergencia</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ maxWidth: 'none' }}>
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Nombre Completo</p>
-                          <p className="font-medium text-lg">{patientData.contactoEmergencia?.nombreContacto || 'N/A'}</p>
+                    <div className="space-y-6">
+                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <IdentificationIcon className="h-5 w-5 text-red-600" />
+                          <h5 className="font-semibold text-red-900">Información de Emergencia</h5>
                         </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Relación</p>
-                          <p className="font-medium">{patientData.contactoEmergencia?.relacion || 'N/A'}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ maxWidth: 'none' }}>
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm text-red-700 font-medium">Nombre Completo</p>
+                              <p className="font-semibold text-lg text-red-900">{patientData.contactoEmergencia?.nombreContacto || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-red-700 font-medium">Relación</p>
+                              <p className="font-medium text-red-800">{patientData.contactoEmergencia?.relacion || 'N/A'}</p>
+                            </div>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="flex items-center space-x-3">
+                              <PhoneIcon className="h-5 w-5 text-red-500" />
+                              <div>
+                                <p className="text-sm text-red-700 font-medium">Teléfono Principal</p>
+                                <p className="font-semibold text-red-900">{patientData.contactoEmergencia?.telefonoContacto || 'N/A'}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <PhoneIcon className="h-5 w-5 text-orange-500" />
+                              <div>
+                                <p className="text-sm text-red-700 font-medium">Teléfono Secundario</p>
+                                <p className="font-medium text-red-800">{patientData.contactoEmergencia?.telefonoContactoSecundario || 'N/A'}</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Consentimiento Informado */}
+                {activeTab === 'consentimiento' && (
+                  <div className="space-y-6">
+                    <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Consentimiento Informado</h4>
+
+                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                        <h5 className="text-xl font-semibold text-blue-900">Consentimiento para Tratamiento Médico</h5>
+                      </div>
+
                       <div className="space-y-4">
-                        <div className="flex items-center space-x-3">
-                          <PhoneIcon className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <p className="text-sm text-gray-600">Teléfono</p>
-                            <p className="font-medium">{patientData.contactoEmergencia?.telefonoContacto || 'N/A'}</p>
+                        <div className="bg-white p-4 rounded border">
+                          <h6 className="font-semibold text-gray-900 mb-3">Consentimientos Otorgados</h6>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700">Tratamiento Médico:</span>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                patientData.consentimientoInformado?.aceptaTratamiento
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {patientData.consentimientoInformado?.aceptaTratamiento ? '✓ Aceptado' : '✗ No aceptado'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700">Privacidad de Datos (Ley 1581):</span>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                patientData.consentimientoInformado?.aceptaPrivacidad
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {patientData.consentimientoInformado?.aceptaPrivacidad ? '✓ Aceptado' : '✗ No aceptado'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700">Tratamiento Datos Sensibles:</span>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                patientData.consentimientoInformado?.aceptaDatosPersonales
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {patientData.consentimientoInformado?.aceptaDatosPersonales ? '✓ Aceptado' : '✗ No aceptado'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-700">Uso de Imágenes:</span>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                patientData.consentimientoInformado?.aceptaImagenes
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {patientData.consentimientoInformado?.aceptaImagenes ? '✓ Aceptado' : '○ Opcional'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded border">
+                          <h6 className="font-semibold text-gray-900 mb-3">Información Legal</h6>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-600 font-medium">Fecha de Consentimiento:</span>
+                              <p className="font-medium">{formatDate(patientData.consentimientoInformado?.fechaConsentimiento) || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 font-medium">Firma del Paciente:</span>
+                              <p className="font-medium">{patientData.consentimientoInformado?.firmaPaciente || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 font-medium">Firma del Profesional:</span>
+                              <p className="font-medium">{patientData.consentimientoInformado?.firmaProfesional || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 font-medium">Testigo:</span>
+                              <p className="font-medium">{patientData.consentimientoInformado?.testigoConsentimiento || 'N/A'}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
+                          <div className="flex items-start space-x-3">
+                            <svg className="h-5 w-5 text-yellow-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <div>
+                              <h6 className="font-semibold text-yellow-900 mb-2">Información Legal Importante</h6>
+                              <div className="text-sm text-yellow-800 space-y-1">
+                                <p>• Este consentimiento cumple con la <strong>Ley 1581 de 2012</strong> (Protección de Datos Personales)</p>
+                                <p>• El paciente ha sido informado sobre sus derechos y deberes según la <strong>Ley 1751 de 2015</strong></p>
+                                <p>• Los datos médicos sensibles están protegidos por la normatividad colombiana</p>
+                                <p>• El paciente puede revocar este consentimiento en cualquier momento</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -505,15 +1199,27 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h4 className="text-lg font-semibold text-gray-900">Historia Clínica Completa</h4>
-                      <button
-                        onClick={() => setActiveTab('clinica')}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Volver
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => printHistoriaClinica()}
+                          className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="Imprimir historia clínica completa"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
+                          Imprimir HC
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('clinica')}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        >
+                          <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                          Volver
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-6">
@@ -739,9 +1445,21 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="text-right">
-                                    <p className="text-xs text-gray-500">Historia Clínica</p>
-                                    <p className="text-sm font-semibold text-blue-600">{historiaClinica.numeroHistoria}</p>
+                                  <div className="flex items-center space-x-4">
+                                    <button
+                                      onClick={() => printConsulta(consulta)}
+                                      className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                      title="Imprimir esta consulta"
+                                    >
+                                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                      </svg>
+                                      Imprimir
+                                    </button>
+                                    <div className="text-right">
+                                      <p className="text-xs text-gray-500">Historia Clínica</p>
+                                      <p className="text-sm font-semibold text-blue-600">{historiaClinica.numeroHistoria}</p>
+                                    </div>
                                   </div>
                                 </div>
 

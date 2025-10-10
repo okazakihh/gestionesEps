@@ -37,6 +37,7 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
     informacionContactoJson: null,
     informacionMedicaJson: null,
     contactoEmergenciaJson: null,
+    consentimientoInformadoJson: null,
     activo: true
   });
 
@@ -50,25 +51,63 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
       fechaNacimiento: '',
       genero: '',
       estadoCivil: '',
-      tipoSangre: ''
+      tipoSangre: '',
+      ocupacion: '',
+      nivelEducativo: '',
+      nacionalidad: 'Colombiana',
+      estratoSocioeconomico: '',
+      grupoEtnico: '',
+      discapacidad: '',
+      telefonoMovil: ''
     },
     informacionContacto: {
       telefono: '',
       email: '',
       direccion: '',
       ciudad: '',
-      departamento: ''
+      departamento: '',
+      pais: 'Colombia'
     },
     informacionMedica: {
       eps: '',
-      alergias: 'Ninguna',
-      medicamentosActuales: 'Ninguno',
-      observacionesMedicas: 'Ninguna'
+      tipoSeguro: '',
+      regimenAfiliacion: '',
+      alergias: '',
+      medicamentosActuales: '',
+      observacionesMedicas: '',
+      antecedentesPersonales: '',
+      antecedentesFamiliares: '',
+      antecedentesQuirurgicos: '',
+      antecedentesAlergicos: '',
+      enfermedadesCronicas: '',
+      cirugiasPrevias: '',
+      hospitalizacionesPrevias: '',
+      vacunas: '',
+      habitos: {
+        tabaquismo: '',
+        alcoholismo: '',
+        drogadiccion: '',
+        ejercicio: '',
+        alimentacion: '',
+        sueno: '',
+        higiene: ''
+      }
     },
     contactoEmergencia: {
       nombreContacto: '',
       telefonoContacto: '',
-      relacion: ''
+      relacion: '',
+      telefonoContactoSecundario: ''
+    },
+    consentimientoInformado: {
+      aceptaTratamiento: false,
+      aceptaPrivacidad: false,
+      aceptaDatosPersonales: false,
+      aceptaImagenes: false,
+      fechaConsentimiento: '',
+      firmaPaciente: '',
+      firmaProfesional: '',
+      testigoConsentimiento: ''
     }
   });
 
@@ -104,6 +143,36 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
       errors.email = 'El correo electrónico no es válido';
     }
 
+    // Consent validation (required by law)
+    if (!parsedData.consentimientoInformado.aceptaTratamiento) {
+      errors.consentimientoTratamiento = 'Debe aceptar el consentimiento informado para tratamiento médico';
+    }
+    if (!parsedData.consentimientoInformado.aceptaPrivacidad) {
+      errors.consentimientoPrivacidad = 'Debe aceptar las políticas de privacidad y protección de datos';
+    }
+    if (!parsedData.consentimientoInformado.aceptaDatosPersonales) {
+      errors.consentimientoDatos = 'Debe aceptar el tratamiento de datos personales según la Ley 1581 de 2012';
+    }
+
+    // Medical information validation (required by law)
+    if (!parsedData.informacionMedica.eps.trim()) {
+      errors.eps = 'La EPS es requerida por ley para atención médica';
+    }
+    if (!parsedData.informacionMedica.regimenAfiliacion) {
+      errors.regimenAfiliacion = 'El régimen de afiliación es requerido';
+    }
+
+    // Emergency contact validation (required by law)
+    if (!parsedData.contactoEmergencia.nombreContacto.trim()) {
+      errors.nombreContactoEmergencia = 'El contacto de emergencia es obligatorio por ley';
+    }
+    if (!parsedData.contactoEmergencia.telefonoContacto.trim()) {
+      errors.telefonoContactoEmergencia = 'El teléfono del contacto de emergencia es obligatorio';
+    }
+    if (!parsedData.contactoEmergencia.relacion.trim()) {
+      errors.relacionContactoEmergencia = 'La relación con el contacto de emergencia es obligatoria';
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -125,13 +194,20 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
       if (cleanInformacionMedica.medicamentosActuales === 'Ninguno') cleanInformacionMedica.medicamentosActuales = '';
       if (cleanInformacionMedica.observacionesMedicas === 'Ninguna') cleanInformacionMedica.observacionesMedicas = '';
 
+      // Agregar fecha de consentimiento si se aceptó
+      const consentimientoData = { ...parsedData.consentimientoInformado };
+      if (consentimientoData.aceptaTratamiento && consentimientoData.aceptaPrivacidad) {
+        consentimientoData.fechaConsentimiento = new Date().toISOString().split('T')[0];
+      }
+
       // Convertir los objetos parsedData a JSON strings antes de enviar
       const dataToSend = {
         ...formData,
         informacionPersonalJson: stringifyJsonSafely(parsedData.informacionPersonal),
         informacionContactoJson: stringifyJsonSafely(parsedData.informacionContacto),
         informacionMedicaJson: stringifyJsonSafely(cleanInformacionMedica),
-        contactoEmergenciaJson: stringifyJsonSafely(parsedData.contactoEmergencia)
+        contactoEmergenciaJson: stringifyJsonSafely(parsedData.contactoEmergencia),
+        consentimientoInformadoJson: stringifyJsonSafely(consentimientoData)
       };
 
       console.log('Enviando datos del paciente:', JSON.stringify(dataToSend, null, 2));
@@ -151,7 +227,8 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
             informacionPersonalJson: dataToSend.informacionPersonalJson,
             informacionContactoJson: dataToSend.informacionContactoJson,
             informacionMedicaJson: dataToSend.informacionMedicaJson,
-            contactoEmergenciaJson: dataToSend.contactoEmergenciaJson
+            contactoEmergenciaJson: dataToSend.contactoEmergenciaJson,
+            consentimientoInformadoJson: dataToSend.consentimientoInformadoJson
           })
         };
 
@@ -194,6 +271,7 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
           informacionContactoJson: null,
           informacionMedicaJson: null,
           contactoEmergenciaJson: null,
+          consentimientoInformadoJson: null,
           activo: true
         });
 
@@ -206,25 +284,63 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
             fechaNacimiento: '',
             genero: '',
             estadoCivil: '',
-            tipoSangre: ''
+            tipoSangre: '',
+            ocupacion: '',
+            nivelEducativo: '',
+            nacionalidad: 'Colombiana',
+            estratoSocioeconomico: '',
+            grupoEtnico: '',
+            discapacidad: '',
+            telefonoMovil: ''
           },
           informacionContacto: {
             telefono: '',
             email: '',
             direccion: '',
             ciudad: '',
-            departamento: ''
+            departamento: '',
+            pais: 'Colombia'
           },
           informacionMedica: {
             eps: '',
-            alergias: 'Ninguna',
-            medicamentosActuales: 'Ninguno',
-            observacionesMedicas: 'Ninguna'
+            tipoSeguro: '',
+            regimenAfiliacion: '',
+            alergias: '',
+            medicamentosActuales: '',
+            observacionesMedicas: '',
+            antecedentesPersonales: '',
+            antecedentesFamiliares: '',
+            antecedentesQuirurgicos: '',
+            antecedentesAlergicos: '',
+            enfermedadesCronicas: '',
+            cirugiasPrevias: '',
+            hospitalizacionesPrevias: '',
+            vacunas: '',
+            habitos: {
+              tabaquismo: '',
+              alcoholismo: '',
+              drogadiccion: '',
+              ejercicio: '',
+              alimentacion: '',
+              sueno: '',
+              higiene: ''
+            }
           },
           contactoEmergencia: {
             nombreContacto: '',
             telefonoContacto: '',
-            relacion: ''
+            relacion: '',
+            telefonoContactoSecundario: ''
+          },
+          consentimientoInformado: {
+            aceptaTratamiento: false,
+            aceptaPrivacidad: false,
+            aceptaDatosPersonales: false,
+            aceptaImagenes: false,
+            fechaConsentimiento: '',
+            firmaPaciente: '',
+            firmaProfesional: '',
+            testigoConsentimiento: ''
           }
         });
       }
@@ -262,7 +378,8 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
           informacionPersonal: parsedData.informacionPersonalJson ? parseJsonSafely(parsedData.informacionPersonalJson) : {},
           informacionContacto: parsedData.informacionContactoJson ? parseJsonSafely(parsedData.informacionContactoJson) : {},
           informacionMedica: parsedData.informacionMedicaJson ? parseJsonSafely(parsedData.informacionMedicaJson) : {},
-          contactoEmergencia: parsedData.contactoEmergenciaJson ? parseJsonSafely(parsedData.contactoEmergenciaJson) : {}
+          contactoEmergencia: parsedData.contactoEmergenciaJson ? parseJsonSafely(parsedData.contactoEmergenciaJson) : {},
+          consentimientoInformado: parsedData.consentimientoInformadoJson ? parseJsonSafely(parsedData.consentimientoInformadoJson) : {}
         };
 
         // Crear el objeto merged con la información correcta
@@ -350,25 +467,63 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
               fechaNacimiento: secondLevel.informacionPersonal?.fechaNacimiento || '',
               genero: secondLevel.informacionPersonal?.genero || '',
               estadoCivil: secondLevel.informacionPersonal?.estadoCivil || '',
-              tipoSangre: secondLevel.informacionPersonal?.tipoSangre || ''
+              tipoSangre: secondLevel.informacionPersonal?.tipoSangre || '',
+              ocupacion: secondLevel.informacionPersonal?.ocupacion || '',
+              nivelEducativo: secondLevel.informacionPersonal?.nivelEducativo || '',
+              nacionalidad: secondLevel.informacionPersonal?.nacionalidad || 'Colombiana',
+              estratoSocioeconomico: secondLevel.informacionPersonal?.estratoSocioeconomico || '',
+              grupoEtnico: secondLevel.informacionPersonal?.grupoEtnico || '',
+              discapacidad: secondLevel.informacionPersonal?.discapacidad || '',
+              telefonoMovil: secondLevel.informacionPersonal?.telefonoMovil || ''
             },
             informacionContacto: {
               telefono: secondLevel.informacionContacto?.telefono || '',
               email: secondLevel.informacionContacto?.email || '',
               direccion: secondLevel.informacionContacto?.direccion || '',
               ciudad: secondLevel.informacionContacto?.ciudad || '',
-              departamento: secondLevel.informacionContacto?.departamento || ''
+              departamento: secondLevel.informacionContacto?.departamento || '',
+              pais: secondLevel.informacionContacto?.pais || 'Colombia'
             },
             informacionMedica: {
               eps: secondLevel.informacionMedica?.eps || '',
-              alergias: secondLevel.informacionMedica?.alergias || 'Ninguna',
-              medicamentosActuales: secondLevel.informacionMedica?.medicamentosActuales || 'Ninguno',
-              observacionesMedicas: secondLevel.informacionMedica?.observacionesMedicas || 'Ninguna'
+              tipoSeguro: secondLevel.informacionMedica?.tipoSeguro || '',
+              regimenAfiliacion: secondLevel.informacionMedica?.regimenAfiliacion || '',
+              alergias: secondLevel.informacionMedica?.alergias || '',
+              medicamentosActuales: secondLevel.informacionMedica?.medicamentosActuales || '',
+              observacionesMedicas: secondLevel.informacionMedica?.observacionesMedicas || '',
+              antecedentesPersonales: secondLevel.informacionMedica?.antecedentesPersonales || '',
+              antecedentesFamiliares: secondLevel.informacionMedica?.antecedentesFamiliares || '',
+              antecedentesQuirurgicos: secondLevel.informacionMedica?.antecedentesQuirurgicos || '',
+              antecedentesAlergicos: secondLevel.informacionMedica?.antecedentesAlergicos || '',
+              enfermedadesCronicas: secondLevel.informacionMedica?.enfermedadesCronicas || '',
+              cirugiasPrevias: secondLevel.informacionMedica?.cirugiasPrevias || '',
+              hospitalizacionesPrevias: secondLevel.informacionMedica?.hospitalizacionesPrevias || '',
+              vacunas: secondLevel.informacionMedica?.vacunas || '',
+              habitos: secondLevel.informacionMedica?.habitos || {
+                tabaquismo: '',
+                alcoholismo: '',
+                drogadiccion: '',
+                ejercicio: '',
+                alimentacion: '',
+                sueno: '',
+                higiene: ''
+              }
             },
             contactoEmergencia: {
               nombreContacto: secondLevel.contactoEmergencia?.nombreContacto || '',
               telefonoContacto: secondLevel.contactoEmergencia?.telefonoContacto || '',
-              relacion: secondLevel.contactoEmergencia?.relacion || ''
+              relacion: secondLevel.contactoEmergencia?.relacion || '',
+              telefonoContactoSecundario: secondLevel.contactoEmergencia?.telefonoContactoSecundario || ''
+            },
+            consentimientoInformado: secondLevel.consentimientoInformado || {
+              aceptaTratamiento: false,
+              aceptaPrivacidad: false,
+              aceptaDatosPersonales: false,
+              aceptaImagenes: false,
+              fechaConsentimiento: '',
+              firmaPaciente: '',
+              firmaProfesional: '',
+              testigoConsentimiento: ''
             }
           };
         }
@@ -379,6 +534,7 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
           const infoContacto = firstLevel.informacionContactoJson ? JSON.parse(firstLevel.informacionContactoJson) : {};
           const infoMedica = firstLevel.informacionMedicaJson ? JSON.parse(firstLevel.informacionMedicaJson) : {};
           const contactoEmergencia = firstLevel.contactoEmergenciaJson ? JSON.parse(firstLevel.contactoEmergenciaJson) : {};
+          const consentimiento = firstLevel.consentimientoInformadoJson ? JSON.parse(firstLevel.consentimientoInformadoJson) : {};
 
           return {
             informacionPersonal: {
@@ -389,25 +545,63 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
               fechaNacimiento: infoPersonal.fechaNacimiento || '',
               genero: infoPersonal.genero || '',
               estadoCivil: infoPersonal.estadoCivil || '',
-              tipoSangre: infoPersonal.tipoSangre || ''
+              tipoSangre: infoPersonal.tipoSangre || '',
+              ocupacion: infoPersonal.ocupacion || '',
+              nivelEducativo: infoPersonal.nivelEducativo || '',
+              nacionalidad: infoPersonal.nacionalidad || 'Colombiana',
+              estratoSocioeconomico: infoPersonal.estratoSocioeconomico || '',
+              grupoEtnico: infoPersonal.grupoEtnico || '',
+              discapacidad: infoPersonal.discapacidad || '',
+              telefonoMovil: infoPersonal.telefonoMovil || ''
             },
             informacionContacto: {
               telefono: infoContacto.telefono || '',
               email: infoContacto.email || '',
               direccion: infoContacto.direccion || '',
               ciudad: infoContacto.ciudad || '',
-              departamento: infoContacto.departamento || ''
+              departamento: infoContacto.departamento || '',
+              pais: infoContacto.pais || 'Colombia'
             },
             informacionMedica: {
               eps: infoMedica.eps || '',
-              alergias: infoMedica.alergias || 'Ninguna',
-              medicamentosActuales: infoMedica.medicamentosActuales || 'Ninguno',
-              observacionesMedicas: infoMedica.observacionesMedicas || 'Ninguna'
+              tipoSeguro: infoMedica.tipoSeguro || '',
+              regimenAfiliacion: infoMedica.regimenAfiliacion || '',
+              alergias: infoMedica.alergias || '',
+              medicamentosActuales: infoMedica.medicamentosActuales || '',
+              observacionesMedicas: infoMedica.observacionesMedicas || '',
+              antecedentesPersonales: infoMedica.antecedentesPersonales || '',
+              antecedentesFamiliares: infoMedica.antecedentesFamiliares || '',
+              antecedentesQuirurgicos: infoMedica.antecedentesQuirurgicos || '',
+              antecedentesAlergicos: infoMedica.antecedentesAlergicos || '',
+              enfermedadesCronicas: infoMedica.enfermedadesCronicas || '',
+              cirugiasPrevias: infoMedica.cirugiasPrevias || '',
+              hospitalizacionesPrevias: infoMedica.hospitalizacionesPrevias || '',
+              vacunas: infoMedica.vacunas || '',
+              habitos: infoMedica.habitos || {
+                tabaquismo: '',
+                alcoholismo: '',
+                drogadiccion: '',
+                ejercicio: '',
+                alimentacion: '',
+                sueno: '',
+                higiene: ''
+              }
             },
             contactoEmergencia: {
               nombreContacto: contactoEmergencia.nombreContacto || '',
               telefonoContacto: contactoEmergencia.telefonoContacto || '',
-              relacion: contactoEmergencia.relacion || ''
+              relacion: contactoEmergencia.relacion || '',
+              telefonoContactoSecundario: contactoEmergencia.telefonoContactoSecundario || ''
+            },
+            consentimientoInformado: consentimiento || {
+              aceptaTratamiento: false,
+              aceptaPrivacidad: false,
+              aceptaDatosPersonales: false,
+              aceptaImagenes: false,
+              fechaConsentimiento: '',
+              firmaPaciente: '',
+              firmaProfesional: '',
+              testigoConsentimiento: ''
             }
           };
         }
@@ -426,25 +620,63 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
         fechaNacimiento: '',
         genero: '',
         estadoCivil: '',
-        tipoSangre: ''
+        tipoSangre: '',
+        ocupacion: '',
+        nivelEducativo: '',
+        nacionalidad: 'Colombiana',
+        estratoSocioeconomico: '',
+        grupoEtnico: '',
+        discapacidad: '',
+        telefonoMovil: ''
       },
       informacionContacto: {
         telefono: '',
         email: '',
         direccion: '',
         ciudad: '',
-        departamento: ''
+        departamento: '',
+        pais: 'Colombia'
       },
       informacionMedica: {
         eps: '',
-        alergias: 'Ninguna',
-        medicamentosActuales: 'Ninguno',
-        observacionesMedicas: 'Ninguna'
+        tipoSeguro: '',
+        regimenAfiliacion: '',
+        alergias: '',
+        medicamentosActuales: '',
+        observacionesMedicas: '',
+        antecedentesPersonales: '',
+        antecedentesFamiliares: '',
+        antecedentesQuirurgicos: '',
+        antecedentesAlergicos: '',
+        enfermedadesCronicas: '',
+        cirugiasPrevias: '',
+        hospitalizacionesPrevias: '',
+        vacunas: '',
+        habitos: {
+          tabaquismo: '',
+          alcoholismo: '',
+          drogadiccion: '',
+          ejercicio: '',
+          alimentacion: '',
+          sueno: '',
+          higiene: ''
+        }
       },
       contactoEmergencia: {
         nombreContacto: '',
         telefonoContacto: '',
-        relacion: ''
+        relacion: '',
+        telefonoContactoSecundario: ''
+      },
+      consentimientoInformado: {
+        aceptaTratamiento: false,
+        aceptaPrivacidad: false,
+        aceptaDatosPersonales: false,
+        aceptaImagenes: false,
+        fechaConsentimiento: '',
+        firmaPaciente: '',
+        firmaProfesional: '',
+        testigoConsentimiento: ''
       }
     };
   };
@@ -490,6 +722,7 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
           informacionContactoJson: null,
           informacionMedicaJson: null,
           contactoEmergenciaJson: null,
+          consentimientoInformadoJson: null,
           activo: editingPatient.activo !== undefined ? editingPatient.activo : true
         });
 
@@ -707,6 +940,88 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
                         <option value="UNION_LIBRE">Unión Libre</option>
                       </select>
                     </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="nacionalidad" className="block text-sm font-medium leading-6 text-gray-900">
+                        Nacionalidad
+                      </label>
+                      <input
+                        type="text"
+                        id="nacionalidad"
+                        value={parsedData.informacionPersonal?.nacionalidad || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'nacionalidad', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Colombiana"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="telefonoMovil" className="block text-sm font-medium leading-6 text-gray-900">
+                        Teléfono Móvil
+                      </label>
+                      <input
+                        type="tel"
+                        id="telefonoMovil"
+                        value={parsedData.informacionPersonal?.telefonoMovil || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'telefonoMovil', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="estratoSocioeconomico" className="block text-sm font-medium leading-6 text-gray-900">
+                        Estrato Socioeconómico
+                      </label>
+                      <select
+                        id="estratoSocioeconomico"
+                        value={parsedData.informacionPersonal?.estratoSocioeconomico || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'estratoSocioeconomico', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="1">Estrato 1</option>
+                        <option value="2">Estrato 2</option>
+                        <option value="3">Estrato 3</option>
+                        <option value="4">Estrato 4</option>
+                        <option value="5">Estrato 5</option>
+                        <option value="6">Estrato 6</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="ocupacion" className="block text-sm font-medium leading-6 text-gray-900">
+                        Ocupación
+                      </label>
+                      <input
+                        type="text"
+                        id="ocupacion"
+                        value={parsedData.informacionPersonal?.ocupacion || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'ocupacion', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Profesión u oficio"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="nivelEducativo" className="block text-sm font-medium leading-6 text-gray-900">
+                        Nivel Educativo
+                      </label>
+                      <select
+                        id="nivelEducativo"
+                        value={parsedData.informacionPersonal?.nivelEducativo || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'nivelEducativo', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="NINGUNO">Ninguno</option>
+                        <option value="PRIMARIA">Primaria</option>
+                        <option value="SECUNDARIA">Secundaria</option>
+                        <option value="TECNICO">Técnico</option>
+                        <option value="TECNOLOGICO">Tecnológico</option>
+                        <option value="PROFESIONAL">Profesional</option>
+                        <option value="POSGRADO">Posgrado</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -801,16 +1116,67 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
                   <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                       <label htmlFor="eps" className="block text-sm font-medium leading-6 text-gray-900">
-                        EPS
+                        EPS <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         id="eps"
                         value={parsedData.informacionMedica?.eps || ''}
                         onChange={(e) => handleNestedInputChange('informacionMedica', 'eps', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        className={`mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+                          validationErrors.eps ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300 focus:ring-blue-600'
+                        }`}
                         placeholder="Nombre de la EPS..."
                       />
+                      {validationErrors.eps && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.eps}</p>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label htmlFor="regimenAfiliacion" className="block text-sm font-medium leading-6 text-gray-900">
+                        Régimen de Afiliación <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="regimenAfiliacion"
+                        value={parsedData.informacionMedica?.regimenAfiliacion || ''}
+                        onChange={(e) => handleNestedInputChange('informacionMedica', 'regimenAfiliacion', e.target.value)}
+                        className={`mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset focus:ring-2 sm:text-sm sm:leading-6 ${
+                          validationErrors.regimenAfiliacion ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300 focus:ring-blue-600'
+                        }`}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="CONTRIBUTIVO">Contributivo</option>
+                        <option value="SUBSIDIADO">Subsidiado</option>
+                        <option value="ESPECIAL">Especial</option>
+                        <option value="EXCEPTUADO">Exceptuado</option>
+                        <option value="NO_AFILIADO">No Afiliado</option>
+                      </select>
+                      {validationErrors.regimenAfiliacion && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.regimenAfiliacion}</p>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="tipoSangre" className="block text-sm font-medium leading-6 text-gray-900">
+                        Tipo de Sangre
+                      </label>
+                      <select
+                        id="tipoSangre"
+                        value={parsedData.informacionPersonal?.tipoSangre || ''}
+                        onChange={(e) => handleNestedInputChange('informacionPersonal', 'tipoSangre', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:text-sm sm:leading-6"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                      </select>
                     </div>
 
                     <div className="sm:col-span-6">
@@ -842,8 +1208,64 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
                     </div>
 
                     <div className="sm:col-span-6">
+                      <label htmlFor="antecedentesPersonales" className="block text-sm font-medium leading-6 text-gray-900">
+                        Antecedentes Médicos Personales
+                      </label>
+                      <textarea
+                        id="antecedentesPersonales"
+                        rows={3}
+                        value={parsedData.informacionMedica?.antecedentesPersonales || ''}
+                        onChange={(e) => handleNestedInputChange('informacionMedica', 'antecedentesPersonales', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Describa enfermedades previas, cirugías, hospitalizaciones..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <label htmlFor="antecedentesFamiliares" className="block text-sm font-medium leading-6 text-gray-900">
+                        Antecedentes Médicos Familiares
+                      </label>
+                      <textarea
+                        id="antecedentesFamiliares"
+                        rows={3}
+                        value={parsedData.informacionMedica?.antecedentesFamiliares || ''}
+                        onChange={(e) => handleNestedInputChange('informacionMedica', 'antecedentesFamiliares', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Enfermedades en familiares directos (padres, hermanos, hijos)..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <label htmlFor="enfermedadesCronicas" className="block text-sm font-medium leading-6 text-gray-900">
+                        Enfermedades Crónicas
+                      </label>
+                      <textarea
+                        id="enfermedadesCronicas"
+                        rows={2}
+                        value={parsedData.informacionMedica?.enfermedadesCronicas || ''}
+                        onChange={(e) => handleNestedInputChange('informacionMedica', 'enfermedadesCronicas', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Diabetes, hipertensión, asma, etc."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <label htmlFor="vacunas" className="block text-sm font-medium leading-6 text-gray-900">
+                        Vacunas y Esquemas de Inmunización
+                      </label>
+                      <textarea
+                        id="vacunas"
+                        rows={2}
+                        value={parsedData.informacionMedica?.vacunas || ''}
+                        onChange={(e) => handleNestedInputChange('informacionMedica', 'vacunas', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Vacunas aplicadas y fechas..."
+                      />
+                    </div>
+
+                    <div className="sm:col-span-6">
                       <label htmlFor="observacionesMedicas" className="block text-sm font-medium leading-6 text-gray-900">
-                        Observaciones Médicas
+                        Observaciones Médicas Adicionales
                       </label>
                       <textarea
                         id="observacionesMedicas"
@@ -851,8 +1273,133 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
                         value={parsedData.informacionMedica?.observacionesMedicas || ''}
                         onChange={(e) => handleNestedInputChange('informacionMedica', 'observacionesMedicas', e.target.value)}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                        placeholder="Observaciones adicionales..."
+                        placeholder="Observaciones adicionales del estado de salud..."
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Consentimiento Informado */}
+              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+                <div className="px-4 py-6 sm:p-8">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900 mb-6">Consentimiento Informado</h3>
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 mb-4">
+                      <p className="font-medium mb-2">Según la Ley 1581 de 2012 y normas relacionadas con historia clínica, el paciente debe otorgar su consentimiento expreso para:</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <input
+                            id="aceptaTratamiento"
+                            type="checkbox"
+                            checked={parsedData.consentimientoInformado?.aceptaTratamiento || false}
+                            onChange={(e) => handleNestedInputChange('consentimientoInformado', 'aceptaTratamiento', e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor="aceptaTratamiento" className="font-medium text-gray-700">
+                            Tratamiento Médico <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-gray-500">Acepto recibir atención médica y procedimientos diagnósticos necesarios para mi salud.</p>
+                          {validationErrors.consentimientoTratamiento && (
+                            <p className="mt-1 text-sm text-red-600">{validationErrors.consentimientoTratamiento}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <input
+                            id="aceptaPrivacidad"
+                            type="checkbox"
+                            checked={parsedData.consentimientoInformado?.aceptaPrivacidad || false}
+                            onChange={(e) => handleNestedInputChange('consentimientoInformado', 'aceptaPrivacidad', e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor="aceptaPrivacidad" className="font-medium text-gray-700">
+                            Protección de Datos Personales <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-gray-500">Acepto el tratamiento de mis datos personales según la Ley 1581 de 2012 y normas de protección de datos.</p>
+                          {validationErrors.consentimientoPrivacidad && (
+                            <p className="mt-1 text-sm text-red-600">{validationErrors.consentimientoPrivacidad}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <input
+                            id="aceptaDatosPersonales"
+                            type="checkbox"
+                            checked={parsedData.consentimientoInformado?.aceptaDatosPersonales || false}
+                            onChange={(e) => handleNestedInputChange('consentimientoInformado', 'aceptaDatosPersonales', e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor="aceptaDatosPersonales" className="font-medium text-gray-700">
+                            Tratamiento de Datos Sensibles <span className="text-red-500">*</span>
+                          </label>
+                          <p className="text-gray-500">Acepto el tratamiento de datos sensibles de salud según la legislación colombiana.</p>
+                          {validationErrors.consentimientoDatos && (
+                            <p className="mt-1 text-sm text-red-600">{validationErrors.consentimientoDatos}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                          <input
+                            id="aceptaImagenes"
+                            type="checkbox"
+                            checked={parsedData.consentimientoInformado?.aceptaImagenes || false}
+                            onChange={(e) => handleNestedInputChange('consentimientoInformado', 'aceptaImagenes', e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor="aceptaImagenes" className="font-medium text-gray-700">
+                            Uso de Imágenes y Fotografías
+                          </label>
+                          <p className="text-gray-500">Acepto el uso de imágenes y fotografías para fines médicos y académicos (opcional).</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 pt-4 border-t border-gray-200">
+                      <div className="sm:col-span-3">
+                        <label htmlFor="firmaPaciente" className="block text-sm font-medium leading-6 text-gray-900">
+                          Firma del Paciente
+                        </label>
+                        <input
+                          type="text"
+                          id="firmaPaciente"
+                          value={parsedData.consentimientoInformado?.firmaPaciente || ''}
+                          onChange={(e) => handleNestedInputChange('consentimientoInformado', 'firmaPaciente', e.target.value)}
+                          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                          placeholder="Nombre completo del paciente"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label htmlFor="firmaProfesional" className="block text-sm font-medium leading-6 text-gray-900">
+                          Firma del Profesional
+                        </label>
+                        <input
+                          type="text"
+                          id="firmaProfesional"
+                          value={parsedData.consentimientoInformado?.firmaProfesional || ''}
+                          onChange={(e) => handleNestedInputChange('consentimientoInformado', 'firmaProfesional', e.target.value)}
+                          className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                          placeholder="Nombre del profesional que recibe el consentimiento"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -865,41 +1412,84 @@ const CreatePatientModal = ({ isOpen, onClose, onPatientCreated, prefillDocument
                   <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-4">
                       <label htmlFor="nombreContacto" className="block text-sm font-medium leading-6 text-gray-900">
-                        Nombre del Contacto
+                        Nombre del Contacto <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         id="nombreContacto"
                         value={parsedData.contactoEmergencia?.nombreContacto || ''}
                         onChange={(e) => handleNestedInputChange('contactoEmergencia', 'nombreContacto', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        className={`mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+                          validationErrors.nombreContactoEmergencia ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300 focus:ring-blue-600'
+                        }`}
+                        placeholder="Nombre completo del contacto de emergencia"
                       />
+                      {validationErrors.nombreContactoEmergencia && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.nombreContactoEmergencia}</p>
+                      )}
                     </div>
 
                     <div className="sm:col-span-2">
                       <label htmlFor="relacion" className="block text-sm font-medium leading-6 text-gray-900">
-                        Relación
+                        Relación <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
+                      <select
                         id="relacion"
                         value={parsedData.contactoEmergencia?.relacion || ''}
                         onChange={(e) => handleNestedInputChange('contactoEmergencia', 'relacion', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                        placeholder="Padre, Madre, Hermano..."
-                      />
+                        className={`mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset focus:ring-2 sm:text-sm sm:leading-6 ${
+                          validationErrors.relacionContactoEmergencia ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300 focus:ring-blue-600'
+                        }`}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="PADRE">Padre</option>
+                        <option value="MADRE">Madre</option>
+                        <option value="HIJO">Hijo/Hija</option>
+                        <option value="HERMANO">Hermano/Hermana</option>
+                        <option value="ESPOSO">Esposo/Esposa</option>
+                        <option value="CONYUGE">Cónyuge</option>
+                        <option value="ABUELO">Abuelo/Abuela</option>
+                        <option value="TIO">Tío/Tía</option>
+                        <option value="PRIMO">Primo/Prima</option>
+                        <option value="AMIGO">Amigo/Amiga</option>
+                        <option value="VECINO">Vecino/Vecina</option>
+                        <option value="OTRO">Otro</option>
+                      </select>
+                      {validationErrors.relacionContactoEmergencia && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.relacionContactoEmergencia}</p>
+                      )}
                     </div>
 
-                    <div className="sm:col-span-6">
+                    <div className="sm:col-span-3">
                       <label htmlFor="telefonoContacto" className="block text-sm font-medium leading-6 text-gray-900">
-                        Teléfono del Contacto
+                        Teléfono Principal <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
                         id="telefonoContacto"
                         value={parsedData.contactoEmergencia?.telefonoContacto || ''}
                         onChange={(e) => handleNestedInputChange('contactoEmergencia', 'telefonoContacto', e.target.value)}
+                        className={`mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+                          validationErrors.telefonoContactoEmergencia ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300 focus:ring-blue-600'
+                        }`}
+                        placeholder="Teléfono principal del contacto"
+                      />
+                      {validationErrors.telefonoContactoEmergencia && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.telefonoContactoEmergencia}</p>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label htmlFor="telefonoContactoSecundario" className="block text-sm font-medium leading-6 text-gray-900">
+                        Teléfono Secundario
+                      </label>
+                      <input
+                        type="tel"
+                        id="telefonoContactoSecundario"
+                        value={parsedData.contactoEmergencia?.telefonoContactoSecundario || ''}
+                        onChange={(e) => handleNestedInputChange('contactoEmergencia', 'telefonoContactoSecundario', e.target.value)}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder="Teléfono alternativo (opcional)"
                       />
                     </div>
                   </div>

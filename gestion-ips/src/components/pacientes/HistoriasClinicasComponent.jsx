@@ -155,6 +155,7 @@ const HistoriasClinicasComponent = () => {
     setHistoriaToEdit(null);
   };
 
+
   const handleCreateHistoriaClinica = async () => {
     try {
       setLoading(true);
@@ -275,7 +276,7 @@ const HistoriasClinicasComponent = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -326,12 +327,12 @@ const HistoriasClinicasComponent = () => {
           ) : pacienteData ? (
             <>
               {/* Información Básica del Paciente */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h3 className="text-base font-semibold text-blue-900 mb-2 flex items-center">
                   <span className="mr-2">👤</span>
                   Información del Paciente
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <span className="text-sm font-medium text-gray-600">Nombre Completo:</span>
                     <p className="text-sm text-gray-900">
@@ -382,12 +383,12 @@ const HistoriasClinicasComponent = () => {
               </div>
 
               {/* Información Médica */}
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-red-900 mb-3 flex items-center">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <h3 className="text-base font-semibold text-red-900 mb-2 flex items-center">
                   <span className="mr-2">🏥</span>
                   Información Médica
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
                     <span className="text-sm font-medium text-gray-600">Alergias:</span>
                     <span className="text-sm text-gray-900 ml-2">{pacienteData.informacionMedica?.alergias || 'Ninguna'}</span>
@@ -407,12 +408,12 @@ const HistoriasClinicasComponent = () => {
               {historiaClinicaData ? (
                 <>
                   {/* Información General de la Historia */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <h3 className="text-base font-semibold text-blue-900 mb-2 flex items-center">
                       <span className="mr-2">📋</span>
                       Historia Clínica - {historiaClinicaData.numeroHistoria}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <span className="text-sm font-medium text-gray-600">Estado:</span>
                         <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
@@ -435,8 +436,8 @@ const HistoriasClinicasComponent = () => {
                   </div>
 
                   {/* Timeline de Consultas */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <div className="space-y-3">
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center">
                       <span className="mr-2">📅</span>
                       Cronología de Consultas
                     </h3>
@@ -523,14 +524,14 @@ const HistoriasClinicasComponent = () => {
                               )}
 
                               <div className="flex items-start">
-                                <div className="flex-shrink-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                  <span className="text-white text-sm font-bold">{consulta.numero}</span>
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">{consulta.numero}</span>
                                 </div>
-                                <div className="ml-4 flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <h4 className="text-md font-semibold text-gray-900">{consulta.tipo}</h4>
+                                <div className="ml-3 flex-1 bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-sm font-semibold text-gray-900">{consulta.tipo}</h4>
                                     <div className="text-right">
-                                      <div className="text-sm text-gray-500">
+                                      <div className="text-xs text-gray-500">
                                         {consulta.fecha ? new Date(consulta.fecha).toLocaleDateString() : 'Fecha no disponible'}
                                       </div>
                                       {consulta.fecha && (
@@ -542,7 +543,7 @@ const HistoriasClinicasComponent = () => {
                                   </div>
 
                                   {/* Información del médico */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs mb-2">
                                     <div>
                                       <span className="font-medium text-gray-600">Médico:</span>
                                       <p className="text-gray-900">{consulta.medico || 'N/A'}</p>
@@ -556,119 +557,119 @@ const HistoriasClinicasComponent = () => {
                                   </div>
 
                                   {/* Motivo de consulta */}
-                                  <div className="mb-3">
-                                    <span className="font-medium text-gray-600 text-sm">Motivo:</span>
-                                    <p className="text-gray-900 text-sm mt-1 p-2 bg-gray-50 rounded">{consulta.motivo || 'No especificado'}</p>
+                                  <div className="mb-2">
+                                    <span className="font-medium text-gray-600 text-xs">Motivo:</span>
+                                    <p className="text-gray-900 text-xs mt-1 p-2 bg-gray-50 rounded">{consulta.motivo || 'No especificado'}</p>
                                   </div>
 
                                   {/* Enfermedad actual */}
                                   {consulta.enfermedadActual && (
-                                    <div className="mb-3">
-                                      <span className="font-medium text-gray-600 text-sm">Enfermedad Actual:</span>
-                                      <p className="text-gray-900 text-sm mt-1 p-2 bg-gray-50 rounded">{consulta.enfermedadActual}</p>
+                                    <div className="mb-2">
+                                      <span className="font-medium text-gray-600 text-xs">Enfermedad Actual:</span>
+                                      <p className="text-gray-900 text-xs mt-1 p-1 bg-gray-50 rounded">{consulta.enfermedadActual}</p>
                                     </div>
                                   )}
 
                                   {/* Revisión por sistemas (solo consultas posteriores) */}
                                   {consulta.revisionSistemas && (
-                                    <div className="mb-3">
-                                      <span className="font-medium text-gray-600 text-sm">Revisión por Sistemas:</span>
-                                      <p className="text-gray-900 text-sm mt-1 p-2 bg-gray-50 rounded">{consulta.revisionSistemas}</p>
+                                    <div className="mb-2">
+                                      <span className="font-medium text-gray-600 text-xs">Revisión por Sistemas:</span>
+                                      <p className="text-gray-900 text-xs mt-1 p-1 bg-gray-50 rounded">{consulta.revisionSistemas}</p>
                                     </div>
                                   )}
 
                                   {/* Medicamentos actuales */}
                                   {consulta.medicamentosActuales && (
-                                    <div className="mb-3">
-                                      <span className="font-medium text-gray-600 text-sm">Medicamentos Actuales:</span>
-                                      <p className="text-gray-900 text-sm mt-1 p-2 bg-gray-50 rounded">{consulta.medicamentosActuales}</p>
+                                    <div className="mb-2">
+                                      <span className="font-medium text-gray-600 text-xs">Medicamentos Actuales:</span>
+                                      <p className="text-gray-900 text-xs mt-1 p-1 bg-gray-50 rounded">{consulta.medicamentosActuales}</p>
                                     </div>
                                   )}
 
                                   {/* Examen clínico */}
                                   {(consulta.examenFisico || consulta.signosVitales) && (
-                                    <div className="mb-3 p-3 bg-blue-50 rounded">
-                                      <span className="font-medium text-blue-900 text-sm">Examen Clínico:</span>
+                                    <div className="mb-2 p-2 bg-blue-50 rounded">
+                                      <span className="font-medium text-blue-900 text-xs">Examen Clínico:</span>
                                       {consulta.examenFisico && (
-                                        <p className="text-blue-800 text-sm mt-1"><strong>Físico:</strong> {consulta.examenFisico}</p>
+                                        <p className="text-blue-800 text-xs mt-1"><strong>Físico:</strong> {consulta.examenFisico}</p>
                                       )}
                                       {consulta.signosVitales && (
-                                        <p className="text-blue-800 text-sm mt-1"><strong>Signos Vitales:</strong> {consulta.signosVitales}</p>
+                                        <p className="text-blue-800 text-xs mt-1"><strong>Signos Vitales:</strong> {consulta.signosVitales}</p>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Diagnóstico y tratamiento */}
                                   {(consulta.diagnosticos || consulta.planTratamiento) && (
-                                    <div className="mb-3 p-3 bg-green-50 rounded">
-                                      <span className="font-medium text-green-900 text-sm">Diagnóstico y Tratamiento:</span>
+                                    <div className="mb-2 p-2 bg-green-50 rounded">
+                                      <span className="font-medium text-green-900 text-xs">Diagnóstico y Tratamiento:</span>
                                       {consulta.diagnosticos && (
-                                        <p className="text-green-800 text-sm mt-1"><strong>Diagnósticos:</strong> {consulta.diagnosticos}</p>
+                                        <p className="text-green-800 text-xs mt-1"><strong>Diagnósticos:</strong> {consulta.diagnosticos}</p>
                                       )}
                                       {consulta.planTratamiento && (
-                                        <p className="text-green-800 text-sm mt-1"><strong>Plan:</strong> {consulta.planTratamiento}</p>
+                                        <p className="text-green-800 text-xs mt-1"><strong>Plan:</strong> {consulta.planTratamiento}</p>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Fórmula Médica */}
                                   {consulta.formulaMedica && (
-                                    <div className="mb-3 p-3 bg-blue-50 rounded">
-                                      <span className="font-medium text-blue-900 text-sm">💊 Fórmula Médica:</span>
-                                      <p className="text-blue-800 text-sm mt-1">{consulta.formulaMedica}</p>
+                                    <div className="mb-2 p-2 bg-blue-50 rounded">
+                                      <span className="font-medium text-blue-900 text-xs">💊 Fórmula Médica:</span>
+                                      <p className="text-blue-800 text-xs mt-1">{consulta.formulaMedica}</p>
                                     </div>
                                   )}
 
                                   {/* Incapacidad */}
                                   {consulta.incapacidad && (consulta.incapacidad.tipo || consulta.incapacidad.dias) && (
-                                    <div className="mb-3 p-3 bg-orange-50 rounded">
-                                      <span className="font-medium text-orange-900 text-sm">📄 Incapacidad:</span>
+                                    <div className="mb-2 p-2 bg-orange-50 rounded">
+                                      <span className="font-medium text-orange-900 text-xs">📄 Incapacidad:</span>
                                       {consulta.incapacidad.tipo && (
-                                        <p className="text-orange-800 text-sm mt-1"><strong>Tipo:</strong> {consulta.incapacidad.tipo}</p>
+                                        <p className="text-orange-800 text-xs mt-1"><strong>Tipo:</strong> {consulta.incapacidad.tipo}</p>
                                       )}
                                       {consulta.incapacidad.dias && (
-                                        <p className="text-orange-800 text-sm mt-1"><strong>Días:</strong> {consulta.incapacidad.dias}</p>
+                                        <p className="text-orange-800 text-xs mt-1"><strong>Días:</strong> {consulta.incapacidad.dias}</p>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Indicaciones y próxima cita */}
                                   {(consulta.indicaciones || consulta.proximaCita) && (
-                                    <div className="mb-3 p-3 bg-yellow-50 rounded">
-                                      <span className="font-medium text-yellow-900 text-sm">Seguimiento:</span>
+                                    <div className="mb-2 p-2 bg-yellow-50 rounded">
+                                      <span className="font-medium text-yellow-900 text-xs">Seguimiento:</span>
                                       {consulta.indicaciones && (
-                                        <p className="text-yellow-800 text-sm mt-1"><strong>Indicaciones:</strong> {consulta.indicaciones}</p>
+                                        <p className="text-yellow-800 text-xs mt-1"><strong>Indicaciones:</strong> {consulta.indicaciones}</p>
                                       )}
                                       {consulta.proximaCita && (
-                                        <p className="text-yellow-800 text-sm mt-1"><strong>Próxima Cita:</strong> {consulta.proximaCita}</p>
+                                        <p className="text-yellow-800 text-xs mt-1"><strong>Próxima Cita:</strong> {consulta.proximaCita}</p>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Antecedentes (solo para consulta inicial) */}
                                   {consulta.antecedentes && (
-                                    <div className="mb-3 p-3 bg-purple-50 rounded">
-                                      <span className="font-medium text-purple-900 text-sm">Antecedentes Médicos:</span>
+                                    <div className="mb-2 p-2 bg-purple-50 rounded">
+                                      <span className="font-medium text-purple-900 text-xs">Antecedentes Médicos:</span>
                                       {consulta.antecedentes.antecedentesPersonales && (
-                                        <p className="text-purple-800 text-sm mt-1"><strong>Personales:</strong> {consulta.antecedentes.antecedentesPersonales}</p>
+                                        <p className="text-purple-800 text-xs mt-1"><strong>Personales:</strong> {consulta.antecedentes.antecedentesPersonales}</p>
                                       )}
                                       {consulta.antecedentes.antecedentesFamiliares && (
-                                        <p className="text-purple-800 text-sm mt-1"><strong>Familiares:</strong> {consulta.antecedentes.antecedentesFamiliares}</p>
+                                        <p className="text-purple-800 text-xs mt-1"><strong>Familiares:</strong> {consulta.antecedentes.antecedentesFamiliares}</p>
                                       )}
                                       {consulta.antecedentes.antecedentesQuirurgicos && (
-                                        <p className="text-purple-800 text-sm mt-1"><strong>Quirúrgicos:</strong> {consulta.antecedentes.antecedentesQuirurgicos}</p>
+                                        <p className="text-purple-800 text-xs mt-1"><strong>Quirúrgicos:</strong> {consulta.antecedentes.antecedentesQuirurgicos}</p>
                                       )}
                                       {consulta.antecedentes.antecedentesAlergicos && (
-                                        <p className="text-purple-800 text-sm mt-1"><strong>Alérgicos:</strong> {consulta.antecedentes.antecedentesAlergicos}</p>
+                                        <p className="text-purple-800 text-xs mt-1"><strong>Alérgicos:</strong> {consulta.antecedentes.antecedentesAlergicos}</p>
                                       )}
                                     </div>
                                   )}
 
                                   {/* Observaciones */}
                                   {consulta.observaciones && (
-                                    <div className="mb-3">
-                                      <span className="font-medium text-gray-600 text-sm">Observaciones:</span>
-                                      <p className="text-gray-900 text-sm mt-1 p-2 bg-gray-50 rounded">{consulta.observaciones}</p>
+                                    <div className="mb-2">
+                                      <span className="font-medium text-gray-600 text-xs">Observaciones:</span>
+                                      <p className="text-gray-900 text-xs mt-1 p-1 bg-gray-50 rounded">{consulta.observaciones}</p>
                                     </div>
                                   )}
                                 </div>

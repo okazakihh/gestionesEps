@@ -89,8 +89,18 @@ public class PacienteController {
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
+            // Convertir tipoDocumento
+            TipoDocumento tipoDocumento;
+            try {
+                tipoDocumento = TipoDocumento.valueOf(tipoDocumentoStr);
+            } catch (IllegalArgumentException e) {
+                response.put(SUCCESS, false);
+                response.put(ERROR, "Tipo de documento inválido: " + tipoDocumentoStr);
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
             // Actualizar paciente
-            PacienteDTO pacienteActualizado = pacienteService.actualizarPacienteDesdeJson(id, datosJson);
+            PacienteDTO pacienteActualizado = pacienteService.actualizarPacienteDesdeJson(id, numeroDocumento, tipoDocumento, datosJson, activo);
 
             response.put(SUCCESS, true);
             response.put("data", pacienteActualizado);

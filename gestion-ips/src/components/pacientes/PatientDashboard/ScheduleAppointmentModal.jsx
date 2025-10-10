@@ -441,12 +441,12 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
-              {/* Fecha y Hora */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Primera fila: Fecha/Hora, Médico, Código CUPS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <CalendarDaysIcon className="h-4 w-4 inline mr-2" />
-                    Fecha y Hora de la Cita *
+                    Fecha y Hora *
                   </label>
                   <input
                     type="datetime-local"
@@ -466,7 +466,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <UserIcon className="h-4 w-4 inline mr-2" />
-                    Médico Asignado *
+                    Médico *
                   </label>
                   <select
                     value={formData.medicoAsignado}
@@ -478,7 +478,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                     disabled={loadingMedicos}
                   >
                     <option value="">
-                      {loadingMedicos ? 'Cargando médicos...' : 'Seleccionar médico'}
+                      {loadingMedicos ? 'Cargando...' : 'Seleccionar médico'}
                     </option>
                     {medicos.map((medico) => (
                       <option key={medico.id} value={getNombreCompletoMedico(medico)}>
@@ -486,9 +486,6 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                       </option>
                     ))}
                   </select>
-                  {loadingMedicos && (
-                    <p className="mt-1 text-sm text-gray-500">Cargando lista de médicos...</p>
-                  )}
                   {errors.medicoAsignado && (
                     <p className="mt-1 text-sm text-red-600">{errors.medicoAsignado}</p>
                   )}
@@ -499,7 +496,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                     Código CUPS *
                   </label>
                   <Select
-                    placeholder="Buscar código CUPS..."
+                    placeholder="Buscar código..."
                     data={codigosCups.map((codigo) => ({
                       value: codigo.codigoCup,
                       label: `${codigo.codigoCup} - ${codigo.nombreCup}`
@@ -512,125 +509,100 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                     required
                     error={errors.codigoCups}
                   />
-                  {loadingCodigosCups && (
-                    <p className="mt-1 text-sm text-gray-500">Cargando códigos CUPS...</p>
+                </div>
+              </div>
+
+              {/* Segunda fila: Motivo y Estado/Duración */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <DocumentTextIcon className="h-4 w-4 inline mr-2" />
+                    Motivo de la Consulta *
+                  </label>
+                  <textarea
+                    value={formData.motivo}
+                    onChange={(e) => handleInputChange('motivo', e.target.value)}
+                    rows={2}
+                    placeholder="Describa el motivo de la consulta médica..."
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.motivo ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.motivo && (
+                    <p className="mt-1 text-sm text-red-600">{errors.motivo}</p>
                   )}
-                  {errors.codigoCups && (
-                    <p className="mt-1 text-sm text-red-600">{errors.codigoCups}</p>
-                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <CheckIcon className="h-4 w-4 inline mr-2" />
+                      Estado
+                    </label>
+                    <select
+                      value={formData.estado}
+                      onChange={(e) => handleInputChange('estado', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="PROGRAMADA">Programada</option>
+                      <option value="CONFIRMADA">Confirmada</option>
+                      <option value="CANCELADA">Cancelada</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <ClockIcon className="h-4 w-4 inline mr-2" />
+                      Duración
+                    </label>
+                    <select
+                      value={formData.duracion || '30'}
+                      onChange={(e) => handleInputChange('duracion', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="60">1 hora</option>
+                      <option value="90">1.5 horas</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Información del Código CUPS seleccionado */}
               {selectedCupData && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Información del Código CUPS</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">Información CUPS</h4>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                     {selectedCupData.categoria && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Categoría</label>
-                        <input
-                          type="text"
-                          value={selectedCupData.categoria}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
-                        />
+                        <span className="font-medium text-blue-800">Categoría:</span>
+                        <p className="text-blue-700">{selectedCupData.categoria}</p>
                       </div>
                     )}
                     {selectedCupData.especialidad && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Especialidad</label>
-                        <input
-                          type="text"
-                          value={selectedCupData.especialidad}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
-                        />
+                        <span className="font-medium text-blue-800">Especialidad:</span>
+                        <p className="text-blue-700">{selectedCupData.especialidad}</p>
                       </div>
                     )}
                     {selectedCupData.tipo && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
-                        <input
-                          type="text"
-                          value={selectedCupData.tipo}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
-                        />
+                        <span className="font-medium text-blue-800">Tipo:</span>
+                        <p className="text-blue-700">{selectedCupData.tipo}</p>
                       </div>
                     )}
                     {selectedCupData.ambito && (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Ámbito</label>
-                        <input
-                          type="text"
-                          value={selectedCupData.ambito}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm"
-                        />
+                        <span className="font-medium text-blue-800">Ámbito:</span>
+                        <p className="text-blue-700">{selectedCupData.ambito}</p>
                       </div>
                     )}
                   </div>
                 </div>
               )}
-
-              {/* Motivo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <DocumentTextIcon className="h-4 w-4 inline mr-2" />
-                  Motivo de la Consulta *
-                </label>
-                <textarea
-                  value={formData.motivo}
-                  onChange={(e) => handleInputChange('motivo', e.target.value)}
-                  rows={3}
-                  placeholder="Describa el motivo de la consulta médica..."
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.motivo ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  required
-                />
-                {errors.motivo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.motivo}</p>
-                )}
-              </div>
-
-              {/* Estado y Notas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <CheckIcon className="h-4 w-4 inline mr-2" />
-                    Estado de la Cita
-                  </label>
-                  <select
-                    value={formData.estado}
-                    onChange={(e) => handleInputChange('estado', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="PROGRAMADA">Programada</option>
-                    <option value="CONFIRMADA">Confirmada</option>
-                    <option value="CANCELADA">Cancelada</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <ClockIcon className="h-4 w-4 inline mr-2" />
-                    Duración Estimada
-                  </label>
-                  <select
-                    value={formData.duracion || '30'}
-                    onChange={(e) => handleInputChange('duracion', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="15">15 minutos</option>
-                    <option value="30">30 minutos</option>
-                    <option value="45">45 minutos</option>
-                    <option value="60">1 hora</option>
-                    <option value="90">1.5 horas</option>
-                  </select>
-                </div>
-              </div>
 
               {/* Notas adicionales */}
               <div>
@@ -640,7 +612,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                 <textarea
                   value={formData.notas}
                   onChange={(e) => handleInputChange('notas', e.target.value)}
-                  rows={3}
+                  rows={2}
                   placeholder="Información adicional, instrucciones especiales, etc..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -711,40 +683,40 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                 </div>
               )}
 
-              {/* Información del paciente */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Información del Paciente</h4>
-                <div className="text-sm text-gray-600">
-                  <p><strong>Paciente:</strong> {patientName}</p>
-                  <p><strong>Fecha de solicitud:</strong> {new Date().toLocaleDateString('es-CO')}</p>
+              {/* Información del paciente y acciones */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-4 border-t">
+                <div className="bg-gray-50 p-3 rounded-lg flex-1">
+                  <div className="text-sm text-gray-600">
+                    <p><strong>Paciente:</strong> {patientName}</p>
+                    <p><strong>Fecha:</strong> {new Date().toLocaleDateString('es-CO')}</p>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Agendando...
+                      </div>
+                    ) : (
+                      'Agendar Cita'
+                    )}
+                  </button>
                 </div>
               </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={loading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Agendando...
-                  </div>
-                ) : (
-                  'Agendar Cita'
-                )}
-              </button>
             </div>
           </form>
         </div>

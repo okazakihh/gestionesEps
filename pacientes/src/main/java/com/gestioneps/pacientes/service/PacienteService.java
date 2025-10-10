@@ -54,11 +54,24 @@ public class PacienteService {
     /**
      * Actualizar un paciente existente desde JSON crudo
      */
-    public PacienteDTO actualizarPacienteDesdeJson(Long id, String datosJson) {
+    public PacienteDTO actualizarPacienteDesdeJson(Long id, String numeroDocumento, TipoDocumento tipoDocumento, String datosJson, Boolean activo) {
         Paciente pacienteExistente = pacienteRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado con ID: " + id));
 
+        // Verificar si el documento cambió y si ya existe otro paciente con ese documento
+        if (!pacienteExistente.getNumeroDocumento().equals(numeroDocumento)) {
+            if (pacienteRepository.existsByNumeroDocumento(numeroDocumento)) {
+                throw new IllegalArgumentException("Ya existe otro paciente con el documento: " + numeroDocumento);
+            }
+        }
+
+        pacienteExistente.setNumeroDocumento(numeroDocumento);
+        pacienteExistente.setTipoDocumento(tipoDocumento);
         pacienteExistente.setDatosJson(datosJson);
+        if (activo != null) {
+            pacienteExistente.setActivo(activo);
+        }
+
         Paciente pacienteActualizado = pacienteRepository.save(pacienteExistente);
         return convertirEntidadADTO(pacienteActualizado);
     }

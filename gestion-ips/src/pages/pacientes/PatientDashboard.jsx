@@ -46,13 +46,10 @@ const PatientDashboard = () => {
 
   // Estados para el calendario y citas
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedDoctor, setSelectedDoctor] = useState('');
   const [medicos, setMedicos] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [doctorPatients, setDoctorPatients] = useState([]);
+  const [allDoctorAppointments, setAllDoctorAppointments] = useState({});
   const [loadingMedicos, setLoadingMedicos] = useState(false);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
-  const [loadingPatients, setLoadingPatients] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState({});
 
   // Modal handlers
@@ -76,12 +73,13 @@ const PatientDashboard = () => {
     setSelectedPatientForAppointment(null);
   };
 
-  const handleSlotClick = (slot) => {
+  const handleSlotClick = (slot, doctorId = null) => {
     if (!slot.available) return;
 
     setSelectedSlotForAppointment({
       ...slot,
-      date: selectedDate
+      date: selectedDate,
+      doctorId: doctorId
     });
     setIsPatientSearchModalOpen(true);
   };
@@ -114,9 +112,9 @@ const PatientDashboard = () => {
   };
 
   const handleAppointmentCreated = () => {
-    // Refresh appointment data for the current doctor and date
-    if (selectedDoctor) {
-      loadDoctorData(selectedDoctor, selectedDate);
+    // Refresh appointment data for all doctors and date
+    if (selectedDate) {
+      loadAllDoctorsData(selectedDate);
     }
     console.log('Cita creada exitosamente - datos actualizados');
   };
@@ -125,7 +123,7 @@ const PatientDashboard = () => {
   const getAvailableStatusTransitions = (currentStatus) => {
     const transitions = {
       'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO'],
-      'EN_SALA': ['ATENDIDO'],
+      'EN_SALA': [], // Removed 'ATENDIDO' from here
       'ATENDIDO': [],
       'NO_SE_PRESENTO': []
     };
@@ -148,15 +146,30 @@ const PatientDashboard = () => {
 
       const response = await pacientesApiService.actualizarEstadoCita(appointmentId, newStatus);
 
-      // Update the appointment in the local state
-      setAppointments(prevAppointments =>
-        prevAppointments.map(appointment =>
-          appointment.id === appointmentId ? {
-            ...appointment,
-            status: newStatus // Ensure status is updated
-          } : appointment
-        )
-      );
+      // Update the appointment in the local state (allDoctorAppointments structure)
+      setAllDoctorAppointments(prevDoctorAppointments => {
+        const updatedDoctorAppointments = { ...prevDoctorAppointments };
+
+        // Find and update the appointment in the grouped structure
+        Object.keys(updatedDoctorAppointments).forEach(doctorId => {
+          const doctorData = updatedDoctorAppointments[doctorId];
+          const appointmentIndex = doctorData.appointments.findIndex(apt => apt.id === appointmentId);
+
+          if (appointmentIndex !== -1) {
+            // Update the appointment status in the datosJson
+            const updatedAppointment = { ...doctorData.appointments[appointmentIndex] };
+            const appointmentData = JSON.parse(updatedAppointment.datosJson || '{}');
+            appointmentData.estado = newStatus;
+            updatedAppointment.datosJson = JSON.stringify(appointmentData);
+            updatedAppointment.status = newStatus;
+
+            // Update the appointment in the array
+            doctorData.appointments[appointmentIndex] = updatedAppointment;
+          }
+        });
+
+        return updatedDoctorAppointments;
+      });
 
       // Show success message with SweetAlert2
       const statusLabels = {
@@ -567,37 +580,21 @@ const PatientDashboard = () => {
     }
   };
 
-  const loadDoctorData = async (doctorId, date) => {
-    if (!doctorId) return;
+  const loadAllDoctorsData = async (date) => {
+    if (!date) return;
 
     try {
       setLoadingAppointments(true);
-      setLoadingPatients(true);
-
-      // Get doctor details for name comparison
-      const selectedDoctor = medicos.find(m => m.id == doctorId);
-      const doctorName = selectedDoctor ? getNombreCompletoMedico(selectedDoctor) : '';
 
       // Load all appointments
       const appointmentsResponse = await pacientesApiService.getCitas({ size: 1000 });
       const allAppointments = appointmentsResponse.content || [];
 
-      // Filter appointments by doctor using the medicoAsignado field from datosJson
-      let filteredAppointments = allAppointments.filter(appointment => {
-        try {
-          const appointmentData = JSON.parse(appointment.datosJson || '{}');
-          const medicoAsignado = appointmentData.medicoAsignado;
-          return medicoAsignado && medicoAsignado === doctorName;
-        } catch (error) {
-          console.error('Error parsing appointment doctor:', appointment.id, error);
-          return false;
-        }
-      });
-
       // Filter by date if specified
+      let filteredAppointments = allAppointments;
       if (date) {
         const selectedDateString = date.toISOString().split('T')[0];
-        filteredAppointments = filteredAppointments.filter(appointment => {
+        filteredAppointments = allAppointments.filter(appointment => {
           try {
             const appointmentData = JSON.parse(appointment.datosJson || '{}');
             const appointmentDateTime = appointmentData.fechaHoraCita;
@@ -616,7 +613,7 @@ const PatientDashboard = () => {
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(today.getDate() + 30);
 
-        filteredAppointments = filteredAppointments.filter(appointment => {
+        filteredAppointments = allAppointments.filter(appointment => {
           try {
             const appointmentData = JSON.parse(appointment.datosJson || '{}');
             const appointmentDateTime = appointmentData.fechaHoraCita;
@@ -648,69 +645,80 @@ const PatientDashboard = () => {
           }
         }
       }
-      setDoctorPatients(patientsData);
 
-      // Transform appointments to display format with patient names
-      const formattedAppointments = filteredAppointments.map(appointment => {
+      // Create a map of doctor names to doctor objects
+      const doctorMap = {};
+      medicos.forEach(medico => {
+        const doctorName = getNombreCompletoMedico(medico);
+        doctorMap[doctorName] = medico;
+      });
+
+      // Initialize grouped appointments for all doctors
+      const groupedAppointments = {};
+      medicos.forEach(medico => {
+        const doctorName = getNombreCompletoMedico(medico);
+        groupedAppointments[medico.id] = {
+          doctor: medico,
+          doctorName: doctorName,
+          appointments: []
+        };
+      });
+
+      // Group appointments by doctor
+      filteredAppointments.forEach(appointment => {
         try {
           const appointmentData = JSON.parse(appointment.datosJson || '{}');
-          const appointmentDateTime = new Date(appointmentData.fechaHoraCita);
+          const medicoAsignado = appointmentData.medicoAsignado;
 
-          // Get patient name from loaded patient data
-          let patientName = appointmentData.motivo || 'Paciente'; // Default to motivo
-          if (appointment.pacienteId) {
-            const patientData = patientsData.find(p => p.id == appointment.pacienteId);
-            if (patientData) {
-              try {
-                // Parse the datosJson field which contains the patient information
-                const datosCompletos = JSON.parse(patientData.datosJson || '{}');
+          if (medicoAsignado && doctorMap[medicoAsignado]) {
+            const doctor = doctorMap[medicoAsignado];
+            const doctorId = doctor.id;
 
-                // Parse the informacionPersonalJson field within datosJson
-                const personalInfo = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
-                const fullName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim();
-                if (fullName && fullName !== ' ') {
-                  patientName = fullName;
+            // Get patient name
+            let patientName = appointmentData.motivo || 'Paciente';
+            if (appointment.pacienteId) {
+              const patientData = patientsData.find(p => p.id == appointment.pacienteId);
+              if (patientData) {
+                try {
+                  const datosCompletos = JSON.parse(patientData.datosJson || '{}');
+                  const personalInfo = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
+                  const fullName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim();
+                  if (fullName && fullName !== ' ') {
+                    patientName = fullName;
+                  }
+                } catch (error) {
+                  console.error('Error parsing patient name for appointment:', appointment.id, error);
                 }
-              } catch (error) {
-                console.error('Error parsing patient name for appointment:', appointment.id, error);
               }
             }
-          }
 
-          return {
-            id: appointment.id,
-            time: appointmentDateTime.toLocaleTimeString('es-ES', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            }),
-            patient: patientName,
-            status: appointmentData.estado || 'PROGRAMADA',
-            pacienteId: appointment.pacienteId,
-            // Include complete appointment data for detail modal
-            datosJson: appointment.datosJson,
-            fechaCreacion: appointment.fechaCreacion
-          };
+            const appointmentDateTime = new Date(appointmentData.fechaHoraCita);
+            groupedAppointments[doctorId].appointments.push({
+              id: appointment.id,
+              time: appointmentDateTime.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              }),
+              patient: patientName,
+              status: appointmentData.estado || 'PROGRAMADA',
+              pacienteId: appointment.pacienteId,
+              datosJson: appointment.datosJson,
+              fechaCreacion: appointment.fechaCreacion
+            });
+          }
         } catch (error) {
-          console.error('Error formatting appointment:', appointment.id, error);
-          return {
-            id: appointment.id,
-            time: 'N/A',
-            patient: 'Error al cargar',
-            status: 'ERROR',
-            pacienteId: null
-          };
+          console.error('Error processing appointment:', appointment.id, error);
         }
       });
-      setAppointments(formattedAppointments);
+
+      setAllDoctorAppointments(groupedAppointments);
 
     } catch (error) {
-      console.error('Error loading doctor data:', error);
-      setAppointments([]);
-      setDoctorPatients([]);
+      console.error('Error loading all doctors data:', error);
+      setAllDoctorAppointments({});
     } finally {
       setLoadingAppointments(false);
-      setLoadingPatients(false);
     }
   };
   const handleDoctorChange = (doctorId) => {
@@ -746,6 +754,14 @@ const PatientDashboard = () => {
     }
   };
 
+  const getDoctorInitials = (doctorName) => {
+    if (!doctorName) return '??';
+    const parts = doctorName.split(' ');
+    const firstInitial = parts[0]?.charAt(0)?.toUpperCase() || '?';
+    const lastInitial = parts[parts.length - 1]?.charAt(0)?.toUpperCase() || '?';
+    return `${firstInitial}${lastInitial}`;
+  };
+
   // Load doctors on component mount
   useEffect(() => {
     loadMedicos();
@@ -756,26 +772,6 @@ const PatientDashboard = () => {
   return (
     <MainLayout title="Dashboard de Pacientes" subtitle="Gestión integral del flujo médico de pacientes">
       <div className="px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Sistema de Gestión de Pacientes</h1>
-              <p className="mt-2 text-lg text-gray-600">
-                Dashboard unificado para el seguimiento completo del flujo médico
-              </p>
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <button
-                onClick={handleOpenCreatePatientModal}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                Nuevo Paciente
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Main Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -785,10 +781,8 @@ const PatientDashboard = () => {
             <CalendarWidget
               onDaySelect={(date) => {
                 setSelectedDate(date);
-                // Reload doctor data if doctor is already selected
-                if (selectedDoctor) {
-                  loadDoctorData(selectedDoctor, date);
-                }
+                // Reload all doctors data for the selected date
+                loadAllDoctorsData(date);
               }}
               onNewPatient={handleOpenCreatePatientModal}
               onOpenAgenda={handleOpenAgendaModal}
@@ -805,87 +799,125 @@ const PatientDashboard = () => {
                   Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
                 </h3>
 
-                {/* Doctor Selector */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <UserIcon className="h-4 w-4 inline mr-2" />
-                    Seleccionar Doctor
-                  </label>
-                  <select
-                    value={selectedDoctor}
-                    onChange={(e) => handleDoctorChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    disabled={loadingMedicos}
-                  >
-                    <option value="">
-                      {loadingMedicos ? 'Cargando doctores...' : 'Seleccionar doctor'}
-                    </option>
-                    {medicos.map((medico) => (
-                      <option key={medico.id} value={medico.id}>
-                        {getNombreCompletoMedico(medico)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Multi-Doctor Schedule Display */}
+                <div className="space-y-6">
+                  {/* Time slots for all doctors */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Horarios Disponibles por Doctor</h4>
 
-                {/* Schedule and Appointments */}
-                {selectedDoctor && (
-                  <div className="space-y-6">
-                    {/* Time slots */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Horarios Disponibles</h4>
+                    {loadingAppointments ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-2 text-xs text-gray-500">Cargando horarios...</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto overflow-y-auto max-h-96">
+                        <div className="grid grid-cols-5 gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+                          {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) => {
+                            const { doctor, doctorName, appointments: doctorAppointments } = doctorData;
+                            const availableSlots = calculateAvailableSlots(doctorAppointments, selectedDate);
 
-                      {loadingAppointments ? (
-                        <div className="text-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                          <p className="mt-2 text-sm text-gray-500">Cargando horarios...</p>
+                            return (
+                              <div key={doctorId} className="border border-gray-200 rounded-lg p-3 min-w-72 flex-shrink-0">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-blue-800">
+                                      {getDoctorInitials(doctorName)}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <h5 className="text-xs font-medium text-gray-900">{doctorName}</h5>
+                                    <p className="text-xs text-gray-500">{doctorAppointments.length} citas</p>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-6 gap-1">
+                                  {availableSlots.map((slot) => (
+                                    <div
+                                      key={`${doctorId}-${slot.time}`}
+                                      onClick={() => slot.available && handleSlotClick(slot, doctorId)}
+                                      className={`p-0.5 text-center text-[10px] rounded border transition-colors ${
+                                        slot.available
+                                          ? 'bg-green-50 border-green-200 text-green-700 cursor-pointer hover:bg-green-100 hover:shadow-sm'
+                                          : 'bg-red-50 border-red-200 text-red-700 cursor-not-allowed'
+                                      }`}
+                                      title={slot.available ? `Click para agendar cita con ${doctorName}` : 'Horario ocupado'}
+                                    >
+                                      {slot.label}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto">
-                          {calculateAvailableSlots(appointments, selectedDate).map((slot) => (
-                            <div
-                              key={slot.time}
-                              onClick={() => slot.available && handleSlotClick(slot)}
-                              className={`p-1 text-center text-xs rounded border transition-colors ${
-                                slot.available
-                                  ? 'bg-green-50 border-green-200 text-green-700 cursor-pointer hover:bg-green-100 hover:shadow-sm'
-                                  : 'bg-red-50 border-red-200 text-red-700 cursor-not-allowed'
-                              }`}
-                              title={slot.available ? 'Click para agendar cita' : 'Horario ocupado'}
-                            >
-                              {slot.label}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Appointments for selected date or upcoming */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">
-                        {selectedDate
-                          ? `Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
-                          : 'Próximas Citas Programadas'
-                        }
-                      </h4>
+                  {/* Appointments for all doctors */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">
+                      Todas las Citas Programadas - {selectedDate.toLocaleDateString('es-ES')}
+                    </h4>
 
-                      {loadingAppointments ? (
-                        <div className="text-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                          <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
-                        </div>
-                      ) : appointments.length > 0 ? (
-                        <div className="space-y-2">
-                          {appointments.map((appointment) => (
+                    {loadingAppointments ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
+                      </div>
+                    ) : Object.values(allDoctorAppointments).some(doctorData =>
+                        doctorData.appointments.some(appointment => {
+                          try {
+                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                            return appointmentData.estado !== 'ATENDIDO';
+                          } catch (error) {
+                            return true;
+                          }
+                        })
+                      ) ? (
+                      <div className="space-y-2 max-h-80 overflow-y-auto">
+                        {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) =>
+                          doctorData.appointments
+                            .filter(appointment => {
+                              try {
+                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                return appointmentData.estado !== 'ATENDIDO';
+                              } catch (error) {
+                                return true;
+                              }
+                            })
+                            .map((appointment) => (
                             <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                               <div className="flex items-center space-x-3">
+                                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-xs font-medium text-blue-800">
+                                    {getDoctorInitials(doctorData.doctorName)}
+                                  </span>
+                                </div>
                                 <ClockIcon className="h-4 w-4 text-gray-400" />
                                 <div>
-                                  <span className="text-sm font-medium">{appointment.time} - {appointment.patient}</span>
+                                  <span className="text-sm font-medium">{(() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      const appointmentDateTime = new Date(appointmentData.fechaHoraCita);
+                                      return appointmentDateTime.toLocaleTimeString('es-ES', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                      });
+                                    } catch (error) {
+                                      return 'N/A';
+                                    }
+                                  })()} - {appointment.patient || 'Paciente'}</span>
                                   <p className="text-xs text-gray-600">
                                     {(() => {
                                       try {
                                         const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                        const informacionCups = appointmentData.informacionCups;
+                                        if (informacionCups && informacionCups.tipo) {
+                                          return `Tipo: ${informacionCups.tipo}`;
+                                        }
                                         return appointmentData.motivo || 'REVISION PERIODICA';
                                       } catch (error) {
                                         return 'REVISION PERIODICA';
@@ -905,19 +937,32 @@ const PatientDashboard = () => {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <span className={`px-2 py-1 text-xs rounded-full ${
-                                  appointment.status === 'CONFIRMADA' || appointment.status === 'PROGRAMADO'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : appointment.status === 'EN_SALA'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : appointment.status === 'ATENDIDO'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                  (() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      const status = appointmentData.estado || 'PROGRAMADO';
+                                      return status === 'PROGRAMADO' ? 'bg-blue-100 text-blue-800' :
+                                             status === 'EN_SALA' ? 'bg-yellow-100 text-yellow-800' :
+                                             status === 'ATENDIDO' ? 'bg-green-100 text-green-800' :
+                                             'bg-red-100 text-red-800';
+                                    } catch (error) {
+                                      return 'bg-blue-100 text-blue-800';
+                                    }
+                                  })()
                                 }`}>
-                                  {appointment.status === 'PROGRAMADO' ? 'Programado' :
-                                   appointment.status === 'EN_SALA' ? 'En Sala' :
-                                   appointment.status === 'ATENDIDO' ? 'Atendido' :
-                                   appointment.status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                   appointment.status}
+                                  {(() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      const status = appointmentData.estado || 'PROGRAMADO';
+                                      return status === 'PROGRAMADO' ? 'Programado' :
+                                             status === 'EN_SALA' ? 'En Sala' :
+                                             status === 'ATENDIDO' ? 'Atendido' :
+                                             status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                                             status;
+                                    } catch (error) {
+                                      return 'Programado';
+                                    }
+                                  })()}
                                 </span>
                                 <Group gap="xs">
                                   <ActionIcon
@@ -941,7 +986,14 @@ const PatientDashboard = () => {
                                     </svg>
                                   </ActionIcon>
                                   {/* Status Change Buttons */}
-                                  {getAvailableStatusTransitions(appointment.status).map((newStatus) => (
+                                  {getAvailableStatusTransitions((() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      return appointmentData.estado || 'PROGRAMADO';
+                                    } catch (error) {
+                                      return 'PROGRAMADO';
+                                    }
+                                  })()).map((newStatus) => (
                                     <ActionIcon
                                       key={newStatus}
                                       variant="light"
@@ -982,77 +1034,16 @@ const PatientDashboard = () => {
                                 </Group>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 text-center py-4">
-                          {selectedDate ? 'No hay citas programadas para este día' : 'No hay citas programadas próximamente'}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Patients associated with this doctor */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Pacientes del Doctor</h4>
-
-                      {loadingPatients ? (
-                        <div className="text-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                          <p className="mt-2 text-sm text-gray-500">Cargando pacientes...</p>
-                        </div>
-                      ) : doctorPatients.length > 0 ? (
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {doctorPatients.map((patient) => {
-                            try {
-                              // Parse the datosJson field which contains the patient information
-                              const datosCompletos = JSON.parse(patient.datosJson || '{}');
-
-                              // Parse the informacionPersonalJson and informacionContactoJson fields within datosJson
-                              const infoPersonal = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
-                              const infoContacto = JSON.parse(datosCompletos.informacionContactoJson || '{}');
-
-                              const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
-
-                              return (
-                                <div key={patient.id} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                  <div className="flex items-center space-x-3">
-                                    <UserIcon className="h-4 w-4 text-blue-600" />
-                                    <div>
-                                      <span className="text-sm font-medium text-blue-900">{nombreCompleto || `Paciente ${patient.id}`}</span>
-                                      <p className="text-xs text-blue-700">{infoContacto.telefono || 'Sin teléfono'}</p>
-                                    </div>
-                                  </div>
-                                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                    ID: {patient.id}
-                                  </span>
-                                </div>
-                              );
-                            } catch (error) {
-                              console.error('❌ Error parsing patient data:', patient.id, error);
-                              return (
-                                <div key={patient.id} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-md">
-                                  <div className="flex items-center space-x-3">
-                                    <UserIcon className="h-4 w-4 text-red-600" />
-                                    <span className="text-sm font-medium text-red-900">Error al cargar paciente {patient.id}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 text-center py-4">No hay pacientes asociados a este doctor</p>
-                      )}
-                    </div>
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        No hay citas programadas para este día
+                      </p>
+                    )}
                   </div>
-                )}
-
-                {!selectedDoctor && (
-                  <div className="text-center py-8">
-                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">Selecciona un doctor para ver su agenda, citas y pacientes</p>
-                  </div>
-                )}
+                </div>
               </div>
             )}
 
@@ -1175,7 +1166,7 @@ const PatientDashboard = () => {
           onPatientSelected={handlePatientSelected}
           onCreatePatient={handleCreatePatient}
           selectedSlot={selectedSlotForAppointment}
-          selectedDoctor={selectedDoctor ? getNombreCompletoMedico(medicos.find(m => m.id == selectedDoctor)) : null}
+          selectedDoctor={selectedSlotForAppointment?.doctorId ? getNombreCompletoMedico(medicos.find(m => m.id == selectedSlotForAppointment.doctorId)) : null}
         />
 
         {/* Agenda Modal */}
@@ -1189,32 +1180,12 @@ const PatientDashboard = () => {
           patientId={selectedPatientForAppointment?.id}
           patientName={selectedPatientForAppointment?.name}
           selectedSlot={selectedPatientForAppointment?.slot}
-          selectedDoctor={selectedDoctor ? getNombreCompletoMedico(medicos.find(m => m.id == selectedDoctor)) : null}
+          selectedDoctor={selectedPatientForAppointment?.slot?.doctorId ? getNombreCompletoMedico(medicos.find(m => m.id == selectedPatientForAppointment.slot.doctorId)) : null}
           isOpen={isAppointmentModalOpen}
           onClose={handleCloseAppointmentModal}
           onAppointmentCreated={handleAppointmentCreated}
         />
 
-        {/* Footer Info */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <UserGroupIcon className="h-5 w-5 text-blue-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Dashboard Unificado de Pacientes
-              </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>
-                  Este dashboard proporciona una vista completa del flujo médico de cada paciente.
-                  Desde el registro inicial hasta el seguimiento continuo, todo el historial médico
-                  está disponible en una interfaz intuitiva y fácil de navegar.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Modal de Detalle de Cita */}
