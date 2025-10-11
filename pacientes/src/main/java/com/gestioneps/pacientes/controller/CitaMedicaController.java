@@ -235,6 +235,7 @@ public class CitaMedicaController {
              }
 
              LOGGER.info("📡 Controller: Actualizando estado de cita {} a '{}'", id, estado);
+             System.out.println("🔍 Controller: Recibido estado = '" + estado + "'");
              CitaMedicaDTO citaActualizada = citaMedicaService.actualizarEstadoCita(id, estado);
              LOGGER.info("✅ Controller: Estado de cita {} actualizado exitosamente", id);
 

@@ -277,10 +277,11 @@ const AgendaModal = ({ isOpen, onClose }) => {
 
   const getAvailableStatusTransitions = (currentStatus) => {
     const transitions = {
-      'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO'],
-      'EN_SALA': ['ATENDIDO'],
+      'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADO'],
+      'EN_SALA': ['ATENDIDO', 'CANCELADO'],
       'ATENDIDO': [],
-      'NO_SE_PRESENTO': []
+      'NO_SE_PRESENTO': [],
+      'CANCELADO': []
     };
     return transitions[currentStatus] || [];
   };
@@ -290,7 +291,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
       'PROGRAMADO': 'Programado',
       'EN_SALA': 'En Sala',
       'ATENDIDO': 'Atendido',
-      'NO_SE_PRESENTO': 'No se Presentó'
+      'NO_SE_PRESENTO': 'No se Presentó',
+      'CANCELADO': 'Cancelado'
     };
     return labels[status] || status;
   };
@@ -300,7 +302,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
       'PROGRAMADO': 'bg-blue-100 text-blue-800',
       'EN_SALA': 'bg-yellow-100 text-yellow-800',
       'ATENDIDO': 'bg-green-100 text-green-800',
-      'NO_SE_PRESENTO': 'bg-red-100 text-red-800'
+      'NO_SE_PRESENTO': 'bg-red-100 text-red-800',
+      'CANCELADO': 'bg-gray-100 text-gray-800'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -308,6 +311,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
   const updateAppointmentStatus = async (citaId, newStatus) => {
     try {
       setUpdatingStatus(prev => ({ ...prev, [citaId]: true }));
+
+      console.log('🎯 Attempting to update cita', citaId, 'to status:', newStatus);
 
       // Debug: Log current cita data
       const currentCita = citas.find(c => c.id === citaId);
@@ -330,7 +335,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
       const statusLabels = {
         'EN_SALA': 'En Sala',
         'ATENDIDO': 'Atendido',
-        'NO_SE_PRESENTO': 'No se Presentó'
+        'NO_SE_PRESENTO': 'No se Presentó',
+        'CANCELADO': 'Cancelado'
       };
 
       await Swal.fire({
@@ -344,6 +350,11 @@ const AgendaModal = ({ isOpen, onClose }) => {
       });
 
       console.log(`Estado de cita ${citaId} actualizado a ${newStatus}`);
+
+      // Si se canceló la cita, recargar la lista para actualizar las horas disponibles
+      if (newStatus === 'CANCELADO') {
+        loadCitasPendientes();
+      }
     } catch (error) {
       console.error('Error updating appointment status:', error);
 
@@ -703,6 +714,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                             <option value="EN_SALA">En Sala</option>
                             <option value="ATENDIDO">Atendido</option>
                             <option value="NO_SE_PRESENTO">No se Presentó</option>
+                            <option value="CANCELADO">Cancelado</option>
                           </select>
                         </div>
 
@@ -842,12 +854,29 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                                   color={
                                                     newStatus === 'EN_SALA' ? 'yellow' :
                                                     newStatus === 'ATENDIDO' ? 'green' :
-                                                    newStatus === 'NO_SE_PRESENTO' ? 'red' : 'blue'
+                                                    newStatus === 'NO_SE_PRESENTO' ? 'red' :
+                                                    newStatus === 'CANCELADO' ? 'gray' : 'blue'
                                                   }
                                                   size="sm"
-                                                  onClick={() => {
+                                                  onClick={async () => {
                                                     if (newStatus === 'ATENDIDO') {
                                                       handleAtendidoClick(cita);
+                                                    } else if (newStatus === 'CANCELADO') {
+                                                      // Confirmación especial para cancelar
+                                                      const result = await Swal.fire({
+                                                        title: '¿Cancelar Cita?',
+                                                        text: 'Esta acción liberará el espacio en el calendario y la cita ya no podrá ser modificada. ¿Estás seguro?',
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#EF4444',
+                                                        cancelButtonColor: '#6B7280',
+                                                        confirmButtonText: 'Sí, cancelar cita',
+                                                        cancelButtonText: 'No, mantener cita'
+                                                      });
+
+                                                      if (result.isConfirmed) {
+                                                        updateAppointmentStatus(cita.id, newStatus);
+                                                      }
                                                     } else {
                                                       updateAppointmentStatus(cita.id, newStatus);
                                                     }
@@ -869,6 +898,12 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                                   {newStatus === 'NO_SE_PRESENTO' && (
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                  )}
+                                                  {newStatus === 'CANCELADO' && (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+                                                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={2} fill="none" />
                                                     </svg>
                                                   )}
                                                 </ActionIcon>

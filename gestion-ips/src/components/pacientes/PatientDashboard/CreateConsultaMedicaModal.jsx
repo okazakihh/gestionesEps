@@ -126,48 +126,48 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
           <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
         </div>
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-4/5 h-4/5">
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-3/4 h-3/4">
           {/* Header */}
-          <div className="bg-purple-600 px-6 py-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white">Nueva Consulta Médica</h3>
+          <div className="bg-purple-600 px-4 py-3 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Nueva Consulta Médica</h3>
             <button
               onClick={onClose}
               className="text-white hover:text-gray-200 transition-colors"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-4">
             <div className="flex items-center justify-center min-h-full">
-              <div className="w-full max-w-4xl">
+              <div className="w-full max-w-3xl">
                 {error && (
-                  <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                    <div className="text-sm text-red-700">{error}</div>
+                  <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+                    <div className="text-xs text-red-700">{error}</div>
                   </div>
                 )}
 
                 {/* Información del Paciente */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-lg font-semibold text-purple-900">Paciente</h4>
-                      <p className="text-sm text-purple-700 mt-1">
+                      <h4 className="text-sm font-semibold text-purple-900">Paciente</h4>
+                      <p className="text-xs text-purple-700 mt-1">
                         {citaData?.nombre || 'No disponible'}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
               {/* Información Básica y Detalle de Consulta - Combinadas */}
               <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-4 py-4 sm:p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="px-3 py-3 sm:p-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {/* ID Historia Clínica */}
                     <div>
-                      <label htmlFor="historiaClinicaId" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="historiaClinicaId" className="block text-xs font-medium text-gray-900 mb-1">
                         ID Historia Clínica
                       </label>
                       <input
@@ -175,13 +175,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         id="historiaClinicaId"
                         value={formData.historiaClinicaId}
                         readOnly
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 text-xs"
                       />
                     </div>
 
                     {/* Médico Tratante */}
                     <div>
-                      <label htmlFor="medicoTratante" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="medicoTratante" className="block text-xs font-medium text-gray-900 mb-1">
                         Médico Tratante
                       </label>
                       <input
@@ -189,14 +189,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         id="medicoTratante"
                         value={formData.detalleConsulta?.medicoTratante}
                         onChange={(e) => handleNestedInputChange('detalleConsulta', 'medicoTratante', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         required
                       />
                     </div>
 
                     {/* Especialidad */}
                     <div>
-                      <label htmlFor="especialidad" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="especialidad" className="block text-xs font-medium text-gray-900 mb-1">
                         Especialidad
                       </label>
                       <input
@@ -204,13 +204,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         id="especialidad"
                         value={formData.detalleConsulta?.especialidad}
                         onChange={(e) => handleNestedInputChange('detalleConsulta', 'especialidad', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                       />
                     </div>
 
                     {/* Fecha de Consulta */}
                     <div>
-                      <label htmlFor="fechaConsulta" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="fechaConsulta" className="block text-xs font-medium text-gray-900 mb-1">
                         Fecha de Consulta
                       </label>
                       <input
@@ -218,14 +218,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         id="fechaConsulta"
                         value={formData.detalleConsulta?.fechaConsulta}
                         onChange={(e) => handleNestedInputChange('detalleConsulta', 'fechaConsulta', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         required
                       />
                     </div>
 
                     {/* Próxima Cita - Full width */}
                     <div className="lg:col-span-2">
-                      <label htmlFor="proximaCita" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="proximaCita" className="block text-xs font-medium text-gray-900 mb-1">
                         Próxima Cita
                       </label>
                       <input
@@ -233,7 +233,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         id="proximaCita"
                         value={formData.detalleConsulta?.proximaCita}
                         onChange={(e) => handleNestedInputChange('detalleConsulta', 'proximaCita', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                       />
                     </div>
                   </div>
@@ -242,11 +242,11 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
               {/* Información de Consulta y Examen Clínico - Combinadas */}
               <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-4 py-4 sm:p-6">
-                  <h3 className="text-base font-medium text-gray-900 mb-4">Información de Consulta</h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="px-3 py-3 sm:p-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Información de Consulta</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="motivoConsulta" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="motivoConsulta" className="block text-xs font-medium text-gray-900 mb-1">
                         Motivo de Consulta
                       </label>
                       <textarea
@@ -254,14 +254,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.informacionConsulta?.motivoConsulta}
                         onChange={(e) => handleNestedInputChange('informacionConsulta', 'motivoConsulta', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Describa el motivo..."
                         required
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="enfermedadActual" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="enfermedadActual" className="block text-xs font-medium text-gray-900 mb-1">
                         Enfermedad Actual
                       </label>
                       <textarea
@@ -269,13 +269,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.informacionConsulta?.enfermedadActual}
                         onChange={(e) => handleNestedInputChange('informacionConsulta', 'enfermedadActual', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Describa la enfermedad..."
                       />
                     </div>
 
                     <div className="lg:col-span-2">
-                      <label htmlFor="observaciones" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="observaciones" className="block text-xs font-medium text-gray-900 mb-1">
                         Observaciones
                       </label>
                       <textarea
@@ -283,16 +283,16 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.informacionConsulta?.observaciones}
                         onChange={(e) => handleNestedInputChange('informacionConsulta', 'observaciones', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Observaciones adicionales..."
                       />
                     </div>
                   </div>
 
-                  <h3 className="text-base font-medium text-gray-900 mb-4 mt-6">Examen Clínico</h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3 mt-4">Examen Clínico</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="examenFisico" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="examenFisico" className="block text-xs font-medium text-gray-900 mb-1">
                         Examen Físico
                       </label>
                       <textarea
@@ -300,13 +300,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.examenClinico?.examenFisico}
                         onChange={(e) => handleNestedInputChange('examenClinico', 'examenFisico', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Resultados del examen..."
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="signosVitales" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="signosVitales" className="block text-xs font-medium text-gray-900 mb-1">
                         Signos Vitales
                       </label>
                       <textarea
@@ -314,7 +314,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.examenClinico?.signosVitales}
                         onChange={(e) => handleNestedInputChange('examenClinico', 'signosVitales', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Signos vitales..."
                       />
                     </div>
@@ -324,11 +324,11 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
               {/* Diagnóstico y Tratamiento + Seguimiento - Combinadas */}
               <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-4 py-4 sm:p-6">
-                  <h3 className="text-base font-medium text-gray-900 mb-4">Diagnóstico y Tratamiento</h3>
-                  <div className="grid grid-cols-1 gap-4">
+                <div className="px-3 py-3 sm:p-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Diagnóstico y Tratamiento</h3>
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label htmlFor="diagnosticos" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="diagnosticos" className="block text-xs font-medium text-gray-900 mb-1">
                         Diagnósticos
                       </label>
                       <textarea
@@ -336,13 +336,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.diagnosticoTratamiento?.diagnosticos}
                         onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'diagnosticos', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Diagnósticos realizados..."
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="planTratamiento" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="planTratamiento" className="block text-xs font-medium text-gray-900 mb-1">
                         Plan de Tratamiento
                       </label>
                       <textarea
@@ -350,16 +350,16 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.diagnosticoTratamiento?.planTratamiento}
                         onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'planTratamiento', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Plan de tratamiento..."
                       />
                     </div>
                   </div>
 
-                  <h3 className="text-base font-medium text-gray-900 mb-4 mt-6">Seguimiento de Consulta</h3>
-                  <div className="grid grid-cols-1 gap-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3 mt-4">Seguimiento de Consulta</h3>
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label htmlFor="evolucion" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="evolucion" className="block text-xs font-medium text-gray-900 mb-1">
                         Evolución
                       </label>
                       <textarea
@@ -367,13 +367,13 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.seguimientoConsulta?.evolucion}
                         onChange={(e) => handleNestedInputChange('seguimientoConsulta', 'evolucion', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Evolución del paciente..."
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="recomendaciones" className="block text-sm font-medium text-gray-900 mb-1">
+                      <label htmlFor="recomendaciones" className="block text-xs font-medium text-gray-900 mb-1">
                         Recomendaciones
                       </label>
                       <textarea
@@ -381,7 +381,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         rows={2}
                         value={formData.seguimientoConsulta?.recomendaciones}
                         onChange={(e) => handleNestedInputChange('seguimientoConsulta', 'recomendaciones', e.target.value)}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-sm"
+                        className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Recomendaciones médicas..."
                       />
                     </div>
@@ -390,18 +390,18 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-x-3 pt-6 border-t">
+              <div className="flex justify-end gap-x-3 pt-4 border-t">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-sm font-semibold leading-6 text-gray-900 px-4 py-2"
+                  className="text-xs font-semibold leading-5 text-gray-900 px-3 py-1.5"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-md bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? 'Guardando...' : 'Crear Consulta'}
                 </button>

@@ -122,10 +122,11 @@ const PatientDashboard = () => {
   // Funciones para manejar acciones de citas
   const getAvailableStatusTransitions = (currentStatus) => {
     const transitions = {
-      'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO'],
+      'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'],
       'EN_SALA': [], // Removed 'ATENDIDO' from here
       'ATENDIDO': [],
-      'NO_SE_PRESENTO': []
+      'NO_SE_PRESENTO': [],
+      'CANCELADA': []
     };
     return transitions[currentStatus] || [];
   };
@@ -135,7 +136,8 @@ const PatientDashboard = () => {
       'PROGRAMADO': 'Programado',
       'EN_SALA': 'En Sala',
       'ATENDIDO': 'Atendido',
-      'NO_SE_PRESENTO': 'No se Presentó'
+      'NO_SE_PRESENTO': 'No se Presentó',
+      'CANCELADA': 'Cancelada'
     };
     return labels[status] || status;
   };
@@ -175,7 +177,8 @@ const PatientDashboard = () => {
       const statusLabels = {
         'EN_SALA': 'En Sala',
         'ATENDIDO': 'Atendido',
-        'NO_SE_PRESENTO': 'No se Presentó'
+        'NO_SE_PRESENTO': 'No se Presentó',
+        'CANCELADA': 'Cancelada'
       };
 
       await Swal.fire({
@@ -189,6 +192,13 @@ const PatientDashboard = () => {
       });
 
       console.log(`Estado de cita ${appointmentId} actualizado a ${newStatus}`);
+
+      // Si se canceló la cita, recargar los datos del calendario
+      if (newStatus === 'CANCELADA') {
+        if (selectedDate) {
+          loadAllDoctorsData(selectedDate);
+        }
+      }
     } catch (error) {
       console.error('Error updating appointment status:', error);
 
@@ -497,6 +507,14 @@ const PatientDashboard = () => {
   // Función para calcular horas disponibles considerando duración
   const calculateAvailableSlots = (appointments, selectedDate) => {
     const slots = [];
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const selectedDateOnly = new Date(selectedDate);
+    selectedDateOnly.setHours(0, 0, 0, 0);
+
+    const isToday = selectedDateOnly.getTime() === today.getTime();
 
     // Generar slots cada 20 minutos de 6:00 AM a 8:00 PM
     const startHour = 6; // 6:00 AM
@@ -512,6 +530,18 @@ const PatientDashboard = () => {
         const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const ampm = hour < 12 ? 'AM' : 'PM';
         const label = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+
+        // Si es hoy, verificar que la hora sea futura
+        if (isToday) {
+          const slotDateTime = new Date(selectedDate);
+          slotDateTime.setHours(hour, minute, 0, 0);
+
+          // Solo incluir slots que estén al menos 1 hora en el futuro
+          const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+          if (slotDateTime <= oneHourFromNow) {
+            continue; // Skip this slot as it's too soon
+          }
+        }
 
         slots.push({
           time: timeString,
@@ -944,6 +974,7 @@ const PatientDashboard = () => {
                                       return status === 'PROGRAMADO' ? 'bg-blue-100 text-blue-800' :
                                              status === 'EN_SALA' ? 'bg-yellow-100 text-yellow-800' :
                                              status === 'ATENDIDO' ? 'bg-green-100 text-green-800' :
+                                             status === 'CANCELADA' ? 'bg-gray-100 text-gray-800' :
                                              'bg-red-100 text-red-800';
                                     } catch (error) {
                                       return 'bg-blue-100 text-blue-800';
@@ -958,6 +989,7 @@ const PatientDashboard = () => {
                                              status === 'EN_SALA' ? 'En Sala' :
                                              status === 'ATENDIDO' ? 'Atendido' :
                                              status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                                             status === 'CANCELADA' ? 'Cancelada' :
                                              status;
                                     } catch (error) {
                                       return 'Programado';
@@ -1000,12 +1032,29 @@ const PatientDashboard = () => {
                                       color={
                                         newStatus === 'EN_SALA' ? 'yellow' :
                                         newStatus === 'ATENDIDO' ? 'green' :
-                                        newStatus === 'NO_SE_PRESENTO' ? 'red' : 'blue'
+                                        newStatus === 'NO_SE_PRESENTO' ? 'red' :
+                                        newStatus === 'CANCELADA' ? 'gray' : 'blue'
                                       }
                                       size="sm"
-                                      onClick={() => {
+                                      onClick={async () => {
                                         if (newStatus === 'ATENDIDO') {
                                           handleAtendidoClick(appointment);
+                                        } else if (newStatus === 'CANCELADA') {
+                                          // Confirmación especial para cancelar
+                                          const result = await Swal.fire({
+                                            title: '¿Cancelar Cita?',
+                                            text: 'Esta acción liberará el espacio en el calendario y la cita ya no podrá ser modificada. ¿Estás seguro?',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#EF4444',
+                                            cancelButtonColor: '#6B7280',
+                                            confirmButtonText: 'Sí, cancelar cita',
+                                            cancelButtonText: 'No, mantener cita'
+                                          });
+
+                                          if (result.isConfirmed) {
+                                            updateAppointmentStatus(appointment.id, newStatus);
+                                          }
                                         } else {
                                           updateAppointmentStatus(appointment.id, newStatus);
                                         }
@@ -1025,6 +1074,11 @@ const PatientDashboard = () => {
                                         </svg>
                                       )}
                                       {newStatus === 'NO_SE_PRESENTO' && (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      )}
+                                      {newStatus === 'CANCELADA' && (
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
@@ -1223,12 +1277,14 @@ const PatientDashboard = () => {
                           appointmentInfo.estado === 'PROGRAMADO' ? 'bg-blue-100 text-blue-800' :
                           appointmentInfo.estado === 'EN_SALA' ? 'bg-yellow-100 text-yellow-800' :
                           appointmentInfo.estado === 'ATENDIDO' ? 'bg-green-100 text-green-800' :
+                          appointmentInfo.estado === 'CANCELADA' ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
                         }`}>
                           {appointmentInfo.estado === 'PROGRAMADO' ? 'Programado' :
                            appointmentInfo.estado === 'EN_SALA' ? 'En Sala' :
                            appointmentInfo.estado === 'ATENDIDO' ? 'Atendido' :
                            appointmentInfo.estado === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                           appointmentInfo.estado === 'CANCELADA' ? 'Cancelada' :
                            appointmentInfo.estado}
                         </span>
                         <div className="flex items-center text-sm text-gray-600">
@@ -1381,6 +1437,8 @@ const PatientDashboard = () => {
                                 ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
                                 : newStatus === 'NO_SE_PRESENTO'
                                 ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                : newStatus === 'CANCELADA'
+                                ? 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
                                 : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
@@ -1391,6 +1449,7 @@ const PatientDashboard = () => {
                              newStatus === 'EN_SALA' ? 'En Sala' :
                              newStatus === 'ATENDIDO' ? 'Atendido' :
                              newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                             newStatus === 'CANCELADA' ? 'Cancelar Cita' :
                              newStatus}
                           </button>
                         ))}

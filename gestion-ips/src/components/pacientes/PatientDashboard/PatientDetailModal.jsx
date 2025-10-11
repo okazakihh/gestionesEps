@@ -66,7 +66,10 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
         // Try nested format first (existing patients)
         if (firstLevel.datosJson) {
           const secondLevel = typeof firstLevel.datosJson === 'string' ? JSON.parse(firstLevel.datosJson) : firstLevel.datosJson;
-          return secondLevel;
+          return {
+            ...secondLevel,
+            consentimientoInformado: secondLevel.consentimientoInformado || {}
+          };
         }
 
         // Try flat format (newly created patients)
@@ -75,7 +78,8 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
             informacionPersonal: firstLevel.informacionPersonalJson ? JSON.parse(firstLevel.informacionPersonalJson) : {},
             informacionContacto: firstLevel.informacionContactoJson ? JSON.parse(firstLevel.informacionContactoJson) : {},
             informacionMedica: firstLevel.informacionMedicaJson ? JSON.parse(firstLevel.informacionMedicaJson) : {},
-            contactoEmergencia: firstLevel.contactoEmergenciaJson ? JSON.parse(firstLevel.contactoEmergenciaJson) : {}
+            contactoEmergencia: firstLevel.contactoEmergenciaJson ? JSON.parse(firstLevel.contactoEmergenciaJson) : {},
+            consentimientoInformado: firstLevel.consentimientoInformadoJson ? JSON.parse(firstLevel.consentimientoInformadoJson) : {}
           };
         }
       }
@@ -154,7 +158,9 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
     // Parsear datos JSON de la historia clínica
     let historiaData = null;
     try {
-      historiaData = JSON.parse(historiaClinica.datosJson || '{}');
+      const parsed = JSON.parse(historiaClinica.datosJson || '{}');
+      // Handle nested structure if exists
+      historiaData = parsed.datosJson ? JSON.parse(parsed.datosJson) : parsed;
     } catch (error) {
       console.error('Error parsing historia clinica JSON:', error);
       historiaData = null;
@@ -190,19 +196,19 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           numero: index + 2,
           tipo: 'Consulta Médica',
           fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
-          medico: consultaData.informacionMedico?.medicoTratante || consultaData.detalleConsulta?.medicoTratante || 'N/A',
-          especialidad: consultaData.informacionMedico?.especialidad || consultaData.detalleConsulta?.especialidad || 'N/A',
-          motivo: consultaData.detalleConsulta?.motivoConsulta || consultaData.informacionConsulta?.motivoConsulta || 'N/A',
-          enfermedadActual: consultaData.detalleConsulta?.enfermedadActual || consultaData.informacionConsulta?.enfermedadActual || 'N/A',
-          diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || consultaData.diagnosticoTratamiento?.diagnosticos || 'N/A',
-          planTratamiento: consultaData.diagnosticoTratamiento?.planManejo || consultaData.diagnosticoTratamiento?.planTratamiento || 'N/A',
+          medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+          especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+          motivo: consultaData.informacionConsulta?.motivoConsulta || consultaData.detalleConsulta?.motivoConsulta || 'N/A',
+          enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
+          diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
+          planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
           examenFisico: consultaData.examenClinico?.examenFisico || 'N/A',
           signosVitales: consultaData.examenClinico?.signosVitales || 'N/A',
           formulaMedica: consultaData.formulaMedica?.medicamentos || 'N/A',
           incapacidad: consultaData.incapacidad || null,
-          indicaciones: consultaData.seguimiento?.indicaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
-          proximaCita: consultaData.seguimiento?.proximaCita || consultaData.detalleConsulta?.proximaCita || 'N/A',
-          observaciones: consultaData.diagnosticoTratamiento?.recomendaciones || consultaData.informacionConsulta?.observaciones || 'N/A'
+          indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
+          proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
+          observaciones: consultaData.informacionConsulta?.observaciones || consultaData.seguimientoConsulta?.recomendaciones || 'N/A'
         });
       } catch (error) {
         console.error('Error parsing consulta JSON:', error);
@@ -217,7 +223,9 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
     // Parsear datos JSON de la historia clínica para obtener información del médico
     let historiaData = null;
     try {
-      historiaData = JSON.parse(historiaClinica.datosJson || '{}');
+      const parsed = JSON.parse(historiaClinica.datosJson || '{}');
+      // Handle nested structure if exists
+      historiaData = parsed.datosJson ? JSON.parse(parsed.datosJson) : parsed;
     } catch (error) {
       console.error('Error parsing historia clinica JSON:', error);
       historiaData = null;
@@ -237,19 +245,19 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
       numero: 1,
       tipo: 'Consulta Médica Individual',
       fecha: consultaParsed.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
-      medico: consultaParsed.informacionMedico?.medicoTratante || consultaParsed.detalleConsulta?.medicoTratante || 'N/A',
-      especialidad: consultaParsed.informacionMedico?.especialidad || consultaParsed.detalleConsulta?.especialidad || 'N/A',
-      motivo: consultaParsed.detalleConsulta?.motivoConsulta || consultaParsed.informacionConsulta?.motivoConsulta || 'N/A',
-      enfermedadActual: consultaParsed.detalleConsulta?.enfermedadActual || consultaParsed.informacionConsulta?.enfermedadActual || 'N/A',
-      diagnosticos: consultaParsed.diagnosticoTratamiento?.diagnosticoPrincipal || consultaParsed.diagnosticoTratamiento?.diagnosticos || 'N/A',
-      planTratamiento: consultaParsed.diagnosticoTratamiento?.planManejo || consultaParsed.diagnosticoTratamiento?.planTratamiento || 'N/A',
+      medico: consultaParsed.detalleConsulta?.medicoTratante || consultaParsed.informacionMedico?.medicoTratante || 'N/A',
+      especialidad: consultaParsed.detalleConsulta?.especialidad || consultaParsed.informacionMedico?.especialidad || 'N/A',
+      motivo: consultaParsed.informacionConsulta?.motivoConsulta || consultaParsed.detalleConsulta?.motivoConsulta || 'N/A',
+      enfermedadActual: consultaParsed.informacionConsulta?.enfermedadActual || consultaParsed.detalleConsulta?.enfermedadActual || 'N/A',
+      diagnosticos: consultaParsed.diagnosticoTratamiento?.diagnosticos || consultaParsed.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
+      planTratamiento: consultaParsed.diagnosticoTratamiento?.planTratamiento || consultaParsed.diagnosticoTratamiento?.planManejo || 'N/A',
       examenFisico: consultaParsed.examenClinico?.examenFisico || 'N/A',
       signosVitales: consultaParsed.examenClinico?.signosVitales || 'N/A',
       formulaMedica: consultaParsed.formulaMedica?.medicamentos || 'N/A',
       incapacidad: consultaParsed.incapacidad || null,
-      indicaciones: consultaParsed.seguimiento?.indicaciones || consultaParsed.seguimientoConsulta?.indicaciones || 'N/A',
-      proximaCita: consultaParsed.seguimiento?.proximaCita || consultaParsed.detalleConsulta?.proximaCita || 'N/A',
-      observaciones: consultaParsed.diagnosticoTratamiento?.recomendaciones || consultaParsed.informacionConsulta?.observaciones || 'N/A'
+      indicaciones: consultaParsed.seguimientoConsulta?.recomendaciones || consultaParsed.seguimientoConsulta?.indicaciones || 'N/A',
+      proximaCita: consultaParsed.detalleConsulta?.proximaCita || consultaParsed.seguimientoConsulta?.proximaCita || 'N/A',
+      observaciones: consultaParsed.informacionConsulta?.observaciones || consultaParsed.seguimientoConsulta?.recomendaciones || 'N/A'
     };
 
     const printContent = createPrintContent([consultaData], true, historiaData);
@@ -339,36 +347,36 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           <div class="patient-info">
             <h3 style="margin-top: 0; color: #1f2937; font-size: 14px; border-bottom: 2px solid #dc2626; padding-bottom: 5px;">INFORMACIÓN MÉDICA BÁSICA</h3>
             <div class="grid-3">
-              <div><strong>Tipo de Sangre:</strong> ${patientMedical.tipoSangre || 'N/A'}</div>
-              <div><strong>EPS:</strong> ${patientMedical.eps || 'N/A'}</div>
+              <div><strong>Tipo de Sangre:</strong> ${patientMedical.tipoSangre || patientInfo.tipoSangre || 'N/A'}</div>
+              <div><strong>EPS:</strong> ${patientMedical.eps || patientMedical.regimenAfiliacion || 'NUEVA EPS'}</div>
               <div><strong>Tipo de Seguro:</strong> ${patientMedical.tipoSeguro || 'N/A'}</div>
             </div>
             <div style="margin-top: 10px;">
-              <div><strong>Alergias:</strong> ${patientMedical.alergias || 'Ninguna registrada'}</div>
-              <div style="margin-top: 5px;"><strong>Medicamentos Actuales:</strong> ${patientMedical.medicamentosActuales || 'Ninguno registrado'}</div>
+              <div><strong>Alergias:</strong> ${patientMedical.alergias || 'NINGUNA'}</div>
+              <div style="margin-top: 5px;"><strong>Medicamentos Actuales:</strong> ${patientMedical.medicamentosActuales || 'NINGUNA'}</div>
             </div>
           </div>
 
           <!-- Medical Antecedents -->
           <div class="medical-antecedents">
             <h3 style="margin-top: 0; color: #92400e; font-size: 14px; border-bottom: 2px solid #f59e0b; padding-bottom: 5px;">ANTECEDENTES MÉDICOS</h3>
-            ${historiaData && historiaData.antecedentesClinico ? `
+            ${historiaData && (historiaData.antecedentesClinico || historiaData.informacionMedica) ? `
             <div class="grid-2">
               <div>
                 <strong>Antecedentes Personales:</strong><br>
-                ${historiaData.antecedentesClinico.antecedentesPersonales || 'No registrados'}
+                ${(historiaData.antecedentesClinico?.antecedentesPersonales || historiaData.informacionMedica?.antecedentesPersonales) || 'No registrados'}
               </div>
               <div>
                 <strong>Antecedentes Familiares:</strong><br>
-                ${historiaData.antecedentesClinico.antecedentesFamiliares || 'No registrados'}
+                ${(historiaData.antecedentesClinico?.antecedentesFamiliares || historiaData.informacionMedica?.antecedentesFamiliares) || 'No registrados'}
               </div>
               <div>
                 <strong>Antecedentes Quirúrgicos:</strong><br>
-                ${historiaData.antecedentesClinico.antecedentesQuirurgicos || 'No registrados'}
+                ${(historiaData.antecedentesClinico?.antecedentesQuirurgicos || historiaData.informacionMedica?.antecedentesQuirurgicos) || 'No registrados'}
               </div>
               <div>
                 <strong>Antecedentes Alérgicos:</strong><br>
-                ${historiaData.antecedentesClinico.antecedentesAlergicos || 'No registrados'}
+                ${(historiaData.antecedentesClinico?.antecedentesAlergicos || historiaData.informacionMedica?.antecedentesAlergicos) || 'No registrados'}
               </div>
             </div>
             ` : '<p>No se encontraron antecedentes médicos registrados.</p>'}
@@ -385,16 +393,6 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
               <strong>Derechos del Paciente:</strong> Conoce sus derechos a la privacidad, confidencialidad, acceso a su historia clínica,
               segunda opinión médica y atención digna según la normatividad colombiana.
             </p>
-            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #a7f3d0;">
-              <div style="display: inline-block; margin-right: 50px;">
-                <div style="border-bottom: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
-                <p style="font-size: 9px; text-align: center;">Firma del Paciente/Acudiente</p>
-              </div>
-              <div style="display: inline-block;">
-                <div style="border-bottom: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
-                <p style="font-size: 9px; text-align: center;">Firma del Profesional</p>
-              </div>
-            </div>
           </div>
     `;
 
@@ -421,7 +419,7 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
             <div class="grid-2">
               <div><span class="field-label">Médico Tratante:</span> ${consulta.medico || 'N/A'}</div>
               <div><span class="field-label">Especialidad:</span> ${consulta.especialidad || 'N/A'}</div>
-              <div><span class="field-label">Registro Médico:</span> ${((historiaData && historiaData.informacionMedico) ? historiaData.informacionMedico.registroMedico : null) || 'N/A'}</div>
+              <div><span class="field-label">Registro Médico:</span> ${consulta.medico ? 'N/A' : 'N/A'}</div>
               <div><span class="field-label">Tipo de Consulta:</span> ${consulta.tipo || 'Consulta General'}</div>
             </div>
           </div>
@@ -516,24 +514,13 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           </div>
           ` : ''}
 
-          <!-- Firma y Sello -->
+          <!-- Sello de la Institución -->
           <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 5px; border: 1px solid #d1d5db;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-              <div style="flex: 1;">
-                <div class="signature">
-                  <div class="signature-line"></div>
-                  <p style="margin-top: 5px; font-size: 11px; font-weight: bold;">Firma del Profesional de la Salud</p>
-                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">${consulta.medico || 'N/A'}</p>
-                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">Registro Médico: ${((historiaData && historiaData.informacionMedico) ? historiaData.informacionMedico.registroMedico : null) || 'N/A'}</p>
-                  <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">Fecha: ${consulta.fecha ? new Date(consulta.fecha).toLocaleDateString('es-CO') : 'N/A'}</p>
-                </div>
-              </div>
-              <div style="flex: 1; text-align: center;">
-                <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white;">
-                  <p style="margin: 0; font-size: 9px; color: #6b7280;">SELLO DE LA INSTITUCIÓN</p>
-                  <div style="margin: 10px 0; width: 80px; height: 60px; border: 1px dashed #9ca3af; margin: 10px auto;"></div>
-                  <p style="margin: 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
-                </div>
+            <div style="text-align: center;">
+              <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white; display: inline-block;">
+                <p style="margin: 0; font-size: 9px; color: #6b7280;">SELLO DE LA INSTITUCIÓN</p>
+                <div style="margin: 10px 0; width: 80px; height: 60px; border: 1px dashed #9ca3af;"></div>
+                <p style="margin: 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
               </div>
             </div>
           </div>
@@ -929,38 +916,6 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                         </p>
                       </div>
 
-                      {/* Hábitos */}
-                      {patientData.informacionMedica?.habitos && (
-                        <div className="bg-green-50 p-4 rounded-lg border">
-                          <h5 className="font-semibold text-green-900 mb-3">Hábitos y Estilo de Vida</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                            <div>
-                              <span className="text-green-700 font-medium">Tabaquismo:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.tabaquismo || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-green-700 font-medium">Alcoholismo:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.alcoholismo || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-green-700 font-medium">Ejercicio:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.ejercicio || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-green-700 font-medium">Alimentación:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.alimentacion || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-green-700 font-medium">Sueño:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.sueno || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-green-700 font-medium">Higiene:</span>
-                              <p className="text-green-800">{patientData.informacionMedica.habitos.higiene || 'N/A'}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -1072,14 +1027,6 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                             <div>
                               <span className="text-gray-600 font-medium">Fecha de Consentimiento:</span>
                               <p className="font-medium">{formatDate(patientData.consentimientoInformado?.fechaConsentimiento) || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">Firma del Paciente:</span>
-                              <p className="font-medium">{patientData.consentimientoInformado?.firmaPaciente || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">Firma del Profesional:</span>
-                              <p className="font-medium">{patientData.consentimientoInformado?.firmaProfesional || 'N/A'}</p>
                             </div>
                             <div>
                               <span className="text-gray-600 font-medium">Testigo:</span>
@@ -1260,7 +1207,7 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                                     {/* Información del Médico e Información de Consulta en una fila */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                       {/* Información del Médico */}
-                                      {datosHistoria.informacionMedico && (
+                                      {(datosHistoria.informacionMedico || datosHistoria.detalleConsulta) && (
                                         <div className="bg-white p-4 rounded-lg border">
                                           <h6 className="font-semibold text-gray-900 mb-3 flex items-center border-b pb-2">
                                             <UserIcon className="h-4 w-4 mr-2 text-blue-600" />
@@ -1269,15 +1216,15 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                                           <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
                                               <span className="text-gray-600">Nombre:</span>
-                                              <span className="font-medium">{datosHistoria.informacionMedico.medicoResponsable || 'N/A'}</span>
+                                              <span className="font-medium">{(datosHistoria.informacionMedico?.medicoResponsable || datosHistoria.detalleConsulta?.medicoTratante) || 'N/A'}</span>
                                             </div>
                                             <div className="flex justify-between">
                                               <span className="text-gray-600">Registro:</span>
-                                              <span className="font-medium">{datosHistoria.informacionMedico.registroMedico || 'N/A'}</span>
+                                              <span className="font-medium">{(datosHistoria.informacionMedico?.registroMedico) || 'N/A'}</span>
                                             </div>
                                             <div className="flex justify-between">
                                               <span className="text-gray-600">Especialidad:</span>
-                                              <span className="font-medium">{datosHistoria.informacionMedico.especialidad || 'N/A'}</span>
+                                              <span className="font-medium">{(datosHistoria.informacionMedico?.especialidad || datosHistoria.detalleConsulta?.especialidad) || 'N/A'}</span>
                                             </div>
                                           </div>
                                         </div>
@@ -1293,7 +1240,7 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
                                           <div className="space-y-2 text-sm">
                                             <div>
                                               <span className="text-gray-600 font-medium">Motivo:</span>
-                                              <p className="mt-1">{datosHistoria.informacionConsulta.motivoConsulta || 'N/A'}</p>
+                                              <p className="mt-1">{datosHistoria.informacionConsulta.motivoConsulta || 'Apertura de historia clínica'}</p>
                                             </div>
                                             <div>
                                               <span className="text-gray-600 font-medium">Enfermedad Actual:</span>

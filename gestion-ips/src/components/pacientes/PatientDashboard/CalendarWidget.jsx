@@ -70,6 +70,17 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
   const handleDayClick = (date) => {
     if (!isCurrentMonth(date)) return;
 
+    // Prevent selecting dates before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+    const selectedDateOnly = new Date(date);
+    selectedDateOnly.setHours(0, 0, 0, 0);
+
+    if (selectedDateOnly < today) {
+      return; // Don't allow selecting past dates
+    }
+
     setSelectedDate(date);
     if (onDaySelect) {
       onDaySelect(date);
@@ -79,6 +90,16 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
   // Check if date is selected
   const isSelected = (date) => {
     return selectedDate && date.toDateString() === selectedDate.toDateString();
+  };
+
+  const isPastDate = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+    const dateToCheck = new Date(date);
+    dateToCheck.setHours(0, 0, 0, 0);
+
+    return dateToCheck < today;
   };
 
   return (
@@ -122,22 +143,25 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
       {/* Días del calendario */}
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((date, index) => {
-          const dayNumber = date.getDate();
-          const isCurrentMonthDay = isCurrentMonth(date);
-          const isTodayDay = isToday(date);
-          const isSelectedDay = isSelected(date);
+           const dayNumber = date.getDate();
+           const isCurrentMonthDay = isCurrentMonth(date);
+           const isTodayDay = isToday(date);
+           const isSelectedDay = isSelected(date);
+           const isPastDay = isPastDate(date);
 
-          return (
-            <div
-              key={index}
-              onClick={() => handleDayClick(date)}
-              className={`
-                relative p-1 text-center text-xs cursor-pointer hover:bg-gray-50 rounded transition-colors
-                ${isCurrentMonthDay ? 'text-gray-900' : 'text-gray-400'}
-                ${isTodayDay ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
-                ${isSelectedDay ? 'bg-green-600 text-white hover:bg-green-700' : ''}
-              `}
-            >
+           return (
+             <div
+               key={index}
+               onClick={() => handleDayClick(date)}
+               className={`
+                 relative p-1 text-center text-xs rounded transition-colors
+                 ${isCurrentMonthDay ? 'text-gray-900' : 'text-gray-400'}
+                 ${isTodayDay ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
+                 ${isSelectedDay ? 'bg-green-600 text-white hover:bg-green-700' : ''}
+                 ${isPastDay && isCurrentMonthDay ? 'text-gray-400 cursor-not-allowed bg-gray-100' : 'cursor-pointer hover:bg-gray-50'}
+               `}
+               title={isPastDay && isCurrentMonthDay ? 'No se pueden seleccionar fechas pasadas' : isCurrentMonthDay ? 'Click para seleccionar esta fecha' : ''}
+             >
               <span className={`inline-block w-5 h-5 leading-5 rounded-full ${
                 isTodayDay ? 'bg-blue-600 text-white' :
                 isSelectedDay ? 'bg-green-600 text-white' : ''
@@ -194,6 +218,10 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
           <div className="flex items-center">
             <div className="w-1.5 h-1.5 bg-green-600 rounded-full mr-1"></div>
             <span>Seleccionado</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1"></div>
+            <span>No disponible</span>
           </div>
         </div>
       </div>

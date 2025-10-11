@@ -218,8 +218,20 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
     } else {
       const selectedDate = new Date(formData.fechaHoraCita);
       const now = new Date();
-      if (selectedDate <= now) {
-        newErrors.fechaHoraCita = 'La cita debe ser en el futuro';
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+
+      if (selectedDate <= oneHourFromNow) {
+        newErrors.fechaHoraCita = 'La cita debe ser programada al menos 1 hora después de la hora actual';
+      }
+
+      // Check if the selected date is in the past (before today)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDateOnly = new Date(selectedDate);
+      selectedDateOnly.setHours(0, 0, 0, 0);
+
+      if (selectedDateOnly < today) {
+        newErrors.fechaHoraCita = 'No se pueden agendar citas en fechas pasadas';
       }
     }
 
@@ -391,7 +403,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
 
   const getMinDateTime = () => {
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 30); // At least 30 minutes from now
+    // Add 1 hour from now to give some buffer time
+    now.setHours(now.getHours() + 1);
     return now.toISOString().slice(0, 16); // Format for datetime-local input
   };
 

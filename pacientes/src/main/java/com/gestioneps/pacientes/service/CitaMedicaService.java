@@ -84,6 +84,11 @@ public class CitaMedicaService {
         System.out.println("🔄 Actualizando estado de cita " + id + " de '" + estadoActual + "' a '" + nuevoEstado + "'");
         validarTransicionEstado(estadoActual, nuevoEstado);
 
+        // Si se cancela, desactivar la cita para liberar el espacio en el calendario
+        if ("CANCELADO".equals(nuevoEstado) || "CANCELADA".equals(nuevoEstado)) {
+            cita.setActiva(false);
+        }
+
         // Actualizar el estado en datosJson
         String datosJsonActualizados = actualizarEstadoEnJson(cita.getDatosJson(), nuevoEstado);
         cita.setDatosJson(datosJsonActualizados);
@@ -130,26 +135,33 @@ public class CitaMedicaService {
             case "NO_SE_PRESENTÓ":
             case "NO SE PRESENTÓ":
                 return "NO_SE_PRESENTO";
+            case "CANCELADO":
+            case "CANCELADA":
+                return "CANCELADO";
             default:
                 return "PROGRAMADO"; // fallback
         }
     }
 
     private void validarTransicionEstado(String estadoActual, String nuevoEstado) {
+        System.out.println("🔍 Validando transición: estadoActual='" + estadoActual + "', nuevoEstado='" + nuevoEstado + "'");
         // Definir transiciones permitidas
         switch (estadoActual) {
             case "PROGRAMADO":
-                if (!nuevoEstado.equals("EN_SALA") && !nuevoEstado.equals("NO_SE_PRESENTO")) {
-                    throw new IllegalArgumentException("Desde PROGRAMADO solo se puede cambiar a EN_SALA o NO_SE_PRESENTO");
+                System.out.println("📋 Estados permitidos desde PROGRAMADO: EN_SALA, NO_SE_PRESENTO, CANCELADO, CANCELADA");
+                if (!nuevoEstado.equals("EN_SALA") && !nuevoEstado.equals("NO_SE_PRESENTO") && !nuevoEstado.equals("CANCELADO") && !nuevoEstado.equals("CANCELADA")) {
+                    System.out.println("❌ Transición no permitida: " + nuevoEstado);
+                    throw new IllegalArgumentException("Desde PROGRAMADO solo se puede cambiar a EN_SALA, NO_SE_PRESENTO o CANCELADO");
                 }
                 break;
             case "EN_SALA":
-                if (!nuevoEstado.equals("ATENDIDO")) {
-                    throw new IllegalArgumentException("Desde EN_SALA solo se puede cambiar a ATENDIDO");
+                if (!nuevoEstado.equals("ATENDIDO") && !nuevoEstado.equals("CANCELADO") && !nuevoEstado.equals("CANCELADA")) {
+                    throw new IllegalArgumentException("Desde EN_SALA solo se puede cambiar a ATENDIDO o CANCELADO");
                 }
                 break;
             case "ATENDIDO":
             case "NO_SE_PRESENTO":
+            case "CANCELADO":
                 throw new IllegalArgumentException("No se puede cambiar el estado de una cita " + estadoActual);
             default:
                 throw new IllegalArgumentException("Estado actual no válido: " + estadoActual);
