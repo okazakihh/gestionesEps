@@ -1,7 +1,7 @@
 package com.gestioneps.administrative.controller;
 
-import com.gestioneps.administrative.dto.NominaDTO;
-import com.gestioneps.administrative.service.NominaService;
+import com.gestioneps.administrative.dto.FacturacionDTO;
+import com.gestioneps.administrative.service.FacturacionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
@@ -15,30 +15,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/nomina")
-@Tag(name = "Nómina", description = "API para gestión de nómina")
-public class NominaController {
+@RequestMapping("/facturacion")
+@Tag(name = "Facturación", description = "API para gestión de facturación")
+public class FacturacionController {
 
-    private final NominaService nominaService;
+    private final FacturacionService facturacionService;
+
+    public FacturacionController(FacturacionService facturacionService) {
+        this.facturacionService = facturacionService;
+    }
 
     // Constantes para mensajes de respuesta
     private static final String SUCCESS = "success";
     private static final String ERROR = "error";
     private static final String DATA = "data";
-    private static final String NOMINA_NO_ENCONTRADA = "Nómina no encontrada con ID: ";
+    private static final String FACTURACION_NO_ENCONTRADA = "Facturación no encontrada con ID: ";
 
-    public NominaController(NominaService nominaService) {
-        this.nominaService = nominaService;
-    }
-
-    @PostMapping("/empleado/{empleadoId}")
-    @Operation(summary = "Crear nómina", description = "Crea una nueva nómina para un empleado desde JSON crudo")
-    public ResponseEntity<Map<String, Object>> crearNomina(@PathVariable Long empleadoId, @RequestBody String jsonData) {
+    @PostMapping
+    @Operation(summary = "Crear facturación", description = "Crea una nueva facturación desde JSON crudo")
+    public ResponseEntity<Map<String, Object>> crearFacturacion(@RequestBody String jsonData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            NominaDTO nomina = nominaService.crearNominaDesdeJson(empleadoId, jsonData);
+            FacturacionDTO facturacion = facturacionService.crearFacturacionDesdeJson(jsonData);
             response.put(SUCCESS, true);
-            response.put(DATA, nomina);
+            response.put(DATA, facturacion);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
@@ -52,60 +52,46 @@ public class NominaController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener nómina por ID", description = "Obtiene una nómina específica por su ID")
-    public ResponseEntity<Map<String, Object>> obtenerNomina(@PathVariable Long id) {
+    @Operation(summary = "Obtener facturación por ID", description = "Obtiene una facturación específica por su ID")
+    public ResponseEntity<Map<String, Object>> obtenerFacturacion(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            NominaDTO nomina = nominaService.obtenerNominaPorId(id);
+            FacturacionDTO facturacion = facturacionService.obtenerFacturacionPorId(id);
             response.put(SUCCESS, true);
-            response.put(DATA, nomina);
+            response.put(DATA, facturacion);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
-            response.put(ERROR, NOMINA_NO_ENCONTRADA + e.getMessage());
+            response.put(ERROR, FACTURACION_NO_ENCONTRADA + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping
-    @Operation(summary = "Obtener nóminas activas", description = "Obtiene una lista paginada de nóminas activas")
-    public ResponseEntity<Map<String, Object>> obtenerNominasActivas(
+    @Operation(summary = "Obtener facturaciones activas", description = "Obtiene una lista paginada de facturaciones activas")
+    public ResponseEntity<Map<String, Object>> obtenerFacturacionesActivas(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Map<String, Object> response = new HashMap<>();
         Pageable pageable = PageRequest.of(page, size);
-        Page<NominaDTO> nominas = nominaService.obtenerNominasActivas(pageable);
+        Page<FacturacionDTO> facturaciones = facturacionService.obtenerFacturacionesActivas(pageable);
         response.put(SUCCESS, true);
-        response.put(DATA, nominas);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/empleado/{empleadoId}")
-    @Operation(summary = "Obtener nóminas por empleado", description = "Obtiene nóminas de un empleado específico")
-    public ResponseEntity<Map<String, Object>> obtenerNominasPorEmpleado(
-            @PathVariable Long empleadoId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Map<String, Object> response = new HashMap<>();
-        Pageable pageable = PageRequest.of(page, size);
-        Page<NominaDTO> nominas = nominaService.obtenerNominasPorEmpleado(empleadoId, pageable);
-        response.put(SUCCESS, true);
-        response.put(DATA, nominas);
+        response.put(DATA, facturaciones);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar nómina", description = "Actualiza una nómina existente")
-    public ResponseEntity<Map<String, Object>> actualizarNomina(@PathVariable Long id, @RequestBody String jsonData) {
+    @Operation(summary = "Actualizar facturación", description = "Actualiza una facturación existente")
+    public ResponseEntity<Map<String, Object>> actualizarFacturacion(@PathVariable Long id, @RequestBody String jsonData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            NominaDTO nomina = nominaService.actualizarNomina(id, jsonData);
+            FacturacionDTO facturacion = facturacionService.actualizarFacturacion(id, jsonData);
             response.put(SUCCESS, true);
-            response.put(DATA, nomina);
+            response.put(DATA, facturacion);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
-            response.put(ERROR, NOMINA_NO_ENCONTRADA + e.getMessage());
+            response.put(ERROR, FACTURACION_NO_ENCONTRADA + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             response.put(SUCCESS, false);
@@ -115,35 +101,35 @@ public class NominaController {
     }
 
     @PatchMapping("/{id}/desactivar")
-    @Operation(summary = "Desactivar nómina", description = "Desactiva una nómina (soft delete)")
-    public ResponseEntity<Map<String, Object>> desactivarNomina(@PathVariable Long id) {
+    @Operation(summary = "Desactivar facturación", description = "Desactiva una facturación (soft delete)")
+    public ResponseEntity<Map<String, Object>> desactivarFacturacion(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            nominaService.desactivarNomina(id);
+            facturacionService.desactivarFacturacion(id);
             response.put(SUCCESS, true);
             response.put(DATA, null);
-            response.put("message", "Nómina desactivada");
+            response.put("message", "Facturación desactivada");
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
-            response.put("message", NOMINA_NO_ENCONTRADA + e.getMessage());
+            response.put("message", FACTURACION_NO_ENCONTRADA + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar nómina", description = "Elimina permanentemente una nómina")
-    public ResponseEntity<Map<String, Object>> eliminarNomina(@PathVariable Long id) {
+    @Operation(summary = "Eliminar facturación", description = "Elimina permanentemente una facturación")
+    public ResponseEntity<Map<String, Object>> eliminarFacturacion(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            nominaService.eliminarNomina(id);
+            facturacionService.eliminarFacturacion(id);
             response.put(SUCCESS, true);
             response.put(DATA, null);
-            response.put("message", "Nómina eliminada");
+            response.put("message", "Facturación eliminada");
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
-            response.put("message", NOMINA_NO_ENCONTRADA + e.getMessage());
+            response.put("message", FACTURACION_NO_ENCONTRADA + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }

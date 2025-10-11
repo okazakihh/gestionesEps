@@ -11,6 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,11 +87,9 @@ public class DocumentoMedicoService {
         DocumentoMedico documento = documentoMedicoRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Documento médico no encontrado con ID: " + id));
 
-        // Actualizar campos
-        documento.setNombreArchivo(documentoDTO.getNombreArchivo());
-        documento.setTipoArchivo(documentoDTO.getTipoArchivo());
-        documento.setArchivoBase64(documentoDTO.getArchivoBase64());
-        documento.setDocumento(documentoDTO.getDocumento());
+        // Actualizar JSON data
+        String jsonData = convertirDtoAJson(documentoDTO);
+        documento.setJsonData(jsonData);
 
         DocumentoMedico documentoActualizado = documentoMedicoRepository.save(documento);
         return convertirEntidadADto(documentoActualizado);
@@ -114,10 +115,7 @@ public class DocumentoMedicoService {
         dto.setCitaMedicaId(documento.getCitaMedica().getId());
         dto.setNumeroHistoria(String.valueOf(documento.getCitaMedica().getId())); // Using cita ID as numeroHistoria
         dto.setPacienteNombre(documento.getCitaMedica().getPaciente().getNombreCompleto());
-        dto.setNombreArchivo(documento.getNombreArchivo());
-        dto.setTipoArchivo(documento.getTipoArchivo());
-        dto.setArchivoBase64(documento.getArchivoBase64());
-        dto.setDocumento(documento.getDocumento());
+        dto.setJsonData(documento.getJsonData()); // Pasar JSON crudo directamente
         dto.setFechaCreacion(documento.getFechaCreacion());
         dto.setFechaActualizacion(documento.getFechaActualizacion());
 
@@ -125,16 +123,18 @@ public class DocumentoMedicoService {
     }
 
     /**
+     * Convertir DTO a JSON - Ahora solo retorna el JSON crudo
+     */
+    private String convertirDtoAJson(DocumentoMedicoDTO dto) {
+        return dto.getJsonData(); // Retornar JSON crudo directamente
+    }
+
+    /**
      * Convertir DTO a entidad
      */
     private DocumentoMedico convertirDtoAEntidad(DocumentoMedicoDTO dto) {
         DocumentoMedico documento = new DocumentoMedico();
-
-        documento.setNombreArchivo(dto.getNombreArchivo());
-        documento.setTipoArchivo(dto.getTipoArchivo());
-        documento.setArchivoBase64(dto.getArchivoBase64());
-        documento.setDocumento(dto.getDocumento());
-
+        documento.setJsonData(convertirDtoAJson(dto));
         return documento;
     }
 }

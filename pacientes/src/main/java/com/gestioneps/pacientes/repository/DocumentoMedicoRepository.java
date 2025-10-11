@@ -16,11 +16,6 @@ public interface DocumentoMedicoRepository extends JpaRepository<DocumentoMedico
     List<DocumentoMedico> findByCitaMedicaOrderByFechaCreacionDesc(CitaMedica citaMedica);
 
     /**
-     * Buscar documentos por nombre de archivo
-     */
-    List<DocumentoMedico> findByNombreArchivoContainingIgnoreCase(String nombreArchivo);
-
-    /**
      * Contar documentos por cita médica
      */
     long countByCitaMedica(CitaMedica citaMedica);

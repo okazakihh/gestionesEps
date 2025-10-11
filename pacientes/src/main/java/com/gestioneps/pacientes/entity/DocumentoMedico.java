@@ -20,22 +20,9 @@ public class DocumentoMedico {
     @NotNull(message = "La cita médica es obligatoria")
     private CitaMedica citaMedica;
 
-    @Column(name = "nombre_archivo", nullable = false)
-    @NotBlank(message = "El nombre del archivo es obligatorio")
-    @Size(max = 255, message = "El nombre del archivo no puede exceder 255 caracteres")
-    private String nombreArchivo;
-
-    @Column(name = "tipo_archivo", nullable = false)
-    @NotBlank(message = "El tipo de archivo es obligatorio")
-    @Size(max = 100, message = "El tipo de archivo no puede exceder 100 caracteres")
-    private String tipoArchivo;
-
-    @Column(name = "archivo_base64", columnDefinition = "TEXT")
-    private String archivoBase64;
-
-    @Column(name = "documento")
-    @Size(max = 500, message = "El documento no puede exceder 500 caracteres")
-    private String documento;
+    // Campo único para almacenar toda la información del documento como JSON crudo
+    @Column(name = "json_data", columnDefinition = "TEXT")
+    private String jsonData;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
@@ -65,36 +52,12 @@ public class DocumentoMedico {
         this.citaMedica = citaMedica;
     }
 
-    public String getNombreArchivo() {
-        return nombreArchivo;
+    public String getJsonData() {
+        return jsonData;
     }
 
-    public void setNombreArchivo(String nombreArchivo) {
-        this.nombreArchivo = nombreArchivo;
-    }
-
-    public String getTipoArchivo() {
-        return tipoArchivo;
-    }
-
-    public void setTipoArchivo(String tipoArchivo) {
-        this.tipoArchivo = tipoArchivo;
-    }
-
-    public String getArchivoBase64() {
-        return archivoBase64;
-    }
-
-    public void setArchivoBase64(String archivoBase64) {
-        this.archivoBase64 = archivoBase64;
-    }
-
-    public String getDocumento() {
-        return documento;
-    }
-
-    public void setDocumento(String documento) {
-        this.documento = documento;
+    public void setJsonData(String jsonData) {
+        this.jsonData = jsonData;
     }
 
     public LocalDateTime getFechaCreacion() {

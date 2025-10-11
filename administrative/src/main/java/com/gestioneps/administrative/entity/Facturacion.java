@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
 
 @SuppressWarnings("unused")
 @Entity
-@Table(name = "empleados")
-public class Empleado {
+@Table(name = "facturacion")
+public class Facturacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Campo único para almacenar toda la información del empleado como JSON crudo
+    // Campo único para almacenar toda la información de facturación como JSON crudo
     @Column(name = "json_data", columnDefinition = "TEXT")
     private String jsonData;
 
@@ -32,7 +32,7 @@ public class Empleado {
     private LocalDateTime fechaActualizacion;
 
     // Constructors
-    public Empleado() {
+    public Facturacion() {
         // Constructor vacío necesario para JPA/Hibernate
     }
 

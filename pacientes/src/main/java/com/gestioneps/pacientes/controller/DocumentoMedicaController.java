@@ -39,7 +39,7 @@ public class DocumentoMedicaController {
     /**
      * Crear nuevo documento médico
      */
-    @Operation(summary = "Crear nuevo documento médico", description = "Crea un nuevo documento médico para una cita médica específica.")
+    @Operation(summary = "Crear nuevo documento médico", description = "Crea un nuevo documento médico enviando JSON crudo con toda la información del documento.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Documento médico creado exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos inválidos en la solicitud")
@@ -47,10 +47,15 @@ public class DocumentoMedicaController {
     @PostMapping("/cita/{citaId}")
     public ResponseEntity<Map<String, Object>> crearDocumento(
             @PathVariable Long citaId,
-            @Valid @RequestBody DocumentoMedicoDTO documentoDTO) {
+            @RequestBody String jsonData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            LOGGER.info("Creando documento médico para cita {}: {}", citaId, documentoDTO);
+            LOGGER.info("Creando documento médico para cita {} con JSON crudo", citaId);
+
+            // Crear DTO con el JSON crudo
+            DocumentoMedicoDTO documentoDTO = new DocumentoMedicoDTO();
+            documentoDTO.setJsonData(jsonData);
+
             DocumentoMedicoDTO documentoCreado = documentoMedicoService.crearDocumento(citaId, documentoDTO);
             response.put(SUCCESS, true);
             response.put("data", documentoCreado);
@@ -126,9 +131,13 @@ public class DocumentoMedicaController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> actualizarDocumento(
             @PathVariable Long id,
-            @Valid @RequestBody DocumentoMedicoDTO documentoDTO) {
+            @RequestBody String jsonData) {
         Map<String, Object> response = new HashMap<>();
         try {
+            // Crear DTO con el JSON crudo
+            DocumentoMedicoDTO documentoDTO = new DocumentoMedicoDTO();
+            documentoDTO.setJsonData(jsonData);
+
             DocumentoMedicoDTO documentoActualizado = documentoMedicoService.actualizarDocumento(id, documentoDTO);
             response.put(SUCCESS, true);
             response.put("data", documentoActualizado);
@@ -137,6 +146,10 @@ public class DocumentoMedicaController {
             response.put(SUCCESS, false);
             response.put(ERROR, DOCUMENTO_NO_ENCONTRADO + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -155,11 +168,15 @@ public class DocumentoMedicaController {
             documentoMedicoService.eliminarDocumento(id);
             response.put(SUCCESS, true);
             response.put("message", "Documento médico eliminado exitosamente.");
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put(SUCCESS, false);
             response.put(ERROR, DOCUMENTO_NO_ENCONTRADO + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            response.put(SUCCESS, false);
+            response.put(ERROR, "Error interno: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
