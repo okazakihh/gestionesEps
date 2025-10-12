@@ -4,15 +4,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { LoginPage } from '../pages/LoginPage.jsx';
 import { DashboardPage } from '../pages/DashboardPage.jsx';
 import UsuariosPage from '../pages/UsersPage.jsx';
-import PacientesPage from '../pages/pacientes/PacientesPage.jsx';
 import PatientDashboard from '../pages/pacientes/PatientDashboard.jsx';
-import PacienteForm from '../pages/pacientes/PacienteForm.jsx';
-import HistoriaClinicaForm from '../pages/pacientes/HistoriaClinicaForm.jsx';
-import ConsultaMedicaForm from '../pages/pacientes/ConsultaMedicaForm.jsx';
-import GestionPacientesPage from '../pages/pacientes/GestionPacientesPage.jsx';
-import HistoriasClinicasPage from '../pages/pacientes/HistoriasClinicasPage.jsx';
-import ConsultasMedicasPage from '../pages/pacientes/ConsultasMedicasPage.jsx';
-import DocumentosMedicosPage from '../pages/pacientes/DocumentosMedicosPage.jsx';
 import EmpleadosPage from '../pages/empleados/EmpleadosPage.jsx';
 
 // Componente para rutas protegidas
@@ -85,6 +77,7 @@ const AppRouter = () => {
         }
       />
 
+      {/* Rutas de Pacientes - Todo se maneja a través del PatientDashboard con modales */}
       <Route
         path="/pacientes/dashboard"
         element={
@@ -95,101 +88,10 @@ const AppRouter = () => {
       />
 
       <Route
-        path="/pacientes"
+        path="/pacientes/*"
         element={
           <ProtectedRoute>
             <PatientDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Submodulos de Pacientes - ahora manejados por PacientesPage con pestañas */}
-      <Route
-        path="/pacientes/gestion"
-        element={
-          <ProtectedRoute>
-            <PacientesPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/historias"
-        element={
-          <ProtectedRoute>
-            <PacientesPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/consultas"
-        element={
-          <ProtectedRoute>
-            <PacientesPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/documentos"
-        element={
-          <ProtectedRoute>
-            <PacientesPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/nuevo"
-        element={
-          <ProtectedRoute>
-            <PacienteForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/:id/editar"
-        element={
-          <ProtectedRoute>
-            <PacienteForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/historias/nueva"
-        element={
-          <ProtectedRoute>
-            <HistoriaClinicaForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/historias/:id/editar"
-        element={
-          <ProtectedRoute>
-            <HistoriaClinicaForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/consultas/nueva"
-        element={
-          <ProtectedRoute>
-            <ConsultaMedicaForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pacientes/consultas/:id/editar"
-        element={
-          <ProtectedRoute>
-            <ConsultaMedicaForm />
           </ProtectedRoute>
         }
       />

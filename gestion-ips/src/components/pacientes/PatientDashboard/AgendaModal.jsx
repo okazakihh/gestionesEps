@@ -338,6 +338,43 @@ const AgendaModal = ({ isOpen, onClose }) => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'PROGRAMADO':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case 'EN_SALA':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'ATENDIDO':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        );
+      case 'NO_SE_PRESENTO':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      case 'CANCELADO':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   const updateAppointmentStatus = async (citaId, newStatus) => {
     try {
       setUpdatingStatus(prev => ({ ...prev, [citaId]: true }));
@@ -479,6 +516,10 @@ const AgendaModal = ({ isOpen, onClose }) => {
   // Función para manejar el clic en "Atendido"
   const handleAtendidoClick = async (cita) => {
     setCurrentCita(cita);
+
+    // Cerrar el modal de detalle de cita si está abierto
+    setIsCitaDetailModalOpen(false);
+    setSelectedCitaForDetail(null);
 
     // Verificar si el paciente tiene historia clínica
     const historiaId = await checkPatientHasHistoriaClinica(cita.pacienteId);
@@ -926,28 +967,11 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                                   }}
                                                   disabled={updatingStatus[cita.id]}
                                                   title={getStatusLabel(newStatus)}
-                                                  loading={updatingStatus[cita.id]}
                                                 >
-                                                  {newStatus === 'EN_SALA' && (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                  )}
-                                                  {newStatus === 'ATENDIDO' && (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                  )}
-                                                  {newStatus === 'NO_SE_PRESENTO' && (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                  )}
-                                                  {newStatus === 'CANCELADO' && (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
-                                                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={2} fill="none" />
-                                                    </svg>
+                                                  {updatingStatus[cita.id] ? (
+                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                                  ) : (
+                                                    getStatusIcon(newStatus)
                                                   )}
                                                 </ActionIcon>
                                               ))}
@@ -1169,7 +1193,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                             onClick={async () => {
                               if (newStatus === 'ATENDIDO') {
                                 handleAtendidoClick(selectedCitaForDetail);
-                                handleCloseCitaDetailModal();
+                                // NO cerrar el modal aquí, se cerrará después de guardar la consulta/historia
                               } else if (newStatus === 'CANCELADO') {
                                 // Confirmación especial para cancelar
                                 const result = await Swal.fire({

@@ -279,16 +279,23 @@ const PatientDashboard = () => {
   const handleHistoriaClinicaCreated = async (historiaClinica) => {
     console.log('Historia clínica creada:', historiaClinica);
 
-    // Ahora que se creó la historia clínica, cambiar a vista de crear consulta
-    setHistoriaClinicaId(historiaClinica.id);
+    // Cambiar el estado de la cita a ATENDIDO inmediatamente después de crear la historia
+    if (currentAppointment) {
+      await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
+    }
+
+    // La historia clínica ya incluye los datos de la primera consulta
+    // No es necesario abrir el modal de consulta médica
     setIsHistoriaModalOpen(false);
-    setIsConsultaModalOpen(true);
+    setCurrentAppointment(null);
+    setHistoriaClinicaId(null);
   };
 
   const handleConsultaMedicaCreated = async (consulta) => {
     console.log('Consulta médica creada:', consulta);
 
-    // Ahora cambiar el estado de la cita a ATENDIDO
+    // La cita ya debería estar marcada como ATENDIDO desde la creación de la historia clínica
+    // Pero por si acaso el flujo es diferente (consulta sin historia nueva), actualizamos el estado
     if (currentAppointment) {
       await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
     }
@@ -1625,7 +1632,9 @@ const PatientDashboard = () => {
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
                       <div className="flex flex-wrap gap-2">
-                        {getAvailableStatusTransitions(appointmentInfo.estado).map((newStatus) => (
+                        {getAvailableStatusTransitions(appointmentInfo.estado)
+                          .filter(newStatus => newStatus !== 'ATENDIDO') // Excluir el botón ATENDIDO
+                          .map((newStatus) => (
                           <button
                             key={newStatus}
                             onClick={() => {

@@ -514,13 +514,72 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           </div>
           ` : ''}
 
-          <!-- Sello de la Institución -->
-          <div style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 5px; border: 1px solid #d1d5db;">
-            <div style="text-align: center;">
-              <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white; display: inline-block;">
-                <p style="margin: 0; font-size: 9px; color: #6b7280;">SELLO DE LA INSTITUCIÓN</p>
-                <div style="margin: 10px 0; width: 80px; height: 60px; border: 1px dashed #9ca3af;"></div>
-                <p style="margin: 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
+          <!-- Firma y Sello (lado a lado) -->
+          <div style="margin-top: 25px; display: flex; justify-content: space-between; gap: 15px; page-break-inside: avoid;">
+            <!-- Firma Digital del Profesional -->
+            <div style="flex: 1; padding: 12px; background: white; border: 1.5px solid #000; border-radius: 3px;">
+              <div style="text-align: center; border-bottom: 1px solid #666; padding-bottom: 6px; margin-bottom: 12px;">
+                <strong style="font-size: 10px; color: #000;">✍️ FIRMA DEL PROFESIONAL</strong>
+              </div>
+              
+              ${consulta.firmaDigital || consulta.medico ? `
+                <!-- Línea de firma -->
+                <div style="border-top: 1.5px solid #000; width: 180px; margin: 20px auto 10px;"></div>
+                
+                <!-- Información del profesional -->
+                <div style="text-align: center;">
+                  <p style="margin: 3px 0; font-weight: bold; font-size: 11px; color: #000;">
+                    ${consulta.firmaDigital?.nombreMedico || consulta.medico || 'Profesional de la Salud'}
+                  </p>
+                  
+                  ${consulta.firmaDigital?.registroProfesional ? `
+                  <p style="margin: 2px 0; font-size: 9px; color: #333;">
+                    Reg. Prof.: ${consulta.firmaDigital.registroProfesional}
+                  </p>
+                  ` : ''}
+                  
+                  ${consulta.firmaDigital?.especialidad || consulta.especialidad ? `
+                  <p style="margin: 2px 0; font-size: 9px; color: #555;">
+                    ${consulta.firmaDigital?.especialidad || consulta.especialidad}
+                  </p>
+                  ` : ''}
+                  
+                  <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
+                    Fecha: ${consulta.firmaDigital?.fechaFirma || consulta.fecha || new Date().toLocaleDateString('es-CO')}
+                  </p>
+                  
+                  ${consulta.firmaDigital?.selloDigital ? `
+                  <p style="margin: 2px 0; font-size: 7px; color: #888; font-style: italic;">
+                    Firmado digitalmente
+                  </p>
+                  ` : ''}
+                </div>
+              ` : `
+                <!-- Espacio para firma manual -->
+                <div style="margin-top: 50px;"></div>
+                <div style="border-top: 1.5px solid #000; width: 180px; margin: 0 auto 8px;"></div>
+                <div style="text-align: center;">
+                  <p style="margin: 3px 0; font-size: 9px; color: #333;">
+                    Firma del Profesional Responsable
+                  </p>
+                  <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
+                    Fecha: ${new Date().toLocaleDateString('es-CO')}
+                  </p>
+                </div>
+              `}
+            </div>
+
+            <!-- Sello de la Institución -->
+            <div style="flex: 1; padding: 12px; background: white; border: 1.5px solid #000; border-radius: 3px;">
+              <div style="text-align: center; border-bottom: 1px solid #666; padding-bottom: 6px; margin-bottom: 12px;">
+                <strong style="font-size: 10px; color: #000;">🏛️ SELLO DE LA INSTITUCIÓN</strong>
+              </div>
+              <div style="text-align: center; margin-top: 20px;">
+                <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white; display: inline-block;">
+                  <p style="margin: 0 0 10px 0; font-size: 9px; color: #6b7280; font-weight: bold;">SELLO OFICIAL</p>
+                  <div style="margin: 10px auto; width: 80px; height: 60px; border: 1px dashed #9ca3af;"></div>
+                  <p style="margin: 10px 0 0 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
+                </div>
               </div>
             </div>
           </div>
@@ -533,18 +592,6 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           <div class="footer">
             <div style="border-top: 2px solid #2563eb; padding-top: 10px; margin-bottom: 15px;">
               <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
-            </div>
-
-            <div class="rights-section" style="margin-bottom: 15px;">
-              <h5 style="margin: 0 0 8px 0; color: #92400e; font-size: 10px;">📋 DERECHOS DEL PACIENTE (Ley 100 de 1993, Ley 1751 de 2015)</h5>
-              <ul style="margin: 0; padding-left: 15px; font-size: 9px; line-height: 1.3;">
-                <li>Recibir atención médica oportuna y de calidad</li>
-                <li>Conocer información clara sobre su estado de salud</li>
-                <li>Acceder a su historia clínica completa</li>
-                <li>Recibir segunda opinión médica</li>
-                <li>Autorizar o negar procedimientos médicos</li>
-                <li>Recibir atención digna y respetuosa</li>
-              </ul>
             </div>
 
             <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
