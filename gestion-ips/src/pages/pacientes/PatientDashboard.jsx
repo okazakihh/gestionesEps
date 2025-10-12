@@ -279,10 +279,8 @@ const PatientDashboard = () => {
   const handleHistoriaClinicaCreated = async (historiaClinica) => {
     console.log('Historia clínica creada:', historiaClinica);
 
-    // Cambiar el estado de la cita a ATENDIDO inmediatamente después de crear la historia
-    if (currentAppointment) {
-      await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
-    }
+    // La actualización del estado de la cita ya se hace en el modal
+    // No es necesario hacerlo aquí nuevamente
 
     // La historia clínica ya incluye los datos de la primera consulta
     // No es necesario abrir el modal de consulta médica
@@ -320,6 +318,14 @@ const PatientDashboard = () => {
 
   const handleAtendidoClick = async (appointment) => {
     setCurrentAppointment(appointment);
+
+    // Verificar el estado actual de la cita
+    const currentStatus = appointment.datosJson ? JSON.parse(appointment.datosJson).estado : 'PROGRAMADO';
+
+    // Actualizar el estado de la cita a EN_SALA solo si está en PROGRAMADO
+    if (currentStatus === 'PROGRAMADO') {
+      await updateAppointmentStatus(appointment.id, 'EN_SALA');
+    }
 
     // Verificar si el paciente tiene historia clínica
     const historiaId = await checkPatientHasHistoriaClinica(appointment.pacienteId);
@@ -1431,6 +1437,7 @@ const PatientDashboard = () => {
           onClose={handleCloseHistoriaModal}
           onHistoriaCreated={handleHistoriaClinicaCreated}
           pacienteId={currentAppointment.pacienteId}
+          citaId={currentAppointment.id}
           citaData={{
             ...getAppointmentInfo(currentAppointment),
             ...getAppointmentPatientInfo(currentAppointment)

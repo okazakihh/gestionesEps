@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Swal from 'sweetalert2';
-import { historiasClinicasApiService } from '../../../services/pacientesApiService.js';
+import { historiasClinicasApiService, pacientesApiService } from '../../../services/pacientesApiService.js';
 
-const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacienteId, citaData }) => {
+const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacienteId, citaId, citaData }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -73,10 +73,22 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
 
       console.log('Respuesta del backend:', result);
 
+      // Actualizar el estado de la cita a ATENDIDO justo después de guardar la historia clínica
+      if (citaId) {
+        try {
+          console.log('Actualizando estado de cita', citaId, 'a ATENDIDO');
+          await pacientesApiService.actualizarEstadoCita(citaId, 'ATENDIDO');
+          console.log('Estado de cita actualizado exitosamente');
+        } catch (citaError) {
+          console.error('Error al actualizar estado de cita:', citaError);
+          // No fallar la creación de la historia si falla la actualización de cita
+        }
+      }
+
       // Mostrar SweetAlert de éxito
       await Swal.fire({
         icon: 'success',
-        title: '¡Historia Clínica Creada!',
+        title: '¡Historia Clínica Creadaaaaa!',
         text: `La historia clínica ha sido creada exitosamente para el paciente.`,
         confirmButtonText: 'Aceptar',
         confirmButtonColor: '#10B981',
