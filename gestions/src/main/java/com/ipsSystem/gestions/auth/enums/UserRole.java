@@ -1,12 +1,11 @@
 package com.ipsSystem.gestions.auth.enums;
 
 public enum UserRole {
-    USER("USER"),
     ADMIN("ADMIN"),
-    MODERATOR("MODERATOR"),
     ADMINISTRATIVO("ADMINISTRATIVO"),
-    MEDICO("MEDICO"),
-    ASISTENCIAL("ASISTENCIAL");
+    AUXILIAR_ADMINISTRATIVO("AUXILIAR_ADMINISTRATIVO"),
+    DOCTOR("DOCTOR"),
+    AUXILIAR_MEDICO("AUXILIAR_MEDICO");
 
     private final String roleName;
 
@@ -43,7 +42,7 @@ public enum UserRole {
         }
 
         if (!validRole) {
-            throw new IllegalArgumentException("Rol inválido: " + roleName + ". Roles válidos: USER, ADMIN, MODERATOR, ADMINISTRATIVO, MEDICO, ASISTENCIAL");
+            throw new IllegalArgumentException("Rol inválido: " + roleName + ". Roles válidos: ADMIN, ADMINISTRATIVO, AUXILIAR_ADMINISTRATIVO, DOCTOR, AUXILIAR_MEDICO");
         }
     }
 

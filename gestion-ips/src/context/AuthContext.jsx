@@ -62,6 +62,7 @@ export const AuthProvider = ({ children }) => {
         nombres: userData?.personalInfo?.nombres ?? userData?.nombres ?? '',
         apellidos: userData?.personalInfo?.apellidos ?? userData?.apellidos ?? '',
         email: userData?.email ?? '',
+        documento: userData?.personalInfo?.documento ?? userData?.documento ?? '',
         rol: Array.isArray(userData?.roles) ? (userData.roles[0] ?? '') : (userData?.rol ?? ''),
         ips: userData?.ips ?? undefined,
         activo: userData?.enabled ?? userData?.activo ?? true,

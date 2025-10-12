@@ -13,8 +13,9 @@ import {
   PasswordInput
 } from '@mantine/core';
 
-const CreateUserForm = ({ onSubmit, initialData, isEditMode = false }) => {
+const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmployee = false }) => {
   const getInitialValues = () => {
+    console.log('🎯 CreateUserForm - isEditMode:', isEditMode, 'initialData:', initialData, 'isFromEmployee:', isFromEmployee);
     if (isEditMode && initialData) {
       return {
         username: initialData.username || '',
@@ -32,7 +33,28 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false }) => {
         departamento: initialData.contactInfo?.departamento || '',
         pais: initialData.contactInfo?.pais || 'COLOMBIA',
         codigoPostal: initialData.contactInfo?.codigoPostal || '',
-        rol: initialData.roles?.[0] || 'USER',
+        rol: initialData.roles?.[0] || 'ADMINISTRATIVO',
+      };
+    }
+    // Handle initial data for creation mode (from employee)
+    if (!isEditMode && initialData) {
+      return {
+        username: initialData.username || '',
+        email: initialData.email || '',
+        password: initialData.password || '',
+        nombres: initialData.nombres || '',
+        apellidos: initialData.apellidos || '',
+        documento: initialData.documento || '',
+        tipoDocumento: initialData.tipoDocumento || 'CC',
+        fechaNacimiento: initialData.fechaNacimiento || '',
+        genero: initialData.genero || 'M',
+        telefono: initialData.telefono || '',
+        direccion: initialData.direccion || '',
+        ciudad: initialData.ciudad || '',
+        departamento: initialData.departamento || '',
+        pais: initialData.pais || 'COLOMBIA',
+        codigoPostal: initialData.codigoPostal || '',
+        rol: initialData.rol || 'ADMINISTRATIVO',
       };
     }
     return {
@@ -51,7 +73,7 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false }) => {
       departamento: '',
       pais: 'COLOMBIA',
       codigoPostal: '',
-      rol: 'USER',
+      rol: 'ADMINISTRATIVO',
     };
   };
 
@@ -99,7 +121,9 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false }) => {
 
   return (
     <Paper p="md" shadow="sm">
-      <Title order={2} mb="lg">{isEditMode ? 'Editar Usuario' : 'Registrar Usuario'}</Title>
+      <Title order={2} mb="lg">
+        {isEditMode ? 'Editar Usuario' : (isFromEmployee ? 'Crear Usuario desde Empleado' : 'Registrar Usuario')}
+      </Title>
       
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="md">
@@ -260,9 +284,11 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false }) => {
                 <Select
                   label="Rol"
                   data={[
-                    { value: 'ADMIN', label: 'Administrador' },
-                    { value: 'MODERATOR', label: 'Moderador' },
-                    { value: 'USER', label: 'Usuario' },
+                    { value: 'ADMIN', label: 'Admin' },
+                    { value: 'ADMINISTRATIVO', label: 'Administrativo' },
+                    { value: 'AUXILIAR_ADMINISTRATIVO', label: 'Auxiliar Administrativo' },
+                    { value: 'DOCTOR', label: 'Doctor' },
+                    { value: 'AUXILIAR_MEDICO', label: 'Auxiliar Médico' },
                   ]}
                   {...form.getInputProps('rol')}
                 />

@@ -38,6 +38,12 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       evolucion: '',
       complicaciones: '',
       recomendaciones: ''
+    },
+    firmaDigital: {
+      nombreMedico: citaData?.medicoAsignado || '',
+      numeroCedula: '',
+      especialidad: citaData?.especialidad || '',
+      fechaFirma: new Date().toISOString().split('T')[0]
     }
   });
 
@@ -54,7 +60,8 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         informacionConsulta: formData.informacionConsulta,
         examenClinico: formData.examenClinico,
         diagnosticoTratamiento: formData.diagnosticoTratamiento,
-        seguimientoConsulta: formData.seguimientoConsulta
+        seguimientoConsulta: formData.seguimientoConsulta,
+        firmaDigital: formData.firmaDigital
       });
 
       const submitData = {
@@ -384,6 +391,94 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         className="block w-full rounded-md border-0 py-1 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
                         placeholder="Recomendaciones médicas..."
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Firma Digital */}
+              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+                <div className="px-3 py-4 sm:p-6">
+                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Firma Digital</h3>
+                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
+                    <div className="sm:col-span-2">
+                      <label htmlFor="nombreMedicoConsulta" className="block text-xs font-medium leading-5 text-gray-900">
+                        Nombre del Médico
+                      </label>
+                      <input
+                        type="text"
+                        id="nombreMedicoConsulta"
+                        value={formData.firmaDigital?.nombreMedico}
+                        onChange={(e) => handleNestedInputChange('firmaDigital', 'nombreMedico', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="numeroCedulaConsulta" className="block text-xs font-medium leading-5 text-gray-900">
+                        Número de Cédula
+                      </label>
+                      <input
+                        type="text"
+                        id="numeroCedulaConsulta"
+                        value={formData.firmaDigital?.numeroCedula}
+                        onChange={(e) => handleNestedInputChange('firmaDigital', 'numeroCedula', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="especialidadFirmaConsulta" className="block text-xs font-medium leading-5 text-gray-900">
+                        Especialidad
+                      </label>
+                      <input
+                        type="text"
+                        id="especialidadFirmaConsulta"
+                        value={formData.firmaDigital?.especialidad}
+                        onChange={(e) => handleNestedInputChange('firmaDigital', 'especialidad', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label htmlFor="fechaFirmaConsulta" className="block text-xs font-medium leading-5 text-gray-900">
+                        Fecha de Firma
+                      </label>
+                      <input
+                        type="date"
+                        id="fechaFirmaConsulta"
+                        value={formData.firmaDigital?.fechaFirma}
+                        onChange={(e) => handleNestedInputChange('firmaDigital', 'fechaFirma', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-purple-600 text-xs"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mostrar firma digital */}
+                  <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Vista Previa de la Firma Digital</h4>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-800">
+                        {formData.firmaDigital?.nombreMedico || 'Nombre del Médico'}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Cédula: {formData.firmaDigital?.numeroCedula || 'Número de Cédula'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Especialidad: {formData.firmaDigital?.especialidad || 'Especialidad'}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Fecha: {formData.firmaDigital?.fechaFirma ? new Date(formData.firmaDigital.fechaFirma).toLocaleDateString('es-CO') : 'Fecha de Firma'}
+                      </div>
+                      <div className="mt-3 border-t border-gray-300 pt-2">
+                        <div className="text-xs text-gray-500 italic">
+                          Firma Digital Autorizada
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

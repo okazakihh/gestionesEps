@@ -6,6 +6,7 @@ import { useClinicalHistory } from '../../context/ClinicalHistoryContext.jsx';
 import ServiceAlert from '../ui/ServiceAlert.jsx';
 import { Modal, Button, TextInput, Select, Group, Text, Stack, ActionIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import Swal from 'sweetalert2';
 
 const GestionPacientesComponent = () => {
   const navigate = useNavigate();
@@ -126,10 +127,12 @@ const GestionPacientesComponent = () => {
       setIsViewModalOpen(true);
     } catch (error) {
       console.error('Error al cargar paciente para ver:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'No se pudo cargar la información del paciente',
-        color: 'red',
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Cargar Paciente',
+        text: 'No se pudo cargar la información del paciente.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que el paciente exista y que tengas permisos para editarlo.'
       });
     } finally {
       setLoading(false);
@@ -202,10 +205,12 @@ const GestionPacientesComponent = () => {
       setIsEditModalOpen(true);
     } catch (error) {
       console.error('Error al cargar paciente para editar:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'No se pudo cargar la información del paciente',
-        color: 'red',
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Cargar Paciente',
+        text: 'No se pudo cargar la información del paciente.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que el paciente exista y que tengas permisos para verlo.'
       });
     } finally {
       setLoading(false);
@@ -235,10 +240,12 @@ const GestionPacientesComponent = () => {
       navigate(`/pacientes/historias?pacienteId=${paciente.id}`);
     } catch (error) {
       console.error('Error cargando datos del paciente:', error);
-      notifications.show({
-        title: 'Error',
-        message: 'No se pudo cargar la información del paciente para la historia clínica',
-        color: 'red',
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Cargar Historia Clínica',
+        text: 'No se pudo cargar la información del paciente para la historia clínica.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que el paciente tenga una historia clínica activa.'
       });
     } finally {
       setLoading(false);
@@ -294,11 +301,14 @@ const GestionPacientesComponent = () => {
 
       await pacientesApiService.createPaciente(datosCompletosJson);
 
-      notifications.show({
-        title: '¡Paciente creado!',
-        message: 'El paciente ha sido registrado correctamente',
-        color: 'green',
-        autoClose: 5000,
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Paciente Creado!',
+        text: 'El paciente ha sido registrado correctamente.',
+        confirmButtonColor: '#10B981',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
       });
 
       setIsCreateModalOpen(false);
@@ -307,11 +317,12 @@ const GestionPacientesComponent = () => {
     } catch (error) {
       console.error('Error al crear paciente:', error);
       console.error('Detalles del error:', error.response?.data);
-      notifications.show({
-        title: 'Error al crear paciente',
-        message: error.message || error.response?.data?.error || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Crear Paciente',
+        text: error.message || error.response?.data?.error || 'Ha ocurrido un error inesperado.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que todos los campos requeridos estén completos y que el documento no esté duplicado.'
       });
     } finally {
       setLoading(false);
@@ -383,11 +394,14 @@ const GestionPacientesComponent = () => {
         activo: pacienteToEdit?.activo ?? true
       });
 
-      notifications.show({
-        title: '¡Paciente actualizado!',
-        message: 'Los datos del paciente han sido actualizados correctamente',
-        color: 'green',
-        autoClose: 5000,
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Paciente Actualizado!',
+        text: 'Los datos del paciente han sido actualizados correctamente.',
+        confirmButtonColor: '#10B981',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
       });
 
       setIsEditModalOpen(false);
@@ -397,11 +411,12 @@ const GestionPacientesComponent = () => {
     } catch (error) {
       console.error('Error al actualizar paciente:', error);
       console.error('Detalles del error:', error.response?.data);
-      notifications.show({
-        title: 'Error al actualizar paciente',
-        message: error.message || error.response?.data?.error || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Actualizar Paciente',
+        text: error.message || error.response?.data?.error || 'Ha ocurrido un error inesperado.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que todos los campos requeridos estén completos.'
       });
     } finally {
       setLoading(false);

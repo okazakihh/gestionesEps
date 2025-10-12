@@ -266,7 +266,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
     try {
       // Format the appointment data as JSON
       const appointmentData = {
-        fechaHoraCita: formData.fechaHoraCita,
+        fechaHoraCita: formData.fechaHoraCita, // Keep as datetime-local string format
         motivo: formData.motivo.trim(),
         medicoAsignado: formData.medicoAsignado.trim(),
         medicoId: formData.medicoId,

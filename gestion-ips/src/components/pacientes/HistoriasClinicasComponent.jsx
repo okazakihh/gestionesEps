@@ -6,6 +6,7 @@ import { useClinicalHistory } from '../../context/ClinicalHistoryContext.jsx';
 import ServiceAlert from '../ui/ServiceAlert.jsx';
 import { Modal, Button, TextInput, Textarea, Group, Text, Stack, Select, ActionIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import Swal from 'sweetalert2';
 
 const HistoriasClinicasComponent = () => {
   const [searchParams] = useSearchParams();
@@ -198,11 +199,14 @@ const HistoriasClinicasComponent = () => {
 
         await historiasClinicasApiService.createHistoriaClinica(parseInt(formData.pacienteId || pacienteId), historiaJson);
 
-        notifications.show({
-          title: '¡Historia Clínica creada!',
-          message: 'La historia clínica inicial ha sido registrada correctamente',
-          color: 'green',
-          autoClose: 5000,
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Historia Clínica Creada!',
+          text: 'La historia clínica inicial ha sido registrada correctamente.',
+          confirmButtonColor: '#10B981',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
         });
       } else {
         // Crear nueva consulta médica - estructura simplificada como JSON
@@ -248,11 +252,14 @@ const HistoriasClinicasComponent = () => {
         // Agregar la nueva consulta al contexto
         addConsulta(nuevaConsulta);
 
-        notifications.show({
-          title: '¡Consulta agregada!',
-          message: 'La consulta ha sido registrada en la historia clínica',
-          color: 'green',
-          autoClose: 5000,
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Consulta Agregada!',
+          text: 'La consulta ha sido registrada en la historia clínica.',
+          confirmButtonColor: '#10B981',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
         });
       }
 
@@ -264,11 +271,12 @@ const HistoriasClinicasComponent = () => {
     } catch (error) {
       console.error('Error al procesar:', error);
       const action = historiaClinicaData ? 'agregar consulta' : 'crear historia clínica';
-      notifications.show({
-        title: `Error al ${action}`,
-        message: error.message || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+      await Swal.fire({
+        icon: 'error',
+        title: `Error al ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+        text: error.message || 'Ha ocurrido un error inesperado.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que todos los campos requeridos estén completos.'
       });
     } finally {
       setLoading(false);
@@ -292,12 +300,26 @@ const HistoriasClinicasComponent = () => {
           </p>
         </div>
         {pacienteId && pacienteData && (
-          <Button
-            onClick={handleOpenCreateModal}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            {historiaClinicaData ? 'Agregar Consulta' : 'Crear Historia Clínica'}
-          </Button>
+          <div className="flex space-x-3">
+            {historiaClinicaData && (
+              <Button
+                onClick={() => window.print()}
+                variant="outline"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Imprimir Historia
+              </Button>
+            )}
+            <Button
+              onClick={handleOpenCreateModal}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              {historiaClinicaData ? 'Agregar Consulta' : 'Crear Historia Clínica'}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -636,7 +658,7 @@ const HistoriasClinicasComponent = () => {
                                   {/* Indicaciones y próxima cita */}
                                   {(consulta.indicaciones || consulta.proximaCita) && (
                                     <div className="mb-2 p-2 bg-yellow-50 rounded">
-                                      <span className="font-medium text-yellow-900 text-xs">Seguimiento:</span>
+                                      <span className="font-medium text-yellow-900 text-xs">📅 Seguimiento y Recomendaciones:</span>
                                       {consulta.indicaciones && (
                                         <p className="text-yellow-800 text-xs mt-1"><strong>Indicaciones:</strong> {consulta.indicaciones}</p>
                                       )}
@@ -645,6 +667,56 @@ const HistoriasClinicasComponent = () => {
                                       )}
                                     </div>
                                   )}
+
+                                  {/* Firma Digital integrada en el seguimiento */}
+                                  {(() => {
+                                    let firmaDigital = null;
+                                    let medicoInfo = '';
+                                    if (consulta.id.startsWith('initial-')) {
+                                      // Firma de la historia inicial
+                                      firmaDigital = historiaData.firmaDigital;
+                                      medicoInfo = historiaData.informacionMedico?.medicoResponsable || '';
+                                    } else {
+                                      // Firma de la consulta específica - buscar primero en campos planos, luego en JSON
+                                      firmaDigital = consulta.firmaDigital;
+                                      let consultaData = null;
+                                      if (!firmaDigital && consulta.datosJson) {
+                                        try {
+                                          consultaData = JSON.parse(consulta.datosJson);
+                                          firmaDigital = consultaData.firmaDigital;
+                                        } catch (error) {
+                                          console.error('Error parsing firma digital:', error);
+                                        }
+                                      }
+                                      medicoInfo = consulta.medico || consultaData?.informacionMedico?.medicoTratante || consultaData?.detalleConsulta?.medicoTratante || '';
+                                    }
+
+                                    // Debug: mostrar siempre el bloque de firma para verificar que se ejecuta
+                                    return (
+                                      <div className="mb-2 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                                        <div className="text-center text-yellow-800 font-medium mb-2">
+                                          AQUI IRA LA FIRMA DIGITAL
+                                        </div>
+                                        {firmaDigital ? (
+                                          <div className="text-center">
+                                            <div className="text-sm font-bold text-green-900 mb-1">
+                                              ✅ FIRMA ENCONTRADA
+                                            </div>
+                                            <div className="text-sm text-gray-800">
+                                              <strong>Profesional:</strong> {firmaDigital.nombreMedico || medicoInfo || 'N/A'}
+                                            </div>
+                                            <div className="text-sm text-gray-800">
+                                              <strong>Fecha:</strong> {firmaDigital.fechaFirma || 'N/A'}
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="text-center text-red-600 text-sm">
+                                            ❌ No se encontró firma digital
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
 
                                   {/* Antecedentes (solo para consulta inicial) */}
                                   {consulta.antecedentes && (

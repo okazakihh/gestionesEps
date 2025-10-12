@@ -6,8 +6,11 @@ import CreateConsultaMedicaModal from './CreateConsultaMedicaModal.jsx';
 import PatientDetailModal from './PatientDetailModal.jsx';
 import Swal from 'sweetalert2';
 import { ActionIcon, Group } from '@mantine/core';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { hasPermission, PERMISSIONS } from '@/utils/permissions.js';
 
 const AgendaModal = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -271,19 +274,46 @@ const AgendaModal = ({ isOpen, onClose }) => {
   const pendingCitas = useMemo(() => {
     return citas.filter(cita => {
       const citaInfo = getCitaInfo(cita);
-      return citaInfo.estado === 'PROGRAMADO' || citaInfo.estado === 'EN_SALA';
+
+      // First filter by status
+      const statusMatch = citaInfo.estado === 'PROGRAMADO' || citaInfo.estado === 'EN_SALA';
+      if (!statusMatch) return false;
+
+      // Then filter by user role permissions
+      if (user?.rol === 'DOCTOR' || user?.rol === 'AUXILIAR_MEDICO') {
+        // Doctors only see appointments assigned to them
+        const assignedDoctor = citaInfo.medicoAsignado;
+        const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
+        return assignedDoctor && (
+          assignedDoctor.toLowerCase().includes(currentUserName.toLowerCase()) ||
+          assignedDoctor.toLowerCase().includes(user.nombres.toLowerCase()) ||
+          assignedDoctor.toLowerCase().includes(user.apellidos.toLowerCase())
+        );
+      }
+
+      // Administrative roles see all appointments
+      return true;
     });
-  }, [citas]);
+  }, [citas, user]);
 
   const getAvailableStatusTransitions = (currentStatus) => {
-    const transitions = {
+    const baseTransitions = {
       'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADO'],
       'EN_SALA': ['ATENDIDO', 'CANCELADO'],
       'ATENDIDO': [],
       'NO_SE_PRESENTO': [],
       'CANCELADO': []
     };
-    return transitions[currentStatus] || [];
+
+    const availableTransitions = baseTransitions[currentStatus] || [];
+
+    // Filter out ATENDIDO if user doesn't have permission to mark as attended
+    return availableTransitions.filter(transition => {
+      if (transition === 'ATENDIDO') {
+        return hasPermission(user?.rol, PERMISSIONS.PACIENTES, 'mark_attended');
+      }
+      return true;
+    });
   };
 
   const getStatusLabel = (status) => {
@@ -589,7 +619,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                   Citas Pendientes
                                   </dt>
                                   <dd className="text-lg font-medium text-gray-900">
-                                    {filteredCitas.length}
+                                    {pendingCitas.length}
                                   </dd>
                               </dl>
                             </div>
@@ -609,7 +639,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                   Próxima Cita
                                   </dt>
                                   <dd className="text-lg font-medium text-gray-900">
-                                    {filteredCitas.length > 0 ? formatDate(filteredCitas[0]?.fechaCreacion) : 'Ninguna'}
+                                    {pendingCitas.length > 0 ? formatDate(pendingCitas[0]?.fechaCreacion) : 'Ninguna'}
                                   </dd>
                               </dl>
                             </div>
@@ -630,7 +660,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                   </dt>
                                   <dd className="text-lg font-medium text-gray-900">
                                     {(() => {
-                                      // Filter all citas by date range and ATENDIDO status
+                                      // Filter citas by date range, ATENDIDO status, and user role
                                       let atendidasEnRango = citas.filter(cita => {
                                         const citaInfo = getCitaInfo(cita);
                                         if (citaInfo.estado !== 'ATENDIDO') return false;
@@ -651,6 +681,17 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                             const citaDate = new Date(citaInfo.fechaHoraCita);
                                             if (citaDate > endDate) return false;
                                           }
+                                        }
+
+                                        // For doctors, only count appointments they attended
+                                        if (user?.rol === 'DOCTOR' || user?.rol === 'AUXILIAR_MEDICO') {
+                                          const assignedDoctor = citaInfo.medicoAsignado;
+                                          const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
+                                          return assignedDoctor && (
+                                            assignedDoctor.toLowerCase().includes(currentUserName.toLowerCase()) ||
+                                            assignedDoctor.toLowerCase().includes(user.nombres.toLowerCase()) ||
+                                            assignedDoctor.toLowerCase().includes(user.apellidos.toLowerCase())
+                                          );
                                         }
 
                                         return true;
@@ -766,7 +807,9 @@ const AgendaModal = ({ isOpen, onClose }) => {
                             <p className="mt-1 text-sm text-gray-500">
                               {citas.length === 0
                                 ? 'No hay citas programadas en el sistema.'
-                                : 'Intenta ajustar los filtros de búsqueda.'
+                                : (user?.rol === 'DOCTOR' || user?.rol === 'AUXILIAR_MEDICO')
+                                  ? 'No tienes citas asignadas en este período.'
+                                  : 'Intenta ajustar los filtros de búsqueda.'
                               }
                             </p>
                           </div>
@@ -1123,9 +1166,31 @@ const AgendaModal = ({ isOpen, onClose }) => {
                         {getAvailableStatusTransitions(citaInfo.estado).map((newStatus) => (
                           <button
                             key={newStatus}
-                            onClick={() => {
-                              updateAppointmentStatus(selectedCitaForDetail.id, newStatus);
-                              handleCloseCitaDetailModal();
+                            onClick={async () => {
+                              if (newStatus === 'ATENDIDO') {
+                                handleAtendidoClick(selectedCitaForDetail);
+                                handleCloseCitaDetailModal();
+                              } else if (newStatus === 'CANCELADO') {
+                                // Confirmación especial para cancelar
+                                const result = await Swal.fire({
+                                  title: '¿Cancelar Cita?',
+                                  text: 'Esta acción liberará el espacio en el calendario y la cita ya no podrá ser modificada. ¿Estás seguro?',
+                                  icon: 'warning',
+                                  showCancelButton: true,
+                                  confirmButtonColor: '#EF4444',
+                                  cancelButtonColor: '#6B7280',
+                                  confirmButtonText: 'Sí, cancelar cita',
+                                  cancelButtonText: 'No, mantener cita'
+                                });
+
+                                if (result.isConfirmed) {
+                                  updateAppointmentStatus(selectedCitaForDetail.id, newStatus);
+                                  handleCloseCitaDetailModal();
+                                }
+                              } else {
+                                updateAppointmentStatus(selectedCitaForDetail.id, newStatus);
+                                handleCloseCitaDetailModal();
+                              }
                             }}
                             disabled={updatingStatus[selectedCitaForDetail.id]}
                             className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
@@ -1135,6 +1200,8 @@ const AgendaModal = ({ isOpen, onClose }) => {
                                 ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
                                 : newStatus === 'NO_SE_PRESENTO'
                                 ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                : newStatus === 'CANCELADO'
+                                ? 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
                                 : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >

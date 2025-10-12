@@ -1,40 +1,50 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { Link, useLocation } from 'react-router-dom';
+import { canAccessModule, PERMISSIONS } from '@/utils/permissions.js';
 
 const navItems = [
   {
     name: 'Dashboard',
     href: '/dashboard',
     icon: '📊',
+    module: null, // Siempre visible
   },
   {
     name: 'Usuarios',
     href: '/usuarios',
     icon: '👥',
-    roles: ['ADMIN', 'MODERATOR'],
+    module: PERMISSIONS.USUARIOS,
   },
   {
     name: 'Pacientes',
     href: '/pacientes',
     icon: '🏥',
+    module: PERMISSIONS.PACIENTES,
+  },
+  {
+    name: 'Facturación',
+    href: '/facturacion',
+    icon: '💰',
+    module: PERMISSIONS.FACTURACION,
   },
   {
     name: 'Empleados',
     href: '/empleados',
     icon: '👷',
+    module: PERMISSIONS.NOMINA,
   },
   {
     name: 'Reportes',
     href: '/reportes',
     icon: '📈',
-    roles: ['ADMIN', 'MODERATOR'],
+    module: PERMISSIONS.REPORTES,
   },
   {
     name: 'Configuración',
     href: '/configuracion',
     icon: '⚙️',
-    roles: ['ADMIN'],
+    module: PERMISSIONS.CONFIGURACION,
   },
 ];
 
@@ -47,8 +57,8 @@ export const VerticalNavbar = () => {
   };
 
   const filteredNavItems = navItems.filter(item => {
-    if (!item.roles) return true;
-    return user?.rol && item.roles.includes(user.rol);
+    if (!item.module) return true; // Dashboard siempre visible
+    return user?.rol && canAccessModule(user.rol, item.module);
   });
 
   return (

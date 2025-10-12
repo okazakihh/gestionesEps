@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PacienteDTO } from '../../types/pacientes.js';
 import { pacientesApiService } from '../../services/pacientesApiService.js';
+import Swal from 'sweetalert2';
 
 // Función helper para parsear JSON de manera segura
 const parseJsonSafely = (jsonString) => {
@@ -209,7 +210,18 @@ const PacienteForm = () => {
       navigate('/pacientes');
     } catch (err) {
       console.error('Error al guardar paciente:', err);
-      setError(err instanceof Error ? err.message : 'Error al guardar paciente');
+      const errorMessage = err instanceof Error ? err.message : 'Error al guardar paciente';
+
+      // Mostrar SweetAlert para error de guardado
+      await Swal.fire({
+        icon: 'error',
+        title: isEditing ? 'Error al Actualizar Paciente' : 'Error al Crear Paciente',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que todos los campos requeridos estén completos.'
+      });
+
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }

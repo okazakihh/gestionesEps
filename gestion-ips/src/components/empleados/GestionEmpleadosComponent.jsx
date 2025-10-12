@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { empleadosApiService } from '../../services/empleadosApiService.js';
 import ServiceAlert from '../ui/ServiceAlert.jsx';
 import { Modal, Button, TextInput, Select, Group, Text, Stack, ActionIcon } from '@mantine/core';
 import Swal from 'sweetalert2';
 
 const GestionEmpleadosComponent = () => {
+  const navigate = useNavigate();
   const [empleados, setEmpleados] = useState([]);
   const [filteredEmpleados, setFilteredEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,8 @@ const GestionEmpleadosComponent = () => {
     size: 10
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [userCheckCache, setUserCheckCache] = useState({});
+  const [checkingUsers, setCheckingUsers] = useState(new Set());
 
   // Estados para los modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -101,6 +105,15 @@ const GestionEmpleadosComponent = () => {
     }
   }, [empleados, searchTerm]);
 
+  // Effect to check user accounts for all employees
+  useEffect(() => {
+    empleados.forEach(empleado => {
+      if (userCheckCache[empleado.id] === undefined && !checkingUsers.has(empleado.id)) {
+        checkEmployeeHasUser(empleado);
+      }
+    });
+  }, [empleados]);
+
   const loadEmpleados = async () => {
     try {
       setLoading(true);
@@ -123,6 +136,85 @@ const GestionEmpleadosComponent = () => {
 
   const handleSearch = (value) => {
     setSearchTerm(value);
+  };
+
+  // Function to check if employee already has a user account
+  const checkEmployeeHasUser = async (empleado) => {
+    const empleadoId = empleado.id;
+
+    // Check cache first
+    if (userCheckCache[empleadoId] !== undefined) {
+      return userCheckCache[empleadoId];
+    }
+
+    // Mark as checking
+    setCheckingUsers(prev => new Set(prev).add(empleadoId));
+
+    try {
+      // Extract employee email and document number
+      let email = '';
+      let numeroDocumento = '';
+
+      try {
+        const datosCompletos = JSON.parse(empleado.jsonData || '{}');
+        numeroDocumento = datosCompletos.numeroDocumento || '';
+        if (datosCompletos.jsonData) {
+          const datosInternos = JSON.parse(datosCompletos.jsonData);
+          email = datosInternos.informacionContacto?.email || '';
+        }
+      } catch (error) {
+        console.error('Error parsing empleado data for user check:', error);
+      }
+
+      // If no email or document, assume no user
+      if (!email && !numeroDocumento) {
+        setUserCheckCache(prev => ({ ...prev, [empleadoId]: false }));
+        setCheckingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(empleadoId);
+          return newSet;
+        });
+        return false;
+      }
+
+      // Import user service dynamically
+      const { usuarioApiService } = await import('../../services/usuarioApiService');
+      const response = await usuarioApiService.getAllUsuarios();
+
+      if (response.success && response.data) {
+        // Check if any user has matching email or document
+        const hasUser = response.data.some(user =>
+          (email && user.email === email) ||
+          (numeroDocumento && user.personalInfo?.documento === numeroDocumento)
+        );
+
+        // Cache the result
+        setUserCheckCache(prev => ({ ...prev, [empleadoId]: hasUser }));
+        setCheckingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(empleadoId);
+          return newSet;
+        });
+        return hasUser;
+      }
+
+      setUserCheckCache(prev => ({ ...prev, [empleadoId]: false }));
+      setCheckingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(empleadoId);
+        return newSet;
+      });
+      return false;
+    } catch (error) {
+      console.error('Error checking if employee has user:', error);
+      setUserCheckCache(prev => ({ ...prev, [empleadoId]: false }));
+      setCheckingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(empleadoId);
+        return newSet;
+      });
+      return false;
+    }
   };
 
   const handleRetry = () => {
@@ -384,6 +476,54 @@ const GestionEmpleadosComponent = () => {
     }
   };
 
+  const handleCreateUserFromEmployee = (empleado) => {
+    // Extract employee data for user creation
+    let datosCompletos = {};
+    let informacionPersonal = {};
+    let informacionContacto = {};
+    let informacionLaboral = {};
+
+    try {
+      datosCompletos = JSON.parse(empleado.jsonData || '{}');
+      if (datosCompletos.jsonData) {
+        const datosInternos = JSON.parse(datosCompletos.jsonData);
+        informacionPersonal = datosInternos.informacionPersonal || {};
+        informacionContacto = datosInternos.informacionContacto || {};
+        informacionLaboral = datosInternos.informacionLaboral || {};
+      }
+    } catch (error) {
+      console.error('Error parsing empleado data for user creation:', error);
+    }
+
+    // Map employee data to user format
+    const userData = {
+      nombres: informacionPersonal.primerNombre || '',
+      apellidos: `${informacionPersonal.primerApellido || ''} ${informacionPersonal.segundoApellido || ''}`.trim(),
+      documento: datosCompletos.numeroDocumento || '',
+      tipoDocumento: datosCompletos.tipoDocumento || 'CC',
+      fechaNacimiento: informacionPersonal.fechaNacimiento || '',
+      genero: informacionPersonal.genero === 'MASCULINO' ? 'M' : informacionPersonal.genero === 'FEMENINO' ? 'F' : 'O',
+      telefono: informacionContacto.telefono || '',
+      email: informacionContacto.email || '',
+      direccion: informacionContacto.direccion || '',
+      ciudad: informacionContacto.ciudad || '',
+      departamento: informacionContacto.departamento || '',
+      pais: informacionContacto.pais || 'COLOMBIA',
+      // Set default role based on employee type
+      rol: informacionLaboral.tipoPersonal === 'MEDICO' ? 'DOCTOR' :
+           informacionLaboral.tipoPersonal === 'ADMINISTRATIVO' ? 'ADMINISTRATIVO' : 'ADMINISTRATIVO'
+    };
+
+    // Navigate to users page with employee data
+    console.log('🔄 Navegando a usuarios con datos del empleado:', userData);
+    navigate('/usuarios', {
+      state: {
+        createUserFromEmployee: true,
+        employeeData: userData
+      }
+    });
+  };
+
   const handleDeactivateEmpleado = async (empleado) => {
     let numeroDocumento = 'N/A';
     try {
@@ -548,6 +688,10 @@ const GestionEmpleadosComponent = () => {
                       console.error('Error parsing empleado datosJson for table:', error);
                     }
 
+                    // Check if employee has user account
+                    const hasUser = userCheckCache[empleado.id];
+                    const isChecking = checkingUsers.has(empleado.id);
+
                     return (
                       <tr key={empleado.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -596,6 +740,35 @@ const GestionEmpleadosComponent = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </ActionIcon>
+                            {/* Only show Create User button if employee doesn't have a user account */}
+                            {hasUser === false && (
+                              <ActionIcon
+                                variant="light"
+                                color="green"
+                                size="sm"
+                                onClick={() => handleCreateUserFromEmployee(empleado)}
+                                title="Crear usuario"
+                                loading={isChecking}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                              </ActionIcon>
+                            )}
+                            {/* Show user indicator if employee has a user */}
+                            {hasUser === true && (
+                              <ActionIcon
+                                variant="light"
+                                color="blue"
+                                size="sm"
+                                title="Ya tiene usuario creado"
+                                disabled
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </ActionIcon>
+                            )}
                             {empleado.activo && (
                               <ActionIcon
                                 variant="light"

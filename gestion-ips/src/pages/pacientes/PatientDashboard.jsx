@@ -13,6 +13,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { ActionIcon, Group } from '@mantine/core';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { hasPermission, PERMISSIONS } from '../../utils/permissions.js';
 import PatientList from '../../components/pacientes/PatientDashboard/PatientList.jsx';
 import PatientDetailModal from '../../components/pacientes/PatientDashboard/PatientDetailModal.jsx';
 import CreatePatientModal from '../../components/pacientes/PatientDashboard/CreatePatientModal.jsx';
@@ -20,11 +22,14 @@ import PatientSearchModal from '../../components/pacientes/PatientDashboard/Pati
 import AgendaModal from '../../components/pacientes/PatientDashboard/AgendaModal.jsx';
 import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/ScheduleAppointmentModal.jsx';
 import CalendarWidget from '../../components/pacientes/PatientDashboard/CalendarWidget.jsx';
+import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/CreateHistoriaClinicaModal.jsx';
+import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/CreateConsultaMedicaModal.jsx';
 import { empleadosApiService } from '../../services/empleadosApiService.js';
-import { pacientesApiService, consultasApiService } from '../../services/pacientesApiService.js';
+import { pacientesApiService, consultasApiService, historiasClinicasApiService } from '../../services/pacientesApiService.js';
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -43,6 +48,12 @@ const PatientDashboard = () => {
   const [selectedAppointmentForDetail, setSelectedAppointmentForDetail] = useState(null);
   const [appointmentDetailPatientInfo, setAppointmentDetailPatientInfo] = useState(null);
   const [loadingAppointmentDetailPatient, setLoadingAppointmentDetailPatient] = useState(false);
+
+  // Estados para los modales de atención médica
+  const [currentAppointment, setCurrentAppointment] = useState(null);
+  const [isHistoriaModalOpen, setIsHistoriaModalOpen] = useState(false);
+  const [isConsultaModalOpen, setIsConsultaModalOpen] = useState(false);
+  const [historiaClinicaId, setHistoriaClinicaId] = useState(null);
 
   // Estados para el calendario y citas
   const [selectedDate, setSelectedDate] = useState(null);
@@ -123,7 +134,7 @@ const PatientDashboard = () => {
   const getAvailableStatusTransitions = (currentStatus) => {
     const transitions = {
       'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'],
-      'EN_SALA': [], // Removed 'ATENDIDO' from here
+      'EN_SALA': ['ATENDIDO'], // Allow ATENDIDO from EN_SALA for medical roles
       'ATENDIDO': [],
       'NO_SE_PRESENTO': [],
       'CANCELADA': []
@@ -248,10 +259,72 @@ const PatientDashboard = () => {
     setLoadingAppointmentDetailPatient(false);
   };
 
+  // Función para verificar si el paciente tiene historia clínica
+  const checkPatientHasHistoriaClinica = async (pacienteId) => {
+    try {
+      const historia = await historiasClinicasApiService.getHistoriaClinicaByPaciente(pacienteId);
+      return historia ? historia.id : null;
+    } catch (error) {
+      // 404 significa que no tiene historia clínica, lo cual es normal
+      if (error.response && error.response.status === 404) {
+        console.log('Paciente no tiene historia clínica:', pacienteId);
+        return null;
+      }
+      // Para otros errores, los propagamos
+      throw error;
+    }
+  };
+
+  // Handlers para los modals de atención médica
+  const handleHistoriaClinicaCreated = async (historiaClinica) => {
+    console.log('Historia clínica creada:', historiaClinica);
+
+    // Ahora que se creó la historia clínica, cambiar a vista de crear consulta
+    setHistoriaClinicaId(historiaClinica.id);
+    setIsHistoriaModalOpen(false);
+    setIsConsultaModalOpen(true);
+  };
+
+  const handleConsultaMedicaCreated = async (consulta) => {
+    console.log('Consulta médica creada:', consulta);
+
+    // Ahora cambiar el estado de la cita a ATENDIDO
+    if (currentAppointment) {
+      await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
+    }
+
+    // Cerrar modales y resetear estado
+    setIsConsultaModalOpen(false);
+    setCurrentAppointment(null);
+    setHistoriaClinicaId(null);
+  };
+
+  const handleCloseHistoriaModal = () => {
+    setIsHistoriaModalOpen(false);
+    setCurrentAppointment(null);
+    setHistoriaClinicaId(null);
+  };
+
+  const handleCloseConsultaModal = () => {
+    setIsConsultaModalOpen(false);
+    setCurrentAppointment(null);
+    setHistoriaClinicaId(null);
+  };
+
   const handleAtendidoClick = async (appointment) => {
-    // For now, just update the status directly
-    // Later we can implement the full flow of checking for historia clinica and creating consulta
-    await updateAppointmentStatus(appointment.id, 'ATENDIDO');
+    setCurrentAppointment(appointment);
+
+    // Verificar si el paciente tiene historia clínica
+    const historiaId = await checkPatientHasHistoriaClinica(appointment.pacienteId);
+    setHistoriaClinicaId(historiaId);
+
+    if (historiaId) {
+      // Tiene historia clínica, mostrar formulario de consulta
+      setIsConsultaModalOpen(true);
+    } else {
+      // No tiene historia clínica, mostrar formulario de historia clínica
+      setIsHistoriaModalOpen(true);
+    }
   };
 
   // Función para formatear fechas
@@ -583,11 +656,13 @@ const PatientDashboard = () => {
   const loadMedicos = async () => {
     try {
       setLoadingMedicos(true);
+      console.log('Loading doctors, current user:', user);
       const response = await empleadosApiService.getEmpleados({ size: 1000 });
       const empleados = response.content || [];
+      console.log('All employees loaded:', empleados.length);
 
       // Filter employees that are medical doctors
-      const medicosFiltrados = empleados.filter(empleado => {
+      let medicosFiltrados = empleados.filter(empleado => {
         try {
           const datosCompletos = JSON.parse(empleado.jsonData || '{}');
           if (datosCompletos.jsonData) {
@@ -601,7 +676,37 @@ const PatientDashboard = () => {
           return false;
         }
       });
+      console.log('Filtered doctors:', medicosFiltrados.length);
 
+      // If user is a doctor, filter to show only their own information
+      if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
+        console.log('User is a doctor, filtering to show only their info');
+        console.log('User documento:', user.documento, 'User ID:', user.id);
+
+        // Find the doctor that matches the current user
+        const currentDoctor = medicosFiltrados.find(medico => {
+          try {
+            const datosCompletos = JSON.parse(medico.jsonData || '{}');
+            const matchByDocumento = datosCompletos.numeroDocumento === user.documento;
+            const matchById = medico.id === user.id;
+            console.log('Checking doctor:', medico.id, 'documento:', datosCompletos.numeroDocumento, 'matchByDocumento:', matchByDocumento, 'matchById:', matchById);
+            return matchByDocumento || matchById;
+          } catch (error) {
+            console.error('Error checking doctor match:', error);
+            return false;
+          }
+        });
+
+        console.log('Current doctor found:', currentDoctor);
+
+        if (currentDoctor) {
+          medicosFiltrados = [currentDoctor];
+        } else {
+          medicosFiltrados = [];
+        }
+      }
+
+      console.log('Final doctors list:', medicosFiltrados);
       setMedicos(medicosFiltrados);
     } catch (error) {
       console.error('Error loading doctors:', error);
@@ -623,15 +728,30 @@ const PatientDashboard = () => {
       // Filter by date if specified
       let filteredAppointments = allAppointments;
       if (date) {
-        const selectedDateString = date.toISOString().split('T')[0];
+        // Create date range for the selected day (start to end of day)
+        const selectedDateStart = new Date(date);
+        selectedDateStart.setHours(0, 0, 0, 0);
+
+        const selectedDateEnd = new Date(date);
+        selectedDateEnd.setHours(23, 59, 59, 999);
+
         filteredAppointments = allAppointments.filter(appointment => {
           try {
             const appointmentData = JSON.parse(appointment.datosJson || '{}');
             const appointmentDateTime = appointmentData.fechaHoraCita;
             if (!appointmentDateTime) return false;
 
-            const appointmentDate = new Date(appointmentDateTime).toISOString().split('T')[0];
-            return appointmentDate === selectedDateString;
+            // Handle different date formats from backend
+            let appointmentDate;
+            if (Array.isArray(appointmentDateTime) && appointmentDateTime.length >= 6) {
+              // LocalDateTime as array [year, month, day, hour, minute, second, nanosecond]
+              appointmentDate = new Date(appointmentDateTime[0], appointmentDateTime[1] - 1, appointmentDateTime[2], appointmentDateTime[3], appointmentDateTime[4], appointmentDateTime[5]);
+            } else {
+              appointmentDate = new Date(appointmentDateTime);
+            }
+
+            // Check if appointment date falls within the selected day
+            return appointmentDate >= selectedDateStart && appointmentDate <= selectedDateEnd;
           } catch (error) {
             console.error('Error parsing appointment date:', error);
             return false;
@@ -695,14 +815,43 @@ const PatientDashboard = () => {
       });
 
       // Group appointments by doctor
+      console.log('Processing appointments for date:', selectedDate);
       filteredAppointments.forEach(appointment => {
         try {
           const appointmentData = JSON.parse(appointment.datosJson || '{}');
           const medicoAsignado = appointmentData.medicoAsignado;
+          console.log('Processing appointment:', appointment.id, 'assigned to:', medicoAsignado);
 
           if (medicoAsignado && doctorMap[medicoAsignado]) {
             const doctor = doctorMap[medicoAsignado];
             const doctorId = doctor.id;
+            console.log('Doctor found for appointment:', doctorId);
+
+            // For doctors, only show appointments assigned to them
+            if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
+              console.log('User is doctor, checking if appointment is assigned to them');
+              // Check if this appointment is assigned to the current doctor
+              const isAssignedToCurrentDoctor = (() => {
+                try {
+                  const datosCompletos = JSON.parse(doctor.jsonData || '{}');
+                  const matchByDocumento = datosCompletos.numeroDocumento === user.documento;
+                  const matchById = doctor.id === user.id;
+                  console.log('Doctor documento:', datosCompletos.numeroDocumento, 'User documento:', user.documento, 'Match:', matchByDocumento);
+                  console.log('Doctor ID:', doctor.id, 'User ID:', user.id, 'Match:', matchById);
+                  return matchByDocumento || matchById;
+                } catch (error) {
+                  console.error('Error checking doctor match for appointment:', error);
+                  return false;
+                }
+              })();
+
+              console.log('Is appointment assigned to current doctor?', isAssignedToCurrentDoctor);
+
+              if (!isAssignedToCurrentDoctor) {
+                console.log('Skipping appointment - not assigned to current doctor');
+                return; // Skip this appointment
+              }
+            }
 
             // Get patient name
             let patientName = appointmentData.motivo || 'Paciente';
@@ -722,7 +871,15 @@ const PatientDashboard = () => {
               }
             }
 
-            const appointmentDateTime = new Date(appointmentData.fechaHoraCita);
+            // Handle different date formats for display
+            let appointmentDateTime;
+            if (Array.isArray(appointmentData.fechaHoraCita) && appointmentData.fechaHoraCita.length >= 6) {
+              // LocalDateTime as array [year, month, day, hour, minute, second, nanosecond]
+              appointmentDateTime = new Date(appointmentData.fechaHoraCita[0], appointmentData.fechaHoraCita[1] - 1, appointmentData.fechaHoraCita[2], appointmentData.fechaHoraCita[3], appointmentData.fechaHoraCita[4], appointmentData.fechaHoraCita[5]);
+            } else {
+              appointmentDateTime = new Date(appointmentData.fechaHoraCita);
+            }
+
             groupedAppointments[doctorId].appointments.push({
               id: appointment.id,
               time: appointmentDateTime.toLocaleTimeString('es-ES', {
@@ -794,8 +951,9 @@ const PatientDashboard = () => {
 
   // Load doctors on component mount
   useEffect(() => {
+    console.log('PatientDashboard useEffect - loading medicos, user:', user);
     loadMedicos();
-  }, []);
+  }, [user]); // Add user as dependency to reload when user changes
 
 
 
@@ -827,13 +985,21 @@ const PatientDashboard = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <ClockIcon className="h-5 w-5 mr-2" />
                   Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
+                  {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO') && (
+                    <span className="ml-2 text-sm font-normal text-blue-600">(Vista Personal)</span>
+                  )}
                 </h3>
 
                 {/* Multi-Doctor Schedule Display */}
                 <div className="space-y-6">
                   {/* Time slots for all doctors */}
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Horarios Disponibles por Doctor</h4>
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">
+                      {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
+                        ? 'Mis Horarios Disponibles'
+                        : 'Horarios Disponibles por Doctor'
+                      }
+                    </h4>
 
                     {loadingAppointments ? (
                       <div className="text-center py-4">
@@ -888,7 +1054,10 @@ const PatientDashboard = () => {
                   {/* Appointments for all doctors */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-900 mb-3">
-                      Todas las Citas Programadas - {selectedDate.toLocaleDateString('es-ES')}
+                      {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
+                        ? `Mis Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
+                        : `Todas las Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
+                      }
                     </h4>
 
                     {loadingAppointments ? (
@@ -1025,7 +1194,13 @@ const PatientDashboard = () => {
                                     } catch (error) {
                                       return 'PROGRAMADO';
                                     }
-                                  })()).map((newStatus) => (
+                                  })()).filter(newStatus => {
+                                    // Hide ATENDIDO button if user doesn't have permission
+                                    if (newStatus === 'ATENDIDO') {
+                                      return hasPermission(user?.rol, PERMISSIONS.PACIENTES, 'mark_attended');
+                                    }
+                                    return true;
+                                  }).map((newStatus) => (
                                     <ActionIcon
                                       key={newStatus}
                                       variant="light"
@@ -1241,6 +1416,34 @@ const PatientDashboard = () => {
         />
 
       </div>
+
+      {/* Modal de Historia Clínica */}
+      {isHistoriaModalOpen && currentAppointment && (
+        <CreateHistoriaClinicaModal
+          isOpen={true}
+          onClose={handleCloseHistoriaModal}
+          onHistoriaCreated={handleHistoriaClinicaCreated}
+          pacienteId={currentAppointment.pacienteId}
+          citaData={{
+            ...getAppointmentInfo(currentAppointment),
+            ...getAppointmentPatientInfo(currentAppointment)
+          }}
+        />
+      )}
+
+      {/* Modal de Consulta Médica */}
+      {isConsultaModalOpen && currentAppointment && (
+        <CreateConsultaMedicaModal
+          isOpen={true}
+          onClose={handleCloseConsultaModal}
+          onConsultaCreated={handleConsultaMedicaCreated}
+          historiaClinicaId={historiaClinicaId}
+          citaData={{
+            ...getAppointmentInfo(currentAppointment),
+            ...getAppointmentPatientInfo(currentAppointment)
+          }}
+        />
+      )}
 
       {/* Modal de Detalle de Cita */}
       {isAppointmentDetailModalOpen && selectedAppointmentForDetail && (() => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 export const LoginPage = () => {
   // Credenciales según la información proporcionada
@@ -21,9 +22,21 @@ export const LoginPage = () => {
   navigate('/');
     } catch (err) {
       console.error('Login failed:', err);
-  // Mostrar mensaje del backend si existe
-  const backendMsg = err?.message || err?.response?.data?.error || err?.response?.data?.message;
-  setError(backendMsg || 'Error en el login. Verifica tus credenciales.');
+
+      // Mostrar mensaje del backend si existe
+      const backendMsg = err?.message || err?.response?.data?.error || err?.response?.data?.message;
+      const errorMessage = backendMsg || 'Error en el login. Verifica tus credenciales.';
+
+      // Mostrar SweetAlert para error de login
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error de Inicio de Sesión',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica tu usuario y contraseña.'
+      });
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

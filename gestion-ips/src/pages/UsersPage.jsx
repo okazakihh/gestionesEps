@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MainLayout } from '@/components/ui/MainLayout.jsx';
 import CreateUserForm from '@/components/auth/CreateUserForm.jsx';
 import { Modal, Table, Badge, ActionIcon, Group, Text, TextInput, Button, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Usuario } from '@/types/index.js';
+import Swal from 'sweetalert2';
 
 const UsuariosPage = () => {
+  const location = useLocation();
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,10 +20,22 @@ const UsuariosPage = () => {
   const [userToEdit, setUserToEdit] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
+  const [employeeData, setEmployeeData] = useState(null);
 
   useEffect(() => {
     loadUsuarios();
   }, []);
+
+  // Check for employee data from navigation state
+  useEffect(() => {
+    if (location.state?.createUserFromEmployee && location.state?.employeeData) {
+      console.log('📥 Datos del empleado recibidos:', location.state.employeeData);
+      setEmployeeData(location.state.employeeData);
+      setIsModalOpen(true);
+      // Clear the state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Effect to filter users based on search term
   useEffect(() => {
@@ -54,6 +69,15 @@ const UsuariosPage = () => {
     } catch (err) {
       console.error('Error al cargar usuarios:', err);
       setError('Error de conexión al cargar usuarios');
+
+      // Mostrar SweetAlert para error de carga
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Cargar Usuarios',
+        text: 'No se pudieron cargar los usuarios. Verifica tu conexión a internet.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Si el problema persiste, contacta al administrador del sistema.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -92,13 +116,17 @@ const UsuariosPage = () => {
       const response = await usuarioApiService.deleteUsuario(expectedUsername);
       
       if (response.success) {
-        notifications.show({
-          title: '¡Usuario eliminado!',
-          message: `El usuario ${expectedUsername} ha sido eliminado correctamente`,
-          color: 'green',
-          autoClose: 5000,
+        // Mostrar SweetAlert de éxito
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Usuario Eliminado!',
+          text: `El usuario ${expectedUsername} ha sido eliminado correctamente.`,
+          confirmButtonColor: '#10B981',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
         });
-        
+
         setIsDeleteModalOpen(false);
         setUserToDelete(null);
         setConfirmationText('');
@@ -108,11 +136,14 @@ const UsuariosPage = () => {
       }
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
-      notifications.show({
-        title: 'Error al eliminar usuario',
-        message: error.message || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+
+      // Mostrar SweetAlert para error de eliminación
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Eliminar Usuario',
+        text: 'No se pudo eliminar el usuario seleccionado.',
+        confirmButtonColor: '#EF4444',
+        footer: 'Verifica que el usuario no tenga dependencias activas.'
       });
     } finally {
       setIsLoading(false);
@@ -135,13 +166,17 @@ const UsuariosPage = () => {
         const response = await usuarioApiService.updateUsuario(userToEdit.username || userToEdit.email, data);
         
         if (response.success) {
-          notifications.show({
-            title: '¡Usuario actualizado!',
-            message: 'Los datos del usuario se han actualizado correctamente',
-            color: 'green',
-            autoClose: 5000,
+          // Mostrar SweetAlert de éxito
+          await Swal.fire({
+            icon: 'success',
+            title: '¡Usuario Actualizado!',
+            text: 'Los datos del usuario se han actualizado correctamente.',
+            confirmButtonColor: '#10B981',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
           });
-          
+
           // Close modal and refresh user list
           setIsModalOpen(false);
           setIsEditMode(false);
@@ -156,14 +191,18 @@ const UsuariosPage = () => {
         const response = await AuthService.register(data);
         
         console.log('Usuario registrado exitosamente:', response);
-        
-        notifications.show({
-          title: '¡Éxito!',
-          message: 'Usuario registrado correctamente',
-          color: 'green',
-          autoClose: 5000,
+
+        // Mostrar SweetAlert de éxito
+        await Swal.fire({
+          icon: 'success',
+          title: '¡Usuario Registrado!',
+          text: 'El usuario ha sido registrado correctamente.',
+          confirmButtonColor: '#10B981',
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
         });
-        
+
         // Close modal and refresh user list
         setIsModalOpen(false);
         await loadUsuarios();
@@ -171,15 +210,16 @@ const UsuariosPage = () => {
       
     } catch (error) {
       console.error('Error al procesar usuario:', error);
-      
-      // Show error notification with API response message
-      notifications.show({
-        title: isEditMode ? 'Error al actualizar usuario' : 'Error al registrar usuario',
-        message: error.message || 'Ha ocurrido un error inesperado',
-        color: 'red',
-        autoClose: 7000,
+
+      // Mostrar SweetAlert para error de creación/actualización
+      await Swal.fire({
+        icon: 'error',
+        title: isEditMode ? 'Error al Actualizar Usuario' : 'Error al Registrar Usuario',
+        text: error.message || 'Ha ocurrido un error inesperado.',
+        confirmButtonColor: '#EF4444',
+        footer: isEditMode ? 'Verifica los datos e intenta nuevamente.' : 'Verifica que el usuario no exista y que todos los campos sean válidos.'
       });
-      
+
       setError(error.message || (isEditMode ? 'Error al actualizar usuario' : 'Error al registrar usuario'));
     } finally {
       setIsLoading(false);
@@ -190,6 +230,7 @@ const UsuariosPage = () => {
     setIsModalOpen(false);
     setIsEditMode(false);
     setUserToEdit(null);
+    setEmployeeData(null);
   };
 
   return (
@@ -305,9 +346,23 @@ const UsuariosPage = () => {
                   <Table.Td>{usuario.email}</Table.Td>
                   <Table.Td>
                     <Badge color={
-                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'ADMIN' ? 'red' : 'blue'
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'ADMIN' ? 'red' :
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'DOCTOR' ? 'green' :
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'ADMINISTRATIVO' ? 'blue' :
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'AUXILIAR_ADMINISTRATIVO' ? 'cyan' :
+                      (usuario.roles?.[0] || usuario.rol?.toString()) === 'AUXILIAR_MEDICO' ? 'lime' : 'gray'
                     }>
-                      {usuario.roles?.[0] || usuario.rol?.toString() || 'USER'}
+                      {(() => {
+                        const role = usuario.roles?.[0] || usuario.rol?.toString() || 'ADMINISTRATIVO';
+                        const roleLabels = {
+                          'ADMIN': 'Admin',
+                          'ADMINISTRATIVO': 'Administrativo',
+                          'AUXILIAR_ADMINISTRATIVO': 'Aux. Admin',
+                          'DOCTOR': 'Doctor',
+                          'AUXILIAR_MEDICO': 'Aux. Médico'
+                        };
+                        return roleLabels[role] || role;
+                      })()}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
@@ -343,14 +398,15 @@ const UsuariosPage = () => {
         <Modal
           opened={isModalOpen}
           onClose={handleCloseModal}
-          title={isEditMode ? "Editar Usuario" : "Registrar Nuevo Usuario"}
+          title=""
           size="xl"
           centered
         >
-          <CreateUserForm 
-            onSubmit={handleCreateUser} 
-            initialData={isEditMode ? userToEdit : undefined}
+          <CreateUserForm
+            onSubmit={handleCreateUser}
+            initialData={employeeData || (isEditMode ? userToEdit : undefined)}
             isEditMode={isEditMode}
+            isFromEmployee={!!employeeData}
           />
         </Modal>
 
