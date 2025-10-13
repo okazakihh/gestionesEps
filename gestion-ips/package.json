@@ -40,7 +40,9 @@
     "clsx": "^2.0.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^2.30.0",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.3",
     "lucide-react": "^0.279.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -51,6 +53,7 @@
     "react-router-dom": "^6.15.0",
     "sweetalert2": "^11.23.0",
     "tailwind-merge": "^1.14.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.22.2",
     "zustand": "^4.4.1"
   },
