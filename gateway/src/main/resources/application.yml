@@ -90,6 +90,12 @@ spring:
             - Path=/api/nomina/**
           filters:
             - StripPrefix=0
+        - id: facturacion_route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/facturacion/**
+          filters:
+            - StripPrefix=0
       default-filters:
         - StripPrefix=0
         - AddRequestHeader=X-Forwarded-For, #{request.remoteAddress}

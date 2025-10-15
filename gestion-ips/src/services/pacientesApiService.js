@@ -18,6 +18,7 @@ const CONSULTAS_BASE_URL = '/api/consultas';
 const DOCUMENTOS_BASE_URL = '/api/documentos';
 const CITAS_BASE_URL = '/api/citas';
 const CODIGOS_CUPS_BASE_URL = '/api/codigos-cups';
+const FACTURACION_BASE_URL = '/api/facturacion';
 
 // Pacientes API Service
 export const pacientesApiService = {
@@ -610,5 +611,69 @@ export const codigosCupsApiService = {
       throw new Error(response.error || 'Error al verificar existencia del código CUP');
     }
     return response.data;
+  }
+};
+
+// Facturación API Service
+export const facturacionApiService = {
+  // Get all invoices with pagination
+  getFacturaciones: async (params) => {
+    const response = await apiClient.get(FACTURACION_BASE_URL, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener facturaciones');
+    }
+    return response.data;
+  },
+
+  // Get invoice by ID
+  getFacturacionById: async (id) => {
+    const response = await apiClient.get(`${FACTURACION_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener facturación');
+    }
+    return response.data;
+  },
+
+  // Create new invoice from JSON
+  createFacturacion: async (jsonData) => {
+    const response = await apiClient.post(FACTURACION_BASE_URL, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al crear facturación');
+    }
+    return response.data;
+  },
+
+  // Update invoice
+  updateFacturacion: async (id, jsonData) => {
+    const response = await apiClient.put(`${FACTURACION_BASE_URL}/${id}`, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar facturación');
+    }
+    return response.data;
+  },
+
+  // Deactivate invoice
+  deactivateFacturacion: async (id) => {
+    const response = await apiClient.patch(`${FACTURACION_BASE_URL}/${id}/desactivar`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al desactivar facturación');
+    }
+    return response.data;
+  },
+
+  // Delete invoice
+  deleteFacturacion: async (id) => {
+    const response = await apiClient.delete(`${FACTURACION_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al eliminar facturación');
+    }
   }
 };
