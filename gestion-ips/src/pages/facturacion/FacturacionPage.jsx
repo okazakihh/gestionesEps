@@ -1,294 +1,129 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
-import { codigosCupsApiService, pacientesApiService, facturacionApiService } from '../../services/pacientesApiService.js';
-import { empleadosApiService } from '../../services/empleadosApiService.js';
+import { DynamicModal, MODAL_TYPES } from '../../presentation/components/ui/index.js';
 import { useServiceWorker } from '../../utils/serviceWorker.js';
+import { FacturacionProvider, useFacturacionContext } from '../../presentation/index.js';
+import { codigosCupsApiService } from '../../services/pacientesApiService.js';
 import Swal from 'sweetalert2';
 import { PencilIcon, PlusIcon, FunnelIcon, CalendarDaysIcon, DocumentArrowDownIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// Componente principal de Facturación
 const FacturacionPage = () => {
-  // Hook del Service Worker
   const { isRegistered, isOnline, clearCache, getCacheStatus } = useServiceWorker();
 
-  const [codigosCups, setCodigosCups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Usar el hook personalizado de facturación
+  const {
+    // Estados de citas
+    citasAtendidas,
+    citasAtendidasFiltradas,
+    loadingCitas,
+    filtrosCitas,
+    setFiltrosCitas,
+    citasSeleccionadas,
+    toggleSeleccionCita,
+    seleccionarTodasCitas,
+    deseleccionarTodasCitas,
+    aplicarFiltrosCitas,
+    limpiarFiltrosCitas,
+    totalFacturado,
+
+    // Estados de filtros de citas (UI)
+    showFiltrosFecha,
+    setShowFiltrosFecha,
+    fechaInicio,
+    setFechaInicio,
+    fechaFin,
+    setFechaFin,
+    filtroDocumentoPaciente,
+    setFiltroDocumentoPaciente,
+    filtroMedico,
+    setFiltroMedico,
+    filtroProcedimiento,
+    setFiltroProcedimiento,
+
+    // Estados de facturas
+    facturas,
+    loadingFacturas,
+    showFiltrosFactura,
+    setShowFiltrosFactura,
+    filtroNumeroFactura,
+    setFiltroNumeroFactura,
+    filtroFechaFacturaInicio,
+    setFiltroFechaFacturaInicio,
+    filtroFechaFacturaFin,
+    setFiltroFechaFacturaFin,
+    limpiarFiltrosFactura,
+
+    // Estados de códigos CUPS
+    codigosCups,
+    loadingCups,
+    terminoBusquedaCups,
+    setTerminoBusquedaCups,
+    paginaCups,
+    setPaginaCups,
+    cargarCodigosCups,
+
+    // Estados de modales
+    mostrarModalFactura,
+    setMostrarModalFactura,
+    datosFactura,
+    setDatosFactura,
+
+    // Estados de modales de facturas (mantenidos por compatibilidad)
+    isFacturaModalOpen,
+    setIsFacturaModalOpen,
+    facturaPreview,
+    setFacturaPreview,
+    isVerFacturaModalOpen,
+    setIsVerFacturaModalOpen,
+    facturaSeleccionada,
+    setFacturaSeleccionada,
+
+    // Funciones
+    crearFactura,
+    handleVerFactura,
+    handleProcesarFactura,
+    generarFacturaPDFFactura,
+    exportarExcel,
+    guardarFactura,
+    handleCloseFacturaModal,
+    handleCloseVerFacturaModal,
+    aplicarFiltrosFactura
+  } = useFacturacionContext();
+
+  // Estados para el modal de valor (CUPS)
+  const [isValorModalOpen, setIsValorModalOpen] = useState(false);
+  const [selectedCodigoCups, setSelectedCodigoCups] = useState(null);
+  const [valorInput, setValorInput] = useState('');
+
+  // Estados para modales dinámicos
+  const [currentModal, setCurrentModal] = useState({
+    isOpen: false,
+    type: null,
+    data: {}
+  });
+
+
+  // Estados para códigos CUPS (consolidados en el hook)
+  const [codigosCupsLocal, setCodigosCupsLocal] = useState([]);
+  const [loadingLocal, setLoadingLocal] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize] = useState(20);
 
-  // Estados para el modal de valor
-  const [isValorModalOpen, setIsValorModalOpen] = useState(false);
-  const [selectedCodigoCups, setSelectedCodigoCups] = useState(null);
-  const [valorInput, setValorInput] = useState('');
+  // Efecto inicial para códigos CUPS
+  useEffect(() => {
+    loadCodigosCups();
+  }, []);
 
-  // Estados para citas médicas
-  const [citasAtendidas, setCitasAtendidas] = useState([]);
-  const [citasAtendidasFiltradas, setCitasAtendidasFiltradas] = useState([]);
-  const [loadingCitas, setLoadingCitas] = useState(true);
-
-  // Estados para filtros de fecha
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [showFiltrosFecha, setShowFiltrosFecha] = useState(false);
-
-  // Estados para filtros adicionales
-  const [filtroDocumentoPaciente, setFiltroDocumentoPaciente] = useState('');
-  const [filtroMedico, setFiltroMedico] = useState('');
-  const [filtroProcedimiento, setFiltroProcedimiento] = useState('');
-
-  // Estados para filtros de facturas
-  const [filtroNumeroFactura, setFiltroNumeroFactura] = useState('');
-  const [filtroFechaFacturaInicio, setFiltroFechaFacturaInicio] = useState('');
-  const [filtroFechaFacturaFin, setFiltroFechaFacturaFin] = useState('');
-  const [showFiltrosFactura, setShowFiltrosFactura] = useState(false);
-
-  // Estados para cache de optimización
-  const [cachePacientes, setCachePacientes] = useState(new Map());
-  const [cacheCups, setCacheCups] = useState(new Map());
-  const [cacheMedicos, setCacheMedicos] = useState(new Map());
-  const [cacheLoaded, setCacheLoaded] = useState(false);
-
-  // Estados para selección de citas y facturación
-  const [selectedCitas, setSelectedCitas] = useState(new Set());
-  const [facturas, setFacturas] = useState([]);
-  const [loadingFacturas, setLoadingFacturas] = useState(true);
-  const [isFacturaModalOpen, setIsFacturaModalOpen] = useState(false);
-  const [facturaPreview, setFacturaPreview] = useState(null);
-  const [isVerFacturaModalOpen, setIsVerFacturaModalOpen] = useState(false);
-  const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
-
-  // Funciones de cache optimizado
-  const getPacienteConCache = async (pacienteId) => {
-    if (cachePacientes.has(pacienteId)) {
-      return cachePacientes.get(pacienteId);
-    }
-
-    try {
-      const pacienteInfo = await pacientesApiService.getPacienteById(pacienteId);
-      cachePacientes.set(pacienteId, pacienteInfo);
-      setCachePacientes(new Map(cachePacientes));
-      return pacienteInfo;
-    } catch (error) {
-      console.warn(`Error cargando paciente ${pacienteId}:`, error);
-      return null;
-    }
-  };
-
-  const getCupsConCache = async (codigoCups) => {
-    if (cacheCups.has(codigoCups)) {
-      return cacheCups.get(codigoCups);
-    }
-
-    try {
-      const cupsInfo = await codigosCupsApiService.getCodigoCupsByCodigo(codigoCups);
-      cacheCups.set(codigoCups, cupsInfo);
-      setCacheCups(new Map(cacheCups));
-      return cupsInfo;
-    } catch (error) {
-      console.warn(`Error cargando CUPS ${codigoCups}:`, error);
-      return null;
-    }
-  };
-
-  // Cargar médicos una sola vez
-  const loadMedicosCache = async () => {
-    if (cacheLoaded) return;
-
-    try {
-      const empleadosResponse = await empleadosApiService.getEmpleados({ size: 1000 });
-      const empleados = empleadosResponse.content || [];
-      const medicosMap = new Map();
-
-      empleados.forEach(empleado => {
-        try {
-          const datosCompletos = JSON.parse(empleado.jsonData || '{}');
-          if (datosCompletos.jsonData) {
-            const datosInternos = JSON.parse(datosCompletos.jsonData);
-            const informacionPersonal = datosInternos.informacionPersonal || {};
-            const informacionLaboral = datosInternos.informacionLaboral || {};
-
-            const nombreBase = `${informacionPersonal.primerNombre || ''} ${informacionPersonal.segundoNombre || ''} ${informacionPersonal.primerApellido || ''}`.trim();
-            const especialidad = informacionLaboral.especialidad;
-            const nombreCompleto = especialidad ? `${nombreBase} - ${especialidad}` : nombreBase;
-
-            // Indexar por nombre completo
-            medicosMap.set(nombreCompleto, {
-              nombre: nombreCompleto,
-              documento: datosCompletos.numeroDocumento || 'N/A'
-            });
-
-            // Indexar por documento
-            if (datosCompletos.numeroDocumento) {
-              medicosMap.set(datosCompletos.numeroDocumento, {
-                nombre: nombreCompleto,
-                documento: datosCompletos.numeroDocumento
-              });
-            }
-
-            // Indexar por nombre sin especialidad
-            if (especialidad && nombreBase) {
-              medicosMap.set(nombreBase, {
-                nombre: nombreCompleto,
-                documento: datosCompletos.numeroDocumento || 'N/A'
-              });
-            }
-          }
-        } catch (error) {
-          console.warn('Error procesando empleado:', error);
-        }
-      });
-
-      setCacheMedicos(medicosMap);
-      setCacheLoaded(true);
-    } catch (error) {
-      console.warn('Error cargando médicos:', error);
-    }
-  };
-
-  // Cargar citas atendidas con cache optimizado
-  const loadCitasAtendidas = async () => {
-    try {
-      setLoadingCitas(true);
-
-      // Asegurar que los médicos estén cargados
-      await loadMedicosCache();
-
-      // Obtener todas las citas
-      const citasResponse = await pacientesApiService.getCitas({ size: 1000 });
-
-      if (citasResponse && citasResponse.content) {
-        // Filtrar solo citas atendidas
-        const citasAtendidasFiltradas = citasResponse.content.filter(cita => {
-          try {
-            const datosJson = JSON.parse(cita.datosJson || '{}');
-            return datosJson.estado === 'ATENDIDO';
-          } catch (error) {
-            return false;
-          }
-        });
-
-        // Ordenar por fecha descendente
-        citasAtendidasFiltradas.sort((a, b) => {
-          try {
-            const fechaA = new Date(JSON.parse(a.datosJson || '{}').fechaHoraCita);
-            const fechaB = new Date(JSON.parse(b.datosJson || '{}').fechaHoraCita);
-            return fechaB - fechaA;
-          } catch (error) {
-            return 0;
-          }
-        });
-
-        // Filtrar citas que no han sido facturadas aún
-        const citasIdsFacturadas = new Set();
-        facturas.forEach(factura => {
-          const facturaData = JSON.parse(factura.jsonData || '{}');
-          if (facturaData.citas) {
-            facturaData.citas.forEach(citaFactura => {
-              citasIdsFacturadas.add(citaFactura.id);
-            });
-          }
-        });
-
-        const citasNoFacturadas = citasAtendidasFiltradas.filter(cita => !citasIdsFacturadas.has(cita.id));
-
-        // Procesar citas usando cache optimizado
-        const citasConValor = await Promise.all(
-          citasNoFacturadas.map(async (cita) => {
-            try {
-              const datosJson = JSON.parse(cita.datosJson || '{}');
-              const codigoCups = datosJson.codigoCups;
-
-              let valorCita = 0;
-              let nombreProcedimiento = datosJson.motivo || 'Procedimiento médico';
-
-              // Obtener valor del CUPS usando cache
-              if (codigoCups) {
-                const cupsInfo = await getCupsConCache(codigoCups);
-                if (cupsInfo && cupsInfo.datosJson) {
-                  const cupsDatos = JSON.parse(cupsInfo.datosJson);
-                  valorCita = cupsDatos.valor || 0;
-                  nombreProcedimiento = cupsInfo.nombreCup || nombreProcedimiento;
-                }
-              }
-
-              // Obtener información del paciente usando cache
-              let nombrePaciente = 'Paciente';
-              let documentoPaciente = 'N/A';
-              if (cita.pacienteId) {
-                const pacienteInfo = await getPacienteConCache(cita.pacienteId);
-                if (pacienteInfo && pacienteInfo.datosJson) {
-                  const datosPaciente = JSON.parse(pacienteInfo.datosJson);
-                  documentoPaciente = pacienteInfo.numeroDocumento || pacienteInfo.documento || 'N/A';
-
-                  if (datosPaciente.informacionPersonalJson) {
-                    const infoPersonal = JSON.parse(datosPaciente.informacionPersonalJson);
-                    nombrePaciente = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim() || `Paciente ${cita.pacienteId}`;
-                  }
-                }
-              }
-
-              // Obtener información del médico desde cache (ya cargado)
-              let nombreMedico = datosJson.medicoAsignado || 'Médico no asignado';
-              let documentoMedico = 'N/A';
-
-              if (datosJson.medicoAsignado && cacheMedicos.has(datosJson.medicoAsignado)) {
-                const medicoInfo = cacheMedicos.get(datosJson.medicoAsignado);
-                nombreMedico = medicoInfo.nombre;
-                documentoMedico = medicoInfo.documento;
-              }
-
-              return {
-                ...cita,
-                nombrePaciente,
-                documentoPaciente,
-                nombreMedico,
-                documentoMedico,
-                nombreProcedimiento,
-                valorCita,
-                codigoCups: codigoCups || 'N/A',
-                fechaAtencion: datosJson.fechaHoraCita
-              };
-            } catch (error) {
-              console.error('Error procesando cita:', cita.id, error);
-              return null;
-            }
-          })
-        );
-
-        // Filtrar citas válidas
-        const citasValidas = citasConValor.filter(cita => cita !== null);
-
-        setCitasAtendidas(citasValidas);
-        setCitasAtendidasFiltradas(citasValidas);
-
-        // Limpiar selección si alguna cita seleccionada ya no está disponible
-        const citasIdsDisponibles = new Set(citasValidas.map(cita => cita.id));
-        const nuevaSeleccion = new Set([...selectedCitas].filter(id => citasIdsDisponibles.has(id)));
-        if (nuevaSeleccion.size !== selectedCitas.size) {
-          setSelectedCitas(nuevaSeleccion);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading citas atendidas:', error);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudieron cargar las citas atendidas',
-        confirmButtonColor: '#EF4444'
-      });
-    } finally {
-      setLoadingCitas(false);
-    }
-  };
-
-  // Cargar códigos CUPS
+  // Función para cargar códigos CUPS (mantener por simplicidad, pero usar hook para lógica principal)
   const loadCodigosCups = async (page = 0, search = '') => {
     try {
-      setLoading(true);
+      setLoadingLocal(true);
       console.log('loadCodigosCups called with page:', page, 'search:', search);
       let response;
 
@@ -314,14 +149,14 @@ const FacturacionPage = () => {
       if (response && response.content !== undefined) {
         console.log('Direct backend response format detected');
         // Respuesta directa del backend (sin wrapper de success)
-        setCodigosCups(response.content || []);
+        setCodigosCupsLocal(response.content || []);
         setTotalPages(response.totalPages || 0);
         setCurrentPage(page);
         console.log('Set', response.content?.length || 0, 'CUPS codes');
       } else if (response && response.success) {
         console.log('Success wrapper response format detected');
         // Respuesta con wrapper de success
-        setCodigosCups(response.data.content || []);
+        setCodigosCupsLocal(response.data.content || []);
         setTotalPages(response.data.totalPages || 0);
         setCurrentPage(page);
         console.log('Set', response.data.content?.length || 0, 'CUPS codes');
@@ -338,39 +173,9 @@ const FacturacionPage = () => {
         confirmButtonColor: '#EF4444'
       });
     } finally {
-      setLoading(false);
+      setLoadingLocal(false);
     }
   };
-
-
-  // Cargar facturas
-  const loadFacturas = async () => {
-    try {
-      setLoadingFacturas(true);
-      const facturasResponse = await facturacionApiService.getFacturaciones({ size: 100 });
-      if (facturasResponse && facturasResponse.content) {
-        setFacturas(facturasResponse.content);
-      }
-    } catch (error) {
-      console.error('Error loading facturas:', error);
-    } finally {
-      setLoadingFacturas(false);
-    }
-  };
-
-  // Efecto inicial
-  useEffect(() => {
-    loadCodigosCups();
-    loadCitasAtendidas();
-    loadFacturas();
-  }, []);
-
-  // Efecto para recargar citas cuando cambian las facturas
-  useEffect(() => {
-    if (facturas.length >= 0) { // Solo ejecutar después de la carga inicial
-      loadCitasAtendidas();
-    }
-  }, [facturas]);
 
   // Manejar búsqueda
   const handleSearch = (e) => {
@@ -501,406 +306,23 @@ const FacturacionPage = () => {
     }
   };
 
-  // Función para obtener el valor formateado
-  const getValorFormateado = (codigoCups) => {
-    try {
-      const datosJson = JSON.parse(codigoCups.datosJson || '{}');
-      const valor = datosJson.valor;
-      if (valor !== undefined && valor !== null) {
-        return new Intl.NumberFormat('es-CO', {
-          style: 'currency',
-          currency: 'COP',
-          minimumFractionDigits: 0
-        }).format(valor);
-      }
-      return 'No definido';
-    } catch (error) {
-      return 'No definido';
-    }
-  };
-
-  // Función para aplicar filtros de fecha
-  const aplicarFiltrosFecha = () => {
-    console.log('Applying filters with:', {
-      fechaInicio,
-      fechaFin,
-      filtroDocumentoPaciente,
-      filtroMedico,
-      filtroProcedimiento
+  // Funciones para modales dinámicos
+  const openDynamicModal = (type, data = {}) => {
+    setCurrentModal({
+      isOpen: true,
+      type,
+      data
     });
-
-    let citasFiltradas = [...citasAtendidas];
-    console.log('Initial citas count:', citasFiltradas.length);
-
-    // Filtro por fecha inicio
-    if (fechaInicio) {
-      const fechaInicioDate = new Date(fechaInicio + 'T00:00:00');
-      citasFiltradas = citasFiltradas.filter(cita => {
-        try {
-          const fechaCita = new Date(cita.fechaAtencion);
-          return fechaCita >= fechaInicioDate;
-        } catch (error) {
-          console.warn('Error filtrando cita por fecha inicio:', cita.id, error);
-          return false;
-        }
-      });
-      console.log('After fecha inicio filter:', citasFiltradas.length);
-    }
-
-    // Filtro por fecha fin
-    if (fechaFin) {
-      const fechaFinDate = new Date(fechaFin + 'T23:59:59');
-      citasFiltradas = citasFiltradas.filter(cita => {
-        try {
-          const fechaCita = new Date(cita.fechaAtencion);
-          return fechaCita <= fechaFinDate;
-        } catch (error) {
-          console.warn('Error filtrando cita por fecha fin:', cita.id, error);
-          return false;
-        }
-      });
-      console.log('After fecha fin filter:', citasFiltradas.length);
-    }
-
-    // Filtro por documento de paciente
-    if (filtroDocumentoPaciente.trim()) {
-      citasFiltradas = citasFiltradas.filter(cita =>
-        cita.documentoPaciente &&
-        cita.documentoPaciente.toLowerCase().includes(filtroDocumentoPaciente.toLowerCase())
-      );
-      console.log('After documento paciente filter:', citasFiltradas.length);
-    }
-
-    // Filtro por médico
-    if (filtroMedico.trim()) {
-      citasFiltradas = citasFiltradas.filter(cita =>
-        cita.nombreMedico &&
-        cita.nombreMedico.toLowerCase().includes(filtroMedico.toLowerCase())
-      );
-      console.log('After medico filter:', citasFiltradas.length);
-    }
-
-    // Filtro por procedimiento (busca por código CUPS o nombre)
-    if (filtroProcedimiento.trim()) {
-      console.log('Filtering by procedimiento:', filtroProcedimiento);
-      citasFiltradas = citasFiltradas.filter(cita => {
-        const matchesNombre = cita.nombreProcedimiento &&
-          cita.nombreProcedimiento.toLowerCase().includes(filtroProcedimiento.toLowerCase());
-        const matchesCodigo = cita.codigoCups &&
-          cita.codigoCups.toLowerCase().includes(filtroProcedimiento.toLowerCase());
-        console.log('Cita:', cita.id, 'codigoCups:', cita.codigoCups, 'matchesNombre:', matchesNombre, 'matchesCodigo:', matchesCodigo);
-        return matchesNombre || matchesCodigo;
-      });
-      console.log('After procedimiento filter:', citasFiltradas.length);
-    }
-
-    console.log('Final filtered citas count:', citasFiltradas.length);
-    setCitasAtendidasFiltradas(citasFiltradas);
   };
 
-  // Función para limpiar filtros
-  const limpiarFiltros = () => {
-    setFechaInicio('');
-    setFechaFin('');
-    setFiltroDocumentoPaciente('');
-    setFiltroMedico('');
-    setFiltroProcedimiento('');
-  };
-
-  // Función para limpiar filtros de facturas
-  const limpiarFiltrosFactura = () => {
-    setFiltroNumeroFactura('');
-    setFiltroFechaFacturaInicio('');
-    setFiltroFechaFacturaFin('');
-  };
-
-  // Función para filtrar facturas
-  const aplicarFiltrosFactura = () => {
-    console.log('Applying invoice filters with:', {
-      filtroNumeroFactura,
-      filtroFechaFacturaInicio,
-      filtroFechaFacturaFin
+  const closeDynamicModal = () => {
+    setCurrentModal({
+      isOpen: false,
+      type: null,
+      data: {}
     });
-
-    let facturasFiltradas = [...facturas];
-    console.log('Initial invoices count:', facturasFiltradas.length);
-
-    // Filtro por número de factura
-    if (filtroNumeroFactura.trim()) {
-      facturasFiltradas = facturasFiltradas.filter(factura => {
-        const facturaData = JSON.parse(factura.jsonData || '{}');
-        const numeroFactura = facturaData.numeroFactura || `FM-${factura.id}`;
-        return numeroFactura.toLowerCase().includes(filtroNumeroFactura.toLowerCase());
-      });
-      console.log('After numero factura filter:', facturasFiltradas.length);
-    }
-
-    // Filtro por fecha inicio
-    if (filtroFechaFacturaInicio) {
-      const fechaInicioDate = new Date(filtroFechaFacturaInicio + 'T00:00:00');
-      facturasFiltradas = facturasFiltradas.filter(factura => {
-        try {
-          const facturaData = JSON.parse(factura.jsonData || '{}');
-          const fechaFactura = new Date(facturaData.fechaEmision || factura.fechaCreacion);
-          return fechaFactura >= fechaInicioDate;
-        } catch (error) {
-          console.warn('Error filtrando factura por fecha inicio:', factura.id, error);
-          return false;
-        }
-      });
-      console.log('After fecha inicio filter:', facturasFiltradas.length);
-    }
-
-    // Filtro por fecha fin
-    if (filtroFechaFacturaFin) {
-      const fechaFinDate = new Date(filtroFechaFacturaFin + 'T23:59:59');
-      facturasFiltradas = facturasFiltradas.filter(factura => {
-        try {
-          const facturaData = JSON.parse(factura.jsonData || '{}');
-          const fechaFactura = new Date(facturaData.fechaEmision || factura.fechaCreacion);
-          return fechaFactura <= fechaFinDate;
-        } catch (error) {
-          console.warn('Error filtrando factura por fecha fin:', factura.id, error);
-          return false;
-        }
-      });
-      console.log('After fecha fin filter:', facturasFiltradas.length);
-    }
-
-    console.log('Final filtered invoices count:', facturasFiltradas.length);
-    return facturasFiltradas;
   };
 
-  // Funciones para manejo de selección de citas
-  const handleSelectCita = (citaId) => {
-    const newSelected = new Set(selectedCitas);
-    if (newSelected.has(citaId)) {
-      newSelected.delete(citaId);
-    } else {
-      newSelected.add(citaId);
-    }
-    setSelectedCitas(newSelected);
-  };
-
-  const handleSelectAllCitas = () => {
-    if (selectedCitas.size === citasAtendidasFiltradas.length) {
-      setSelectedCitas(new Set());
-    } else {
-      setSelectedCitas(new Set(citasAtendidasFiltradas.map(cita => cita.id)));
-    }
-  };
-
-  // Función para crear factura
-  const crearFactura = async () => {
-    if (selectedCitas.size === 0) {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Selección requerida',
-        text: 'Debe seleccionar al menos una cita para crear la factura',
-        confirmButtonColor: '#F59E0B'
-      });
-      return;
-    }
-
-    try {
-      // Obtener citas seleccionadas
-      const citasSeleccionadas = citasAtendidasFiltradas.filter(cita => selectedCitas.has(cita.id));
-
-      // Calcular total
-      const totalFactura = citasSeleccionadas.reduce((total, cita) => total + cita.valorCita, 0);
-
-      // Crear objeto de factura
-      const facturaData = {
-        numeroFactura: `FM-${Date.now()}`,
-        fechaEmision: new Date().toISOString(),
-        citas: citasSeleccionadas.map(cita => ({
-          id: cita.id,
-          paciente: {
-            nombre: cita.nombrePaciente,
-            documento: cita.documentoPaciente
-          },
-          medico: {
-            nombre: cita.nombreMedico,
-            documento: cita.documentoMedico
-          },
-          procedimiento: cita.nombreProcedimiento,
-          codigoCups: cita.codigoCups,
-          valor: cita.valorCita,
-          fechaAtencion: cita.fechaAtencion
-        })),
-        total: totalFactura,
-        estado: 'PENDIENTE'
-      };
-
-      setFacturaPreview(facturaData);
-      setIsFacturaModalOpen(true);
-
-    } catch (error) {
-      console.error('Error creando factura:', error);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo crear la factura. Inténtelo nuevamente.',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
-
-  // Función para guardar factura
-  const guardarFactura = async () => {
-    try {
-      // El backend espera el jsonData como string crudo, no como JSON stringificado
-      const jsonDataCrudo = JSON.stringify(facturaPreview);
-      const response = await facturacionApiService.createFacturacion(jsonDataCrudo);
-
-      if (response && (response.success || response.id)) {
-        await Swal.fire({
-          icon: 'success',
-          title: '¡Factura Creada!',
-          text: `La factura ${facturaPreview.numeroFactura} ha sido creada exitosamente.`,
-          confirmButtonColor: '#10B981',
-          timer: 3000,
-          timerProgressBar: true,
-          showConfirmButton: false
-        });
-
-        // Limpiar selección y cerrar modal
-        setSelectedCitas(new Set());
-        setIsFacturaModalOpen(false);
-        setFacturaPreview(null);
-
-        // Recargar facturas
-        loadFacturas();
-
-        // Recargar citas para ocultar las facturadas
-        loadCitasAtendidas();
-
-      } else {
-        console.error('Respuesta del servidor:', response);
-        throw new Error('Respuesta inválida del servidor');
-      }
-
-    } catch (error) {
-      console.error('Error guardando factura:', error);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error al Guardar',
-        text: 'No se pudo guardar la factura. Inténtelo nuevamente.',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
-
-  // Función para cerrar modal de factura
-  const handleCloseFacturaModal = () => {
-    setIsFacturaModalOpen(false);
-    setFacturaPreview(null);
-  };
-
-  // Función para ver factura
-  const handleVerFactura = (factura) => {
-    try {
-      const facturaData = JSON.parse(factura.jsonData || '{}');
-      setFacturaSeleccionada({
-        ...factura,
-        ...facturaData
-      });
-      setIsVerFacturaModalOpen(true);
-    } catch (error) {
-      console.error('Error parsing factura data:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo cargar la información de la factura',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
-
-  // Función para procesar factura (cambiar estado a PAGADA)
-  const handleProcesarFactura = async (factura) => {
-    try {
-      const result = await Swal.fire({
-        title: '¿Procesar Factura?',
-        text: `¿Estás seguro de marcar la factura ${factura.numeroFactura || `FM-${factura.id}`} como PAGADA?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#10B981',
-        cancelButtonColor: '#6B7280',
-        confirmButtonText: 'Sí, procesar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (result.isConfirmed) {
-        // Actualizar el estado de la factura
-        const facturaData = JSON.parse(factura.jsonData || '{}');
-        facturaData.estado = 'PAGADA';
-
-        const response = await facturacionApiService.updateFacturacion(factura.id, JSON.stringify(facturaData));
-
-        if (response && (response.success || response.id)) {
-          await Swal.fire({
-            icon: 'success',
-            title: '¡Factura Procesada!',
-            text: `La factura ha sido marcada como PAGADA.`,
-            confirmButtonColor: '#10B981',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false
-          });
-
-          // Recargar facturas para mostrar el cambio
-          loadFacturas();
-        } else {
-          throw new Error('Error al actualizar la factura');
-        }
-      }
-    } catch (error) {
-      console.error('Error procesando factura:', error);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo procesar la factura. Inténtelo nuevamente.',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
-
-  // Función para cerrar modal de ver factura
-  const handleCloseVerFacturaModal = () => {
-    setIsVerFacturaModalOpen(false);
-    setFacturaSeleccionada(null);
-  };
-
-  // Función para generar factura PDF desde citas individuales
-  const generarFacturaPDF = async (cita) => {
-    // Crear contenido HTML para la factura
-    const contenidoHTML = createFacturaContent(cita);
-
-    // Usar la misma función de impresión que la historia clínica
-    printFactura(contenidoHTML);
-  };
-
-  // Función para generar factura PDF desde facturas guardadas
-  const generarFacturaPDFFactura = async (factura) => {
-    try {
-      const facturaData = JSON.parse(factura.jsonData || '{}');
-
-      // Crear contenido HTML para la factura usando los datos de la factura guardada
-      const contenidoHTML = createFacturaContentFromFactura(facturaData);
-
-      // Usar la misma función de impresión
-      printFactura(contenidoHTML);
-    } catch (error) {
-      console.error('Error generando PDF de factura:', error);
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo generar el PDF de la factura',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
 
   // Función para crear el contenido HTML de la factura (similar a createPrintContent)
   const createFacturaContent = (cita) => {
@@ -1220,96 +642,7 @@ const FacturacionPage = () => {
     return html;
   };
 
-  // Función para exportar a Excel
-  const exportarExcel = () => {
-    try {
-      // Preparar datos para Excel
-      const datosExcel = citasAtendidasFiltradas.map(cita => ({
-        'Fecha': formatDate(cita.fechaAtencion),
-        'Paciente': cita.nombrePaciente,
-        'Documento Paciente': cita.documentoPaciente,
-        'Médico': cita.nombreMedico,
-        'Procedimiento': cita.nombreProcedimiento,
-        'Código CUPS': cita.codigoCups,
-        'Valor': cita.valorCita
-      }));
 
-      // Crear libro de trabajo
-      const wb = XLSX.utils.book_new();
-
-      // Crear hoja de trabajo
-      const ws = XLSX.utils.json_to_sheet(datosExcel);
-
-      // Ajustar ancho de columnas
-      const colWidths = [
-        { wch: 12 }, // Fecha
-        { wch: 25 }, // Paciente
-        { wch: 18 }, // Documento Paciente
-        { wch: 30 }, // Médico
-        { wch: 40 }, // Procedimiento
-        { wch: 12 }, // Código CUPS
-        { wch: 15 }  // Valor
-      ];
-      ws['!cols'] = colWidths;
-
-      // Agregar hoja al libro
-      XLSX.utils.book_append_sheet(wb, ws, 'Citas Atendidas');
-
-      // Crear hoja de resumen
-      const resumenData = [
-        { 'Concepto': 'Total Citas', 'Valor': citasAtendidasFiltradas.length },
-        { 'Concepto': 'Total Facturado', 'Valor': citasAtendidasFiltradas.reduce((total, cita) => total + cita.valorCita, 0) }
-      ];
-
-      const wsResumen = XLSX.utils.json_to_sheet(resumenData);
-      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-
-      // Generar nombre del archivo con fecha
-      const fechaActual = new Date().toISOString().split('T')[0];
-      const filtrosActivos = [];
-      if (fechaInicio) filtrosActivos.push(`desde_${fechaInicio.replace(/-/g, '')}`);
-      if (fechaFin) filtrosActivos.push(`hasta_${fechaFin.replace(/-/g, '')}`);
-      if (filtroDocumentoPaciente) filtrosActivos.push('filtrado_paciente');
-      if (filtroMedico) filtrosActivos.push('filtrado_medico');
-      if (filtroProcedimiento) filtrosActivos.push('filtrado_procedimiento');
-
-      const sufijoFiltros = filtrosActivos.length > 0 ? `_${filtrosActivos.join('_')}` : '';
-      const nombreArchivo = `reporte_facturacion_${fechaActual}${sufijoFiltros}.xlsx`;
-
-      // Descargar archivo
-      XLSX.writeFile(wb, nombreArchivo);
-
-      // Mostrar mensaje de éxito
-      Swal.fire({
-        icon: 'success',
-        title: '¡Exportación Exitosa!',
-        text: `El archivo Excel "${nombreArchivo}" ha sido generado y descargado.`,
-        confirmButtonColor: '#10B981',
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      });
-
-    } catch (error) {
-      console.error('Error exportando Excel:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error en Exportación',
-        text: 'No se pudo generar el archivo Excel. Inténtelo nuevamente.',
-        confirmButtonColor: '#EF4444'
-      });
-    }
-  };
-
-  // Efecto para aplicar filtros cuando cambian las fechas o filtros adicionales
-  useEffect(() => {
-    aplicarFiltrosFecha();
-  }, [fechaInicio, fechaFin, filtroDocumentoPaciente, filtroMedico, filtroProcedimiento, citasAtendidas]);
-
-  // Efecto para aplicar filtros de facturas
-  useEffect(() => {
-    aplicarFiltrosFactura();
-  }, [filtroNumeroFactura, filtroFechaFacturaInicio, filtroFechaFacturaFin, facturas]);
 
   return (
     <MainLayout
@@ -1373,12 +706,12 @@ const FacturacionPage = () => {
                   </button>
                   <button
                     onClick={crearFactura}
-                    disabled={selectedCitas.size === 0}
+                    disabled={citasSeleccionadas.size === 0}
                     className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Crear factura con citas seleccionadas"
                   >
                     <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-                    Crear Factura ({selectedCitas.size})
+                    Crear Factura ({citasSeleccionadas.size})
                   </button>
                   <button
                     onClick={exportarExcel}
@@ -1525,8 +858,8 @@ const FacturacionPage = () => {
                         <th scope="col" className="relative w-12 px-6 sm:w-16 sm:px-8">
                           <input
                             type="checkbox"
-                            checked={selectedCitas.size === citasAtendidasFiltradas.length && citasAtendidasFiltradas.length > 0}
-                            onChange={handleSelectAllCitas}
+                            checked={citasSeleccionadas.size === citasAtendidasFiltradas.length && citasAtendidasFiltradas.length > 0}
+                            onChange={seleccionarTodasCitas}
                             className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 sm:left-6"
                           />
                         </th>
@@ -1578,8 +911,8 @@ const FacturacionPage = () => {
                             <td className="relative w-12 px-6 sm:w-16 sm:px-8">
                               <input
                                 type="checkbox"
-                                checked={selectedCitas.has(cita.id)}
-                                onChange={() => handleSelectCita(cita.id)}
+                                checked={citasSeleccionadas.has(cita.id)}
+                                onChange={() => toggleSeleccionCita(cita.id)}
                                 className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 sm:left-6"
                               />
                             </td>
@@ -1782,8 +1115,22 @@ const FacturacionPage = () => {
                           </td>
                         </tr>
                       ) : (
-                        aplicarFiltrosFactura().slice(0, 10).map((factura) => {
-                          const facturaData = JSON.parse(factura.jsonData || '{}');
+                        facturas.slice(0, 10).map((factura) => {
+                          // Parsear el jsonData correctamente - puede estar doblemente anidado
+                          let facturaData = {};
+                          try {
+                            const parsed = JSON.parse(factura.jsonData || '{}');
+                            // Verificar si está doblemente anidado (jsonData dentro de jsonData)
+                            if (parsed.jsonData) {
+                              facturaData = JSON.parse(parsed.jsonData);
+                            } else {
+                              facturaData = parsed;
+                            }
+                          } catch (error) {
+                            console.error('Error parseando datos de factura:', error);
+                            facturaData = {};
+                          }
+
                           return (
                             <tr key={factura.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -1812,7 +1159,36 @@ const FacturacionPage = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                 <button
-                                  onClick={() => handleVerFactura(factura)}
+                                  onClick={() => {
+                                    // Parsear el jsonData correctamente - puede estar doblemente anidado
+                                    let facturaData = {};
+                                    try {
+                                      const parsed = JSON.parse(factura.jsonData || '{}');
+                                      // Verificar si está doblemente anidado (jsonData dentro de jsonData)
+                                      if (parsed.jsonData) {
+                                        facturaData = JSON.parse(parsed.jsonData);
+                                      } else {
+                                        facturaData = parsed;
+                                      }
+                                    } catch (error) {
+                                      console.error('Error parseando datos de factura para modal:', error);
+                                      facturaData = {};
+                                    }
+
+                                    openDynamicModal(MODAL_TYPES.FACTURA_VIEW, {
+                                      facturaSeleccionada: {
+                                        id: factura.id,
+                                        numeroFactura: facturaData.numeroFactura || `FM-${factura.id}`,
+                                        fechaEmision: facturaData.fechaEmision || null,
+                                        fechaCreacion: factura.fechaCreacion || null,
+                                        fechaActualizacion: factura.fechaActualizacion || null,
+                                        estado: facturaData.estado || 'PENDIENTE',
+                                        total: facturaData.total || 0,
+                                        citas: facturaData.citas || []
+                                      },
+                                      handleProcesarFactura
+                                    });
+                                  }}
                                   className="text-blue-600 hover:text-blue-900"
                                   title="Ver detalles de la factura"
                                 >
@@ -1848,17 +1224,14 @@ const FacturacionPage = () => {
                   <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-700">
-                        Mostrando las últimas 10 facturas de {aplicarFiltrosFactura().length} filtradas
-                        {aplicarFiltrosFactura().length !== facturas.length && (
-                          <span className="text-blue-600"> (de {facturas.length} totales)</span>
-                        )}
+                        Mostrando las últimas 10 facturas de {facturas.length} filtradas
                       </span>
                       <div className="text-sm font-medium text-gray-900">
                         Total facturado: {new Intl.NumberFormat('es-CO', {
                           style: 'currency',
                           currency: 'COP',
                           minimumFractionDigits: 0
-                        }).format(aplicarFiltrosFactura().reduce((total, factura) => {
+                        }).format(facturas.reduce((total, factura) => {
                           const facturaData = JSON.parse(factura.jsonData || '{}');
                           return total + (facturaData.total || 0);
                         }, 0))}
@@ -1933,7 +1306,7 @@ const FacturacionPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {loading ? (
+                    {loadingLocal ? (
                       <tr>
                         <td colSpan="6" className="py-8 text-center">
                           <div className="flex items-center justify-center">
@@ -1942,14 +1315,14 @@ const FacturacionPage = () => {
                           </div>
                         </td>
                       </tr>
-                    ) : codigosCups.length === 0 ? (
+                    ) : codigosCupsLocal.length === 0 ? (
                       <tr>
                         <td colSpan="6" className="py-8 text-center text-sm text-gray-500">
                           No se encontraron códigos CUPS
                         </td>
                       </tr>
                     ) : (
-                      codigosCups.map((codigo) => (
+                      codigosCupsLocal.map((codigo) => (
                         <tr key={codigo.id} className="hover:bg-gray-50">
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                             {codigo.codigoCup}
@@ -1958,7 +1331,22 @@ const FacturacionPage = () => {
                             {codigo.nombreCup}
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {getValorFormateado(codigo)}
+                            {(() => {
+                              try {
+                                const datosJson = JSON.parse(codigo.datosJson || '{}');
+                                const valor = datosJson.valor;
+                                if (valor !== undefined && valor !== null) {
+                                  return new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0
+                                  }).format(valor);
+                                }
+                                return 'No definido';
+                              } catch (error) {
+                                return 'No definido';
+                              }
+                            })()}
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                             {formatDate(codigo.fechaCreacion)}
@@ -1968,7 +1356,48 @@ const FacturacionPage = () => {
                           </td>
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                             <button
-                              onClick={() => handleOpenValorModal(codigo)}
+                              onClick={() => openDynamicModal(MODAL_TYPES.VALOR_CUPS, {
+                                selectedCodigoCups: codigo,
+                                valorInput,
+                                setValorInput,
+                                handleSaveValor: async () => {
+                                  if (!codigo) return;
+                                  try {
+                                    let datosJson = {};
+                                    try {
+                                      datosJson = JSON.parse(codigo.datosJson || '{}');
+                                    } catch (error) {
+                                      datosJson = {};
+                                    }
+                                    datosJson.valor = parseFloat(valorInput) || 0;
+                                    const updateData = {
+                                      codigoCup: codigo.codigoCup,
+                                      nombreCup: codigo.nombreCup,
+                                      datosJson: JSON.stringify(datosJson)
+                                    };
+                                    await codigosCupsApiService.updateCodigoCups(codigo.id, updateData);
+                                    await Swal.fire({
+                                      icon: 'success',
+                                      title: '¡Valor Actualizado!',
+                                      text: `El valor del código CUPS ${codigo.codigoCup} ha sido actualizado exitosamente.`,
+                                      confirmButtonColor: '#10B981',
+                                      timer: 3000,
+                                      timerProgressBar: true,
+                                      showConfirmButton: false
+                                    });
+                                    loadCodigosCups(currentPage, searchTerm);
+                                    closeDynamicModal();
+                                  } catch (error) {
+                                    console.error('Error updating CUPS value:', error);
+                                    await Swal.fire({
+                                      icon: 'error',
+                                      title: 'Error al Actualizar',
+                                      text: 'No se pudo actualizar el valor del código CUPS. Inténtelo nuevamente.',
+                                      confirmButtonColor: '#EF4444'
+                                    });
+                                  }
+                                }
+                              })}
                               className="text-blue-600 hover:text-blue-900 inline-flex items-center"
                               title="Editar valor"
                             >
@@ -1987,7 +1416,7 @@ const FacturacionPage = () => {
         </div>
 
         {/* Paginación */}
-        {!loading && totalPages > 1 && (
+        {!loadingLocal && totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Página {currentPage + 1} de {totalPages}
@@ -2365,7 +1794,15 @@ const FacturacionPage = () => {
           </div>
         )}
 
-        {/* Modal para editar valor */}
+        {/* Modal Dinámico */}
+        <DynamicModal
+          isOpen={currentModal.isOpen}
+          onClose={closeDynamicModal}
+          type={currentModal.type}
+          data={currentModal.data}
+        />
+
+        {/* Modal para editar valor (mantener por compatibilidad) */}
         {isValorModalOpen && selectedCodigoCups && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -2465,4 +1902,13 @@ const FacturacionPage = () => {
   );
 };
 
-export default FacturacionPage;
+// Componente wrapper con el provider
+const FacturacionPageWithProvider = () => {
+  return (
+    <FacturacionProvider>
+      <FacturacionPage />
+    </FacturacionProvider>
+  );
+};
+
+export default FacturacionPageWithProvider;
