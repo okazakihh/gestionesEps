@@ -8,14 +8,27 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@/components": path.resolve(__dirname, "./src/components"),
-      "@/pages": path.resolve(__dirname, "./src/pages"),
-      "@/hooks": path.resolve(__dirname, "./src/hooks"),
-      "@/utils": path.resolve(__dirname, "./src/utils"),
-      "@/api": path.resolve(__dirname, "./src/api"),
-      "@/types": path.resolve(__dirname, "./src/types"),
-      "@/stores": path.resolve(__dirname, "./src/stores"),
-      "@/context": path.resolve(__dirname, "./src/context"),
+      // Capa de Datos
+      "@/data": path.resolve(__dirname, "./src/data"),
+      "@/api": path.resolve(__dirname, "./src/data/api"),
+      "@/services": path.resolve(__dirname, "./src/data/services"),
+      "@/repositories": path.resolve(__dirname, "./src/data/repositories"),
+      // Capa de Negocio
+      "@/negocio": path.resolve(__dirname, "./src/negocio"),
+      "@/hooks": path.resolve(__dirname, "./src/negocio/hooks"),
+      "@/context": path.resolve(__dirname, "./src/negocio/context"),
+      "@/useCases": path.resolve(__dirname, "./src/negocio/useCases"),
+      "@/utils": path.resolve(__dirname, "./src/negocio/utils"),
+      // Capa de Presentación
+      "@/presentacion": path.resolve(__dirname, "./src/presentacion"),
+      "@/components": path.resolve(__dirname, "./src/presentacion/components"),
+      "@/pages": path.resolve(__dirname, "./src/presentacion/pages"),
+      "@/routes": path.resolve(__dirname, "./src/presentacion/routes"),
+      "@/stores": path.resolve(__dirname, "./src/presentacion/stores"),
+      "@/types": path.resolve(__dirname, "./src/presentacion/types"),
+      // Capa de Estilos
+      "@/estilos": path.resolve(__dirname, "./src/estilos"),
+      "@/styles": path.resolve(__dirname, "./src/estilos"),
     },
   },
   server: {

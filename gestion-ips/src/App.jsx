@@ -1,7 +1,7 @@
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import AppRouter from '@/routes/AppRouter';
+import AppRouter from '@/presentacion/routes/AppRouter';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
