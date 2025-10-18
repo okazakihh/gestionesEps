@@ -187,7 +187,7 @@ const UsuariosPage = () => {
         }
       } else {
         // Create new user
-        const { AuthService } = await import('@/services/authService');
+        const { AuthService } = await import('@/data/services/authService.js');
         const response = await AuthService.register(data);
         
         console.log('Usuario registrado exitosamente:', response);

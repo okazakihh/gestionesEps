@@ -49,6 +49,8 @@ export const FacturacionProvider = ({ children }) => {
   const [facturaPreview, setFacturaPreview] = useState(null);
   const [isVerFacturaModalOpen, setIsVerFacturaModalOpen] = useState(false);
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+  const [isPrevisualizacionModalOpen, setIsPrevisualizacionModalOpen] = useState(false);
+  const [facturaPrevisualizacion, setFacturaPrevisualizacion] = useState(null);
 
   // Funciones
   const toggleSeleccionCita = (citaId) => {
@@ -71,33 +73,10 @@ export const FacturacionProvider = ({ children }) => {
     setCitasSeleccionadas(new Set());
   };
 
+  // Función de aplicar filtros de citas (ahora se llama automáticamente por useEffect)
   const aplicarFiltrosCitas = () => {
-    // Implementar lógica de filtros
-    let filtered = [...citasAtendidas];
-    
-    if (fechaInicio) {
-      filtered = filtered.filter(cita => new Date(cita.fecha) >= new Date(fechaInicio));
-    }
-    if (fechaFin) {
-      filtered = filtered.filter(cita => new Date(cita.fecha) <= new Date(fechaFin));
-    }
-    if (filtroDocumentoPaciente) {
-      filtered = filtered.filter(cita => 
-        cita.paciente?.documento?.includes(filtroDocumentoPaciente)
-      );
-    }
-    if (filtroMedico) {
-      filtered = filtered.filter(cita => 
-        cita.medico?.toLowerCase().includes(filtroMedico.toLowerCase())
-      );
-    }
-    if (filtroProcedimiento) {
-      filtered = filtered.filter(cita => 
-        cita.procedimiento?.toLowerCase().includes(filtroProcedimiento.toLowerCase())
-      );
-    }
-
-    setCitasAtendidasFiltradas(filtered);
+    // Esta función se mantiene por compatibilidad pero los filtros se aplican automáticamente
+    console.log('Los filtros de citas se aplican automáticamente');
   };
 
   const limpiarFiltrosCitas = () => {
@@ -106,13 +85,14 @@ export const FacturacionProvider = ({ children }) => {
     setFiltroDocumentoPaciente('');
     setFiltroMedico('');
     setFiltroProcedimiento('');
-    setCitasAtendidasFiltradas(citasAtendidas);
+    // El useEffect se encargará de actualizar citasAtendidasFiltradas automáticamente
   };
 
   const limpiarFiltrosFactura = () => {
     setFiltroNumeroFactura('');
     setFiltroFechaFacturaInicio('');
     setFiltroFechaFacturaFin('');
+    // El useEffect se encargará de recargar las facturas automáticamente
   };
 
   // Cargar citas atendidas inicial
@@ -140,10 +120,10 @@ export const FacturacionProvider = ({ children }) => {
   };
 
   // Cargar facturas inicial
-  const cargarFacturas = async () => {
+  const cargarFacturas = async (filtros = {}) => {
     try {
       setLoadingFacturas(true);
-      console.log('Cargando facturas...');
+      console.log('Cargando facturas con filtros:', filtros);
       
       if (!dependencyContainer.isInitialized()) {
         dependencyContainer.initialize();
@@ -151,13 +131,32 @@ export const FacturacionProvider = ({ children }) => {
       
       const { obtenerFacturasUseCase } = dependencyContainer.getAllUseCases();
       
-      const facturasData = await obtenerFacturasUseCase.execute();
+      // Preparar filtros para el use case
+      const filtrosUseCase = {
+        numeroFactura: filtros.numeroFactura || filtroNumeroFactura,
+        fechaInicio: filtros.fechaInicio || filtroFechaFacturaInicio,
+        fechaFin: filtros.fechaFin || filtroFechaFacturaFin,
+        limite: 50 // Aumentar límite para mostrar más facturas
+      };
+
+      // Solo enviar filtros que tengan valor
+      const filtrosLimpios = Object.keys(filtrosUseCase).reduce((acc, key) => {
+        if (filtrosUseCase[key]) {
+          acc[key] = filtrosUseCase[key];
+        }
+        return acc;
+      }, {});
+      
+      const facturasData = await obtenerFacturasUseCase.execute(filtrosLimpios);
       console.log('Facturas cargadas:', facturasData.length);
-      console.log('Primera factura (ejemplo):', JSON.stringify(facturasData[0], null, 2));
+      if (facturasData.length > 0) {
+        console.log('Primera factura (ejemplo):', JSON.stringify(facturasData[0], null, 2));
+      }
       
       setFacturas(facturasData);
     } catch (error) {
       console.error('Error al cargar facturas:', error);
+      setFacturas([]);
     } finally {
       setLoadingFacturas(false);
     }
@@ -169,9 +168,78 @@ export const FacturacionProvider = ({ children }) => {
     cargarFacturas();
   }, []);
 
+  // Efecto para aplicar filtros de citas automáticamente
+  useEffect(() => {
+    if (citasAtendidas.length > 0) {
+      let filtered = [...citasAtendidas];
+      
+      // Filtro por rango de fechas
+      if (fechaInicio) {
+        filtered = filtered.filter(cita => {
+          const fechaCita = new Date(cita.fecha || cita.fechaAtencion);
+          const fechaInicioFilter = new Date(fechaInicio);
+          return fechaCita >= fechaInicioFilter;
+        });
+      }
+      if (fechaFin) {
+        filtered = filtered.filter(cita => {
+          const fechaCita = new Date(cita.fecha || cita.fechaAtencion);
+          const fechaFinFilter = new Date(fechaFin);
+          return fechaCita <= fechaFinFilter;
+        });
+      }
+      
+      // Filtro por documento de paciente
+      if (filtroDocumentoPaciente) {
+        filtered = filtered.filter(cita => {
+          const documento = cita.documentoPaciente || cita.paciente?.documento || '';
+          return documento.toLowerCase().includes(filtroDocumentoPaciente.toLowerCase());
+        });
+      }
+      
+      // Filtro por médico
+      if (filtroMedico) {
+        filtered = filtered.filter(cita => {
+          const nombreMedico = cita.nombreMedico || cita.medico?.nombre || '';
+          return nombreMedico.toLowerCase().includes(filtroMedico.toLowerCase());
+        });
+      }
+      
+      // Filtro por procedimiento
+      if (filtroProcedimiento) {
+        filtered = filtered.filter(cita => {
+          const procedimiento = cita.nombreProcedimiento || cita.procedimiento || '';
+          return procedimiento.toLowerCase().includes(filtroProcedimiento.toLowerCase());
+        });
+      }
+
+      setCitasAtendidasFiltradas(filtered);
+    }
+  }, [citasAtendidas, fechaInicio, fechaFin, filtroDocumentoPaciente, filtroMedico, filtroProcedimiento]);
+
+  // Efecto para aplicar filtros de facturas automáticamente
+  useEffect(() => {
+    // Solo aplicar si hay al menos un filtro con valor
+    if (filtroNumeroFactura || filtroFechaFacturaInicio || filtroFechaFacturaFin) {
+      const timeoutId = setTimeout(() => {
+        cargarFacturas({
+          numeroFactura: filtroNumeroFactura,
+          fechaInicio: filtroFechaFacturaInicio,
+          fechaFin: filtroFechaFacturaFin
+        });
+      }, 500); // Debounce de 500ms para evitar muchas peticiones
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Si no hay filtros, cargar todas las facturas
+      cargarFacturas({});
+    }
+  }, [filtroNumeroFactura, filtroFechaFacturaInicio, filtroFechaFacturaFin]);
+
+  // Función de aplicar filtros de facturas (ahora se llama automáticamente por useEffect)
   const aplicarFiltrosFactura = () => {
-    // Implementar lógica de filtros de facturas
-    console.log('Aplicando filtros de factura');
+    // Esta función se mantiene por compatibilidad pero los filtros se aplican automáticamente
+    console.log('Los filtros de facturas se aplican automáticamente');
   };
 
   const cargarCodigosCups = async (termino = '', pagina = 0) => {
@@ -186,15 +254,142 @@ export const FacturacionProvider = ({ children }) => {
     }
   };
 
-  const crearFactura = async (datos) => {
+  const crearFactura = async () => {
     try {
-      console.log('Creando factura:', datos);
-      // Implementar lógica de creación de factura
-      return { success: true };
+      // Validar que haya citas seleccionadas
+      if (citasSeleccionadas.size === 0) {
+        const { default: Swal } = await import('sweetalert2');
+        Swal.fire({
+          icon: 'warning',
+          title: 'No hay citas seleccionadas',
+          text: 'Por favor selecciona al menos una cita para crear la factura.',
+          confirmButtonColor: '#3b82f6'
+        });
+        return { success: false };
+      }
+
+      // Obtener las citas seleccionadas completas para la previsualización
+      const citasSeleccionadasArray = citasAtendidas.filter(cita => 
+        citasSeleccionadas.has(cita.id)
+      );
+
+      // Calcular el total de la factura
+      const totalFactura = citasSeleccionadasArray.reduce((sum, cita) => {
+        const valor = cita.datosJson?.valor || 0;
+        return sum + Number(valor);
+      }, 0);
+
+      // Crear objeto de previsualización de factura (simulando estructura de factura real)
+      const facturaPreview = {
+        numeroFactura: 'PREVIEW-' + Date.now(),
+        fechaEmision: new Date().toISOString(),
+        estado: 'BORRADOR',
+        total: totalFactura,
+        citas: citasSeleccionadasArray.map(cita => ({
+          id: cita.id,
+          codigoCups: cita.codigoCups || cita.datosJson?.codigoCUPS || 'N/A',
+          procedimiento: cita.nombreProcedimiento || cita.datosJson?.descripcion || 'Sin descripción',
+          valor: cita.valorCita || cita.datosJson?.valor || 0,
+          fechaAtencion: cita.fechaAtencion || cita.fecha,
+          paciente: {
+            nombre: cita.nombrePaciente || 'Paciente no identificado',
+            documento: cita.documentoPaciente || 'N/A'
+          },
+          medico: {
+            nombre: cita.nombreMedico || 'Médico no asignado',
+            documento: cita.documentoMedico || 'N/A'
+          }
+        })),
+        paciente: {
+          nombre: citasSeleccionadasArray[0]?.nombrePaciente || 'Paciente no identificado',
+          documento: citasSeleccionadasArray[0]?.documentoPaciente || 'N/A'
+        },
+        isPrevisualizacion: true // Flag para indicar que es previsualización
+      };
+
+      // Mostrar el modal de previsualización
+      setFacturaPrevisualizacion(facturaPreview);
+      setIsPrevisualizacionModalOpen(true);
+
+      return { success: false }; // No creamos aún, solo previsualizamos
+
     } catch (error) {
-      console.error('Error creando factura:', error);
+      console.error('Error en previsualización de factura:', error);
+      
+      const { default: Swal } = await import('sweetalert2');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Ocurrió un error al generar la previsualización.',
+        confirmButtonColor: '#3b82f6'
+      });
+
       return { success: false, error };
     }
+  };
+
+  // Nueva función para confirmar y crear la factura desde la previsualización
+  const confirmarCrearFactura = async () => {
+    try {
+      // Cerrar modal de previsualización
+      setIsPrevisualizacionModalOpen(false);
+
+      // Mostrar loading
+      const { default: Swal } = await import('sweetalert2');
+      Swal.fire({
+        title: 'Creando factura...',
+        text: 'Por favor espera',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Convertir Set a Array para el use case
+      const citasIds = Array.from(citasSeleccionadas);
+
+      // Obtener el use case del contenedor de dependencias
+      const crearFacturaUseCase = dependencyContainer.getUseCase('crearFacturaUseCase');
+
+      // Crear la factura
+      const facturaCreada = await crearFacturaUseCase.execute({}, citasIds);
+
+      console.log('Factura creada exitosamente:', facturaCreada);
+
+      // Cerrar el loading y mostrar éxito
+      Swal.fire({
+        icon: 'success',
+        title: 'Factura creada',
+        text: `Factura ${facturaCreada.numeroFactura} creada exitosamente.`,
+        confirmButtonColor: '#3b82f6'
+      });
+
+      // Limpiar selección
+      setCitasSeleccionadas(new Set());
+
+      // Recargar facturas
+      await cargarFacturas();
+
+      return { success: true, factura: facturaCreada };
+
+    } catch (error) {
+      console.error('Error creando factura:', error);
+      
+      const { default: Swal } = await import('sweetalert2');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al crear factura',
+        text: error.message || 'Ocurrió un error al crear la factura. Por favor intenta de nuevo.',
+        confirmButtonColor: '#3b82f6'
+      });
+
+      return { success: false, error };
+    }
+  };
+
+  const cancelarPrevisualizacion = () => {
+    setIsPrevisualizacionModalOpen(false);
+    setFacturaPrevisualizacion(null);
   };
 
   const handleVerFactura = (factura) => {
@@ -500,9 +695,15 @@ export const FacturacionProvider = ({ children }) => {
     setIsVerFacturaModalOpen,
     facturaSeleccionada,
     setFacturaSeleccionada,
+    isPrevisualizacionModalOpen,
+    setIsPrevisualizacionModalOpen,
+    facturaPrevisualizacion,
+    setFacturaPrevisualizacion,
 
     // Funciones
     crearFactura,
+    confirmarCrearFactura,
+    cancelarPrevisualizacion,
     handleVerFactura,
     handleProcesarFactura,
     generarFacturaPDFFactura,

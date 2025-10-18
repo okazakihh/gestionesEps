@@ -81,9 +81,15 @@ const FacturacionPage = () => {
     setIsVerFacturaModalOpen,
     facturaSeleccionada,
     setFacturaSeleccionada,
+    isPrevisualizacionModalOpen,
+    setIsPrevisualizacionModalOpen,
+    facturaPrevisualizacion,
+    setFacturaPrevisualizacion,
 
     // Funciones
     crearFactura,
+    confirmarCrearFactura,
+    cancelarPrevisualizacion,
     handleVerFactura,
     handleProcesarFactura,
     generarFacturaPDFFactura,
@@ -119,6 +125,15 @@ const FacturacionPage = () => {
   useEffect(() => {
     loadCodigosCups();
   }, []);
+
+  // Efecto para búsqueda automática de códigos CUPS
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadCodigosCups(0, searchTerm);
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Función para cargar códigos CUPS (mantener por simplicidad, pero usar hook para lógica principal)
   const loadCodigosCups = async (page = 0, search = '') => {
@@ -177,12 +192,8 @@ const FacturacionPage = () => {
     }
   };
 
-  // Manejar búsqueda
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log('Iniciando búsqueda con término:', searchTerm);
-    loadCodigosCups(0, searchTerm);
-  };
+  // Búsqueda automática ahora se maneja en useEffect
+  // Removida función handleSearch para usar búsqueda automática
 
   // Manejar cambio de página
   const handlePageChange = (page) => {
@@ -1263,25 +1274,17 @@ const FacturacionPage = () => {
           </div>
         </div>
 
-        {/* Barra de búsqueda */}
+        {/* Barra de búsqueda automática */}
         <div className="mt-6">
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Buscar por código o nombre..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Buscar
-            </button>
-          </form>
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Buscar por código o nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
         </div>
 
         {/* Tabla */}
@@ -1810,6 +1813,179 @@ const FacturacionPage = () => {
                         Procesar Factura
                       </button>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para previsualización de factura antes de crear */}
+        {isPrevisualizacionModalOpen && facturaPrevisualizacion && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={cancelarPrevisualizacion}></div>
+              </div>
+
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-4xl">
+                {/* Header */}
+                <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-white">
+                    Previsualización de Factura
+                  </h3>
+                  <button
+                    onClick={cancelarPrevisualizacion}
+                    className="text-white hover:text-gray-200 transition-colors"
+                  >
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {/* Información general de la factura */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="text-lg font-medium text-gray-900 mb-4">Información de la Factura</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                          <strong>Número de Factura:</strong><br />
+                          <span className="text-gray-500 italic">Se asignará automáticamente</span>
+                        </div>
+                        <div>
+                          <strong>Fecha de Emisión:</strong><br />
+                          {formatDate(facturaPrevisualizacion.fechaEmision)}
+                        </div>
+                        <div>
+                          <strong>Estado:</strong><br />
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            BORRADOR
+                          </span>
+                        </div>
+                        <div>
+                          <strong>Total:</strong><br />
+                          <span className="text-lg font-bold text-green-600">
+                            {new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              minimumFractionDigits: 0
+                            }).format(facturaPrevisualizacion.total)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tabla de servicios */}
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-900 mb-4">Servicios Facturados</h4>
+                      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                                  Paciente
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
+                                  Médico
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                                  Procedimiento
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                                  Código CUPS
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                                  Fecha Atención
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                                  Valor
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {facturaPrevisualizacion.citas && facturaPrevisualizacion.citas.map((cita, index) => (
+                                <tr key={index} className="hover:bg-gray-50">
+                                  <td className="px-4 py-4 text-sm text-gray-900">
+                                    <div className="font-medium">{cita.paciente?.nombre || 'N/A'}</div>
+                                    <div className="text-xs text-gray-500">Doc: {cita.paciente?.documento || 'N/A'}</div>
+                                  </td>
+                                  <td className="px-4 py-4 text-sm text-gray-900">
+                                    <div className="break-words max-w-[180px]">{cita.medico?.nombre || 'N/A'}</div>
+                                  </td>
+                                  <td className="px-4 py-4 text-sm text-gray-500">
+                                    <div className="break-words max-w-[200px]">{cita.descripcion}</div>
+                                  </td>
+                                  <td className="px-4 py-4 text-sm text-gray-500 font-mono">
+                                    {cita.codigoCUPS}
+                                  </td>
+                                  <td className="px-4 py-4 text-sm text-gray-500">
+                                    {formatDate(cita.fecha)}
+                                  </td>
+                                  <td className="px-4 py-4 text-sm font-medium text-green-600 text-right">
+                                    {new Intl.NumberFormat('es-CO', {
+                                      style: 'currency',
+                                      currency: 'COP',
+                                      minimumFractionDigits: 0
+                                    }).format(cita.valor)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot>
+                              <tr className="bg-gray-50">
+                                <td colSpan="5" className="px-4 py-4 text-right text-sm font-medium text-gray-900">
+                                  TOTAL:
+                                </td>
+                                <td className="px-4 py-4 text-sm font-bold text-green-600 text-right">
+                                  {new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    minimumFractionDigits: 0
+                                  }).format(facturaPrevisualizacion.total)}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Información adicional */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Información de Previsualización</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
+                        <div>
+                          <strong>Citas Seleccionadas:</strong> {facturaPrevisualizacion.citas?.length || 0}
+                        </div>
+                        <div>
+                          <strong>Fecha de Creación:</strong> {formatDate(new Date().toISOString())}
+                        </div>
+                        <div>
+                          <strong>Estado:</strong> Esta factura aún no ha sido creada
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      onClick={cancelarPrevisualizacion}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmarCrearFactura}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      Confirmar y Crear Factura
+                    </button>
                   </div>
                 </div>
               </div>

@@ -109,15 +109,30 @@ export class CrearFacturaUseCase {
           throw new Error(`La cita ${citaId} no está en estado ATENDIDO`);
         }
 
+        // Obtener información del paciente
+        const pacienteInfo = await this._obtenerInformacionPaciente(cita.pacienteId);
+        
+        // Obtener información del médico
+        const medicoInfo = await this._obtenerInformacionMedico(datosJson.medicoAsignado);
+
+        // Obtener valor del CUPS si existe en datosJson
+        const valorCita = datosJson.valor || await this._obtenerValorCita(datosJson.codigoCups);
+
         // Crear objeto de detalle de cita para la factura
         const detalleCita = {
           id: cita.id,
-          paciente: await this._obtenerNombrePaciente(cita.pacienteId),
-          medico: datosJson.medicoAsignado || 'Médico no asignado',
-          procedimiento: datosJson.motivo || 'Procedimiento médico',
-          codigoCups: datosJson.codigoCups || 'N/A',
+          paciente: {
+            nombre: pacienteInfo.nombre,
+            documento: pacienteInfo.documento
+          },
+          medico: {
+            nombre: medicoInfo.nombre,
+            documento: medicoInfo.documento
+          },
+          procedimiento: datosJson.descripcion || datosJson.motivo || 'Procedimiento médico',
+          codigoCups: datosJson.codigoCups || datosJson.codigoCUPS || 'N/A',
           fechaAtencion: datosJson.fechaHoraCita,
-          valor: await this._obtenerValorCita(datosJson.codigoCups)
+          valor: valorCita
         };
 
         citasDetalladas.push(detalleCita);
@@ -155,13 +170,74 @@ export class CrearFacturaUseCase {
   }
 
   /**
-   * Obtiene el nombre del paciente
+   * Obtiene información del paciente
    * @private
    */
-  async _obtenerNombrePaciente(pacienteId) {
-    // Esta lógica se puede mejorar con un repositorio de pacientes dedicado
-    // Por ahora, devolver un placeholder
-    return `Paciente ${pacienteId}`;
+  async _obtenerInformacionPaciente(pacienteId) {
+    if (!pacienteId) {
+      return { nombre: 'Paciente no identificado', documento: 'N/A' };
+    }
+
+    try {
+      // Necesitamos acceder al repositorio de pacientes
+      // Asumiendo que tenemos acceso a través del citaMedicaRepository
+      const paciente = await this.citaMedicaRepository.pacienteRepository?.getPacienteById(pacienteId);
+
+      if (paciente && paciente.datosJson) {
+        const datosPaciente = this._parseDatosJson(paciente.datosJson);
+        const documentoPaciente = paciente.numeroDocumento || paciente.documento || 'N/A';
+
+        let nombrePaciente = 'Paciente';
+        if (datosPaciente.informacionPersonalJson) {
+          const infoPersonal = this._parseDatosJson(datosPaciente.informacionPersonalJson);
+          nombrePaciente = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim() || `Paciente ${pacienteId}`;
+        }
+
+        return {
+          nombre: nombrePaciente,
+          documento: documentoPaciente
+        };
+      }
+    } catch (error) {
+      console.warn(`Error obteniendo información del paciente ${pacienteId}:`, error);
+    }
+
+    return { nombre: `Paciente ${pacienteId}`, documento: 'N/A' };
+  }
+
+  /**
+   * Obtiene información del médico
+   * @private
+   */
+  async _obtenerInformacionMedico(medicoId) {
+    if (!medicoId) {
+      return { nombre: 'Médico no asignado', documento: 'N/A' };
+    }
+
+    try {
+      // Necesitamos acceder al repositorio de empleados
+      const medico = await this.citaMedicaRepository.empleadoRepository?.getEmpleadoById(medicoId);
+
+      if (medico && medico.datosJson) {
+        const datosMedico = this._parseDatosJson(medico.datosJson);
+        const documentoMedico = medico.numeroDocumento || medico.documento || 'N/A';
+
+        let nombreMedico = 'Médico';
+        if (datosMedico.informacionPersonal) {
+          const infoPersonal = this._parseDatosJson(datosMedico.informacionPersonal);
+          nombreMedico = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim() || `Médico ${medicoId}`;
+        }
+
+        return {
+          nombre: nombreMedico,
+          documento: documentoMedico
+        };
+      }
+    } catch (error) {
+      console.warn(`Error obteniendo información del médico ${medicoId}:`, error);
+    }
+
+    return { nombre: `Médico ${medicoId}`, documento: 'N/A' };
   }
 
   /**

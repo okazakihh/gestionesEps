@@ -80,6 +80,37 @@ export class ObtenerFacturasUseCase {
       // 4. Transformar facturas para incluir datos parseados
       const facturasTransformadas = facturasFiltradas.map(factura => {
         const facturaData = this._parseDatosJson(factura.jsonData);
+        
+        // Normalizar estructura de citas para asegurar que paciente y médico sean objetos
+        const citasNormalizadas = (facturaData.citas || []).map(cita => {
+          // Si paciente es un string, convertirlo a objeto
+          let paciente = cita.paciente;
+          if (typeof paciente === 'string') {
+            paciente = { nombre: paciente, documento: 'N/A' };
+          } else if (!paciente) {
+            paciente = { nombre: 'Paciente no identificado', documento: 'N/A' };
+          }
+
+          // Si médico es un string, convertirlo a objeto
+          let medico = cita.medico;
+          if (typeof medico === 'string') {
+            medico = { nombre: medico, documento: 'N/A' };
+          } else if (!medico) {
+            medico = { nombre: 'Médico no asignado', documento: 'N/A' };
+          }
+
+          return {
+            ...cita,
+            paciente,
+            medico,
+            // Normalizar nombres de campos
+            codigoCups: cita.codigoCups || cita.codigoCUPS || 'N/A',
+            procedimiento: cita.procedimiento || cita.descripcion || 'Procedimiento médico',
+            fechaAtencion: cita.fechaAtencion || cita.fecha,
+            valor: cita.valor || 0
+          };
+        });
+
         return {
           ...factura,
           ...facturaData,
@@ -88,7 +119,7 @@ export class ObtenerFacturasUseCase {
           fechaEmision: facturaData.fechaEmision || factura.fechaCreacion,
           estado: facturaData.estado || 'PENDIENTE',
           total: facturaData.total || 0,
-          citas: facturaData.citas || []
+          citas: citasNormalizadas
         };
       });
 

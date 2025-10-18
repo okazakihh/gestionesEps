@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from '@mantine/form';
 import { 
   TextInput, 
@@ -10,12 +10,63 @@ import {
   Paper,
   Grid,
   Fieldset,
-  PasswordInput
+  PasswordInput,
+  Loader
 } from '@mantine/core';
+import { TIPOS_DOCUMENTO, GENEROS, ROLES_SISTEMA } from '@/negocio/utils/loadHelpers';
+import { 
+  obtenerPaises, 
+  obtenerEstadosPorPais, 
+  obtenerCiudadesPorEstado 
+} from '@/data/services/geografiaApiService';
 
 const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmployee = false }) => {
+  const [paisesDisponibles, setPaisesDisponibles] = useState([]);
+  const [departamentosDisponibles, setDepartamentosDisponibles] = useState([]);
+  const [ciudadesDisponibles, setCiudadesDisponibles] = useState([]);
+  const [loadingPaises, setLoadingPaises] = useState(true);
+  const [loadingDepartamentos, setLoadingDepartamentos] = useState(false);
+  const [loadingCiudades, setLoadingCiudades] = useState(false);
   const getInitialValues = () => {
     console.log('🎯 CreateUserForm - isEditMode:', isEditMode, 'initialData:', initialData, 'isFromEmployee:', isFromEmployee);
+    
+    // Función helper para normalizar código de país
+    const normalizarCodigoPais = (pais) => {
+      if (!pais) return 'CO';
+      if (pais === 'COLOMBIA') return 'CO';
+      return pais;
+    };
+    
+    // Función helper para normalizar rol (conversión de roles obsoletos)
+    const normalizarRol = (rol) => {
+      if (!rol) return 'ADMINISTRATIVO';
+      
+      // Mapeo de roles obsoletos a roles válidos
+      const rolesObsoletos = {
+        'MEDICO': 'DOCTOR',
+        'ENFERMERO': 'AUXILIAR_MEDICO',
+        'RECEPCIONISTA': 'ADMINISTRATIVO',
+        'FACTURADOR': 'ADMINISTRATIVO',
+        'FARMACEUTICO': 'ADMINISTRATIVO',
+        'AUDITOR': 'ADMINISTRATIVO'
+      };
+      
+      // Si el rol está en la lista de obsoletos, convertirlo
+      if (rolesObsoletos[rol]) {
+        console.warn(`⚠️ Rol obsoleto detectado: "${rol}" → Convertido a: "${rolesObsoletos[rol]}"`);
+        return rolesObsoletos[rol];
+      }
+      
+      // Verificar que sea un rol válido
+      const rolesValidos = ['ADMIN', 'ADMINISTRATIVO', 'AUXILIAR_ADMINISTRATIVO', 'DOCTOR', 'AUXILIAR_MEDICO'];
+      if (!rolesValidos.includes(rol)) {
+        console.warn(`⚠️ Rol no válido detectado: "${rol}" → Usando por defecto: "ADMINISTRATIVO"`);
+        return 'ADMINISTRATIVO';
+      }
+      
+      return rol;
+    };
+    
     if (isEditMode && initialData) {
       return {
         username: initialData.username || '',
@@ -31,9 +82,9 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
         direccion: initialData.contactInfo?.direccion || '',
         ciudad: initialData.contactInfo?.ciudad || '',
         departamento: initialData.contactInfo?.departamento || '',
-        pais: initialData.contactInfo?.pais || 'COLOMBIA',
+        pais: normalizarCodigoPais(initialData.contactInfo?.pais),
         codigoPostal: initialData.contactInfo?.codigoPostal || '',
-        rol: initialData.roles?.[0] || 'ADMINISTRATIVO',
+        rol: normalizarRol(initialData.roles?.[0]),
       };
     }
     // Handle initial data for creation mode (from employee)
@@ -52,9 +103,9 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
         direccion: initialData.direccion || '',
         ciudad: initialData.ciudad || '',
         departamento: initialData.departamento || '',
-        pais: initialData.pais || 'COLOMBIA',
+        pais: normalizarCodigoPais(initialData.pais),
         codigoPostal: initialData.codigoPostal || '',
-        rol: initialData.rol || 'ADMINISTRATIVO',
+        rol: normalizarRol(initialData.rol),
       };
     }
     return {
@@ -71,7 +122,7 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
       direccion: '',
       ciudad: '',
       departamento: '',
-      pais: 'COLOMBIA',
+      pais: 'CO', // Usar código ISO2 para Colombia
       codigoPostal: '',
       rol: 'ADMINISTRATIVO',
     };
@@ -88,10 +139,75 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
       documento: (value) => (value.length < 5 ? 'El documento debe tener al menos 5 caracteres' : null),
       fechaNacimiento: (value) => (!value ? 'La fecha de nacimiento es requerida' : null),
       telefono: (value) => (value.length < 7 ? 'El teléfono debe tener al menos 7 caracteres' : null),
-      ciudad: (value) => (value.length < 2 ? 'La ciudad es requerida' : null),
-      departamento: (value) => (value.length < 2 ? 'El departamento es requerido' : null),
+      ciudad: (value) => (!value || value.toString().length < 1 ? 'La ciudad es requerida' : null),
+      departamento: (value) => (!value || value.toString().length < 1 ? 'El departamento es requerido' : null),
     },
   });
+
+  // Cargar países al montar el componente
+  useEffect(() => {
+    const cargarPaises = async () => {
+      setLoadingPaises(true);
+      const paises = await obtenerPaises();
+      setPaisesDisponibles(paises);
+      setLoadingPaises(false);
+    };
+    cargarPaises();
+  }, []);
+
+  // Cargar estados/departamentos cuando cambia el país
+  useEffect(() => {
+    const cargarEstados = async () => {
+      const codigoPais = form.values.pais;
+      
+      if (codigoPais) {
+        setLoadingDepartamentos(true);
+        const estados = await obtenerEstadosPorPais(codigoPais);
+        setDepartamentosDisponibles(estados);
+        setLoadingDepartamentos(false);
+        
+        // Limpiar departamento y ciudad si cambia el país
+        if (form.values.departamento) {
+          form.setFieldValue('departamento', '');
+        }
+        if (form.values.ciudad) {
+          form.setFieldValue('ciudad', '');
+        }
+      } else {
+        setDepartamentosDisponibles([]);
+        setCiudadesDisponibles([]);
+        form.setFieldValue('departamento', '');
+        form.setFieldValue('ciudad', '');
+      }
+    };
+    cargarEstados();
+  }, [form.values.pais]);
+
+  // Cargar ciudades cuando cambia el departamento/estado
+  useEffect(() => {
+    const cargarCiudades = async () => {
+      const codigoPais = form.values.pais;
+      const codigoEstado = form.values.departamento;
+      
+      if (codigoPais && codigoEstado) {
+        setLoadingCiudades(true);
+        const ciudades = await obtenerCiudadesPorEstado(codigoPais, codigoEstado);
+        setCiudadesDisponibles(ciudades);
+        setLoadingCiudades(false);
+        
+        // Si la ciudad actual no está en la lista del nuevo estado, limpiarla
+        if (form.values.ciudad && !ciudades.find(c => c.value === form.values.ciudad)) {
+          form.setFieldValue('ciudad', '');
+        }
+      } else {
+        setCiudadesDisponibles([]);
+        if (form.values.ciudad) {
+          form.setFieldValue('ciudad', '');
+        }
+      }
+    };
+    cargarCiudades();
+  }, [form.values.departamento]);
 
   const handleSubmit = (values) => {
     const formattedData = {
@@ -181,12 +297,7 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
               <Grid.Col span={4}>
                 <Select
                   label="Tipo de Documento"
-                  data={[
-                    { value: 'CC', label: 'Cédula de Ciudadanía' },
-                    { value: 'CE', label: 'Cédula de Extranjería' },
-                    { value: 'PA', label: 'Pasaporte' },
-                    { value: 'TI', label: 'Tarjeta de Identidad' },
-                  ]}
+                  data={TIPOS_DOCUMENTO}
                   {...form.getInputProps('tipoDocumento')}
                 />
               </Grid.Col>
@@ -209,11 +320,7 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
               <Grid.Col span={12}>
                 <Select
                   label="Género"
-                  data={[
-                    { value: 'M', label: 'Masculino' },
-                    { value: 'F', label: 'Femenino' },
-                    { value: 'O', label: 'Otro' },
-                  ]}
+                  data={GENEROS}
                   {...form.getInputProps('genero')}
                 />
               </Grid.Col>
@@ -232,32 +339,39 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
                 />
               </Grid.Col>
               <Grid.Col span={6}>
-                <TextInput
-                  label="Ciudad"
-                  placeholder="Ingrese ciudad"
+                <Select
+                  label="País"
+                  placeholder="Seleccione país"
+                  data={paisesDisponibles}
+                  searchable
                   required
-                  {...form.getInputProps('ciudad')}
+                  disabled={loadingPaises}
+                  rightSection={loadingPaises ? <Loader size="xs" /> : null}
+                  {...form.getInputProps('pais')}
                 />
               </Grid.Col>
               <Grid.Col span={6}>
-                <TextInput
-                  label="Departamento"
-                  placeholder="Ingrese departamento"
+                <Select
+                  label="Departamento/Estado/Provincia"
+                  placeholder={form.values.pais ? "Seleccione departamento/estado" : "Primero seleccione un país"}
+                  data={departamentosDisponibles}
+                  searchable
                   required
+                  disabled={!form.values.pais || loadingDepartamentos}
+                  rightSection={loadingDepartamentos ? <Loader size="xs" /> : null}
                   {...form.getInputProps('departamento')}
                 />
               </Grid.Col>
               <Grid.Col span={6}>
                 <Select
-                  label="País"
-                  data={[
-                    { value: 'COLOMBIA', label: 'Colombia' },
-                    { value: 'VENEZUELA', label: 'Venezuela' },
-                    { value: 'ECUADOR', label: 'Ecuador' },
-                    { value: 'PERU', label: 'Perú' },
-                    { value: 'BRASIL', label: 'Brasil' },
-                  ]}
-                  {...form.getInputProps('pais')}
+                  label="Ciudad"
+                  placeholder={form.values.departamento ? "Seleccione ciudad" : "Primero seleccione un departamento"}
+                  data={ciudadesDisponibles}
+                  searchable
+                  required
+                  disabled={!form.values.departamento || loadingCiudades}
+                  rightSection={loadingCiudades ? <Loader size="xs" /> : null}
+                  {...form.getInputProps('ciudad')}
                 />
               </Grid.Col>
               <Grid.Col span={8}>
@@ -283,13 +397,7 @@ const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmplo
               <Grid.Col span={12}>
                 <Select
                   label="Rol"
-                  data={[
-                    { value: 'ADMIN', label: 'Admin' },
-                    { value: 'ADMINISTRATIVO', label: 'Administrativo' },
-                    { value: 'AUXILIAR_ADMINISTRATIVO', label: 'Auxiliar Administrativo' },
-                    { value: 'DOCTOR', label: 'Doctor' },
-                    { value: 'AUXILIAR_MEDICO', label: 'Auxiliar Médico' },
-                  ]}
+                  data={ROLES_SISTEMA}
                   {...form.getInputProps('rol')}
                 />
               </Grid.Col>
