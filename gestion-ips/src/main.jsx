@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './styles/globals.css'
-import { AuthProvider } from './context/AuthContext.jsx'
-import { ClinicalHistoryProvider } from './context/ClinicalHistoryContext.jsx'
-import { registerServiceWorker } from './utils/serviceWorker.js'
+import { AuthProvider } from './data/context/AuthContext.jsx'
+import { ClinicalHistoryProvider } from './data/context/ClinicalHistoryContext.jsx'
+import { registerServiceWorker } from './negocio/utils/utils/serviceWorker.js'
 
 // Registrar Service Worker al iniciar la aplicación
 registerServiceWorker();
