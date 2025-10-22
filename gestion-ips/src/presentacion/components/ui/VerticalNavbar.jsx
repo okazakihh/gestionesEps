@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
 import { Link, useLocation } from 'react-router-dom';
-import { canAccessModule, PERMISSIONS } from '../../../negocio/utils/utils/permissions.js';
+import { canAccessModule, PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
 
 const navItems = [
   {

@@ -7,7 +7,7 @@ import PatientDetailModal from './PatientDetailModal.jsx';
 import Swal from 'sweetalert2';
 import { ActionIcon, Group } from '@mantine/core';
 import { useAuth } from '../../../../data/context/AuthContext.jsx';
-import { hasPermission, PERMISSIONS } from '../../../../negocio/utils/utils/permissions.js';
+import { hasPermission, PERMISSIONS } from '../../../../negocio/utils/auth/permissions.js';
 
 const AgendaModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();

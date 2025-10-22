@@ -5,7 +5,7 @@ import App from './App.jsx'
 import './styles/globals.css'
 import { AuthProvider } from './data/context/AuthContext.jsx'
 import { ClinicalHistoryProvider } from './data/context/ClinicalHistoryContext.jsx'
-import { registerServiceWorker } from './negocio/utils/utils/serviceWorker.js'
+import { registerServiceWorker } from './serviceWorker.js'
 
 // Registrar Service Worker al iniciar la aplicación
 registerServiceWorker();

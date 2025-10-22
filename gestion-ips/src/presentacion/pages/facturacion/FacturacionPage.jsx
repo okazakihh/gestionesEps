@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import { codigosCupsApiService, pacientesApiService, facturacionApiService } from '../../../data/services/pacientesApiService.js';
 import { empleadosApiService } from '../../../data/services/empleadosApiService.js';
-import { useServiceWorker } from '../../../negocio/utils/utils/serviceWorker.js';
+import { useServiceWorker } from '../../../serviceWorker.js';
 
 import { PencilIcon, PlusIcon, FunnelIcon, CalendarDaysIcon, DocumentArrowDownIcon, PrinterIcon } from '@heroicons/react/24/outline';
 import Swal from 'sweetalert2'

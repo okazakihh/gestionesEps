@@ -14,7 +14,17 @@ import {
 import { ActionIcon, Group } from '@mantine/core';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
-import { hasPermission, PERMISSIONS } from '../../../negocio/utils/utils/permissions.js';
+import { hasPermission, PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
+
+// Importar custom hooks
+import { useAppointmentManagement } from '../../../negocio/hooks/useAppointmentManagement.js';
+import { usePatientManagement } from '../../../negocio/hooks/usePatientManagement.js';
+import { useCalendarManagement } from '../../../negocio/hooks/useCalendarManagement.js';
+
+// Importar servicios de negocio
+import { appointmentService } from '../../../negocio/services/appointmentService.js';
+
+// Importar componentes
 import PatientList from '../../components/pacientes/PatientDashboard/PatientList.jsx';
 import PatientDetailModal from '../../components/pacientes/PatientDashboard/PatientDetailModal.jsx';
 import CreatePatientModal from '../../components/pacientes/PatientDashboard/CreatePatientModal.jsx';
@@ -24,950 +34,105 @@ import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboar
 import CalendarWidget from '../../components/pacientes/PatientDashboard/CalendarWidget.jsx';
 import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/CreateHistoriaClinicaModal.jsx';
 import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/CreateConsultaMedicaModal.jsx';
-import { empleadosApiService } from '../../../data/services/empleadosApiService.js';
-import { pacientesApiService, consultasApiService, historiasClinicasApiService } from '../../../data/services/pacientesApiService.js';
 
 const PatientDashboard = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] = useState(false);
-  const [prefillDocumentNumber, setPrefillDocumentNumber] = useState('');
-  const [editingPatient, setEditingPatient] = useState(null);
-  const [isPatientSearchModalOpen, setIsPatientSearchModalOpen] = useState(false);
-  const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
-  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState(null);
-  const [selectedSlotForAppointment, setSelectedSlotForAppointment] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [isAppointmentDetailModalOpen, setIsAppointmentDetailModalOpen] = useState(false);
-  const [selectedAppointmentForDetail, setSelectedAppointmentForDetail] = useState(null);
-  const [appointmentDetailPatientInfo, setAppointmentDetailPatientInfo] = useState(null);
-  const [loadingAppointmentDetailPatient, setLoadingAppointmentDetailPatient] = useState(false);
+   const navigate = useNavigate();
+   const { user } = useAuth();
 
-  // Estados para los modales de atención médica
-  const [currentAppointment, setCurrentAppointment] = useState(null);
-  const [isHistoriaModalOpen, setIsHistoriaModalOpen] = useState(false);
-  const [isConsultaModalOpen, setIsConsultaModalOpen] = useState(false);
-  const [historiaClinicaId, setHistoriaClinicaId] = useState(null);
+   // Usar custom hooks para manejar estado
+   const appointmentManagement = useAppointmentManagement();
+   const patientManagement = usePatientManagement();
+   const calendarManagement = useCalendarManagement();
 
-  // Estados para el calendario y citas
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [medicos, setMedicos] = useState([]);
-  const [allDoctorAppointments, setAllDoctorAppointments] = useState({});
-  const [loadingMedicos, setLoadingMedicos] = useState(false);
-  const [loadingAppointments, setLoadingAppointments] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState({});
+   // Estados locales restantes (mínimos)
+   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Modal handlers
-  const handlePatientClick = (patientId) => {
-    setSelectedPatientId(patientId);
-    setIsModalOpen(true);
-  };
+   // Estados para filtros (mover a hook después)
+   const [searchTerm, setSearchTerm] = useState('');
+   const [filterStatus, setFilterStatus] = useState('all');
+   const [showFilters, setShowFilters] = useState(false);
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPatientId(null);
-  };
+  // Modal handlers usando los hooks
+  const handlePatientClick = patientManagement.handlePatientClick;
+
+  const handleCloseModal = patientManagement.handleCloseModal;
 
   const handleScheduleAppointment = (patientId, patientName) => {
-    setSelectedPatientForAppointment({ id: patientId, name: patientName });
-    setIsAppointmentModalOpen(true);
+    const patientData = patientManagement.handleScheduleAppointment(patientId, patientName);
+    appointmentManagement.setSelectedPatientForAppointment(patientData);
+    appointmentManagement.setIsAppointmentModalOpen(true);
   };
 
   const handleCloseAppointmentModal = () => {
-    setIsAppointmentModalOpen(false);
-    setSelectedPatientForAppointment(null);
+    appointmentManagement.setIsAppointmentModalOpen(false);
+    appointmentManagement.setSelectedPatientForAppointment(null);
   };
 
   const handleSlotClick = (slot, doctorId = null) => {
     if (!slot.available) return;
 
-    setSelectedSlotForAppointment({
-      ...slot,
-      date: selectedDate,
-      doctorId: doctorId
-    });
-    setIsPatientSearchModalOpen(true);
+    const slotData = calendarManagement.handleSlotClick(slot, doctorId);
+    appointmentManagement.setSelectedSlotForAppointment(slotData);
+    patientManagement.setIsPatientSearchModalOpen(true);
   };
 
   const handlePatientSelected = (patient, patientName) => {
-    setSelectedPatientForAppointment({
-      id: patient.id,
-      name: patientName,
-      slot: selectedSlotForAppointment
+    const patientData = patientManagement.handlePatientSelected(patient, patientName);
+    appointmentManagement.setSelectedPatientForAppointment({
+      ...patientData,
+      slot: appointmentManagement.selectedSlotForAppointment
     });
-    setIsAppointmentModalOpen(true);
+    appointmentManagement.setIsAppointmentModalOpen(true);
   };
 
-  const handleCreatePatient = (documentNumber) => {
-    // Close search modal and open create patient modal with document pre-filled
-    setIsPatientSearchModalOpen(false);
-    setPrefillDocumentNumber(documentNumber);
-    setIsCreatePatientModalOpen(true);
-  };
+  const handleCreatePatient = patientManagement.handleCreatePatient;
 
-  const handleEditPatient = (patient) => {
-    // Set editing mode and open create patient modal with patient data
-    setEditingPatient(patient);
-    setIsCreatePatientModalOpen(true);
-  };
+  const handleEditPatient = patientManagement.handleEditPatient;
 
   const handleClosePatientSearchModal = () => {
-    setIsPatientSearchModalOpen(false);
-    setSelectedSlotForAppointment(null);
+    patientManagement.handleClosePatientSearchModal();
+    appointmentManagement.setSelectedSlotForAppointment(null);
   };
 
-  const handleAppointmentCreated = () => {
-    // Refresh appointment data for all doctors and date
-    if (selectedDate) {
-      loadAllDoctorsData(selectedDate);
-    }
-    console.log('Cita creada exitosamente - datos actualizados');
-  };
+  const handleAppointmentCreated = appointmentManagement.handleAppointmentCreated;
 
-  // Funciones para manejar acciones de citas
-  const getAvailableStatusTransitions = (currentStatus) => {
-    const transitions = {
-      'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'],
-      'EN_SALA': ['ATENDIDO'], // Allow ATENDIDO from EN_SALA for medical roles
-      'ATENDIDO': [],
-      'NO_SE_PRESENTO': [],
-      'CANCELADA': []
-    };
-    return transitions[currentStatus] || [];
-  };
+  // Funciones delegadas a los hooks
+  const getAvailableStatusTransitions = appointmentService.getAvailableStatusTransitions;
+  const getStatusLabel = appointmentService.getStatusLabel;
+  const updateAppointmentStatus = appointmentManagement.updateAppointmentStatus;
 
-  const getStatusLabel = (status) => {
-    const labels = {
-      'PROGRAMADO': 'Programado',
-      'EN_SALA': 'En Sala',
-      'ATENDIDO': 'Atendido',
-      'NO_SE_PRESENTO': 'No se Presentó',
-      'CANCELADA': 'Cancelada'
-    };
-    return labels[status] || status;
-  };
+  const handleViewAppointmentDetail = appointmentManagement.handleViewAppointmentDetail;
 
-  const updateAppointmentStatus = async (appointmentId, newStatus) => {
-    try {
-      setUpdatingStatus(prev => ({ ...prev, [appointmentId]: true }));
+  const handleAtendidoClick = appointmentManagement.handleAtendidoClick;
 
-      const response = await pacientesApiService.actualizarEstadoCita(appointmentId, newStatus);
+  // Funciones delegadas a servicios
+  const formatDate = appointmentService.formatDate;
 
-      // Update the appointment in the local state (allDoctorAppointments structure)
-      setAllDoctorAppointments(prevDoctorAppointments => {
-        const updatedDoctorAppointments = { ...prevDoctorAppointments };
+  const handleOpenCreatePatientModal = patientManagement.handleOpenCreatePatientModal;
 
-        // Find and update the appointment in the grouped structure
-        Object.keys(updatedDoctorAppointments).forEach(doctorId => {
-          const doctorData = updatedDoctorAppointments[doctorId];
-          const appointmentIndex = doctorData.appointments.findIndex(apt => apt.id === appointmentId);
-
-          if (appointmentIndex !== -1) {
-            // Update the appointment status in the datosJson
-            const updatedAppointment = { ...doctorData.appointments[appointmentIndex] };
-            const appointmentData = JSON.parse(updatedAppointment.datosJson || '{}');
-            appointmentData.estado = newStatus;
-            updatedAppointment.datosJson = JSON.stringify(appointmentData);
-            updatedAppointment.status = newStatus;
-
-            // Update the appointment in the array
-            doctorData.appointments[appointmentIndex] = updatedAppointment;
-          }
-        });
-
-        return updatedDoctorAppointments;
-      });
-
-      // Show success message with SweetAlert2
-      const statusLabels = {
-        'EN_SALA': 'En Sala',
-        'ATENDIDO': 'Atendido',
-        'NO_SE_PRESENTO': 'No se Presentó',
-        'CANCELADA': 'Cancelada'
-      };
-
-      await Swal.fire({
-        icon: 'success',
-        title: '¡Estado Actualizado!',
-        text: `La cita ha sido cambiada a "${statusLabels[newStatus] || newStatus}" exitosamente.`,
-        confirmButtonColor: '#10B981',
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      });
-
-      console.log(`Estado de cita ${appointmentId} actualizado a ${newStatus}`);
-
-      // Si se canceló la cita, recargar los datos del calendario
-      if (newStatus === 'CANCELADA') {
-        if (selectedDate) {
-          loadAllDoctorsData(selectedDate);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating appointment status:', error);
-
-      // Show error message with SweetAlert2
-      const errorMessage = error.message || 'Error desconocido';
-
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error al Actualizar Estado',
-        text: `No se pudo actualizar el estado de la cita. ${errorMessage}`,
-        confirmButtonColor: '#EF4444',
-        footer: 'Por favor, verifica que la transición de estado sea válida.'
-      });
-    } finally {
-      setUpdatingStatus(prev => ({ ...prev, [appointmentId]: false }));
-    }
-  };
-
-  const handleViewAppointmentDetail = async (appointment) => {
-    setSelectedAppointmentForDetail(appointment);
-    setIsAppointmentDetailModalOpen(true);
-
-    // Load patient information
-    if (appointment.pacienteId) {
-      try {
-        setLoadingAppointmentDetailPatient(true);
-        const patientInfo = await getAppointmentPatientInfo(appointment);
-        setAppointmentDetailPatientInfo(patientInfo);
-      } catch (error) {
-        console.error('Error loading patient info for appointment detail:', error);
-        setAppointmentDetailPatientInfo({
-          nombre: 'Error al cargar',
-          telefono: 'N/A',
-          documento: 'N/A',
-          estado: 'N/A'
-        });
-      } finally {
-        setLoadingAppointmentDetailPatient(false);
-      }
-    }
-  };
-
-  const handleCloseAppointmentDetailModal = () => {
-    setIsAppointmentDetailModalOpen(false);
-    setSelectedAppointmentForDetail(null);
-    setAppointmentDetailPatientInfo(null);
-    setLoadingAppointmentDetailPatient(false);
-  };
-
-  // Función para verificar si el paciente tiene historia clínica
-  const checkPatientHasHistoriaClinica = async (pacienteId) => {
-    try {
-      const historia = await historiasClinicasApiService.getHistoriaClinicaByPaciente(pacienteId);
-      return historia ? historia.id : null;
-    } catch (error) {
-      // 404 significa que no tiene historia clínica, lo cual es normal
-      if (error.response && error.response.status === 404) {
-        console.log('Paciente no tiene historia clínica:', pacienteId);
-        return null;
-      }
-      // Para otros errores, los propagamos
-      throw error;
-    }
-  };
-
-  // Handlers para los modals de atención médica
-  const handleHistoriaClinicaCreated = async (historiaClinica) => {
-    console.log('Historia clínica creada:', historiaClinica);
-
-    // La actualización del estado de la cita ya se hace en el modal
-    // No es necesario hacerlo aquí nuevamente
-
-    // La historia clínica ya incluye los datos de la primera consulta
-    // No es necesario abrir el modal de consulta médica
-    setIsHistoriaModalOpen(false);
-    setCurrentAppointment(null);
-    setHistoriaClinicaId(null);
-  };
-
-  const handleConsultaMedicaCreated = async (consulta) => {
-    console.log('Consulta médica creada:', consulta);
-
-    // La cita ya debería estar marcada como ATENDIDO desde la creación de la historia clínica
-    // Pero por si acaso el flujo es diferente (consulta sin historia nueva), actualizamos el estado
-    if (currentAppointment) {
-      await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
-    }
-
-    // Cerrar modales y resetear estado
-    setIsConsultaModalOpen(false);
-    setCurrentAppointment(null);
-    setHistoriaClinicaId(null);
-  };
-
-  const handleCloseHistoriaModal = () => {
-    setIsHistoriaModalOpen(false);
-    setCurrentAppointment(null);
-    setHistoriaClinicaId(null);
-  };
-
-  const handleCloseConsultaModal = () => {
-    setIsConsultaModalOpen(false);
-    setCurrentAppointment(null);
-    setHistoriaClinicaId(null);
-  };
-
-  const handleAtendidoClick = async (appointment) => {
-    setCurrentAppointment(appointment);
-
-    // Verificar el estado actual de la cita
-    const currentStatus = appointment.datosJson ? JSON.parse(appointment.datosJson).estado : 'PROGRAMADO';
-
-    // Actualizar el estado de la cita a EN_SALA solo si está en PROGRAMADO
-    if (currentStatus === 'PROGRAMADO') {
-      await updateAppointmentStatus(appointment.id, 'EN_SALA');
-    }
-
-    // Verificar si el paciente tiene historia clínica
-    const historiaId = await checkPatientHasHistoriaClinica(appointment.pacienteId);
-    setHistoriaClinicaId(historiaId);
-
-    if (historiaId) {
-      // Tiene historia clínica, mostrar formulario de consulta
-      setIsConsultaModalOpen(true);
-    } else {
-      // No tiene historia clínica, mostrar formulario de historia clínica
-      setIsHistoriaModalOpen(true);
-    }
-  };
-
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-
-    try {
-      let date;
-
-      // Handle LocalDateTime serialized as array [year, month, day, hour, minute, second, nanosecond]
-      if (Array.isArray(dateString) && dateString.length >= 6) {
-        // LocalDateTime comes as [2024, 12, 15, 10, 30, 0, 0]
-        date = new Date(dateString[0], dateString[1] - 1, dateString[2], dateString[3], dateString[4], dateString[5]);
-      } else if (typeof dateString === 'string') {
-        // Try different parsing strategies
-        if (dateString.includes('T')) {
-          // ISO format with time: "2024-12-15T10:30:00.000+00:00" or "2024-12-15T10:30"
-          date = new Date(dateString);
-        } else if (dateString.includes('-') && dateString.length === 10) {
-          // Date only format: "2024-12-15"
-          date = new Date(dateString + 'T00:00:00');
-        } else {
-          // Other string formats
-          date = new Date(dateString);
-        }
-      } else if (dateString instanceof Date) {
-        date = dateString;
-      } else {
-        date = new Date(dateString);
-      }
-
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return 'Fecha inválida';
-      }
-
-      return date.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      console.error('Error formatting date:', dateString, error);
-      return 'Error en fecha';
-    }
-  };
-
-  // Función para obtener información detallada de la cita
-  const getAppointmentInfo = (appointment) => {
-    try {
-      if (appointment.datosJson) {
-        const appointmentData = typeof appointment.datosJson === 'string' ? JSON.parse(appointment.datosJson) : appointment.datosJson;
-
-        // Extraer información del CUPS si existe
-        const informacionCups = appointmentData.informacionCups || null;
-
-        // Handle different possible estado formats
-        let estado = appointmentData.estado || 'PROGRAMADO';
-
-        // Normalize estado to uppercase for consistency
-        if (typeof estado === 'string') {
-          estado = estado.toUpperCase();
-        }
-
-        // Map common variations to standard values
-        const estadoMapping = {
-          'PROGRAMADO': 'PROGRAMADO',
-          'PROGRAMADA': 'PROGRAMADO',
-          'EN_SALA': 'EN_SALA',
-          'EN SALA': 'EN_SALA',
-          'ATENDIDO': 'ATENDIDO',
-          'ATENDIDA': 'ATENDIDO',
-          'NO_SE_PRESENTO': 'NO_SE_PRESENTO',
-          'NO SE PRESENTO': 'NO_SE_PRESENTO',
-          'NO SE PRESENTÓ': 'NO_SE_PRESENTO'
-        };
-
-        estado = estadoMapping[estado] || estado;
-
-        // Extraer especialidad del CUPS (tiene prioridad) o del médico asignado
-        let especialidad = 'N/A';
-        if (informacionCups && informacionCups.especialidad) {
-          especialidad = informacionCups.especialidad;
-        } else if (appointmentData.medicoAsignado) {
-          // El médico asignado puede incluir la especialidad: "Nombre - Especialidad"
-          const medicoParts = appointmentData.medicoAsignado.split(' - ');
-          if (medicoParts.length > 1) {
-            especialidad = medicoParts[1];
-          }
-        }
-
-        return {
-          fechaHoraCita: appointmentData.fechaHoraCita || null,
-          motivo: appointmentData.motivo || 'N/A',
-          medicoAsignado: appointmentData.medicoAsignado || 'N/A',
-          estado: estado,
-          notas: appointmentData.notas || 'Sin notas',
-          especialidad: especialidad,
-          tipoCita: appointmentData.tipoCita || 'General',
-          codigoCups: appointmentData.codigoCups || null,
-          informacionCups: informacionCups,
-          duracion: appointmentData.duracion || 30 // Duración en minutos
-        };
-      }
-    } catch (error) {
-      console.error('Error parsing appointment data for appointment', appointment.id, ':', error);
-    }
-
-    return {
-      fechaHoraCita: null,
-      motivo: 'N/A',
-      medicoAsignado: 'N/A',
-      estado: 'PROGRAMADO',
-      notas: 'Sin notas',
-      especialidad: 'N/A',
-      tipoCita: 'General',
-      codigoCups: null,
-      informacionCups: null,
-      duracion: 30
-    };
-  };
-
-  // Función para obtener información del paciente de la cita
-  const getAppointmentPatientInfo = async (appointment) => {
-    if (!appointment.pacienteId) {
-      return {
-        nombre: 'N/A',
-        telefono: 'N/A',
-        documento: 'N/A',
-        estado: 'N/A'
-      };
-    }
-
-    try {
-      const patientResponse = await pacientesApiService.getPacienteById(appointment.pacienteId);
-      const patientInfo = patientResponse;
-
-      if (patientInfo.datosJson) {
-        const parsedData = typeof patientInfo.datosJson === 'string' ? JSON.parse(patientInfo.datosJson) : patientInfo.datosJson;
-
-        // Try nested format first (existing patients)
-        if (parsedData.datosJson) {
-          const secondLevel = typeof parsedData.datosJson === 'string' ? JSON.parse(parsedData.datosJson) : parsedData.datosJson;
-          const infoPersonal = secondLevel.informacionPersonal || {};
-          const infoContacto = secondLevel.informacionContacto || {};
-
-          return {
-            nombre: `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim() || 'N/A',
-            telefono: infoContacto.telefono || 'N/A',
-            documento: `${patientInfo.tipoDocumento || ''} ${patientInfo.numeroDocumento || ''}`.trim() || 'N/A',
-            estado: patientInfo.activo ? 'Activo' : 'Inactivo'
-          };
-        }
-
-        // Try flat format (newly created patients)
-        if (parsedData.informacionPersonalJson || parsedData.informacionContactoJson) {
-          const infoPersonal = parsedData.informacionPersonalJson ? JSON.parse(parsedData.informacionPersonalJson) : {};
-          const infoContacto = parsedData.informacionContactoJson ? JSON.parse(parsedData.informacionContactoJson) : {};
-
-          return {
-            nombre: `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim() || 'N/A',
-            telefono: infoContacto.telefono || 'N/A',
-            documento: `${patientInfo.tipoDocumento || ''} ${patientInfo.numeroDocumento || ''}`.trim() || 'N/A',
-            estado: patientInfo.activo ? 'Activo' : 'Inactivo'
-          };
-        }
-      }
-    } catch (error) {
-      console.error('Error loading patient data for appointment:', appointment.id, error);
-    }
-
-    // Fallback
-    return {
-      nombre: appointment.patient || 'N/A',
-      telefono: 'N/A',
-      documento: 'N/A',
-      estado: 'N/A'
-    };
-  };
-
-  const handleOpenCreatePatientModal = () => {
-    setIsCreatePatientModalOpen(true);
-  };
-
-  const handleCloseCreatePatientModal = () => {
-    setIsCreatePatientModalOpen(false);
-    setPrefillDocumentNumber('');
-    setEditingPatient(null);
-  };
+  const handleCloseCreatePatientModal = patientManagement.handleCloseCreatePatientModal;
 
   const handlePatientCreated = async (patientData) => {
-    // Refresh patient list
-    setRefreshTrigger(prev => prev + 1);
-    console.log('Paciente procesado exitosamente - lista actualizada', patientData);
+    const result = await patientManagement.handlePatientCreated(patientData, appointmentManagement.selectedSlotForAppointment);
 
-    // Only show appointment creation confirmation for new patients (not when editing)
-    if (!editingPatient && selectedSlotForAppointment) {
-      const result = await Swal.fire({
-        title: '¿Crear cita médica?',
-        text: `El paciente ${patientData.nombreCompleto || 'ha sido creado exitosamente'}. ¿Desea agendar una cita médica para este paciente en el horario seleccionado?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#10B981',
-        cancelButtonColor: '#6B7280',
-        confirmButtonText: 'Sí, crear cita',
-        cancelButtonText: 'No, gracias'
-      });
-
-      if (result.isConfirmed) {
-        // Create patient name from patient data
-        let patientName = 'Paciente';
-        try {
-          if (patientData.datosJson) {
-            const parsedData = JSON.parse(patientData.datosJson);
-            if (parsedData.datosJson) {
-              const innerData = JSON.parse(parsedData.datosJson);
-              const personalInfo = innerData.informacionPersonal || {};
-              patientName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim() || `Paciente ${patientData.id}`;
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing patient name:', error);
-          patientName = `Paciente ${patientData.id}`;
-        }
-
-        // Proceed with appointment creation
-        setSelectedPatientForAppointment({
-          id: patientData.id,
-          name: patientName,
-          slot: selectedSlotForAppointment
-        });
-        setIsAppointmentModalOpen(true);
-      } else {
-        // Clear the selected slot since they don't want to create appointment
-        setSelectedSlotForAppointment(null);
-      }
-    }
-
-    // Clear editing state after processing
-    setEditingPatient(null);
-  };
-
-  const handleOpenAgendaModal = () => {
-    setIsAgendaModalOpen(true);
-  };
-
-  const handleCloseAgendaModal = () => {
-    setIsAgendaModalOpen(false);
-  };
-
-  // Función para calcular horas disponibles considerando duración
-  const calculateAvailableSlots = (appointments, selectedDate) => {
-    const slots = [];
-    const now = new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const selectedDateOnly = new Date(selectedDate);
-    selectedDateOnly.setHours(0, 0, 0, 0);
-
-    const isToday = selectedDateOnly.getTime() === today.getTime();
-
-    // Generar slots cada 20 minutos de 6:00 AM a 8:00 PM
-    const startHour = 6; // 6:00 AM
-    const endHour = 20; // 8:00 PM
-    const intervalMinutes = 20;
-
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += intervalMinutes) {
-        // Para la última hora (8:00 PM), solo incluir si es exactamente 8:00
-        if (hour === endHour && minute > 0) break;
-
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const ampm = hour < 12 ? 'AM' : 'PM';
-        const label = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
-
-        // Si es hoy, verificar que la hora sea futura
-        if (isToday) {
-          const slotDateTime = new Date(selectedDate);
-          slotDateTime.setHours(hour, minute, 0, 0);
-
-          // Solo incluir slots que estén al menos 1 hora en el futuro
-          const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-          if (slotDateTime <= oneHourFromNow) {
-            continue; // Skip this slot as it's too soon
-          }
-        }
-
-        slots.push({
-          time: timeString,
-          label: label
-        });
-      }
-    }
-
-    return slots.map(slot => {
-      const slotStartTime = new Date(`${selectedDate.toDateString()} ${slot.time}`);
-
-      // Verificar si este slot específico está ocupado
-      const isOccupied = appointments.some(appointment => {
-        try {
-          const appointmentData = JSON.parse(appointment.datosJson || '{}');
-          const appointmentStart = new Date(appointmentData.fechaHoraCita);
-
-          // Verificar si la cita comienza exactamente en este slot
-          const appointmentHour = appointmentStart.getHours();
-          const appointmentMinute = appointmentStart.getMinutes();
-          const slotHour = slotStartTime.getHours();
-          const slotMinute = slotStartTime.getMinutes();
-
-          return appointmentHour === slotHour && appointmentMinute === slotMinute;
-        } catch (error) {
-          console.error('Error parsing appointment for slot calculation:', error);
-          return false;
-        }
-      });
-
-      return {
-        ...slot,
-        available: !isOccupied
-      };
-    });
-  };
-
-  // Funciones para el calendario y citas
-  const loadMedicos = async () => {
-    try {
-      setLoadingMedicos(true);
-      console.log('Loading doctors, current user:', user);
-      const response = await empleadosApiService.getEmpleados({ size: 1000 });
-      const empleados = response.content || [];
-      console.log('All employees loaded:', empleados.length);
-
-      // Filter employees that are medical doctors
-      let medicosFiltrados = empleados.filter(empleado => {
-        try {
-          const datosCompletos = JSON.parse(empleado.jsonData || '{}');
-          if (datosCompletos.jsonData) {
-            const datosInternos = JSON.parse(datosCompletos.jsonData);
-            const informacionLaboral = datosInternos.informacionLaboral || {};
-            return informacionLaboral.tipoPersonal === 'MEDICO' && informacionLaboral.tipoMedico === 'DOCTOR';
-          }
-          return false;
-        } catch (error) {
-          console.error('Error parsing employee data:', error);
-          return false;
-        }
-      });
-      console.log('Filtered doctors:', medicosFiltrados.length);
-
-      // If user is a doctor, filter to show only their own information
-      if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
-        console.log('User is a doctor, filtering to show only their info');
-        console.log('User documento:', user.documento, 'User ID:', user.id);
-
-        // Find the doctor that matches the current user
-        const currentDoctor = medicosFiltrados.find(medico => {
-          try {
-            const datosCompletos = JSON.parse(medico.jsonData || '{}');
-            const matchByDocumento = datosCompletos.numeroDocumento === user.documento;
-            const matchById = medico.id === user.id;
-            console.log('Checking doctor:', medico.id, 'documento:', datosCompletos.numeroDocumento, 'matchByDocumento:', matchByDocumento, 'matchById:', matchById);
-            return matchByDocumento || matchById;
-          } catch (error) {
-            console.error('Error checking doctor match:', error);
-            return false;
-          }
-        });
-
-        console.log('Current doctor found:', currentDoctor);
-
-        if (currentDoctor) {
-          medicosFiltrados = [currentDoctor];
-        } else {
-          medicosFiltrados = [];
-        }
-      }
-
-      console.log('Final doctors list:', medicosFiltrados);
-      setMedicos(medicosFiltrados);
-    } catch (error) {
-      console.error('Error loading doctors:', error);
-    } finally {
-      setLoadingMedicos(false);
+    if (result.shouldCreateAppointment) {
+      appointmentManagement.setSelectedPatientForAppointment(result.patientData);
+      appointmentManagement.setIsAppointmentModalOpen(true);
+    } else {
+      appointmentManagement.setSelectedSlotForAppointment(null);
     }
   };
 
-  const loadAllDoctorsData = async (date) => {
-    if (!date) return;
+  const handleOpenAgendaModal = patientManagement.handleOpenAgendaModal;
 
-    try {
-      setLoadingAppointments(true);
+  const handleCloseAgendaModal = patientManagement.handleCloseAgendaModal;
 
-      // Load all appointments
-      const appointmentsResponse = await pacientesApiService.getCitas({ size: 1000 });
-      const allAppointments = appointmentsResponse.content || [];
+  // Función delegada al hook de calendario
+  const calculateAvailableSlots = calendarManagement.calculateAvailableSlots;
 
-      // Filter by date if specified
-      let filteredAppointments = allAppointments;
-      if (date) {
-        // Create date range for the selected day (start to end of day)
-        const selectedDateStart = new Date(date);
-        selectedDateStart.setHours(0, 0, 0, 0);
-
-        const selectedDateEnd = new Date(date);
-        selectedDateEnd.setHours(23, 59, 59, 999);
-
-        filteredAppointments = allAppointments.filter(appointment => {
-          try {
-            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-            const appointmentDateTime = appointmentData.fechaHoraCita;
-            if (!appointmentDateTime) return false;
-
-            // Handle different date formats from backend
-            let appointmentDate;
-            if (Array.isArray(appointmentDateTime) && appointmentDateTime.length >= 6) {
-              // LocalDateTime as array [year, month, day, hour, minute, second, nanosecond]
-              appointmentDate = new Date(appointmentDateTime[0], appointmentDateTime[1] - 1, appointmentDateTime[2], appointmentDateTime[3], appointmentDateTime[4], appointmentDateTime[5]);
-            } else {
-              appointmentDate = new Date(appointmentDateTime);
-            }
-
-            // Check if appointment date falls within the selected day
-            return appointmentDate >= selectedDateStart && appointmentDate <= selectedDateEnd;
-          } catch (error) {
-            console.error('Error parsing appointment date:', error);
-            return false;
-          }
-        });
-      } else {
-        // If no date selected, show only future appointments (next 30 days)
-        const today = new Date();
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(today.getDate() + 30);
-
-        filteredAppointments = allAppointments.filter(appointment => {
-          try {
-            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-            const appointmentDateTime = appointmentData.fechaHoraCita;
-            if (!appointmentDateTime) return false;
-
-            const appointmentDate = new Date(appointmentDateTime);
-            return appointmentDate >= today && appointmentDate <= thirtyDaysFromNow;
-          } catch (error) {
-            console.error('Error parsing appointment date:', error);
-            return false;
-          }
-        });
-      }
-
-      // Get unique patient IDs from filtered appointments
-      const patientIds = [...new Set(filteredAppointments
-        .map(apt => apt.pacienteId)
-        .filter(id => id))];
-
-      // Load patient details for these IDs
-      const patientsData = [];
-      if (patientIds.length > 0) {
-        for (const patientId of patientIds) {
-          try {
-            const patientResponse = await pacientesApiService.getPacienteById(patientId);
-            patientsData.push(patientResponse);
-          } catch (error) {
-            console.error(`Error loading patient ${patientId}:`, error);
-          }
-        }
-      }
-
-      // Create a map of doctor names to doctor objects
-      const doctorMap = {};
-      medicos.forEach(medico => {
-        const doctorName = getNombreCompletoMedico(medico);
-        doctorMap[doctorName] = medico;
-      });
-
-      // Initialize grouped appointments for all doctors
-      const groupedAppointments = {};
-      medicos.forEach(medico => {
-        const doctorName = getNombreCompletoMedico(medico);
-        groupedAppointments[medico.id] = {
-          doctor: medico,
-          doctorName: doctorName,
-          appointments: []
-        };
-      });
-
-      // Group appointments by doctor
-      console.log('Processing appointments for date:', selectedDate);
-      filteredAppointments.forEach(appointment => {
-        try {
-          const appointmentData = JSON.parse(appointment.datosJson || '{}');
-          const medicoAsignado = appointmentData.medicoAsignado;
-          console.log('Processing appointment:', appointment.id, 'assigned to:', medicoAsignado);
-
-          if (medicoAsignado && doctorMap[medicoAsignado]) {
-            const doctor = doctorMap[medicoAsignado];
-            const doctorId = doctor.id;
-            console.log('Doctor found for appointment:', doctorId);
-
-            // For doctors, only show appointments assigned to them
-            if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
-              console.log('User is doctor, checking if appointment is assigned to them');
-              // Check if this appointment is assigned to the current doctor
-              const isAssignedToCurrentDoctor = (() => {
-                try {
-                  const datosCompletos = JSON.parse(doctor.jsonData || '{}');
-                  const matchByDocumento = datosCompletos.numeroDocumento === user.documento;
-                  const matchById = doctor.id === user.id;
-                  console.log('Doctor documento:', datosCompletos.numeroDocumento, 'User documento:', user.documento, 'Match:', matchByDocumento);
-                  console.log('Doctor ID:', doctor.id, 'User ID:', user.id, 'Match:', matchById);
-                  return matchByDocumento || matchById;
-                } catch (error) {
-                  console.error('Error checking doctor match for appointment:', error);
-                  return false;
-                }
-              })();
-
-              console.log('Is appointment assigned to current doctor?', isAssignedToCurrentDoctor);
-
-              if (!isAssignedToCurrentDoctor) {
-                console.log('Skipping appointment - not assigned to current doctor');
-                return; // Skip this appointment
-              }
-            }
-
-            // Get patient name
-            let patientName = appointmentData.motivo || 'Paciente';
-            if (appointment.pacienteId) {
-              const patientData = patientsData.find(p => p.id == appointment.pacienteId);
-              if (patientData) {
-                try {
-                  const datosCompletos = JSON.parse(patientData.datosJson || '{}');
-                  const personalInfo = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
-                  const fullName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim();
-                  if (fullName && fullName !== ' ') {
-                    patientName = fullName;
-                  }
-                } catch (error) {
-                  console.error('Error parsing patient name for appointment:', appointment.id, error);
-                }
-              }
-            }
-
-            // Handle different date formats for display
-            let appointmentDateTime;
-            if (Array.isArray(appointmentData.fechaHoraCita) && appointmentData.fechaHoraCita.length >= 6) {
-              // LocalDateTime as array [year, month, day, hour, minute, second, nanosecond]
-              appointmentDateTime = new Date(appointmentData.fechaHoraCita[0], appointmentData.fechaHoraCita[1] - 1, appointmentData.fechaHoraCita[2], appointmentData.fechaHoraCita[3], appointmentData.fechaHoraCita[4], appointmentData.fechaHoraCita[5]);
-            } else {
-              appointmentDateTime = new Date(appointmentData.fechaHoraCita);
-            }
-
-            groupedAppointments[doctorId].appointments.push({
-              id: appointment.id,
-              time: appointmentDateTime.toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              }),
-              patient: patientName,
-              status: appointmentData.estado || 'PROGRAMADA',
-              pacienteId: appointment.pacienteId,
-              datosJson: appointment.datosJson,
-              fechaCreacion: appointment.fechaCreacion
-            });
-          }
-        } catch (error) {
-          console.error('Error processing appointment:', appointment.id, error);
-        }
-      });
-
-      setAllDoctorAppointments(groupedAppointments);
-
-    } catch (error) {
-      console.error('Error loading all doctors data:', error);
-      setAllDoctorAppointments({});
-    } finally {
-      setLoadingAppointments(false);
-    }
-  };
-  const handleDoctorChange = (doctorId) => {
-    setSelectedDoctor(doctorId);
-    setAppointments([]);
-    setDoctorPatients([]);
-    if (doctorId) {
-      loadDoctorData(doctorId, selectedDate);
-    }
-  };
-
-  const getNombreCompletoMedico = (medico) => {
-    try {
-      const datosCompletos = JSON.parse(medico.jsonData || '{}');
-      if (datosCompletos.jsonData) {
-        const datosInternos = JSON.parse(datosCompletos.jsonData);
-        const informacionPersonal = datosInternos.informacionPersonal || {};
-        const informacionLaboral = datosInternos.informacionLaboral || {};
-
-        const primerNombre = informacionPersonal.primerNombre || '';
-        const segundoNombre = informacionPersonal.segundoNombre || '';
-        const primerApellido = informacionPersonal.primerApellido || '';
-        const segundoApellido = informacionPersonal.segundoApellido || '';
-        const especialidad = informacionLaboral.especialidad || '';
-
-        const nombreCompleto = `${primerNombre} ${segundoNombre} ${primerApellido} ${segundoApellido}`.trim();
-        return especialidad ? `${nombreCompleto} - ${especialidad}` : nombreCompleto;
-      }
-      return `Doctor ID: ${medico.id}`;
-    } catch (error) {
-      console.error('Error getting doctor name:', error);
-      return `Doctor ID: ${medico.id}`;
-    }
-  };
-
-  const getDoctorInitials = (doctorName) => {
-    if (!doctorName) return '??';
-    const parts = doctorName.split(' ');
-    const firstInitial = parts[0]?.charAt(0)?.toUpperCase() || '?';
-    const lastInitial = parts[parts.length - 1]?.charAt(0)?.toUpperCase() || '?';
-    return `${firstInitial}${lastInitial}`;
-  };
-
-  // Load doctors on component mount
-  useEffect(() => {
-    console.log('PatientDashboard useEffect - loading medicos, user:', user);
-    loadMedicos();
-  }, [user]); // Add user as dependency to reload when user changes
-
+  // Funciones delegadas a los hooks
+  const getDoctorInitials = calendarManagement.getDoctorInitials;
+  const getNombreCompletoMedico = appointmentManagement.getNombreCompletoMedico;
 
 
   return (
@@ -980,11 +145,7 @@ const PatientDashboard = () => {
           <div className="lg:col-span-1">
             {/* Calendar */}
             <CalendarWidget
-              onDaySelect={(date) => {
-                setSelectedDate(date);
-                // Reload all doctors data for the selected date
-                loadAllDoctorsData(date);
-              }}
+              onDaySelect={calendarManagement.handleDaySelect}
               onNewPatient={handleOpenCreatePatientModal}
               onOpenAgenda={handleOpenAgendaModal}
             />
@@ -993,11 +154,11 @@ const PatientDashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Appointment Availability Card */}
-            {selectedDate && (
+            {calendarManagement.selectedDate && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <ClockIcon className="h-5 w-5 mr-2" />
-                  Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
+                  Agenda Médica - {calendarManagement.selectedDate.toLocaleDateString('es-ES')}
                   {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO') && (
                     <span className="ml-2 text-sm font-normal text-blue-600">(Vista Personal)</span>
                   )}
@@ -1014,7 +175,7 @@ const PatientDashboard = () => {
                       }
                     </h4>
 
-                    {loadingAppointments ? (
+                    {calendarManagement.loadingAppointments ? (
                       <div className="text-center py-4">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                         <p className="mt-2 text-xs text-gray-500">Cargando horarios...</p>
@@ -1022,16 +183,16 @@ const PatientDashboard = () => {
                     ) : (
                       <div className="overflow-x-auto overflow-y-auto max-h-96">
                         <div className="grid grid-cols-5 gap-4 pb-4" style={{ minWidth: 'max-content' }}>
-                          {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) => {
+                          {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) => {
                             const { doctor, doctorName, appointments: doctorAppointments } = doctorData;
-                            const availableSlots = calculateAvailableSlots(doctorAppointments, selectedDate);
+                            const availableSlots = calendarManagement.calculateAvailableSlots(doctorAppointments, calendarManagement.selectedDate);
 
                             return (
                               <div key={doctorId} className="border border-gray-200 rounded-lg p-3 min-w-72 flex-shrink-0">
                                 <div className="flex items-center space-x-2 mb-2">
                                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                                     <span className="text-xs font-medium text-blue-800">
-                                      {getDoctorInitials(doctorName)}
+                                      {calendarManagement.getDoctorInitials(doctorName)}
                                     </span>
                                   </div>
                                   <div>
@@ -1068,17 +229,17 @@ const PatientDashboard = () => {
                   <div>
                     <h4 className="text-sm font-medium text-gray-900 mb-3">
                       {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
-                        ? `Mis Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
-                        : `Todas las Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
+                        ? `Mis Citas Programadas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
+                        : `Todas las Citas Programadas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
                       }
                     </h4>
 
-                    {loadingAppointments ? (
+                    {calendarManagement.loadingAppointments ? (
                       <div className="text-center py-4">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                         <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
                       </div>
-                    ) : Object.values(allDoctorAppointments).some(doctorData =>
+                    ) : Object.values(calendarManagement.allDoctorAppointments).some(doctorData =>
                         doctorData.appointments.some(appointment => {
                           try {
                             const appointmentData = JSON.parse(appointment.datosJson || '{}');
@@ -1089,7 +250,7 @@ const PatientDashboard = () => {
                         })
                       ) ? (
                       <div className="space-y-2 max-h-80 overflow-y-auto">
-                        {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) =>
+                        {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) =>
                           doctorData.appointments
                             .filter(appointment => {
                               try {
@@ -1104,7 +265,7 @@ const PatientDashboard = () => {
                               <div className="flex items-center space-x-3">
                                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                                   <span className="text-xs font-medium text-blue-800">
-                                    {getDoctorInitials(doctorData.doctorName)}
+                                    {calendarManagement.getDoctorInitials(doctorData.doctorName)}
                                   </span>
                                 </div>
                                 <ClockIcon className="h-4 w-4 text-gray-400" />
@@ -1200,7 +361,7 @@ const PatientDashboard = () => {
                                     </svg>
                                   </ActionIcon>
                                   {/* Status Change Buttons */}
-                                  {getAvailableStatusTransitions((() => {
+                                  {appointmentService.getAvailableStatusTransitions((() => {
                                     try {
                                       const appointmentData = JSON.parse(appointment.datosJson || '{}');
                                       return appointmentData.estado || 'PROGRAMADO';
@@ -1241,15 +402,15 @@ const PatientDashboard = () => {
                                           });
 
                                           if (result.isConfirmed) {
-                                            updateAppointmentStatus(appointment.id, newStatus);
+                                            appointmentManagement.updateAppointmentStatus(appointment.id, newStatus);
                                           }
                                         } else {
-                                          updateAppointmentStatus(appointment.id, newStatus);
+                                          appointmentManagement.updateAppointmentStatus(appointment.id, newStatus);
                                         }
                                       }}
-                                      disabled={updatingStatus[appointment.id]}
-                                      title={getStatusLabel(newStatus)}
-                                      loading={updatingStatus[appointment.id]}
+                                      disabled={appointmentManagement.updatingStatus[appointment.id]}
+                                      title={appointmentService.getStatusLabel(newStatus)}
+                                      loading={appointmentManagement.updatingStatus[appointment.id]}
                                     >
                                       {newStatus === 'EN_SALA' && (
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1289,7 +450,7 @@ const PatientDashboard = () => {
               </div>
             )}
 
-            {!selectedDate && (
+            {!calendarManagement.selectedDate && (
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="text-center py-8">
                   <CalendarDaysIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
@@ -1387,43 +548,43 @@ const PatientDashboard = () => {
 
         {/* Patient Detail Modal */}
         <PatientDetailModal
-          patientId={selectedPatientId}
-          isOpen={isModalOpen}
+          patientId={patientManagement.selectedPatientId}
+          isOpen={patientManagement.isModalOpen}
           onClose={handleCloseModal}
         />
 
         {/* Create Patient Modal */}
         <CreatePatientModal
-          isOpen={isCreatePatientModalOpen}
+          isOpen={patientManagement.isCreatePatientModalOpen}
           onClose={handleCloseCreatePatientModal}
           onPatientCreated={handlePatientCreated}
-          prefillDocumentNumber={prefillDocumentNumber}
-          editingPatient={editingPatient}
+          prefillDocumentNumber={patientManagement.prefillDocumentNumber}
+          editingPatient={patientManagement.editingPatient}
         />
 
         {/* Patient Search Modal */}
         <PatientSearchModal
-          isOpen={isPatientSearchModalOpen}
+          isOpen={patientManagement.isPatientSearchModalOpen}
           onClose={handleClosePatientSearchModal}
           onPatientSelected={handlePatientSelected}
           onCreatePatient={handleCreatePatient}
-          selectedSlot={selectedSlotForAppointment}
-          selectedDoctor={selectedSlotForAppointment?.doctorId ? getNombreCompletoMedico(medicos.find(m => m.id == selectedSlotForAppointment.doctorId)) : null}
+          selectedSlot={appointmentManagement.selectedSlotForAppointment}
+          selectedDoctor={appointmentManagement.selectedSlotForAppointment?.doctorId ? getNombreCompletoMedico(calendarManagement.medicos.find(m => m.id == appointmentManagement.selectedSlotForAppointment.doctorId)) : null}
         />
 
         {/* Agenda Modal */}
         <AgendaModal
-          isOpen={isAgendaModalOpen}
+          isOpen={patientManagement.isAgendaModalOpen}
           onClose={handleCloseAgendaModal}
         />
 
         {/* Schedule Appointment Modal */}
         <ScheduleAppointmentModal
-          patientId={selectedPatientForAppointment?.id}
-          patientName={selectedPatientForAppointment?.name}
-          selectedSlot={selectedPatientForAppointment?.slot}
-          selectedDoctor={selectedPatientForAppointment?.slot?.doctorId ? getNombreCompletoMedico(medicos.find(m => m.id == selectedPatientForAppointment.slot.doctorId)) : null}
-          isOpen={isAppointmentModalOpen}
+          patientId={appointmentManagement.selectedPatientForAppointment?.id}
+          patientName={appointmentManagement.selectedPatientForAppointment?.name}
+          selectedSlot={appointmentManagement.selectedPatientForAppointment?.slot}
+          selectedDoctor={appointmentManagement.selectedPatientForAppointment?.slot?.doctorId ? getNombreCompletoMedico(calendarManagement.medicos.find(m => m.id == appointmentManagement.selectedPatientForAppointment.slot.doctorId)) : null}
+          isOpen={appointmentManagement.isAppointmentModalOpen}
           onClose={handleCloseAppointmentModal}
           onAppointmentCreated={handleAppointmentCreated}
         />
@@ -1431,53 +592,53 @@ const PatientDashboard = () => {
       </div>
 
       {/* Modal de Historia Clínica */}
-      {isHistoriaModalOpen && currentAppointment && (
+      {appointmentManagement.isHistoriaModalOpen && appointmentManagement.currentAppointment && (
         <CreateHistoriaClinicaModal
           isOpen={true}
-          onClose={handleCloseHistoriaModal}
-          onHistoriaCreated={handleHistoriaClinicaCreated}
-          pacienteId={currentAppointment.pacienteId}
-          citaId={currentAppointment.id}
+          onClose={appointmentManagement.handleCloseHistoriaModal}
+          onHistoriaCreated={appointmentManagement.handleHistoriaClinicaCreated}
+          pacienteId={appointmentManagement.currentAppointment.pacienteId}
+          citaId={appointmentManagement.currentAppointment.id}
           citaData={{
-            ...getAppointmentInfo(currentAppointment),
-            ...getAppointmentPatientInfo(currentAppointment)
+            ...appointmentService.getAppointmentInfo(appointmentManagement.currentAppointment),
+            ...appointmentService.getAppointmentPatientInfo(appointmentManagement.currentAppointment)
           }}
         />
       )}
 
       {/* Modal de Consulta Médica */}
-      {isConsultaModalOpen && currentAppointment && (
+      {appointmentManagement.isConsultaModalOpen && appointmentManagement.currentAppointment && (
         <CreateConsultaMedicaModal
           isOpen={true}
-          onClose={handleCloseConsultaModal}
-          onConsultaCreated={handleConsultaMedicaCreated}
-          historiaClinicaId={historiaClinicaId}
+          onClose={appointmentManagement.handleCloseConsultaModal}
+          onConsultaCreated={appointmentManagement.handleConsultaMedicaCreated}
+          historiaClinicaId={appointmentManagement.historiaClinicaId}
           citaData={{
-            ...getAppointmentInfo(currentAppointment),
-            ...getAppointmentPatientInfo(currentAppointment)
+            ...appointmentService.getAppointmentInfo(appointmentManagement.currentAppointment),
+            ...appointmentService.getAppointmentPatientInfo(appointmentManagement.currentAppointment)
           }}
         />
       )}
 
       {/* Modal de Detalle de Cita */}
-      {isAppointmentDetailModalOpen && selectedAppointmentForDetail && (() => {
-        const appointmentInfo = getAppointmentInfo(selectedAppointmentForDetail);
+      {appointmentManagement.isAppointmentDetailModalOpen && appointmentManagement.selectedAppointmentForDetail && (() => {
+        const appointmentInfo = appointmentService.getAppointmentInfo(appointmentManagement.selectedAppointmentForDetail);
 
         return (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={handleCloseAppointmentDetailModal}></div>
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={appointmentManagement.handleCloseAppointmentDetailModal}></div>
               </div>
 
               <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-4xl">
                 {/* Header */}
                 <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-white">
-                    Detalle de la Cita #{selectedAppointmentForDetail.id}
+                    Detalle de la Cita #{appointmentManagement.selectedAppointmentForDetail.id}
                   </h3>
                   <button
-                    onClick={handleCloseAppointmentDetailModal}
+                    onClick={appointmentManagement.handleCloseAppointmentDetailModal}
                     className="text-white hover:text-gray-200 transition-colors"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -1510,7 +671,7 @@ const PatientDashboard = () => {
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Creada: {formatDate(selectedAppointmentForDetail.fechaCreacion)}
+                        Creada: {formatDate(appointmentManagement.selectedAppointmentForDetail.fechaCreacion)}
                       </div>
                     </div>
 
@@ -1520,31 +681,31 @@ const PatientDashboard = () => {
                         <UserIcon className="h-5 w-5 mr-2 text-gray-600" />
                         Información del Paciente
                       </h4>
-                      {loadingAppointmentDetailPatient ? (
+                      {appointmentManagement.loadingAppointmentDetailPatient ? (
                         <div className="flex items-center justify-center py-4">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                           <span className="ml-2 text-sm text-gray-600">Cargando información del paciente...</span>
                         </div>
-                      ) : appointmentDetailPatientInfo ? (
+                      ) : appointmentManagement.appointmentDetailPatientInfo ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm font-medium text-gray-900 mb-1">Nombre Completo</p>
-                            <p className="text-sm text-gray-600">{appointmentDetailPatientInfo.nombre}</p>
+                            <p className="text-sm text-gray-600">{appointmentManagement.appointmentDetailPatientInfo.nombre}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 mb-1">Documento</p>
-                            <p className="text-sm text-gray-600">{appointmentDetailPatientInfo.documento}</p>
+                            <p className="text-sm text-gray-600">{appointmentManagement.appointmentDetailPatientInfo.documento}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 mb-1">Teléfono</p>
-                            <p className="text-sm text-gray-600">{appointmentDetailPatientInfo.telefono}</p>
+                            <p className="text-sm text-gray-600">{appointmentManagement.appointmentDetailPatientInfo.telefono}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 mb-1">Estado</p>
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              appointmentDetailPatientInfo.estado === 'Activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              appointmentManagement.appointmentDetailPatientInfo.estado === 'Activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>
-                              {appointmentDetailPatientInfo.estado}
+                              {appointmentManagement.appointmentDetailPatientInfo.estado}
                             </span>
                           </div>
                         </div>
@@ -1639,16 +800,16 @@ const PatientDashboard = () => {
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
                       <div className="flex flex-wrap gap-2">
-                        {getAvailableStatusTransitions(appointmentInfo.estado)
+                        {appointmentService.getAvailableStatusTransitions(appointmentInfo.estado)
                           .filter(newStatus => newStatus !== 'ATENDIDO') // Excluir el botón ATENDIDO
                           .map((newStatus) => (
                           <button
                             key={newStatus}
                             onClick={() => {
-                              updateAppointmentStatus(selectedAppointmentForDetail.id, newStatus);
-                              handleCloseAppointmentDetailModal();
+                              appointmentManagement.updateAppointmentStatus(appointmentManagement.selectedAppointmentForDetail.id, newStatus);
+                              appointmentManagement.handleCloseAppointmentDetailModal();
                             }}
-                            disabled={updatingStatus[selectedAppointmentForDetail.id]}
+                            disabled={appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id]}
                             className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
                               newStatus === 'EN_SALA'
                                 ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
@@ -1661,7 +822,7 @@ const PatientDashboard = () => {
                                 : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
-                            {updatingStatus[selectedAppointmentForDetail.id] ? (
+                            {appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id] ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                             ) : null}
                             {newStatus === 'PROGRAMADO' ? 'Programado' :
@@ -1679,7 +840,7 @@ const PatientDashboard = () => {
                   {/* Footer */}
                   <div className="mt-6 flex justify-end">
                     <button
-                      onClick={handleCloseAppointmentDetailModal}
+                      onClick={appointmentManagement.handleCloseAppointmentDetailModal}
                       className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       Cerrar
