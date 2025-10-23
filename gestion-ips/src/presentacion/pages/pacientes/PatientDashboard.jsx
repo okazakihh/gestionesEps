@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import {
-  UserGroupIcon,
+  
   MagnifyingGlassIcon,
   FunnelIcon,
-  PlusIcon,
+  
   UserIcon,
   ClockIcon,
   CalendarDaysIcon,
@@ -26,10 +26,10 @@ import { appointmentService } from '../../../negocio/services/appointmentService
 
 // Importar componentes
 import PatientList from '../../components/pacientes/PatientDashboard/PatientList.jsx';
-import PatientDetailModal from '../../components/pacientes/PatientDashboard/PatientDetailModal.jsx';
+import PatientDetailModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientDetailModal.jsx';
 import CreatePatientModal from '../../components/pacientes/PatientDashboard/CreatePatientModal.jsx';
-import PatientSearchModal from '../../components/pacientes/PatientDashboard/PatientSearchModal.jsx';
-import AgendaModal from '../../components/pacientes/PatientDashboard/AgendaModal.jsx';
+import PatientSearchModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientSearchModal.jsx';
+import AgendaModal from '../../components/pacientes/PatientDashboard/agendaModal/AgendaModal.jsx';
 import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/ScheduleAppointmentModal.jsx';
 import CalendarWidget from '../../components/pacientes/PatientDashboard/CalendarWidget.jsx';
 import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/CreateHistoriaClinicaModal.jsx';
@@ -94,7 +94,11 @@ const PatientDashboard = () => {
     appointmentManagement.setSelectedSlotForAppointment(null);
   };
 
-  const handleAppointmentCreated = appointmentManagement.handleAppointmentCreated;
+  const handleAppointmentCreated = async () => {
+    await appointmentManagement.handleAppointmentCreated();
+    // Forzar recarga de datos del calendario después de crear cita
+    await calendarManagement.handleDaySelect(calendarManagement.selectedDate);
+  };
 
   // Funciones delegadas a los hooks
   const getAvailableStatusTransitions = appointmentService.getAvailableStatusTransitions;
@@ -386,26 +390,63 @@ const PatientDashboard = () => {
                                       }
                                       size="sm"
                                       onClick={async () => {
-                                        if (newStatus === 'ATENDIDO') {
-                                          handleAtendidoClick(appointment);
-                                        } else if (newStatus === 'CANCELADA') {
-                                          // Confirmación especial para cancelar
-                                          const result = await Swal.fire({
+                                        // Confirmación para todos los cambios de estado
+                                        const statusLabels = {
+                                          'EN_SALA': 'En Sala',
+                                          'ATENDIDO': 'Atendido',
+                                          'NO_SE_PRESENTO': 'No se Presentó',
+                                          'CANCELADA': 'Cancelada'
+                                        };
+
+                                        const confirmMessages = {
+                                          'EN_SALA': {
+                                            title: '¿Cambiar estado a "En Sala"?',
+                                            text: 'El paciente está siendo atendido en la sala de espera.',
+                                            icon: 'question',
+                                            confirmButtonColor: '#F59E0B'
+                                          },
+                                          'ATENDIDO': {
+                                            title: '¿Marcar cita como atendida?',
+                                            text: 'Esta acción creará automáticamente la historia clínica y consulta médica si no existen. ¿Desea continuar?',
+                                            icon: 'question',
+                                            confirmButtonColor: '#10B981'
+                                          },
+                                          'NO_SE_PRESENTO': {
+                                            title: '¿Marcar como "No se Presentó"?',
+                                            text: 'El paciente no asistió a la cita programada.',
+                                            icon: 'warning',
+                                            confirmButtonColor: '#EF4444'
+                                          },
+                                          'CANCELADA': {
                                             title: '¿Cancelar Cita?',
                                             text: 'Esta acción liberará el espacio en el calendario y la cita ya no podrá ser modificada. ¿Estás seguro?',
                                             icon: 'warning',
+                                            confirmButtonColor: '#EF4444'
+                                          }
+                                        };
+
+                                        const confirmConfig = confirmMessages[newStatus];
+                                        if (confirmConfig) {
+                                          const result = await Swal.fire({
+                                            ...confirmConfig,
                                             showCancelButton: true,
-                                            confirmButtonColor: '#EF4444',
                                             cancelButtonColor: '#6B7280',
-                                            confirmButtonText: 'Sí, cancelar cita',
-                                            cancelButtonText: 'No, mantener cita'
+                                            confirmButtonText: newStatus === 'ATENDIDO' ? 'Sí, marcar como atendida' :
+                                                              newStatus === 'CANCELADA' ? 'Sí, cancelar cita' :
+                                                              newStatus === 'NO_SE_PRESENTO' ? 'Sí, confirmar' :
+                                                              'Sí, cambiar estado',
+                                            cancelButtonText: 'Cancelar'
                                           });
 
                                           if (result.isConfirmed) {
-                                            appointmentManagement.updateAppointmentStatus(appointment.id, newStatus);
+                                            if (newStatus === 'ATENDIDO') {
+                                              await handleAtendidoClick(appointment);
+                                            } else {
+                                              await appointmentManagement.updateAppointmentStatus(appointment.id, newStatus);
+                                            }
+                                            // Forzar recarga de datos del calendario después de cambiar estado
+                                            await calendarManagement.handleDaySelect(calendarManagement.selectedDate);
                                           }
-                                        } else {
-                                          appointmentManagement.updateAppointmentStatus(appointment.id, newStatus);
                                         }
                                       }}
                                       disabled={appointmentManagement.updatingStatus[appointment.id]}
@@ -797,44 +838,103 @@ const PatientDashboard = () => {
                     )}
 
                     {/* Acciones disponibles */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {appointmentService.getAvailableStatusTransitions(appointmentInfo.estado)
-                          .filter(newStatus => newStatus !== 'ATENDIDO') // Excluir el botón ATENDIDO
-                          .map((newStatus) => (
-                          <button
-                            key={newStatus}
-                            onClick={() => {
-                              appointmentManagement.updateAppointmentStatus(appointmentManagement.selectedAppointmentForDetail.id, newStatus);
-                              appointmentManagement.handleCloseAppointmentDetailModal();
-                            }}
-                            disabled={appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id]}
-                            className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
-                              newStatus === 'EN_SALA'
-                                ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
-                                : newStatus === 'ATENDIDO'
-                                ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                                : newStatus === 'NO_SE_PRESENTO'
-                                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                                : newStatus === 'CANCELADA'
-                                ? 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
-                                : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                          >
-                            {appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id] ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            ) : null}
-                            {newStatus === 'PROGRAMADO' ? 'Programado' :
-                             newStatus === 'EN_SALA' ? 'En Sala' :
-                             newStatus === 'ATENDIDO' ? 'Atendido' :
-                             newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                             newStatus === 'CANCELADA' ? 'Cancelar Cita' :
-                             newStatus}
-                          </button>
-                        ))}
+                    {appointmentInfo.estado !== 'CANCELADA' && appointmentInfo.estado !== 'NO_SE_PRESENTO' && appointmentInfo.estado !== 'ATENDIDO' && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-3">Acciones Disponibles</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {appointmentService.getAvailableStatusTransitions(appointmentInfo.estado)
+                            .filter(newStatus => newStatus !== 'ATENDIDO') // Excluir el botón ATENDIDO
+                            .map((newStatus) => (
+                            <button
+                              key={newStatus}
+                              onClick={async () => {
+                                // Confirmación para todos los cambios de estado
+                                const statusLabels = {
+                                  'EN_SALA': 'En Sala',
+                                  'ATENDIDO': 'Atendido',
+                                  'NO_SE_PRESENTO': 'No se Presentó',
+                                  'CANCELADA': 'Cancelada'
+                                };
+
+                                const confirmMessages = {
+                                  'EN_SALA': {
+                                    title: '¿Cambiar estado a "En Sala"?',
+                                    text: 'El paciente está siendo atendido en la sala de espera.',
+                                    icon: 'question',
+                                    confirmButtonColor: '#F59E0B'
+                                  },
+                                  'ATENDIDO': {
+                                    title: '¿Marcar cita como atendida?',
+                                    text: 'Esta acción creará automáticamente la historia clínica y consulta médica si no existen. ¿Desea continuar?',
+                                    icon: 'question',
+                                    confirmButtonColor: '#10B981'
+                                  },
+                                  'NO_SE_PRESENTO': {
+                                    title: '¿Marcar como "No se Presentó"?',
+                                    text: 'El paciente no asistió a la cita programada.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#EF4444'
+                                  },
+                                  'CANCELADA': {
+                                    title: '¿Cancelar Cita?',
+                                    text: 'Esta acción liberará el espacio en el calendario y la cita ya no podrá ser modificada. ¿Estás seguro?',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#EF4444'
+                                  }
+                                };
+
+                                const confirmConfig = confirmMessages[newStatus];
+                                if (confirmConfig) {
+                                  const result = await Swal.fire({
+                                    ...confirmConfig,
+                                    showCancelButton: true,
+                                    cancelButtonColor: '#6B7280',
+                                    confirmButtonText: newStatus === 'ATENDIDO' ? 'Sí, marcar como atendida' :
+                                                      newStatus === 'CANCELADA' ? 'Sí, cancelar cita' :
+                                                      newStatus === 'NO_SE_PRESENTO' ? 'Sí, confirmar' :
+                                                      'Sí, cambiar estado',
+                                    cancelButtonText: 'Cancelar'
+                                  });
+
+                                  if (result.isConfirmed) {
+                                    if (newStatus === 'ATENDIDO') {
+                                      await handleAtendidoClick(appointmentManagement.selectedAppointmentForDetail);
+                                    } else {
+                                      await appointmentManagement.updateAppointmentStatus(appointmentManagement.selectedAppointmentForDetail.id, newStatus);
+                                    }
+                                    // Forzar recarga de datos del calendario después de cambiar estado
+                                    await calendarManagement.handleDaySelect(calendarManagement.selectedDate);
+                                    appointmentManagement.handleCloseAppointmentDetailModal();
+                                  }
+                                }
+                              }}
+                              disabled={appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id]}
+                              className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200 ${
+                                newStatus === 'EN_SALA'
+                                  ? 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                                  : newStatus === 'ATENDIDO'
+                                  ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                                  : newStatus === 'NO_SE_PRESENTO'
+                                  ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                  : newStatus === 'CANCELADA'
+                                  ? 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
+                                  : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {appointmentManagement.updatingStatus[appointmentManagement.selectedAppointmentForDetail.id] ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              ) : null}
+                              {newStatus === 'PROGRAMADO' ? 'Programado' :
+                               newStatus === 'EN_SALA' ? 'En Sala' :
+                               newStatus === 'ATENDIDO' ? 'Atendido' :
+                               newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                               newStatus === 'CANCELADA' ? 'Cancelar Cita' :
+                               newStatus}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Footer */}

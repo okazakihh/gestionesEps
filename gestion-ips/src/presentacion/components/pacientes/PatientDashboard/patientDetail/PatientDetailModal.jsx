@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { pacientesApiService, historiasClinicasApiService, consultasApiService } from '../../../../data/services/pacientesApiService.js';
+import { pacientesApiService, historiasClinicasApiService, consultasApiService } from '../../../../../data/services/pacientesApiService.js';
 
 // Importar componentes de modal reutilizables
-import BaseModal from '../../ui/BaseModal.jsx';
-import ModalContent from '../../ui/ModalContent.jsx';
-import ModalFooter from '../../ui/ModalFooter.jsx';
+import BaseModal from '../../../ui/BaseModal.jsx';
+import ModalContent from '../../../ui/ModalContent.jsx';
+import ModalFooter from '../../../ui/ModalFooter.jsx';
 
 // Importar utilidades
-import { parsePatientData } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
-import { printHistoriaClinica, printConsulta } from '../../../../negocio/utils/pacientes/printUtils.js';
+import { parsePatientData } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
+import { printHistoriaClinica, printConsulta } from '../../../../../negocio/utils/pacientes/printUtils.js';
 
 // Importar componentes extraídos
 import PatientModalHeader from './PatientModalHeader.jsx';

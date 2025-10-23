@@ -104,9 +104,9 @@ export const useAppointmentManagement = () => {
 
       console.log(`Estado de cita ${appointmentId} actualizado a ${newStatus}`);
 
-      // Si se canceló la cita, recargar los datos del calendario
-      if (newStatus === 'CANCELADA' && selectedDate) {
-        loadAllDoctorsData(selectedDate);
+      // Si se cambió el estado de la cita, recargar los datos del calendario para actualizar los slots disponibles
+      if (selectedDate) {
+        await loadAllDoctorsData(selectedDate);
       }
     } catch (error) {
       console.error('Error updating appointment status:', error);
@@ -148,6 +148,13 @@ export const useAppointmentManagement = () => {
     } else {
       // No tiene historia clínica, mostrar formulario de historia clínica
       setIsHistoriaModalOpen(true);
+    }
+  };
+
+  // Función para forzar recarga de datos del calendario
+  const refreshCalendarData = async () => {
+    if (selectedDate) {
+      await loadAllDoctorsData(selectedDate);
     }
   };
 
@@ -512,10 +519,10 @@ export const useAppointmentManagement = () => {
   };
 
   // Handlers para modales
-  const handleAppointmentCreated = () => {
+  const handleAppointmentCreated = async () => {
     // Refresh appointment data for all doctors and date
     if (selectedDate) {
-      loadAllDoctorsData(selectedDate);
+      await loadAllDoctorsData(selectedDate);
     }
     console.log('Cita creada exitosamente - datos actualizados');
   };
@@ -631,6 +638,7 @@ export const useAppointmentManagement = () => {
     handleHistoriaClinicaCreated,
     handleConsultaMedicaCreated,
     handleCloseHistoriaModal,
-    handleCloseConsultaModal
+    handleCloseConsultaModal,
+    refreshCalendarData
   };
 };

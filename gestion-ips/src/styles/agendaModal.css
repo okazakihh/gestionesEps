@@ -1,0 +1,771 @@
+/* Agenda Modal Styles - Simplified CSS Classes */
+
+/* Layout and Spacing */
+.agenda-modal-container {
+  @apply space-y-6;
+}
+
+.agenda-modal-section {
+  @apply space-y-6;
+}
+
+.agenda-modal-header {
+  @apply text-lg font-semibold text-gray-900 border-b pb-2;
+}
+
+.agenda-modal-subheader {
+  @apply text-lg font-semibold text-gray-900 border-b pb-2 mb-4;
+}
+
+/* Grid Layouts */
+.agenda-modal-grid-2 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.agenda-modal-grid-3 {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+}
+
+.agenda-modal-grid-4 {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-4;
+}
+
+/* Cards and Containers */
+.agenda-modal-card {
+  @apply bg-white border border-gray-200 rounded-lg p-4;
+}
+
+.agenda-modal-card-blue {
+  @apply bg-blue-50 p-4 rounded-lg;
+}
+
+.agenda-modal-card-gray {
+  @apply bg-gray-50 p-4 rounded-lg border;
+}
+
+.agenda-modal-card-yellow {
+  @apply bg-yellow-50 p-4 rounded border border-yellow-200;
+}
+
+.agenda-modal-card-red {
+  @apply bg-red-50 p-4 rounded-lg border border-red-200;
+}
+
+.agenda-modal-card-green {
+  @apply bg-green-50 border border-green-200 rounded-lg p-4;
+}
+
+/* Buttons */
+.agenda-modal-btn-primary {
+  @apply inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+.agenda-modal-btn-secondary {
+  @apply inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500;
+}
+
+.agenda-modal-btn-print {
+  @apply inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+/* Text Styles */
+.agenda-modal-text-label {
+  @apply text-gray-600 font-medium;
+}
+
+.agenda-modal-text-value {
+  @apply font-medium;
+}
+
+.agenda-modal-text-small {
+  @apply text-sm text-gray-600;
+}
+
+.agenda-modal-text-muted {
+  @apply text-sm text-gray-500;
+}
+
+/* Status Badges */
+.agenda-modal-status-active {
+  @apply bg-green-100 text-green-800;
+}
+
+.agenda-modal-status-inactive {
+  @apply bg-red-100 text-red-800;
+}
+
+.agenda-modal-status-accepted {
+  @apply bg-green-100 text-green-800;
+}
+
+.agenda-modal-status-rejected {
+  @apply bg-red-100 text-red-800;
+}
+
+.agenda-modal-status-optional {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Icons */
+.agenda-modal-icon-blue {
+  @apply h-4 w-4 mr-2 text-blue-600;
+}
+
+.agenda-modal-icon-green {
+  @apply h-4 w-4 mr-2 text-green-600;
+}
+
+.agenda-modal-icon-red {
+  @apply h-4 w-4 mr-2 text-red-600;
+}
+
+.agenda-modal-icon-purple {
+  @apply h-4 w-4 mr-2 text-purple-600;
+}
+
+.agenda-modal-icon-orange {
+  @apply h-4 w-4 mr-2 text-orange-600;
+}
+
+.agenda-modal-icon-gray {
+  @apply h-5 w-5 text-gray-400;
+}
+
+/* Form Elements */
+.agenda-modal-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.agenda-modal-textarea {
+  @apply font-medium bg-white p-3 rounded border min-h-[80px];
+}
+
+/* Lists and Items */
+.agenda-modal-list {
+  @apply space-y-3;
+}
+
+.agenda-modal-list-item {
+  @apply bg-white border border-gray-200 rounded-lg p-4;
+}
+
+.agenda-modal-list-item-header {
+  @apply flex items-center justify-between;
+}
+
+.agenda-modal-list-item-content {
+  @apply flex items-center space-x-3;
+}
+
+.agenda-modal-list-item-avatar {
+  @apply w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.agenda-modal-list-item-avatar-lg {
+  @apply w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.agenda-modal-list-item-text {
+  @apply text-sm font-medium text-blue-600;
+}
+
+/* Empty States */
+.agenda-modal-empty-state {
+  @apply text-center py-12 bg-gray-50 rounded-lg;
+}
+
+.agenda-modal-empty-icon {
+  @apply mx-auto h-12 w-12 text-gray-400;
+}
+
+.agenda-modal-empty-title {
+  @apply mt-2 text-sm font-medium text-gray-900;
+}
+
+.agenda-modal-empty-text {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+/* Loading States */
+.agenda-modal-loading {
+  @apply flex items-center justify-center h-64;
+}
+
+.agenda-modal-spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-green-600;
+}
+
+/* Tabs */
+.agenda-modal-tabs {
+  @apply border-b border-gray-200 mb-6;
+}
+
+.agenda-modal-tabs-nav {
+  @apply flex space-x-8;
+}
+
+.agenda-modal-tab {
+  @apply py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2;
+}
+
+.agenda-modal-tab-active {
+  @apply border-blue-500 text-blue-600;
+}
+
+.agenda-modal-tab-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300;
+}
+
+/* Modal Styles */
+.agenda-modal-content {
+  @apply flex-1 overflow-y-auto max-h-[75vh];
+}
+
+/* Utility Classes */
+.agenda-modal-max-width-none {
+  max-width: none;
+}
+
+.agenda-modal-min-height-80 {
+  @apply min-h-[80px];
+}
+
+.agenda-modal-min-height-100 {
+  @apply min-h-[100px];
+}
+
+.agenda-modal-min-height-60 {
+  @apply min-h-[60px];
+}
+
+/* Specific Agenda Modal Styles */
+.agenda-stats-cards {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-4 mb-6;
+}
+
+.agenda-stats-card {
+  @apply bg-white p-4 rounded-lg border shadow-sm;
+}
+
+.agenda-stats-card-header {
+  @apply flex items-center justify-between mb-2;
+}
+
+.agenda-stats-card-title {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.agenda-stats-card-value {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.agenda-stats-card-change {
+  @apply text-sm font-medium;
+}
+
+.agenda-stats-card-change-positive {
+  @apply text-green-600;
+}
+
+.agenda-stats-card-change-negative {
+  @apply text-red-600;
+}
+
+.agenda-filters-section {
+  @apply bg-white p-6 rounded-lg border shadow-sm mb-6;
+}
+
+.agenda-filters-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.agenda-filters-title {
+  @apply text-lg font-medium text-gray-900;
+}
+
+.agenda-filters-actions {
+  @apply flex items-center space-x-3;
+}
+
+.agenda-filters-grid {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-4;
+}
+
+.agenda-filters-field {
+  @apply space-y-2;
+}
+
+.agenda-filters-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.agenda-filters-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.agenda-filters-select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.agenda-filters-btn-clear {
+  @apply inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.agenda-filters-btn-apply {
+  @apply inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.agenda-citas-toggle {
+  @apply flex items-center justify-between mb-4;
+}
+
+.agenda-citas-toggle-title {
+  @apply text-lg font-medium text-gray-900;
+}
+
+.agenda-citas-toggle-btn {
+  @apply inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.agenda-citas-table-container {
+  @apply bg-white shadow overflow-hidden sm:rounded-md;
+}
+
+.agenda-citas-table-wrapper {
+  @apply px-4 py-5 sm:p-6;
+}
+
+.agenda-citas-table-scroll {
+  @apply overflow-x-auto;
+}
+
+.agenda-citas-table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+.agenda-citas-table-header {
+  @apply bg-gray-50;
+}
+
+.agenda-citas-table-header-row {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.agenda-citas-table-body {
+  @apply bg-white divide-y divide-gray-200;
+}
+
+.agenda-citas-table-row {
+  @apply hover:bg-gray-50;
+}
+
+.agenda-citas-table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900;
+}
+
+.agenda-citas-table-cell-patient {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+.agenda-citas-table-cell-patient-info {
+  @apply flex items-center space-x-3;
+}
+
+.agenda-citas-table-cell-patient-avatar {
+  @apply w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.agenda-citas-table-cell-patient-avatar-icon {
+  @apply h-5 w-5 text-blue-600;
+}
+
+.agenda-citas-table-cell-patient-details {
+  @apply flex-1 min-w-0;
+}
+
+.agenda-citas-table-cell-patient-name {
+  @apply font-medium text-gray-900;
+}
+
+.agenda-citas-table-cell-patient-doc {
+  @apply text-gray-500 text-xs;
+}
+
+.agenda-citas-table-cell-date {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+
+.agenda-citas-table-cell-specialty {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+
+.agenda-citas-table-cell-status {
+  @apply px-6 py-4 whitespace-nowrap;
+}
+
+.agenda-citas-table-cell-actions {
+  @apply px-6 py-4 whitespace-nowrap text-sm font-medium;
+}
+
+.agenda-citas-table-cell-actions-group {
+  @apply flex items-center gap-2;
+}
+
+.agenda-citas-table-cell-actions-btn {
+  @apply p-1 rounded-md hover:bg-gray-100 transition-colors;
+}
+
+.agenda-citas-table-cell-actions-btn-icon {
+  @apply w-4 h-4;
+}
+
+.agenda-citas-empty {
+  @apply text-center py-12 bg-gray-50 rounded-lg;
+}
+
+.agenda-citas-empty-icon {
+  @apply mx-auto h-12 w-12 text-gray-400;
+}
+
+.agenda-citas-empty-title {
+  @apply mt-2 text-sm font-medium text-gray-900;
+}
+
+.agenda-citas-empty-text {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+.agenda-citas-empty-actions {
+  @apply mt-4;
+}
+
+.agenda-citas-empty-btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.agenda-error-section {
+  @apply mb-6 bg-red-50 border border-red-200 rounded-md p-4;
+}
+
+.agenda-error-text {
+  @apply text-sm text-red-700;
+}
+
+.agenda-error-actions {
+  @apply mt-4;
+}
+
+.agenda-error-btn {
+  @apply bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-md text-sm font-medium;
+}
+
+.agenda-loading-section {
+  @apply flex items-center justify-center h-64;
+}
+
+.agenda-loading-spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-green-600;
+}
+
+.agenda-modal-overlay {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.agenda-modal-backdrop {
+  @apply flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0;
+}
+
+.agenda-modal-backdrop-bg {
+  @apply fixed inset-0 transition-opacity;
+}
+
+.agenda-modal-backdrop-bg-color {
+  @apply absolute inset-0 bg-gray-500 opacity-75;
+}
+
+.agenda-modal-container {
+  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-4/5 h-4/5;
+}
+
+.agenda-modal-header {
+  @apply bg-green-600 px-6 py-4 flex items-center justify-between;
+}
+
+.agenda-modal-header-content {
+  @apply flex items-center space-x-4;
+}
+
+.agenda-modal-header-back {
+  @apply text-white hover:text-gray-200 transition-colors;
+}
+
+.agenda-modal-header-back-icon {
+  @apply h-6 w-6;
+}
+
+.agenda-modal-header-title {
+  @apply text-xl font-semibold text-white;
+}
+
+.agenda-modal-header-close {
+  @apply text-white hover:text-gray-200 transition-colors;
+}
+
+.agenda-modal-header-close-icon {
+  @apply h-6 w-6;
+}
+
+.agenda-modal-content {
+  @apply flex-1 overflow-y-auto p-6;
+}
+
+.agenda-modal-content-section {
+  @apply space-y-6;
+}
+
+.agenda-modal-footer {
+  @apply mt-6 flex justify-end;
+}
+
+.agenda-modal-footer-btn {
+  @apply inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+/* Status Badge Styles */
+.agenda-status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.agenda-status-programado {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.agenda-status-en-sala {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.agenda-status-atendido {
+  @apply bg-green-100 text-green-800;
+}
+
+.agenda-status-no-se-presento {
+  @apply bg-red-100 text-red-800;
+}
+
+.agenda-status-cancelado {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Action Button Styles */
+.agenda-action-btn {
+  @apply p-1 rounded-md hover:bg-gray-100 transition-colors;
+}
+
+.agenda-action-btn-programado {
+  @apply text-blue-600 hover:bg-blue-50;
+}
+
+.agenda-action-btn-en-sala {
+  @apply text-yellow-600 hover:bg-yellow-50;
+}
+
+.agenda-action-btn-atendido {
+  @apply text-green-600 hover:bg-green-50;
+}
+
+.agenda-action-btn-no-se-presento {
+  @apply text-red-600 hover:bg-red-50;
+}
+
+.agenda-action-btn-cancelado {
+  @apply text-gray-600 hover:bg-gray-50;
+}
+
+/* Loading Spinner Styles */
+.agenda-loading-spinner {
+  @apply animate-spin rounded-full h-3 w-3 border-b-2;
+}
+
+.agenda-loading-spinner-programado {
+  @apply border-blue-600;
+}
+
+.agenda-loading-spinner-en-sala {
+  @apply border-yellow-600;
+}
+
+.agenda-loading-spinner-atendido {
+  @apply border-green-600;
+}
+
+.agenda-loading-spinner-no-se-presento {
+  @apply border-red-600;
+}
+
+.agenda-loading-spinner-cancelado {
+  @apply border-gray-600;
+}
+
+/* Modal Specific Styles */
+.agenda-cita-detail-modal-overlay {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.agenda-cita-detail-modal-backdrop {
+  @apply flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0;
+}
+
+.agenda-cita-detail-modal-backdrop-bg {
+  @apply fixed inset-0 transition-opacity;
+}
+
+.agenda-cita-detail-modal-backdrop-bg-color {
+  @apply absolute inset-0 bg-gray-500 opacity-75;
+}
+
+.agenda-cita-detail-modal-container {
+  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full;
+}
+
+.agenda-cita-detail-modal-header {
+  @apply bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4;
+}
+
+.agenda-cita-detail-modal-header-content {
+  @apply sm:flex sm:items-start;
+}
+
+.agenda-cita-detail-modal-header-icon {
+  @apply mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10;
+}
+
+.agenda-cita-detail-modal-header-icon-blue {
+  @apply bg-blue-100;
+}
+
+.agenda-cita-detail-modal-header-icon-blue-svg {
+  @apply h-6 w-6 text-blue-600;
+}
+
+.agenda-cita-detail-modal-header-text {
+  @apply mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left;
+}
+
+.agenda-cita-detail-modal-header-title {
+  @apply text-lg leading-6 font-medium text-gray-900;
+}
+
+.agenda-cita-detail-modal-header-subtitle {
+  @apply mt-2 text-sm text-gray-500;
+}
+
+.agenda-cita-detail-modal-content {
+  @apply bg-gray-50 px-4 py-5 sm:p-6 sm:pb-4;
+}
+
+.agenda-cita-detail-modal-content-section {
+  @apply space-y-4;
+}
+
+.agenda-cita-detail-modal-content-field {
+  @apply flex justify-between items-center py-2;
+}
+
+.agenda-cita-detail-modal-content-label {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.agenda-cita-detail-modal-content-value {
+  @apply text-sm text-gray-900;
+}
+
+.agenda-cita-detail-modal-footer {
+  @apply bg-white px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse;
+}
+
+.agenda-cita-detail-modal-footer-actions {
+  @apply w-full flex items-center justify-between;
+}
+
+.agenda-cita-detail-modal-footer-btn-primary {
+  @apply w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm;
+}
+
+.agenda-cita-detail-modal-footer-btn-primary-blue {
+  @apply bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.agenda-cita-detail-modal-footer-btn-secondary {
+  @apply mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm;
+}
+
+.agenda-cita-detail-modal-footer-status-actions {
+  @apply flex flex-wrap gap-2;
+}
+
+.agenda-cita-detail-modal-footer-status-btn {
+  @apply inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white transition-colors duration-200;
+}
+
+.agenda-cita-detail-modal-footer-status-btn-programado {
+  @apply bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.agenda-cita-detail-modal-footer-status-btn-en-sala {
+  @apply bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500;
+}
+
+.agenda-cita-detail-modal-footer-status-btn-atendido {
+  @apply bg-green-600 hover:bg-green-700 focus:ring-green-500;
+}
+
+.agenda-cita-detail-modal-footer-status-btn-no-se-presento {
+  @apply bg-red-600 hover:bg-red-700 focus:ring-red-500;
+}
+
+.agenda-cita-detail-modal-footer-status-btn-cancelado {
+  @apply bg-gray-600 hover:bg-gray-700 focus:ring-gray-500;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .agenda-modal-container {
+    @apply w-full h-full;
+  }
+
+  .agenda-stats-cards {
+    @apply grid-cols-2 gap-3;
+  }
+
+  .agenda-filters-grid {
+    @apply grid-cols-1 gap-3;
+  }
+
+  .agenda-citas-table-cell {
+    @apply px-4 py-2 text-xs;
+  }
+
+  .agenda-citas-table-cell-patient-info {
+    @apply space-x-2;
+  }
+
+  .agenda-citas-table-cell-patient-avatar {
+    @apply w-8 h-8;
+  }
+
+  .agenda-citas-table-cell-patient-avatar-icon {
+    @apply h-4 w-4;
+  }
+
+  .agenda-citas-table-cell-actions-group {
+    @apply gap-1;
+  }
+
+  .agenda-citas-table-cell-actions-btn {
+    @apply p-0.5;
+  }
+
+  .agenda-citas-table-cell-actions-btn-icon {
+    @apply w-3 h-3;
+  }
+}

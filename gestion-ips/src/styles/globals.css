@@ -1,10 +1,12 @@
 @import './tokens.css';
 @import './components.css';
 @import './utilities.css';
+@import './patientDetail.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Include Tailwind layers */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 /* Estilos de impresión para Historia Clínica y Consultas */
 @media print {

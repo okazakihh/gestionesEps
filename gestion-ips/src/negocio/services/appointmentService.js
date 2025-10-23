@@ -34,7 +34,14 @@ export const appointmentService = {
         if (hour === endHour && minute > 0) break;
 
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        let hour12;
+        if (hour === 0) {
+          hour12 = 12;
+        } else if (hour > 12) {
+          hour12 = hour - 12;
+        } else {
+          hour12 = hour;
+        }
         const ampm = hour < 12 ? 'AM' : 'PM';
         const label = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
 
@@ -135,7 +142,7 @@ export const appointmentService = {
 
         // Extraer especialidad del CUPS (tiene prioridad) o del médico asignado
         let especialidad = 'N/A';
-        if (informacionCups && informacionCups.especialidad) {
+        if (informacionCups?.especialidad) {
           especialidad = informacionCups.especialidad;
         } else if (appointmentData.medicoAsignado) {
           // El médico asignado puede incluir la especialidad: "Nombre - Especialidad"
@@ -290,5 +297,56 @@ export const appointmentService = {
       'CANCELADA': 'Cancelada'
     };
     return labels[status] || status;
+  },
+
+  /**
+   * Formatea una fecha para mostrar
+   * @param {string|Date} dateString - Fecha a formatear
+   * @returns {string} Fecha formateada
+   */
+  formatDate: (dateString) => {
+    if (!dateString) return 'N/A';
+
+    try {
+      let date;
+
+      // Handle LocalDateTime serialized as array [year, month, day, hour, minute, second, nanosecond]
+      if (Array.isArray(dateString) && dateString.length >= 6) {
+        // LocalDateTime comes as [2024, 12, 15, 10, 30, 0, 0]
+        date = new Date(dateString[0], dateString[1] - 1, dateString[2], dateString[3], dateString[4], dateString[5]);
+      } else if (typeof dateString === 'string') {
+        // Try different parsing strategies
+        if (dateString.includes('T')) {
+          // ISO format with time: "2024-12-15T10:30:00.000+00:00"
+          date = new Date(dateString);
+        } else if (dateString.includes('-')) {
+          // Date only format: "2024-12-15"
+          date = new Date(dateString + 'T00:00:00');
+        } else {
+          // Other string formats
+          date = new Date(dateString);
+        }
+      } else if (dateString instanceof Date) {
+        date = dateString;
+      } else {
+        date = new Date(dateString);
+      }
+
+      // Check if date is valid
+      if (Number.isNaN(date.getTime())) {
+        return 'Fecha inválida';
+      }
+
+      return date.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return 'Error en fecha';
+    }
   }
 };

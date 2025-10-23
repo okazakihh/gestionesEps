@@ -3,7 +3,7 @@ import {
   DocumentTextIcon,
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
-import { formatDate } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
+import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 /**
  * Componente para la pestaña de historia clínica del paciente

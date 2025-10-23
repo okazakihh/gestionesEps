@@ -1,27 +1,32 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   DocumentTextIcon,
+  CalendarDaysIcon,
   UserIcon,
   HeartIcon,
   IdentificationIcon,
-  CalendarDaysIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-
-// Importar utilidades
-import { formatDate } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
-import { printHistoriaClinica, printConsulta } from '../../../../negocio/utils/pacientes/printUtils.js';
+import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
+import { printHistoriaClinica, printConsulta } from '../../../../../negocio/utils/pacientes/printUtils.js';
 
 /**
- * Componente para mostrar la historia clínica completa del paciente
- * Extraído del PatientDetailModal para mantener el clean code
+ * Componente para la pestaña completa de historia clínica del paciente
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.historiaClinica - Historia clínica del paciente
+ * @param {Array} props.consultas - Lista de consultas
+ * @param {Object} props.patientData - Datos parseados del paciente
+ * @param {Object} props.patient - Datos del paciente
+ * @param {Function} props.setActiveTab - Función para cambiar pestaña
+ * @returns {JSX.Element} Contenido de la pestaña completa de historia clínica
  */
-const PatientClinicalHistoryComplete = ({
+const PatientClinicalHistoryCompleteTab = ({
   historiaClinica,
   consultas,
-  setActiveTab,
+  patientData,
   patient,
-  patientData
+  setActiveTab
 }) => {
   return (
     <div className="space-y-6">
@@ -29,7 +34,7 @@ const PatientClinicalHistoryComplete = ({
         <h4 className="text-lg font-semibold text-gray-900">Historia Clínica Completa</h4>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => printHistoriaClinica(consultas, historiaClinica, patient, patientData)}
+            onClick={() => printHistoriaClinica(consultas, historiaClinica)}
             className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             title="Imprimir historia clínica completa"
           >
@@ -232,6 +237,7 @@ const PatientClinicalHistoryComplete = ({
                     </div>
                   );
                 } catch (e) {
+                  console.error('Error parsing historiaClinica.datosJson:', e);
                   return (
                     <div className="bg-gray-100 p-4 rounded border">
                       <h6 className="font-medium text-gray-800 mb-2">Datos Adicionales (JSON Crudo):</h6>
@@ -460,6 +466,7 @@ const PatientClinicalHistoryComplete = ({
                             </div>
                           );
                         } catch (e) {
+                          console.error('Error parsing consulta.datosJson:', e);
                           return (
                             <div className="bg-gray-100 p-4 rounded border">
                               <h6 className="font-medium text-gray-800 mb-2">Información Detallada (JSON Crudo):</h6>
@@ -482,4 +489,13 @@ const PatientClinicalHistoryComplete = ({
   );
 };
 
-export default PatientClinicalHistoryComplete;
+PatientClinicalHistoryCompleteTab.propTypes = {
+  historiaClinica: PropTypes.object.isRequired,
+  consultas: PropTypes.array.isRequired,
+  patientData: PropTypes.object,
+  patient: PropTypes.object,
+  setActiveTab: PropTypes.func.isRequired
+};
+
+
+export default PatientClinicalHistoryCompleteTab;

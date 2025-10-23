@@ -1,0 +1,787 @@
+/* Patient Detail Styles - Simplified CSS Classes */
+
+/* Layout and Spacing */
+.patient-detail-container {
+  @apply space-y-6;
+}
+
+.patient-detail-section {
+  @apply space-y-6;
+}
+
+.patient-detail-header {
+  @apply text-lg font-semibold text-gray-900 border-b pb-2;
+}
+
+.patient-detail-subheader {
+  @apply text-lg font-semibold text-gray-900 border-b pb-2 mb-4;
+}
+
+/* Grid Layouts */
+.patient-detail-grid-2 {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.patient-detail-grid-3 {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+}
+
+.patient-detail-grid-4 {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-4;
+}
+
+/* Cards and Containers */
+.patient-detail-card {
+  @apply bg-white border border-gray-200 rounded-lg p-4;
+}
+
+.patient-detail-card-blue {
+  @apply bg-blue-50 p-4 rounded-lg;
+}
+
+.patient-detail-card-gray {
+  @apply bg-gray-50 p-4 rounded-lg border;
+}
+
+.patient-detail-card-yellow {
+  @apply bg-yellow-50 p-4 rounded border border-yellow-200;
+}
+
+.patient-detail-card-red {
+  @apply bg-red-50 p-4 rounded-lg border border-red-200;
+}
+
+.patient-detail-card-green {
+  @apply bg-green-50 border border-green-200 rounded-lg p-4;
+}
+
+/* Buttons */
+.patient-detail-btn-primary {
+  @apply inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+.patient-detail-btn-secondary {
+  @apply inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500;
+}
+
+.patient-detail-btn-print {
+  @apply inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+/* Text Styles */
+.patient-detail-text-label {
+  @apply text-gray-600 font-medium;
+}
+
+.patient-detail-text-value {
+  @apply font-medium;
+}
+
+.patient-detail-text-small {
+  @apply text-sm text-gray-600;
+}
+
+.patient-detail-text-muted {
+  @apply text-sm text-gray-500;
+}
+
+/* Status Badges */
+.patient-detail-status-active {
+  @apply bg-green-100 text-green-800;
+}
+
+.patient-detail-status-inactive {
+  @apply bg-red-100 text-red-800;
+}
+
+.patient-detail-status-accepted {
+  @apply bg-green-100 text-green-800;
+}
+
+.patient-detail-status-rejected {
+  @apply bg-red-100 text-red-800;
+}
+
+.patient-detail-status-optional {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Icons */
+.patient-detail-icon-blue {
+  @apply h-4 w-4 mr-2 text-blue-600;
+}
+
+.patient-detail-icon-green {
+  @apply h-4 w-4 mr-2 text-green-600;
+}
+
+.patient-detail-icon-red {
+  @apply h-4 w-4 mr-2 text-red-600;
+}
+
+.patient-detail-icon-purple {
+  @apply h-4 w-4 mr-2 text-purple-600;
+}
+
+.patient-detail-icon-orange {
+  @apply h-4 w-4 mr-2 text-orange-600;
+}
+
+.patient-detail-icon-gray {
+  @apply h-5 w-5 text-gray-400;
+}
+
+/* Form Elements */
+.patient-detail-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.patient-detail-textarea {
+  @apply font-medium bg-white p-3 rounded border min-h-[80px];
+}
+
+/* Lists and Items */
+.patient-detail-list {
+  @apply space-y-3;
+}
+
+.patient-detail-list-item {
+  @apply bg-white border border-gray-200 rounded-lg p-4;
+}
+
+.patient-detail-list-item-header {
+  @apply flex items-center justify-between;
+}
+
+.patient-detail-list-item-content {
+  @apply flex items-center space-x-3;
+}
+
+.patient-detail-list-item-avatar {
+  @apply w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.patient-detail-list-item-avatar-lg {
+  @apply w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.patient-detail-list-item-text {
+  @apply text-sm font-medium text-blue-600;
+}
+
+/* Empty States */
+.patient-detail-empty-state {
+  @apply text-center py-12 bg-gray-50 rounded-lg;
+}
+
+.patient-detail-empty-icon {
+  @apply mx-auto h-12 w-12 text-gray-400;
+}
+
+.patient-detail-empty-title {
+  @apply mt-2 text-sm font-medium text-gray-900;
+}
+
+.patient-detail-empty-text {
+  @apply mt-1 text-sm text-gray-500;
+}
+
+/* Loading States */
+.patient-detail-loading {
+  @apply flex items-center justify-center h-64;
+}
+
+.patient-detail-spinner {
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600;
+}
+
+/* Tabs */
+.patient-detail-tabs {
+  @apply border-b border-gray-200 mb-6;
+}
+
+.patient-detail-tabs-nav {
+  @apply flex space-x-8;
+}
+
+.patient-detail-tab {
+  @apply py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2;
+}
+
+.patient-detail-tab-active {
+  @apply border-blue-500 text-blue-600;
+}
+
+.patient-detail-tab-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300;
+}
+
+/* Modal Styles */
+.patient-detail-modal-content {
+  @apply flex-1 overflow-y-auto max-h-[75vh];
+}
+
+/* Utility Classes */
+.patient-detail-max-width-none {
+  max-width: none;
+}
+
+.patient-detail-min-height-80 {
+  @apply min-h-[80px];
+}
+
+.patient-detail-min-height-100 {
+  @apply min-h-[100px];
+}
+
+.patient-detail-min-height-60 {
+  @apply min-h-[60px];
+}
+
+/* Specific Component Styles */
+.patient-consent-header {
+  @apply flex items-center space-x-3 mb-4;
+}
+
+.patient-consent-title {
+  @apply text-xl font-semibold text-blue-900;
+}
+
+.patient-consent-legal {
+  @apply flex items-start space-x-3;
+}
+
+.patient-consent-warning-icon {
+  @apply h-5 w-5 text-yellow-600 mt-0.5;
+}
+
+.patient-consent-warning-content {
+  @apply text-sm text-yellow-800 space-y-1;
+}
+
+.patient-emergency-info {
+  @apply flex items-center space-x-2 mb-3;
+}
+
+.patient-emergency-title {
+  @apply font-semibold text-red-900;
+}
+
+.patient-emergency-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.patient-emergency-field {
+  @apply space-y-4;
+}
+
+.patient-emergency-label {
+  @apply text-sm text-red-700 font-medium;
+}
+
+.patient-emergency-value {
+  @apply font-semibold text-lg text-red-900;
+}
+
+.patient-emergency-contact {
+  @apply flex items-center space-x-3;
+}
+
+.patient-emergency-phone-primary {
+  @apply h-5 w-5 text-red-500;
+}
+
+.patient-emergency-phone-secondary {
+  @apply h-5 w-5 text-orange-500;
+}
+
+.patient-emergency-phone-label {
+  @apply text-sm text-red-700 font-medium;
+}
+
+.patient-emergency-phone-value {
+  @apply font-semibold text-red-900;
+}
+
+/* History Styles */
+.patient-history-info {
+  @apply font-semibold text-blue-900 mb-2;
+}
+
+.patient-history-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4 text-sm;
+}
+
+.patient-history-label {
+  @apply text-blue-700;
+}
+
+.patient-history-value {
+  @apply font-medium;
+}
+
+.patient-history-consultas-title {
+  @apply font-semibold text-gray-900 mb-4;
+}
+
+.patient-history-consultas-count {
+  @apply text-lg;
+}
+
+.patient-history-consulta-item {
+  @apply bg-white border border-gray-200 rounded-lg p-4;
+}
+
+.patient-history-consulta-header {
+  @apply flex items-center justify-between;
+}
+
+.patient-history-consulta-avatar {
+  @apply flex items-center space-x-3;
+}
+
+.patient-history-consulta-number {
+  @apply w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.patient-history-consulta-title {
+  @apply font-medium text-gray-900;
+}
+
+.patient-history-consulta-date {
+  @apply text-sm text-gray-600;
+}
+
+.patient-history-consulta-right {
+  @apply text-right;
+}
+
+.patient-history-consulta-label {
+  @apply text-sm text-gray-500;
+}
+
+.patient-history-consulta-value {
+  @apply text-sm font-medium;
+}
+
+/* Medical Info Styles */
+.patient-medical-basic {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+}
+
+.patient-medical-field {
+  @apply flex justify-between items-center;
+}
+
+.patient-medical-antecedents {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.patient-medical-antecedent-item {
+  @apply bg-white p-3 rounded border min-h-[80px];
+}
+
+.patient-medical-current {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.patient-medical-current-item {
+  @apply bg-yellow-50 p-3 rounded-md border;
+}
+
+.patient-medical-current-item-blue {
+  @apply bg-blue-50 p-3 rounded-md border;
+}
+
+.patient-medical-observations {
+  @apply bg-gray-50 p-4 rounded-md border min-h-[100px];
+}
+
+/* Contact Info Styles */
+.patient-contact-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.patient-contact-section {
+  @apply space-y-4;
+}
+
+.patient-contact-item {
+  @apply flex items-center space-x-3;
+}
+
+.patient-contact-icon-primary {
+  @apply h-5 w-5 text-gray-400;
+}
+
+.patient-contact-icon-mobile {
+  @apply h-5 w-5 text-blue-400;
+}
+
+.patient-contact-label {
+  @apply text-sm text-gray-600;
+}
+
+.patient-contact-value {
+  @apply font-medium;
+}
+
+.patient-contact-address {
+  @apply flex items-start space-x-3;
+}
+
+.patient-contact-address-icon {
+  @apply h-5 w-5 text-gray-400 mt-0.5;
+}
+
+.patient-contact-address-content {
+  @apply flex-1;
+}
+
+.patient-contact-address-city {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+.patient-contact-address-country {
+  @apply text-sm text-gray-600;
+}
+
+/* Personal Info Styles */
+.patient-personal-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.patient-personal-section {
+  @apply space-y-4;
+}
+
+.patient-personal-fields {
+  @apply space-y-3;
+}
+
+.patient-personal-field {
+  @apply flex justify-between;
+}
+
+.patient-personal-system-section {
+  @apply space-y-4;
+}
+
+.patient-personal-system-header {
+  @apply text-lg font-semibold text-gray-900 border-b pb-2;
+}
+
+.patient-personal-system-fields {
+  @apply space-y-3;
+}
+
+.patient-personal-status-active {
+  @apply text-green-600;
+}
+
+.patient-personal-status-inactive {
+  @apply text-red-600;
+}
+
+/* Modal Tabs Styles */
+.patient-modal-tabs {
+  @apply border-b border-gray-200 mb-6;
+}
+
+.patient-modal-tabs-nav {
+  @apply flex space-x-8;
+}
+
+.patient-modal-tab {
+  @apply py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2;
+}
+
+.patient-modal-tab-active {
+  @apply border-blue-500 text-blue-600;
+}
+
+.patient-modal-tab-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300;
+}
+
+.patient-modal-tab-icon {
+  @apply h-4 w-4;
+}
+
+/* Modal Content Styles */
+.patient-modal-content {
+  @apply flex-1 overflow-y-auto max-h-[75vh];
+}
+
+/* Search Modal Styles */
+.patient-search-modal-overlay {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.patient-search-modal-backdrop {
+  @apply fixed inset-0 transition-opacity;
+}
+
+.patient-search-modal-backdrop-bg {
+  @apply absolute inset-0 bg-gray-500 opacity-75;
+}
+
+.patient-search-modal-container {
+  @apply inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full max-w-2xl;
+}
+
+.patient-search-modal-header {
+  @apply bg-blue-600 px-6 py-4 flex items-center justify-between;
+}
+
+.patient-search-modal-header-content {
+  @apply flex items-center space-x-4;
+}
+
+.patient-search-modal-avatar {
+  @apply w-12 h-12 bg-white rounded-full flex items-center justify-center;
+}
+
+.patient-search-modal-avatar-icon {
+  @apply h-6 w-6 text-blue-600;
+}
+
+.patient-search-modal-title {
+  @apply text-xl font-semibold text-white;
+}
+
+.patient-search-modal-subtitle {
+  @apply text-blue-100 text-sm;
+}
+
+.patient-search-modal-close {
+  @apply text-white hover:text-gray-200 transition-colors;
+}
+
+.patient-search-modal-close-icon {
+  @apply h-6 w-6;
+}
+
+.patient-search-modal-content {
+  @apply p-6;
+}
+
+.patient-search-modal-section {
+  @apply space-y-6;
+}
+
+.patient-search-modal-search-box {
+  @apply bg-gray-50 border border-gray-200 rounded-lg p-4;
+}
+
+.patient-search-modal-search-title {
+  @apply text-lg font-medium text-gray-900 mb-4 flex items-center;
+}
+
+.patient-search-modal-search-icon {
+  @apply h-5 w-5 mr-2 text-gray-600;
+}
+
+.patient-search-modal-search-input-group {
+  @apply flex space-x-3;
+}
+
+.patient-search-modal-search-input {
+  @apply flex-1;
+}
+
+.patient-search-modal-create-btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.patient-search-modal-create-icon {
+  @apply h-4 w-4 mr-2;
+}
+
+.patient-search-modal-error {
+  @apply mt-3 p-3 bg-red-50 border border-red-200 rounded-md;
+}
+
+.patient-search-modal-error-text {
+  @apply text-sm text-red-700;
+}
+
+.patient-search-modal-patients-box {
+  @apply bg-white border border-gray-200 rounded-lg;
+}
+
+.patient-search-modal-patients-header {
+  @apply p-4 border-b border-gray-200;
+}
+
+.patient-search-modal-patients-title {
+  @apply text-lg font-medium text-gray-900 flex items-center;
+}
+
+.patient-search-modal-patients-count {
+  @apply text-lg;
+}
+
+.patient-search-modal-patients-list {
+  @apply max-h-96 overflow-y-auto;
+}
+
+.patient-search-modal-loading {
+  @apply p-8 text-center;
+}
+
+.patient-search-modal-loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4;
+}
+
+.patient-search-modal-loading-text {
+  @apply text-sm text-gray-600;
+}
+
+.patient-search-modal-patients-items {
+  @apply divide-y divide-gray-200;
+}
+
+.patient-search-modal-patient-item {
+  @apply p-4 hover:bg-gray-50 cursor-pointer transition-colors;
+}
+
+.patient-search-modal-patient-selected {
+  @apply bg-blue-50 border-l-4 border-blue-500;
+}
+
+.patient-search-modal-patient-content {
+  @apply flex items-center justify-between;
+}
+
+.patient-search-modal-patient-info {
+  @apply flex-1;
+}
+
+.patient-search-modal-patient-details {
+  @apply flex items-center space-x-3;
+}
+
+.patient-search-modal-patient-avatar {
+  @apply flex-shrink-0;
+}
+
+.patient-search-modal-patient-avatar-circle {
+  @apply w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center;
+}
+
+.patient-search-modal-patient-avatar-icon {
+  @apply h-5 w-5 text-blue-600;
+}
+
+.patient-search-modal-patient-text {
+  @apply flex-1 min-w-0;
+}
+
+.patient-search-modal-patient-name-group {
+  @apply flex items-center space-x-2;
+}
+
+.patient-search-modal-patient-name {
+  @apply text-sm font-medium text-gray-900 truncate;
+}
+
+.patient-search-modal-patient-status {
+  @apply inline-flex px-2 py-1 text-xs rounded-full;
+}
+
+.patient-search-modal-patient-meta {
+  @apply mt-1 flex items-center space-x-4 text-xs text-gray-500;
+}
+
+.patient-search-modal-patient-check {
+  @apply flex-shrink-0;
+}
+
+.patient-search-modal-patient-check-icon {
+  @apply h-5 w-5 text-blue-600;
+}
+
+.patient-search-modal-empty {
+  @apply p-8 text-center;
+}
+
+.patient-search-modal-empty-icon {
+  @apply h-12 w-12 text-gray-400 mx-auto mb-4;
+}
+
+.patient-search-modal-empty-text {
+  @apply text-sm text-gray-500;
+}
+
+.patient-search-modal-selected-box {
+  @apply bg-green-50 border border-green-200 rounded-lg p-4;
+}
+
+.patient-search-modal-selected-title {
+  @apply text-lg font-medium text-green-900 mb-4 flex items-center;
+}
+
+.patient-search-modal-selected-icon {
+  @apply h-5 w-5 mr-2 text-green-600;
+}
+
+.patient-search-modal-selected-patient {
+  @apply bg-white border border-green-200 rounded-lg p-4 mb-4;
+}
+
+.patient-search-modal-selected-patient-content {
+  @apply flex items-center space-x-3;
+}
+
+.patient-search-modal-selected-patient-avatar {
+  @apply w-12 h-12 bg-green-100 rounded-full flex items-center justify-center;
+}
+
+.patient-search-modal-selected-patient-icon {
+  @apply h-6 w-6 text-green-600;
+}
+
+.patient-search-modal-selected-patient-info {
+  @apply flex-1;
+}
+
+.patient-search-modal-selected-patient-name {
+  @apply font-medium text-gray-900;
+}
+
+.patient-search-modal-selected-patient-id {
+  @apply text-sm text-gray-600;
+}
+
+.patient-search-modal-selected-actions {
+  @apply flex justify-end;
+}
+
+.patient-search-modal-selected-btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500;
+}
+
+.patient-search-modal-selected-btn-icon {
+  @apply h-4 w-4 mr-2;
+}
+
+.patient-search-modal-appointment-info {
+  @apply bg-blue-50 border border-blue-200 rounded-lg p-4;
+}
+
+.patient-search-modal-appointment-title {
+  @apply text-lg font-medium text-blue-900 mb-2;
+}
+
+.patient-search-modal-appointment-details {
+  @apply text-sm text-blue-700 space-y-1;
+}
+
+.patient-search-modal-footer {
+  @apply mt-6 flex justify-end;
+}
+
+.patient-search-modal-footer-btn {
+  @apply inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}

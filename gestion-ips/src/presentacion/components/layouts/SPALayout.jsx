@@ -3,13 +3,7 @@ import { useAuth } from '../../../data/context/AuthContext.jsx';
 import { useNavigationStore } from '../../../data/stores/navigationStore.js';
 import { SPANavbar } from '../navigation/SPANavbar.jsx';
 
-interface SPALayoutProps {
-  children: React.ReactNode;
-  title?: string;
-  subtitle?: string;
-}
-
-export const SPALayout: React.FC<SPALayoutProps> = ({
+export const SPALayout = ({
   children,
   title,
   subtitle

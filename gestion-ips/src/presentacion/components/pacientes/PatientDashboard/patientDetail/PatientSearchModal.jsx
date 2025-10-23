@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import {
   XMarkIcon,
   MagnifyingGlassIcon,
@@ -6,8 +7,7 @@ import {
   CalendarDaysIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
-import { pacientesApiService } from '../../../../data/services/pacientesApiService.js';
-import Swal from 'sweetalert2';
+import { pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
 
 const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, selectedDoctor, onCreatePatient }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -362,7 +362,17 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
         </div>
       </div>
     </div>
-  );
+  )
 };
+
+PatientSearchModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onPatientSelected: PropTypes.func,
+  selectedSlot: PropTypes.object,
+  selectedDoctor: PropTypes.string,
+  onCreatePatient: PropTypes.func
+};
+
 
 export default PatientSearchModal;

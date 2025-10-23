@@ -1,14 +1,10 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   UserIcon,
   PhoneIcon,
-  EnvelopeIcon,
-  MapPinIcon,
   HeartIcon,
   DocumentTextIcon,
-  CalendarDaysIcon,
-  ClockIcon,
-  BuildingOfficeIcon,
   IdentificationIcon
 } from '@heroicons/react/24/outline';
 
@@ -28,23 +24,22 @@ const PatientModalTabs = ({ activeTab, setActiveTab }) => {
     { id: 'consentimiento', name: 'Consentimiento', icon: DocumentTextIcon },
     { id: 'clinica', name: 'Historia Clínica', icon: DocumentTextIcon },
   ];
-
   return (
-    <div className="border-b border-gray-200 mb-6">
-      <nav className="flex space-x-8">
+    <div className="patient-modal-tabs">
+      <nav className="patient-modal-tabs-nav">
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+              className={`patient-modal-tab ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'patient-modal-tab-active'
+                  : 'patient-modal-tab-inactive'
               }`}
             >
-              <IconComponent className="h-4 w-4" />
+              <IconComponent className="patient-modal-tab-icon" />
               <span>{tab.name}</span>
             </button>
           );
@@ -53,5 +48,11 @@ const PatientModalTabs = ({ activeTab, setActiveTab }) => {
     </div>
   );
 };
+
+PatientModalTabs.propTypes = {
+  activeTab: PropTypes.string.isRequired,
+  setActiveTab: PropTypes.func.isRequired
+};
+
 
 export default PatientModalTabs;

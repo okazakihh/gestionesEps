@@ -1,36 +1,32 @@
 import React from 'react';
-import {
-  DocumentTextIcon
-} from '@heroicons/react/24/outline';
-import { formatDate } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
+import PropTypes from 'prop-types';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 /**
- * Componente para la pestaña de consentimiento informado del paciente
- * @param {Object} props - Propiedades del componente
- * @param {Object} props.patientData - Datos parseados del paciente
- * @returns {JSX.Element} Contenido de la pestaña de consentimiento
+ * Componente para mostrar la información de consentimiento informado del paciente
+ * Extraído del PatientDetailModal para mantener el clean code
  */
-const PatientConsentInfoTab = ({ patientData }) => {
+const PatientConsentInfo = ({ patientData, formatDate }) => {
   return (
-    <div className="space-y-6">
-      <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Consentimiento Informado</h4>
+    <div className="patient-detail-container">
+      <h4 className="patient-detail-header">Consentimiento Informado</h4>
 
-      <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-        <div className="flex items-center space-x-3 mb-4">
+      <div className="patient-detail-card-blue">
+        <div className="patient-consent-header">
           <DocumentTextIcon className="h-6 w-6 text-blue-600" />
-          <h5 className="text-xl font-semibold text-blue-900">Consentimiento para Tratamiento Médico</h5>
+          <h5 className="patient-consent-title">Consentimiento para Tratamiento Médico</h5>
         </div>
 
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded border">
+          <div className="patient-detail-card">
             <h6 className="font-semibold text-gray-900 mb-3">Consentimientos Otorgados</h6>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-gray-700">Tratamiento Médico:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   patientData.consentimientoInformado?.aceptaTratamiento
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    ? 'patient-detail-status-accepted'
+                    : 'patient-detail-status-rejected'
                 }`}>
                   {patientData.consentimientoInformado?.aceptaTratamiento ? '✓ Aceptado' : '✗ No aceptado'}
                 </span>
@@ -39,8 +35,8 @@ const PatientConsentInfoTab = ({ patientData }) => {
                 <span className="text-gray-700">Privacidad de Datos (Ley 1581):</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   patientData.consentimientoInformado?.aceptaPrivacidad
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    ? 'patient-detail-status-accepted'
+                    : 'patient-detail-status-rejected'
                 }`}>
                   {patientData.consentimientoInformado?.aceptaPrivacidad ? '✓ Aceptado' : '✗ No aceptado'}
                 </span>
@@ -49,8 +45,8 @@ const PatientConsentInfoTab = ({ patientData }) => {
                 <span className="text-gray-700">Tratamiento Datos Sensibles:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   patientData.consentimientoInformado?.aceptaDatosPersonales
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    ? 'patient-detail-status-accepted'
+                    : 'patient-detail-status-rejected'
                 }`}>
                   {patientData.consentimientoInformado?.aceptaDatosPersonales ? '✓ Aceptado' : '✗ No aceptado'}
                 </span>
@@ -59,8 +55,8 @@ const PatientConsentInfoTab = ({ patientData }) => {
                 <span className="text-gray-700">Uso de Imágenes:</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   patientData.consentimientoInformado?.aceptaImagenes
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'patient-detail-status-accepted'
+                    : 'patient-detail-status-optional'
                 }`}>
                   {patientData.consentimientoInformado?.aceptaImagenes ? '✓ Aceptado' : '○ Opcional'}
                 </span>
@@ -68,7 +64,7 @@ const PatientConsentInfoTab = ({ patientData }) => {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded border">
+          <div className="patient-detail-card">
             <h6 className="font-semibold text-gray-900 mb-3">Información Legal</h6>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -82,8 +78,8 @@ const PatientConsentInfoTab = ({ patientData }) => {
             </div>
           </div>
 
-          <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-            <div className="flex items-start space-x-3">
+          <div className="patient-detail-card-yellow">
+            <div className="patient-consent-legal">
               <svg className="h-5 w-5 text-yellow-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
@@ -101,7 +97,26 @@ const PatientConsentInfoTab = ({ patientData }) => {
         </div>
       </div>
     </div>
-  );
+  )
 };
 
-export default PatientConsentInfoTab;
+PatientConsentInfo.propTypes = {
+  patientData: PropTypes.shape({
+    consentimientoInformado: PropTypes.shape({
+      aceptaTratamiento: PropTypes.bool,
+      aceptaPrivacidad: PropTypes.bool,
+      aceptaDatosPersonales: PropTypes.bool,
+      aceptaImagenes: PropTypes.bool,
+      fechaConsentimiento: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+      testigoConsentimiento: PropTypes.string
+    })
+  }),
+  formatDate: PropTypes.func.isRequired
+};
+
+PatientConsentInfo.defaultProps = {
+  patientData: {}
+};
+
+
+export default PatientConsentInfo;

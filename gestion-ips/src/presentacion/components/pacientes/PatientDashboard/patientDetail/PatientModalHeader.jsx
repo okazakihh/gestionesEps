@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { UserIcon } from '@heroicons/react/24/outline';
-import ModalHeader from '../../ui/ModalHeader.jsx';
-import { calculateAge } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
+import ModalHeader from '../../../ui/ModalHeader.jsx';
+import { calculateAge } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 /**
  * Componente para el header del modal de detalles del paciente
@@ -24,6 +25,23 @@ const PatientModalHeader = ({ patient, patientData, onClose }) => {
       icon={UserIcon}
     />
   );
+};
+
+PatientModalHeader.propTypes = {
+  patient: PropTypes.shape({
+    tipoDocumento: PropTypes.string,
+    numeroDocumento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }),
+  patientData: PropTypes.shape({
+    informacionPersonal: PropTypes.shape({
+      primerNombre: PropTypes.string,
+      segundoNombre: PropTypes.string,
+      primerApellido: PropTypes.string,
+      segundoApellido: PropTypes.string,
+      fechaNacimiento: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+    }),
+  }),
+  onClose: PropTypes.func,
 };
 
 export default PatientModalHeader;

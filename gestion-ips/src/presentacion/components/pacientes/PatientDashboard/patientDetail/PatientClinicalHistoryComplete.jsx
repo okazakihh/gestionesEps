@@ -1,31 +1,27 @@
 import React from 'react';
 import {
   DocumentTextIcon,
-  CalendarDaysIcon,
   UserIcon,
   HeartIcon,
   IdentificationIcon,
+  CalendarDaysIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-import { formatDate } from '../../../../negocio/utils/pacientes/patientModalUtils.js';
-import { printHistoriaClinica, printConsulta } from '../../../../negocio/utils/pacientes/printUtils.js';
+
+// Importar utilidades
+import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
+import { printHistoriaClinica, printConsulta } from '../../../../../negocio/utils/pacientes/printUtils.js';
 
 /**
- * Componente para la pestaña completa de historia clínica del paciente
- * @param {Object} props - Propiedades del componente
- * @param {Object} props.historiaClinica - Historia clínica del paciente
- * @param {Array} props.consultas - Lista de consultas
- * @param {Object} props.patientData - Datos parseados del paciente
- * @param {Object} props.patient - Datos del paciente
- * @param {Function} props.setActiveTab - Función para cambiar pestaña
- * @returns {JSX.Element} Contenido de la pestaña completa de historia clínica
+ * Componente para mostrar la historia clínica completa del paciente
+ * Extraído del PatientDetailModal para mantener el clean code
  */
-const PatientClinicalHistoryCompleteTab = ({
+const PatientClinicalHistoryComplete = ({
   historiaClinica,
   consultas,
-  patientData,
+  setActiveTab,
   patient,
-  setActiveTab
+  patientData
 }) => {
   return (
     <div className="space-y-6">
@@ -33,7 +29,7 @@ const PatientClinicalHistoryCompleteTab = ({
         <h4 className="text-lg font-semibold text-gray-900">Historia Clínica Completa</h4>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => printHistoriaClinica(consultas, historiaClinica)}
+            onClick={() => printHistoriaClinica(consultas, historiaClinica, patient, patientData)}
             className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             title="Imprimir historia clínica completa"
           >
@@ -486,4 +482,4 @@ const PatientClinicalHistoryCompleteTab = ({
   );
 };
 
-export default PatientClinicalHistoryCompleteTab;
+export default PatientClinicalHistoryComplete;

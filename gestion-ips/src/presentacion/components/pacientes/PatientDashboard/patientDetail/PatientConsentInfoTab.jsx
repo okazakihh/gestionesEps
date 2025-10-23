@@ -1,11 +1,16 @@
 import React from 'react';
-import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import {
+  DocumentTextIcon
+} from '@heroicons/react/24/outline';
+import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 /**
- * Componente para mostrar la información de consentimiento informado del paciente
- * Extraído del PatientDetailModal para mantener el clean code
+ * Componente para la pestaña de consentimiento informado del paciente
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.patientData - Datos parseados del paciente
+ * @returns {JSX.Element} Contenido de la pestaña de consentimiento
  */
-const PatientConsentInfo = ({ patientData, formatDate }) => {
+const PatientConsentInfoTab = ({ patientData }) => {
   return (
     <div className="space-y-6">
       <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Consentimiento Informado</h4>
@@ -99,4 +104,4 @@ const PatientConsentInfo = ({ patientData, formatDate }) => {
   );
 };
 
-export default PatientConsentInfo;
+export default PatientConsentInfoTab;
