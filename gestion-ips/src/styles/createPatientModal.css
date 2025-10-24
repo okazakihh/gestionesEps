@@ -1,0 +1,201 @@
+/* Create Patient Modal Styles - Simplified CSS Classes */
+
+/* Layout and Spacing */
+.create-patient-modal-container {
+  @apply space-y-6;
+}
+
+.create-patient-modal-section {
+  @apply bg-gray-50/50 border border-gray-100 sm:rounded-lg;
+}
+
+.create-patient-modal-section-header {
+  @apply px-6 py-4;
+}
+
+.create-patient-modal-section-title {
+  @apply text-base font-medium text-gray-900;
+}
+
+.create-patient-modal-section-content {
+  @apply px-6 py-4;
+}
+
+.create-patient-modal-section-content-grid {
+  @apply grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6;
+}
+
+/* Form Elements */
+.create-patient-modal-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
+}
+
+.create-patient-modal-input-valid {
+  @apply border-gray-300;
+}
+
+.create-patient-modal-input-error {
+  @apply border-red-300 focus:border-red-400 focus:ring-red-200;
+}
+
+.create-patient-modal-select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
+}
+
+.create-patient-modal-select-valid {
+  @apply border-gray-300;
+}
+
+.create-patient-modal-select-error {
+  @apply border-red-300 focus:border-red-400 focus:ring-red-200;
+}
+
+.create-patient-modal-textarea {
+  @apply mt-2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6;
+}
+
+.create-patient-modal-label {
+  @apply block text-sm font-medium leading-6 text-gray-900;
+}
+
+.create-patient-modal-label-required {
+  @apply after:content-['*'] after:ml-0.5 after:text-red-500;
+}
+
+.create-patient-modal-error {
+  @apply mt-1 text-sm text-red-600;
+}
+
+/* Consent Section */
+.create-patient-modal-consent {
+  @apply space-y-4;
+}
+
+.create-patient-modal-consent-text {
+  @apply text-sm text-gray-600 mb-4;
+}
+
+.create-patient-modal-consent-text-legal {
+  @apply font-medium mb-2;
+}
+
+.create-patient-modal-consent-item {
+  @apply flex items-start;
+}
+
+.create-patient-modal-consent-checkbox {
+  @apply flex items-center h-5;
+}
+
+.create-patient-modal-consent-checkbox-input {
+  @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
+}
+
+.create-patient-modal-consent-content {
+  @apply ml-3 text-sm;
+}
+
+.create-patient-modal-consent-label {
+  @apply font-medium text-gray-700;
+}
+
+.create-patient-modal-consent-label-required {
+  @apply after:content-['*'] after:ml-0.5 after:text-red-500;
+}
+
+.create-patient-modal-consent-description {
+  @apply text-gray-500;
+}
+
+/* Modal Structure */
+.create-patient-modal-overlay {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.create-patient-modal-backdrop {
+  @apply flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0;
+}
+
+.create-patient-modal-backdrop-bg {
+  @apply fixed inset-0 transition-opacity;
+}
+
+.create-patient-modal-backdrop-bg-color {
+  @apply absolute inset-0 bg-gray-500 opacity-75;
+}
+
+.create-patient-modal-container {
+  @apply inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all w-4/5 max-w-5xl max-h-[90vh];
+}
+
+.create-patient-modal-header {
+  @apply bg-blue-600 px-6 py-4 flex items-center justify-between;
+}
+
+.create-patient-modal-header-title {
+  @apply text-xl font-semibold text-white;
+}
+
+.create-patient-modal-header-close {
+  @apply text-white hover:text-gray-200 transition-colors;
+}
+
+.create-patient-modal-header-close-icon {
+  @apply h-6 w-6;
+}
+
+.create-patient-modal-content {
+  @apply flex-1 overflow-y-auto p-6;
+}
+
+.create-patient-modal-content-inner {
+  @apply flex items-center justify-center min-h-full;
+}
+
+.create-patient-modal-content-wrapper {
+  @apply w-full max-w-4xl;
+}
+
+.create-patient-modal-error-section {
+  @apply mb-6 bg-red-50 border border-red-200 rounded-md p-4;
+}
+
+.create-patient-modal-error-text {
+  @apply text-sm text-red-700;
+}
+
+.create-patient-modal-footer {
+  @apply flex justify-end gap-x-3 pt-6 border-t;
+}
+
+.create-patient-modal-footer-btn-cancel {
+  @apply text-sm font-semibold leading-6 text-gray-900 px-4 py-2;
+}
+
+.create-patient-modal-footer-btn-submit {
+  @apply rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .create-patient-modal-container {
+    @apply w-full h-full;
+  }
+
+  .create-patient-modal-content {
+    @apply p-4;
+  }
+
+  .create-patient-modal-section-content-grid {
+    @apply gap-y-6;
+  }
+
+  .create-patient-modal-footer {
+    @apply gap-x-2 pt-4;
+  }
+
+  .create-patient-modal-footer-btn-cancel,
+  .create-patient-modal-footer-btn-submit {
+    @apply px-3 py-2 text-sm;
+  }
+}

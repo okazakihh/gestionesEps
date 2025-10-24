@@ -59,6 +59,8 @@ export const usePatientManagement = () => {
   };
 
   const handleOpenCreatePatientModal = () => {
+    setEditingPatient(null); // Asegurar que no hay paciente en edición
+    setPrefillDocumentNumber(''); // Limpiar documento pre-llenado
     setIsCreatePatientModalOpen(true);
   };
 
@@ -66,6 +68,11 @@ export const usePatientManagement = () => {
     setIsCreatePatientModalOpen(false);
     setPrefillDocumentNumber('');
     setEditingPatient(null);
+    // Reset form data when closing modal to prevent data persistence
+    setTimeout(() => {
+      setPrefillDocumentNumber('');
+      setEditingPatient(null);
+    }, 100);
   };
 
   const handlePatientCreated = async (patientData, selectedSlotForAppointment) => {

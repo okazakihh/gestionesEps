@@ -76,25 +76,29 @@ const AppointmentAvailabilitySection = ({
 
                       <div className="grid grid-cols-6 gap-1">
                         {availableSlots.map((slot) => (
-                          <div
+                          <button
                             key={`${doctorId}-${slot.time}`}
+                            type="button"
                             onClick={() => {
                               console.log('Slot clicked:', { slot, selectedDate, doctorId });
-                              slot.available && handleSlotClick({
-                                ...slot,
-                                date: selectedDate,
-                                doctorId: doctorId
-                              });
+                              if (slot.available) {
+                                handleSlotClick({
+                                  ...slot,
+                                  date: selectedDate,
+                                  doctorId: doctorId
+                                });
+                              }
                             }}
-                            className={`p-0.5 text-center text-[10px] rounded border transition-colors ${
+                            disabled={!slot.available}
+                            className={`p-0.5 text-center text-[10px] rounded border transition-colors focus:outline-none ${
                               slot.available
                                 ? 'bg-green-50 border-green-200 text-green-700 cursor-pointer hover:bg-green-100 hover:shadow-sm'
-                                : 'bg-red-50 border-red-200 text-red-700 cursor-not-allowed'
+                                : 'bg-red-50 border-red-200 text-red-700 cursor-not-allowed opacity-70'
                             }`}
                             title={slot.available ? `Click para agendar cita con ${doctorName}` : 'Horario ocupado'}
                           >
                             {slot.label}
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>

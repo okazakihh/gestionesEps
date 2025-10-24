@@ -2,10 +2,10 @@ import React, { useState  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import {
-  
+
   MagnifyingGlassIcon,
   FunnelIcon,
-  
+
   UserIcon,
   ClockIcon,
   CalendarDaysIcon,
@@ -15,6 +15,7 @@ import { ActionIcon, Group } from '@mantine/core';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
 import { hasPermission, PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
+import { ESTADO_PACIENTE_OPTIONS, EPS_OPTIONS, TIPO_SANGRE_OPTIONS } from '../../../negocio/utils/listHelps.js';
 
 // Importar custom hooks
 import { useAppointmentManagement } from '../../../negocio/hooks/useAppointmentManagement.js';
@@ -27,7 +28,7 @@ import { appointmentService } from '../../../negocio/services/appointmentService
 // Importar componentes
 import PatientList from '../../components/pacientes/PatientDashboard/PatientList.jsx';
 import PatientDetailModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientDetailModal.jsx';
-import CreatePatientModal from '../../components/pacientes/PatientDashboard/CreatePatientModal.jsx';
+import CreatePatientModal from '../../components/pacientes/PatientDashboard/createPatient/CreatePatientModal.jsx';
 import PatientSearchModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientSearchModal.jsx';
 import AgendaModal from '../../components/pacientes/PatientDashboard/agendaModal/AgendaModal.jsx';
 import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/ScheduleAppointmentModal.jsx';
@@ -540,32 +541,32 @@ const PatientDashboard = () => {
                         onChange={(e) => setFilterStatus(e.target.value)}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="all">Todos</option>
-                        <option value="active">Activos</option>
-                        <option value="inactive">Inactivos</option>
+                        {ESTADO_PACIENTE_OPTIONS.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">EPS</label>
                       <select className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Todas</option>
-                        <option value="nueva_eps">Nueva EPS</option>
-                        <option value="salud_total">Salud Total</option>
-                        <option value="sanitas">Sanitas</option>
+                        {EPS_OPTIONS.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Tipo de Sangre</label>
                       <select className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Todos</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
+                        {TIPO_SANGRE_OPTIONS.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -581,6 +582,7 @@ const PatientDashboard = () => {
                 onPatientClick={handlePatientClick}
                 onScheduleAppointment={handleScheduleAppointment}
                 onEditPatient={handleEditPatient}
+                onNewPatient={handleOpenCreatePatientModal}
                 refreshTrigger={refreshTrigger}
               />
             </div>

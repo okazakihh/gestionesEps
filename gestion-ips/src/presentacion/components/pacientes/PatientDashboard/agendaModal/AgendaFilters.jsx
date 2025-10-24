@@ -1,4 +1,5 @@
 import React from 'react';
+import { ESTADO_CITA_OPTIONS } from '/src/negocio/utils/listHelps.js';
 
 /**
  * Componente para los filtros de la agenda
@@ -53,11 +54,11 @@ const AgendaFilters = ({ filters, setFilters, clearFilters }) => {
             className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
           >
             <option value="">Todos los estados</option>
-            <option value="PROGRAMADO">Programado</option>
-            <option value="EN_SALA">En Sala</option>
-            <option value="ATENDIDO">Atendido</option>
-            <option value="NO_SE_PRESENTO">No se Presentó</option>
-            <option value="CANCELADO">Cancelado</option>
+            {ESTADO_CITA_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 

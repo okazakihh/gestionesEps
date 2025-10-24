@@ -13,7 +13,7 @@ import {
 import { pacientesApiService } from '../../../../data/services/pacientesApiService.js';
 import { ActionIcon, Group, Button } from '@mantine/core';
 
-const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppointment, onEditPatient, refreshTrigger }) => {
+const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppointment, onEditPatient, onNewPatient, refreshTrigger }) => {
   const [allPatients, setAllPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -251,7 +251,7 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
               Lista de Pacientes ({filteredPatients.length})
             </h3>
             <Button
-              onClick={() => window.location.href = '/pacientes/gestion'}
+              onClick={onNewPatient}
               leftSection={<span>+</span>}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >

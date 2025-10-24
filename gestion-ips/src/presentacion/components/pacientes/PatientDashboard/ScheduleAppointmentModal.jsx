@@ -12,6 +12,7 @@ import { empleadosApiService } from '../../../../data/services/empleadosApiServi
 import { notifications } from '@mantine/notifications';
 import { Select } from '@mantine/core';
 import Swal from 'sweetalert2';
+import { ESTADO_CITA_AGENDAR_OPTIONS, DURACION_CITA_OPTIONS } from '../../../../negocio/utils/listHelps.js';
 
 const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, selectedDoctor, isOpen, onClose, onAppointmentCreated }) => {
   const [formData, setFormData] = useState({
@@ -558,9 +559,11 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                       onChange={(e) => handleInputChange('estado', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="PROGRAMADA">Programada</option>
-                      <option value="CONFIRMADA">Confirmada</option>
-                      <option value="CANCELADA">Cancelada</option>
+                      {ESTADO_CITA_AGENDAR_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -574,11 +577,11 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
                       onChange={(e) => handleInputChange('duracion', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="15">15 min</option>
-                      <option value="30">30 min</option>
-                      <option value="45">45 min</option>
-                      <option value="60">1 hora</option>
-                      <option value="90">1.5 horas</option>
+                      {DURACION_CITA_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
