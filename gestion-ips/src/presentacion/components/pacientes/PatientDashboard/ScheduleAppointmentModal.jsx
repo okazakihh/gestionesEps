@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
-import {
-  XMarkIcon,
-  CalendarDaysIcon,
-  ClockIcon,
-  UserIcon,
-  DocumentTextIcon,
-  CheckIcon
-} from '@heroicons/react/24/outline';
 import { pacientesApiService, codigosCupsApiService } from '../../../../data/services/pacientesApiService.js';
 import { empleadosApiService } from '../../../../data/services/empleadosApiService.js';
-import { notifications } from '@mantine/notifications';
-import { Select } from '@mantine/core';
+
 import Swal from 'sweetalert2';
-import { ESTADO_CITA_AGENDAR_OPTIONS, DURACION_CITA_OPTIONS } from '../../../../negocio/utils/listHelps.js';
+
+// Import extracted components
+import ScheduleAppointmentHeader from './agendaModal/ScheduleAppointmentHeader.jsx';
+import ScheduleAppointmentForm from './agendaModal/ScheduleAppointmentForm.jsx';
 
 const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, selectedDoctor, isOpen, onClose, onAppointmentCreated }) => {
   const [formData, setFormData] = useState({
@@ -402,13 +396,6 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
     }
   };
 
-  const getMinDateTime = () => {
-    const now = new Date();
-    // Add 1 hour from now to give some buffer time
-    now.setHours(now.getHours() + 1);
-    return now.toISOString().slice(0, 16); // Format for datetime-local input
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -420,321 +407,30 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-11/12 max-w-4xl h-5/6">
           {/* Header */}
-          <div className="bg-blue-600 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                  <CalendarDaysIcon className="h-8 w-8 text-blue-600" />
-                </div>
-                <div>
-                  <div className="flex items-center space-x-3">
-                    <h3 className="text-xl font-semibold text-white">
-                      Agendar Cita Médica
-                    </h3>
-                    {loading && (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span className="ml-2 text-sm text-blue-100">Agendando...</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-blue-100">
-                    Paciente: {patientName}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={onClose}
-                className="text-white hover:text-gray-200 transition-colors"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
+          <ScheduleAppointmentHeader
+            patientName={patientName}
+            loading={loading}
+            onClose={onClose}
+          />
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-            <div className="space-y-6">
-              {/* Primera fila: Fecha/Hora, Médico, Código CUPS */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <CalendarDaysIcon className="h-4 w-4 inline mr-2" />
-                    Fecha y Hora *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formData.fechaHoraCita}
-                    onChange={(e) => handleInputChange('fechaHoraCita', e.target.value)}
-                    min={getMinDateTime()}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.fechaHoraCita ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    required
-                  />
-                  {errors.fechaHoraCita && (
-                    <p className="mt-1 text-sm text-red-600">{errors.fechaHoraCita}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <UserIcon className="h-4 w-4 inline mr-2" />
-                    Médico *
-                  </label>
-                  <select
-                    value={formData.medicoAsignado}
-                    onChange={(e) => handleInputChange('medicoAsignado', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.medicoAsignado ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    required
-                    disabled={loadingMedicos}
-                  >
-                    <option value="">
-                      {loadingMedicos ? 'Cargando...' : 'Seleccionar médico'}
-                    </option>
-                    {medicos.map((medico) => (
-                      <option key={medico.id} value={getNombreCompletoMedico(medico)}>
-                        {getNombreCompletoMedico(medico)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.medicoAsignado && (
-                    <p className="mt-1 text-sm text-red-600">{errors.medicoAsignado}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Código CUPS *
-                  </label>
-                  <Select
-                    placeholder="Buscar código..."
-                    data={codigosCups.map((codigo) => ({
-                      value: codigo.codigoCup,
-                      label: `${codigo.codigoCup} - ${codigo.nombreCup}`
-                    }))}
-                    value={formData.codigoCups}
-                    onChange={(value) => handleInputChange('codigoCups', value)}
-                    searchable
-                    clearable={false}
-                    disabled={loadingCodigosCups}
-                    required
-                    error={errors.codigoCups}
-                  />
-                </div>
-              </div>
-
-              {/* Segunda fila: Motivo y Estado/Duración */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <DocumentTextIcon className="h-4 w-4 inline mr-2" />
-                    Motivo de la Consulta *
-                  </label>
-                  <textarea
-                    value={formData.motivo}
-                    onChange={(e) => handleInputChange('motivo', e.target.value)}
-                    rows={2}
-                    placeholder="Describa el motivo de la consulta médica..."
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.motivo ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    required
-                  />
-                  {errors.motivo && (
-                    <p className="mt-1 text-sm text-red-600">{errors.motivo}</p>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <CheckIcon className="h-4 w-4 inline mr-2" />
-                      Estado
-                    </label>
-                    <select
-                      value={formData.estado}
-                      onChange={(e) => handleInputChange('estado', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {ESTADO_CITA_AGENDAR_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <ClockIcon className="h-4 w-4 inline mr-2" />
-                      Duración
-                    </label>
-                    <select
-                      value={formData.duracion || '30'}
-                      onChange={(e) => handleInputChange('duracion', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {DURACION_CITA_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Información del Código CUPS seleccionado */}
-              {selectedCupData && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Información CUPS</h4>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                    {selectedCupData.categoria && (
-                      <div>
-                        <span className="font-medium text-blue-800">Categoría:</span>
-                        <p className="text-blue-700">{selectedCupData.categoria}</p>
-                      </div>
-                    )}
-                    {selectedCupData.especialidad && (
-                      <div>
-                        <span className="font-medium text-blue-800">Especialidad:</span>
-                        <p className="text-blue-700">{selectedCupData.especialidad}</p>
-                      </div>
-                    )}
-                    {selectedCupData.tipo && (
-                      <div>
-                        <span className="font-medium text-blue-800">Tipo:</span>
-                        <p className="text-blue-700">{selectedCupData.tipo}</p>
-                      </div>
-                    )}
-                    {selectedCupData.ambito && (
-                      <div>
-                        <span className="font-medium text-blue-800">Ámbito:</span>
-                        <p className="text-blue-700">{selectedCupData.ambito}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Notas adicionales */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notas Adicionales
-                </label>
-                <textarea
-                  value={formData.notas}
-                  onChange={(e) => handleInputChange('notas', e.target.value)}
-                  rows={2}
-                  placeholder="Información adicional, instrucciones especiales, etc..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Error Display */}
-              {submitError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
-                        {submitError.title}
-                      </h3>
-                      <div className="mt-2 text-sm text-red-700">
-                        <p>{submitError.message}</p>
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex space-x-3">
-                          <button
-                            type="button"
-                            onClick={() => setSubmitError(null)}
-                            className="text-sm font-medium text-red-800 hover:text-red-600"
-                          >
-                            Entendido
-                          </button>
-                          <details className="text-sm">
-                            <summary className="cursor-pointer text-red-700 hover:text-red-900 font-medium">
-                              Ver detalles técnicos
-                            </summary>
-                            <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono text-red-900">
-                              {debugInfo && (
-                                <>
-                                  <div className="mb-2">
-                                    <strong>URL:</strong> {debugInfo.url}
-                                  </div>
-                                  <div className="mb-2">
-                                    <strong>Datos enviados:</strong>
-                                    <pre className="mt-1 whitespace-pre-wrap">
-                                      {JSON.stringify(debugInfo.requestData, null, 2)}
-                                    </pre>
-                                  </div>
-                                  {debugInfo.error && (
-                                    <div className="mb-2">
-                                      <strong>Error del cliente:</strong> {debugInfo.error}
-                                    </div>
-                                  )}
-                                  {debugInfo.response && (
-                                    <div>
-                                      <strong>Respuesta del servidor:</strong>
-                                      <pre className="mt-1 whitespace-pre-wrap">
-                                        {JSON.stringify(debugInfo.response, null, 2)}
-                                      </pre>
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </details>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Información del paciente y acciones */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pt-4 border-t">
-                <div className="bg-gray-50 p-3 rounded-lg flex-1">
-                  <div className="text-sm text-gray-600">
-                    <p><strong>Paciente:</strong> {patientName}</p>
-                    <p><strong>Fecha:</strong> {new Date().toLocaleDateString('es-CO')}</p>
-                  </div>
-                </div>
-
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    disabled={loading}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Agendando...
-                      </div>
-                    ) : (
-                      'Agendar Cita'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+          <ScheduleAppointmentForm
+            formData={formData}
+            errors={errors}
+            submitError={submitError}
+            debugInfo={debugInfo}
+            codigosCups={codigosCups}
+            loadingCodigosCups={loadingCodigosCups}
+            medicos={medicos}
+            loadingMedicos={loadingMedicos}
+            selectedCupData={selectedCupData}
+            patientName={patientName}
+            loading={loading}
+            onInputChange={handleInputChange}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            setSubmitError={setSubmitError}
+          />
         </div>
       </div>
     </div>

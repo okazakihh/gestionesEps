@@ -28,7 +28,7 @@ const ConfiguracionPage = () => (
   </SPALayout>
 );
 
-const viewComponents: Record<ViewType, React.ComponentType> = {
+const viewComponents = {
   login: SPALoginPage,
   dashboard: DashboardPage,
   usuarios: UsuariosPage,
@@ -38,7 +38,7 @@ const viewComponents: Record<ViewType, React.ComponentType> = {
   configuracion: ConfiguracionPage,
 };
 
-export const ViewRenderer: React.FC = () => {
+export const ViewRenderer = () => {
   const { currentView } = useNavigationStore();
   
   const ViewComponent = viewComponents[currentView];

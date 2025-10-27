@@ -16,10 +16,10 @@ export const GENERO_OPTIONS = [
 ];
 
 export const ESTADO_CIVIL_OPTIONS = [
-  { value: 'SOLTERO', label: 'Soltero' },
-  { value: 'CASADO', label: 'Casado' },
-  { value: 'DIVORCIADO', label: 'Divorciado' },
-  { value: 'VIUDO', label: 'Viudo' },
+  { value: 'SOLTERO', label: 'Soltero/a' },
+  { value: 'CASADO', label: 'Casado/a' },
+  { value: 'DIVORCIADO', label: 'Divorciado/a' },
+  { value: 'VIUDO', label: 'Viudo/a' },
   { value: 'UNION_LIBRE', label: 'Unión Libre' }
 ];
 
@@ -92,10 +92,10 @@ export const ESTADO_CITA_AGENDAR_OPTIONS = [
 
 export const DURACION_CITA_OPTIONS = [
   { value: '15', label: '15 min' },
-  { value: '30', label: '30 min' },
-  { value: '45', label: '45 min' },
+  { value: '20', label: '20 min' },
+  { value: '40', label: '40 min' },
   { value: '60', label: '1 hora' },
-  { value: '90', label: '1.5 horas' }
+
 ];
 
 export const ESTADO_PACIENTE_OPTIONS = [

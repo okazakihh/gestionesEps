@@ -2,12 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
 
-interface RequireRoleProps {
-  roles: string[]; // nombres de rol esperados (e.g. ['ADMIN'])
-  children: React.ReactElement;
-}
-
-export const RequireRole: React.FC<RequireRoleProps> = ({ roles, children }) => {
+export const RequireRole = ({ roles, children }) => {
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
