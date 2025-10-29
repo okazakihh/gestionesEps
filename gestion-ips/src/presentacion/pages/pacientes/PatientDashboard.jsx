@@ -18,23 +18,23 @@ import { hasPermission, PERMISSIONS } from '../../../negocio/utils/auth/permissi
 import { ESTADO_PACIENTE_OPTIONS, EPS_OPTIONS, TIPO_SANGRE_OPTIONS } from '../../../negocio/utils/listHelps.js';
 
 // Importar custom hooks
-import { useAppointmentManagement } from '../../../negocio/hooks/useAppointmentManagement.js';
-import { usePatientManagement } from '../../../negocio/hooks/usePatientManagement.js';
-import { useCalendarManagement } from '../../../negocio/hooks/useCalendarManagement.js';
+import { useAppointmentManagement } from '../../../negocio/hooks/citas/useAppointmentManagement.js';
+import { usePatientManagement } from '../../../negocio/hooks/pacientes/usePatientManagement.js';
+import { useCalendarManagement } from '../../../negocio/hooks/calendario/useCalendarManagement.js';
 
 // Importar servicios de negocio
 import { appointmentService } from '../../../negocio/services/appointmentService.js';
 
 // Importar componentes
-import PatientList from '../../components/pacientes/PatientDashboard/PatientList.jsx';
+import PatientList from '../../components/pacientes/PatientDashboard/patients/PatientList.jsx';
 import PatientDetailModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientDetailModal.jsx';
 import CreatePatientModal from '../../components/pacientes/PatientDashboard/createPatient/CreatePatientModal.jsx';
 import PatientSearchModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientSearchModal.jsx';
 import AgendaModal from '../../components/pacientes/PatientDashboard/agendaModal/AgendaModal.jsx';
-import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/ScheduleAppointmentModal.jsx';
-import CalendarWidget from '../../components/pacientes/PatientDashboard/CalendarWidget.jsx';
-import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/CreateHistoriaClinicaModal.jsx';
-import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/CreateConsultaMedicaModal.jsx';
+import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/agendaModal/ScheduleAppointmentModal.jsx';
+import CalendarWidget from '../../components/pacientes/PatientDashboard/calendar/CalendarWidget.jsx';
+import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateHistoriaClinicaModal.jsx';
+import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateConsultaMedicaModal.jsx';
 
 const PatientDashboard = () => {
    const navigate = useNavigate();
@@ -171,7 +171,16 @@ const PatientDashboard = () => {
 
                 {/* Multi-Doctor Schedule Display */}
                 <div className="space-y-6">
-                  {/* Time slots for all doctors */}
+                  {/* Time slots for all doctors - Only show for today and future dates */}
+                  {(() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const selectedDateOnly = new Date(calendarManagement.selectedDate);
+                    selectedDateOnly.setHours(0, 0, 0, 0);
+                    const isPastDate = selectedDateOnly < today;
+                    
+                    return !isPastDate;
+                  })() && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-900 mb-3">
                       {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
@@ -229,13 +238,14 @@ const PatientDashboard = () => {
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Appointments for all doctors */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-900 mb-3">
                       {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
-                        ? `Mis Citas Programadas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
-                        : `Todas las Citas Programadas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
+                        ? `Mis Citas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
+                        : `Todas las Citas - ${calendarManagement.selectedDate.toLocaleDateString('es-ES')}`
                       }
                     </h4>
 
@@ -244,20 +254,43 @@ const PatientDashboard = () => {
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                         <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
                       </div>
-                    ) : Object.values(calendarManagement.allDoctorAppointments).some(doctorData =>
-                        doctorData.appointments.some(appointment => {
-                          try {
-                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                            return appointmentData.estado !== 'ATENDIDO';
-                          } catch (error) {
-                            return true;
-                          }
-                        })
-                      ) ? (
+                    ) : (() => {
+                        // Check if selected date is in the past
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const selectedDateOnly = new Date(calendarManagement.selectedDate);
+                        selectedDateOnly.setHours(0, 0, 0, 0);
+                        const isPastDate = selectedDateOnly < today;
+                        
+                        // For past dates, show ALL appointments including ATENDIDO
+                        // For today and future dates, hide ATENDIDO appointments
+                        const hasAppointments = Object.values(calendarManagement.allDoctorAppointments).some(doctorData =>
+                          doctorData.appointments.some(appointment => {
+                            if (isPastDate) return true; // Show all appointments for past dates
+                            try {
+                              const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                              return appointmentData.estado !== 'ATENDIDO';
+                            } catch (error) {
+                              return true;
+                            }
+                          })
+                        );
+                        
+                        return hasAppointments;
+                      })() ? (
                       <div className="space-y-2 max-h-80 overflow-y-auto">
                         {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) =>
                           doctorData.appointments
                             .filter(appointment => {
+                              // Check if selected date is in the past
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              const selectedDateOnly = new Date(calendarManagement.selectedDate);
+                              selectedDateOnly.setHours(0, 0, 0, 0);
+                              const isPastDate = selectedDateOnly < today;
+                              
+                              if (isPastDate) return true; // Show all appointments for past dates
+                              
                               try {
                                 const appointmentData = JSON.parse(appointment.datosJson || '{}');
                                 return appointmentData.estado !== 'ATENDIDO';

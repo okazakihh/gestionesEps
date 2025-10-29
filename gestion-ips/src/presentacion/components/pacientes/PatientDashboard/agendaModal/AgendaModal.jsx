@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { XMarkIcon, UserIcon } from '@heroicons/react/24/outline';
 import { pacientesApiService, historiasClinicasApiService } from '../../../../../data/services/pacientesApiService.js';
-import CreateHistoriaClinicaModal from '../CreateHistoriaClinicaModal.jsx';
-import CreateConsultaMedicaModal from '../CreateConsultaMedicaModal.jsx';
+import CreateHistoriaClinicaModal from '../medicalRecords/CreateHistoriaClinicaModal.jsx';
+import CreateConsultaMedicaModal from '../medicalRecords/CreateConsultaMedicaModal.jsx';
 import PatientDetailModal from '../patientDetail/PatientDetailModal.jsx';
 import Swal from 'sweetalert2';
 import { ActionIcon, Group } from '@mantine/core';
@@ -53,6 +53,16 @@ const AgendaModal = ({ isOpen, onClose }) => {
     estado: '',
     paciente: ''
   });
+
+  // Function to handle date selection from calendar
+  const handleDateSelection = (selectedDate) => {
+    const dateString = selectedDate.toISOString().split('T')[0];
+    setFilters(prev => ({
+      ...prev,
+      fechaInicio: dateString,
+      fechaFin: dateString
+    }));
+  };
   const [filteredCitas, setFilteredCitas] = useState([]);
   const [showCitasCards, setShowCitasCards] = useState(true);
   const [selectedCitaForDetail, setSelectedCitaForDetail] = useState(null);
@@ -94,18 +104,26 @@ const AgendaModal = ({ isOpen, onClose }) => {
     applyFilters();
   }, [citas, filters]);
 
+  // Reload citas when date range changes
+  useEffect(() => {
+    if (isOpen) {
+      loadCitasPendientes();
+    }
+  }, [filters.fechaInicio, filters.fechaFin, isOpen]);
+
   const loadCitasPendientes = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await pacientesApiService.getCitasPendientes(searchParams);
+      // Get all appointments instead of just pending ones to show all statuses
+      const response = await pacientesApiService.getCitas(searchParams);
       setCitas(response.content || []);
     } catch (err) {
       const error = err;
       if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
         setError('No se pudo conectar con el servicio de citas médicas. Verifique que el servidor esté ejecutándose.');
       } else {
-        setError(err instanceof Error ? err.message : 'Error al cargar citas pendientes');
+        setError(err instanceof Error ? err.message : 'Error al cargar citas');
       }
     } finally {
       setLoading(false);
@@ -135,6 +153,21 @@ const AgendaModal = ({ isOpen, onClose }) => {
   const allCitas = useMemo(() => {
     return citas; // Show all citas in agenda modal
   }, [citas]);
+
+  // Get citas for the selected date
+  const citasForSelectedDate = useMemo(() => {
+    if (!filters.fechaInicio) return [];
+    const selectedDate = new Date(filters.fechaInicio);
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    return citas.filter(cita => {
+      const citaInfo = parseCitaInfo(cita);
+      if (!citaInfo.fechaHoraCita) return false;
+      const citaDate = new Date(citaInfo.fechaHoraCita);
+      return citaDate >= selectedDate && citaDate < nextDay;
+    });
+  }, [citas, filters.fechaInicio]);
 
 
   const updateAppointmentStatus = async (citaId, newStatus) => {

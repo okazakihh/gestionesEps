@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { usePatientForm } from "/src/negocio/hooks/usePatientForm.js";
+import { usePatientForm } from "../../../../../negocio/hooks/pacientes/usePatientForm.js";
 import BasicInfoSection from './BasicInfoSection.jsx';
 import PersonalInfoSection from './PersonalInfoSection.jsx';
 import ContactInfoSection from './ContactInfoSection.jsx';
