@@ -36,7 +36,7 @@ export const registerServiceWorker = async () => {
       return null;
     }
   } else {
-    console.warn('Service Worker no soportado en este navegador');
+    console.info('Service Worker no está disponible en este navegador');
     return null;
   }
 };

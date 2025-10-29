@@ -110,3 +110,52 @@ export const EPS_OPTIONS = [
   { value: 'salud_total', label: 'Salud Total' },
   { value: 'sanitas', label: 'Sanitas' }
 ];
+
+// ============================================
+// LISTAS PARA EMPLEADOS
+// ============================================
+
+export const TIPO_PERSONAL_OPTIONS = [
+  { value: 'MEDICO', label: 'Médico' },
+  { value: 'ADMINISTRATIVO', label: 'Administrativo' }
+];
+
+export const ESPECIALIDAD_MEDICA_OPTIONS = [
+  { value: 'MEDICINA_GENERAL', label: 'Medicina General' },
+  { value: 'PEDIATRIA', label: 'Pediatría' },
+  { value: 'GINECOLOGIA', label: 'Ginecología' },
+  { value: 'CARDIOLOGIA', label: 'Cardiología' },
+  { value: 'DERMATOLOGIA', label: 'Dermatología' },
+  { value: 'OFTALMOLOGIA', label: 'Oftalmología' },
+  { value: 'ODONTOLOGIA', label: 'Odontología' },
+  { value: 'PSICOLOGIA', label: 'Psicología' },
+  { value: 'NUTRICION', label: 'Nutrición' },
+  { value: 'FISIOTERAPIA', label: 'Fisioterapia' },
+  { value: 'ORTOPEDIA', label: 'Ortopedia' },
+  { value: 'NEUROLOGIA', label: 'Neurología' },
+  { value: 'PSIQUIATRIA', label: 'Psiquiatría' },
+  { value: 'UROLOGIA', label: 'Urología' },
+  { value: 'GASTROENTEROLOGIA', label: 'Gastroenterología' }
+];
+
+export const CARGO_ADMINISTRATIVO_OPTIONS = [
+  { value: 'RECEPCIONISTA', label: 'Recepcionista' },
+  { value: 'AUXILIAR_ADMINISTRATIVO', label: 'Auxiliar Administrativo' },
+  { value: 'CONTADOR', label: 'Contador' },
+  { value: 'GERENTE', label: 'Gerente' },
+  { value: 'COORDINADOR', label: 'Coordinador' },
+  { value: 'ASISTENTE', label: 'Asistente' },
+  { value: 'JEFE_ENFERMERIA', label: 'Jefe de Enfermería' },
+  { value: 'RECURSOS_HUMANOS', label: 'Recursos Humanos' },
+  { value: 'SISTEMAS', label: 'Sistemas' },
+  { value: 'SERVICIOS_GENERALES', label: 'Servicios Generales' }
+];
+
+export const TIPO_CONTRATO_OPTIONS = [
+  { value: 'INDEFINIDO', label: 'Indefinido' },
+  { value: 'FIJO', label: 'Término Fijo' },
+  { value: 'OBRA', label: 'Por Obra o Labor' },
+  { value: 'PRESTACION', label: 'Prestación de Servicios' },
+  { value: 'APRENDIZAJE', label: 'Aprendizaje' },
+  { value: 'TEMPORAL', label: 'Temporal' }
+];
