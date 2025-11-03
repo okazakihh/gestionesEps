@@ -279,8 +279,8 @@ const PatientDashboard = () => {
                         return hasAppointments;
                       })() ? (
                       <div className="space-y-2 max-h-80 overflow-y-auto">
-                        {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) =>
-                          doctorData.appointments
+                        {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) => {
+                          return doctorData.appointments
                             .filter(appointment => {
                               // Check if selected date is in the past
                               const today = new Date();
@@ -512,8 +512,8 @@ const PatientDashboard = () => {
                                 </Group>
                               </div>
                             </div>
-                          ))
-                        )}
+                          ));
+                        })}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500 text-center py-4">

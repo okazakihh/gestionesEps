@@ -274,10 +274,18 @@ export const useAppointmentManagement = (user = null) => {
       }
 
       // Create a map of doctor names to doctor objects
+      // Also create a map by base name (without specialty) for flexible matching
       const doctorMap = {};
+      const doctorMapByBaseName = {};
       medicos.forEach(medico => {
         const doctorName = getNombreCompletoMedico(medico);
         doctorMap[doctorName] = medico;
+        
+        // Extract base name (everything before the last dash and specialty)
+        const baseName = doctorName.split(' - ')[0]?.trim();
+        if (baseName) {
+          doctorMapByBaseName[baseName] = medico;
+        }
       });
 
       // Filtrar médicos según el rol del usuario
@@ -307,17 +315,24 @@ export const useAppointmentManagement = (user = null) => {
       });
 
       // Group appointments by doctor
-      console.log('Processing appointments for date:', selectedDate);
       filteredAppointments.forEach(appointment => {
         try {
           const appointmentData = JSON.parse(appointment.datosJson || '{}');
           const medicoAsignado = appointmentData.medicoAsignado;
-          console.log('Processing appointment:', appointment.id, 'assigned to:', medicoAsignado);
+          
+          // Try exact match first, then try matching by base name (without specialty)
+          let doctor = doctorMap[medicoAsignado];
+          
+          if (!doctor && medicoAsignado) {
+            // Extract base name from the assigned doctor
+            const baseNameFromAppointment = medicoAsignado.split(' - ')[0]?.trim();
+            if (baseNameFromAppointment) {
+              doctor = doctorMapByBaseName[baseNameFromAppointment];
+            }
+          }
 
-          if (medicoAsignado && doctorMap[medicoAsignado]) {
-            const doctor = doctorMap[medicoAsignado];
+          if (medicoAsignado && doctor) {
             const doctorId = doctor.id;
-            console.log('Doctor found for appointment:', doctorId);
 
             // Get patient name
             let patientName = appointmentData.motivo || 'Paciente';

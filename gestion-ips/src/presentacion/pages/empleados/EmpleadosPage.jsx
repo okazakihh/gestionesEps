@@ -7,7 +7,7 @@ import GestionEmpleadosComponent from '../../components/empleados/GestionEmplead
 const EmpleadosPage = () => {
   return (
     <MainLayout title="Módulo de Empleados" subtitle="Gestión de empleados del sistema">
-      <Container size="xl" px="md">
+      <Container size="100%" px="xl" style={{ maxWidth: '100%' }}>
         <Stack gap="lg">
           {/* Header */}
           <Stack gap="xs">
@@ -18,7 +18,7 @@ const EmpleadosPage = () => {
           </Stack>
 
           {/* Content */}
-          <Paper shadow="sm" radius="md" withBorder>
+          <Paper shadow="sm" radius="md" withBorder p="xl">
             <GestionEmpleadosComponent />
           </Paper>
 

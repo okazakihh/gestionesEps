@@ -162,11 +162,12 @@ const FacturacionPage = () => {
       const citasResponse = await pacientesApiService.getCitas({ size: 1000 });
 
       if (citasResponse && citasResponse.content) {
-        // Filtrar solo citas atendidas
+        // Filtrar todas las citas (PROGRAMADA, ATENDIDO, CANCELADO, NO_SE_PRESENTO)
         const citasAtendidasFiltradas = citasResponse.content.filter(cita => {
           try {
             const datosJson = JSON.parse(cita.datosJson || '{}');
-            return datosJson.estado === 'ATENDIDO';
+            // Permitir todos los estados de citas
+            return datosJson.estado && ['PROGRAMADA', 'ATENDIDO', 'CANCELADO', 'NO_SE_PRESENTO'].includes(datosJson.estado);
           } catch (error) {
             return false;
           }
@@ -242,7 +243,7 @@ const FacturacionPage = () => {
                 documentoMedico = medicoInfo.documento;
               }
 
-              return {
+              const citaProcessed = {
                 ...cita,
                 nombrePaciente,
                 documentoPaciente,
@@ -251,8 +252,11 @@ const FacturacionPage = () => {
                 nombreProcedimiento,
                 valorCita,
                 codigoCups: codigoCups || 'N/A',
-                fechaAtencion: datosJson.fechaHoraCita
+                fechaAtencion: datosJson.fechaHoraCita,
+                estadoCita: datosJson.estado
               };
+              
+              return citaProcessed;
             } catch (error) {
               console.error('Error procesando cita:', cita.id, error);
               return null;
@@ -522,16 +526,7 @@ const FacturacionPage = () => {
 
   // Función para aplicar filtros de fecha
   const aplicarFiltrosFecha = () => {
-    console.log('Applying filters with:', {
-      fechaInicio,
-      fechaFin,
-      filtroDocumentoPaciente,
-      filtroMedico,
-      filtroProcedimiento
-    });
-
     let citasFiltradas = [...citasAtendidas];
-    console.log('Initial citas count:', citasFiltradas.length);
 
     // Filtro por fecha inicio
     if (fechaInicio) {
@@ -541,11 +536,9 @@ const FacturacionPage = () => {
           const fechaCita = new Date(cita.fechaAtencion);
           return fechaCita >= fechaInicioDate;
         } catch (error) {
-          console.warn('Error filtrando cita por fecha inicio:', cita.id, error);
           return false;
         }
       });
-      console.log('After fecha inicio filter:', citasFiltradas.length);
     }
 
     // Filtro por fecha fin
@@ -556,11 +549,9 @@ const FacturacionPage = () => {
           const fechaCita = new Date(cita.fechaAtencion);
           return fechaCita <= fechaFinDate;
         } catch (error) {
-          console.warn('Error filtrando cita por fecha fin:', cita.id, error);
           return false;
         }
       });
-      console.log('After fecha fin filter:', citasFiltradas.length);
     }
 
     // Filtro por documento de paciente
@@ -569,7 +560,6 @@ const FacturacionPage = () => {
         cita.documentoPaciente &&
         cita.documentoPaciente.toLowerCase().includes(filtroDocumentoPaciente.toLowerCase())
       );
-      console.log('After documento paciente filter:', citasFiltradas.length);
     }
 
     // Filtro por médico
@@ -578,24 +568,19 @@ const FacturacionPage = () => {
         cita.nombreMedico &&
         cita.nombreMedico.toLowerCase().includes(filtroMedico.toLowerCase())
       );
-      console.log('After medico filter:', citasFiltradas.length);
     }
 
     // Filtro por procedimiento (busca por código CUPS o nombre)
     if (filtroProcedimiento.trim()) {
-      console.log('Filtering by procedimiento:', filtroProcedimiento);
       citasFiltradas = citasFiltradas.filter(cita => {
         const matchesNombre = cita.nombreProcedimiento &&
           cita.nombreProcedimiento.toLowerCase().includes(filtroProcedimiento.toLowerCase());
         const matchesCodigo = cita.codigoCups &&
           cita.codigoCups.toLowerCase().includes(filtroProcedimiento.toLowerCase());
-        console.log('Cita:', cita.id, 'codigoCups:', cita.codigoCups, 'matchesNombre:', matchesNombre, 'matchesCodigo:', matchesCodigo);
         return matchesNombre || matchesCodigo;
       });
-      console.log('After procedimiento filter:', citasFiltradas.length);
     }
 
-    console.log('Final filtered citas count:', citasFiltradas.length);
     setCitasAtendidasFiltradas(citasFiltradas);
   };
 
