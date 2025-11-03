@@ -1,5 +1,6 @@
 import React from 'react';
-import { CalendarDaysIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Paper, Group, Text, ThemeIcon, SimpleGrid } from '@mantine/core';
+import { IconCalendar, IconClock, IconUsers } from '@tabler/icons-react';
 
 /**
  * Componente para mostrar las tarjetas de estadísticas de la agenda
@@ -13,106 +14,94 @@ import { CalendarDaysIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outli
  */
 const AgendaStatsCards = ({ pendingCitas, citas, filters, user, formatDate }) => {
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-      <div className="bg-white overflow-hidden shadow rounded-lg border">
-        <div className="p-5">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <CalendarDaysIcon className="h-6 w-6 text-gray-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Citas Pendientes
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {pendingCitas.length}
-                </dd>
-              </dl>
-            </div>
+    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
+      <Paper shadow="sm" p="md" radius="md" withBorder>
+        <Group>
+          <ThemeIcon size="xl" radius="md" variant="light" color="blue">
+            <IconCalendar size={24} />
+          </ThemeIcon>
+          <div>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+              Citas Pendientes
+            </Text>
+            <Text size="xl" fw={700}>
+              {pendingCitas.length}
+            </Text>
           </div>
-        </div>
-      </div>
+        </Group>
+      </Paper>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg border">
-        <div className="p-5">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <ClockIcon className="h-6 w-6 text-gray-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Próxima Cita
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {pendingCitas.length > 0 ? formatDate(pendingCitas[0]?.fechaCreacion) : 'Ninguna'}
-                </dd>
-              </dl>
-            </div>
+      <Paper shadow="sm" p="md" radius="md" withBorder>
+        <Group>
+          <ThemeIcon size="xl" radius="md" variant="light" color="cyan">
+            <IconClock size={24} />
+          </ThemeIcon>
+          <div>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+              Próxima Cita
+            </Text>
+            <Text size="xl" fw={700}>
+              {pendingCitas.length > 0 ? formatDate(pendingCitas[0]?.fechaCreacion) : 'Ninguna'}
+            </Text>
           </div>
-        </div>
-      </div>
+        </Group>
+      </Paper>
 
-      <div className="bg-white overflow-hidden shadow rounded-lg border">
-        <div className="p-5">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <UserIcon className="h-6 w-6 text-gray-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Pacientes Atendidos
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {(() => {
-                    // Filter citas by date range, ATENDIDO status, and user role
-                    let atendidasEnRango = citas.filter(cita => {
-                      const citaInfo = getCitaInfo(cita);
-                      if (citaInfo.estado !== 'ATENDIDO') return false;
+      <Paper shadow="sm" p="md" radius="md" withBorder>
+        <Group>
+          <ThemeIcon size="xl" radius="md" variant="light" color="teal">
+            <IconUsers size={24} />
+          </ThemeIcon>
+          <div>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+              Pacientes Atendidos
+            </Text>
+            <Text size="xl" fw={700}>
+              {(() => {
+                // Filter citas by date range, ATENDIDO status, and user role
+                let atendidasEnRango = citas.filter(cita => {
+                  const citaInfo = getCitaInfo(cita);
+                  if (citaInfo.estado !== 'ATENDIDO') return false;
 
-                      // Apply date filters
-                      if (filters.fechaInicio) {
-                        const startDate = new Date(filters.fechaInicio);
-                        if (citaInfo.fechaHoraCita) {
-                          const citaDate = new Date(citaInfo.fechaHoraCita);
-                          if (citaDate < startDate) return false;
-                        }
-                      }
+                  // Apply date filters
+                  if (filters.fechaInicio) {
+                    const startDate = new Date(filters.fechaInicio);
+                    if (citaInfo.fechaHoraCita) {
+                      const citaDate = new Date(citaInfo.fechaHoraCita);
+                      if (citaDate < startDate) return false;
+                    }
+                  }
 
-                      if (filters.fechaFin) {
-                        const endDate = new Date(filters.fechaFin);
-                        endDate.setHours(23, 59, 59, 999);
-                        if (citaInfo.fechaHoraCita) {
-                          const citaDate = new Date(citaInfo.fechaHoraCita);
-                          if (citaDate > endDate) return false;
-                        }
-                      }
+                  if (filters.fechaFin) {
+                    const endDate = new Date(filters.fechaFin);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (citaInfo.fechaHoraCita) {
+                      const citaDate = new Date(citaInfo.fechaHoraCita);
+                      if (citaDate > endDate) return false;
+                    }
+                  }
 
-                      // For doctors, only count appointments they attended
-                      if (user?.rol === 'DOCTOR' || user?.rol === 'AUXILIAR_MEDICO') {
-                        const assignedDoctor = citaInfo.medicoAsignado;
-                        const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
-                        return assignedDoctor && (
-                          assignedDoctor.toLowerCase().includes(currentUserName.toLowerCase()) ||
-                          assignedDoctor.toLowerCase().includes(user.nombres.toLowerCase()) ||
-                          assignedDoctor.toLowerCase().includes(user.apellidos.toLowerCase())
-                        );
-                      }
+                  // For doctors, only count appointments they attended
+                  if (user?.rol === 'DOCTOR' || user?.rol === 'AUXILIAR_MEDICO') {
+                    const assignedDoctor = citaInfo.medicoAsignado;
+                    const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
+                    return assignedDoctor && (
+                      assignedDoctor.toLowerCase().includes(currentUserName.toLowerCase()) ||
+                      assignedDoctor.toLowerCase().includes(user.nombres.toLowerCase()) ||
+                      assignedDoctor.toLowerCase().includes(user.apellidos.toLowerCase())
+                    );
+                  }
 
-                      return true;
-                    });
+                  return true;
+                });
 
-                    return new Set(atendidasEnRango.map(cita => cita.pacienteId)).size;
-                  })()}
-                </dd>
-              </dl>
-            </div>
+                return new Set(atendidasEnRango.map(cita => cita.pacienteId)).size;
+              })()}
+            </Text>
           </div>
-        </div>
-      </div>
-    </div>
+        </Group>
+      </Paper>
+    </SimpleGrid>
   );
 };
 

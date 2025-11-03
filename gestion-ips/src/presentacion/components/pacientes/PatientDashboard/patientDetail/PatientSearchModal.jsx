@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import {
-  XMarkIcon,
-  MagnifyingGlassIcon,
-  UserIcon,
-  CalendarDaysIcon,
-  CheckIcon
-} from '@heroicons/react/24/outline';
+import { Modal, Paper, Stack, Group, Text, Title, TextInput, Button, Badge, ScrollArea, Loader, Alert, Avatar, ThemeIcon } from '@mantine/core';
+import { IconX, IconSearch, IconUser, IconCalendar, IconCheck, IconUserPlus } from '@tabler/icons-react';
 import { pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
 
 const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, selectedDoctor, onCreatePatient }) => {
@@ -153,215 +148,215 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={handleClose}></div>
-        </div>
+    <Modal
+      opened={isOpen}
+      onClose={handleClose}
+      size="xl"
+      title={
+        <Group gap="md">
+          <Avatar size="lg" color="blue">
+            <IconUser size={24} />
+          </Avatar>
+          <Stack gap={4}>
+            <Title order={3} size="h4">Buscar Paciente</Title>
+            {selectedSlot && (
+              <Text size="sm" c="dimmed">Horario: {selectedSlot.label}</Text>
+            )}
+          </Stack>
+        </Group>
+      }
+      padding="lg"
+      closeButtonProps={{ icon: <IconX size={20} /> }}
+    >
+      <Stack gap="lg">
+        {/* Search Section */}
+        <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Stack gap="md">
+            <Group gap="sm">
+              <IconSearch size={20} color="var(--mantine-color-gray-6)" />
+              <Title order={5} size="h6">Buscar por Documento</Title>
+            </Group>
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full max-w-2xl">
-          {/* Header */}
-          <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <UserIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-white">
-                  Buscar Paciente
-                </h3>
-                <p className="text-blue-100 text-sm">
-                  {selectedSlot && `Horario: ${selectedSlot.label}`}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleClose}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
+            <Group gap="sm" align="flex-start" grow={false} style={{ flexWrap: 'nowrap' }}>
+              <TextInput
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Buscar por documento, nombre o teléfono..."
+                disabled={loadingPatients}
+                style={{ flex: 1 }}
+                leftSection={<IconSearch size={16} />}
+              />
+              {showCreatePatient && (
+                <Button
+                  onClick={() => onCreatePatient && onCreatePatient(searchTerm)}
+                  color="green"
+                  leftSection={<IconUserPlus size={16} />}
+                  style={{ flexShrink: 0 }}
+                >
+                  Crear Paciente
+                </Button>
+              )}
+            </Group>
 
-          {/* Content */}
-          <div className="p-6">
-            <div className="space-y-6">
-              {/* Search Section */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <MagnifyingGlassIcon className="h-5 w-5 mr-2 text-gray-600" />
-                  Buscar por Documento
-                </h4>
+            {error && (
+              <Alert color="red" variant="light">
+                {error}
+              </Alert>
+            )}
+          </Stack>
+        </Paper>
 
-                <div className="flex space-x-3">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Buscar por documento, nombre o teléfono..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      disabled={loadingPatients}
-                    />
-                  </div>
-                  {showCreatePatient && (
-                    <button
-                      onClick={() => onCreatePatient && onCreatePatient(searchTerm)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        {/* Patients List Section */}
+        <Paper withBorder radius="md">
+          <Group p="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+            <IconUser size={20} color="var(--mantine-color-gray-6)" />
+            <Title order={5} size="h6">
+              Pacientes {filteredPatients.length > 0 && `(${filteredPatients.length})`}
+            </Title>
+          </Group>
+
+          <ScrollArea h={384}>
+            {loadingPatients ? (
+              <Stack align="center" justify="center" py="xl">
+                <Loader color="blue" size="lg" />
+                <Text size="sm" c="dimmed">Cargando pacientes...</Text>
+              </Stack>
+            ) : filteredPatients.length > 0 ? (
+              <Stack gap={0}>
+                {filteredPatients.map((patient) => {
+                  const patientData = parsePatientData(patient);
+                  const isSelected = selectedPatient?.id === patient.id;
+                  
+                  return (
+                    <Paper
+                      key={patient.id}
+                      p="md"
+                      radius={0}
+                      style={{
+                        cursor: 'pointer',
+                        borderBottom: '1px solid var(--mantine-color-gray-2)',
+                        borderLeft: isSelected ? '4px solid var(--mantine-color-blue-6)' : 'none',
+                        backgroundColor: isSelected ? 'var(--mantine-color-blue-0)' : 'transparent'
+                      }}
+                      onClick={() => setSelectedPatient(patient)}
                     >
-                      <UserIcon className="h-4 w-4 mr-2" />
-                      Crear Paciente
-                    </button>
-                  )}
-                </div>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Group gap="md" style={{ flex: 1, minWidth: 0 }}>
+                          <Avatar size="md" color="blue">
+                            <IconUser size={20} />
+                          </Avatar>
+                          <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                            <Group gap="sm" wrap="nowrap">
+                              <Text size="sm" fw={500} lineClamp={1}>
+                                {patientData.nombreCompleto !== 'N/A' ? patientData.nombreCompleto : `Paciente ${patient.id}`}
+                              </Text>
+                              <Badge
+                                color={patient.activo ? 'green' : 'red'}
+                                variant="light"
+                                size="sm"
+                              >
+                                {patient.activo ? 'Activo' : 'Inactivo'}
+                              </Badge>
+                            </Group>
+                            <Group gap="md">
+                              <Text size="xs" c="dimmed">📄 {patient.tipoDocumento} {patient.numeroDocumento}</Text>
+                              <Text size="xs" c="dimmed">📞 {patientData.telefono !== 'N/A' ? patientData.telefono : 'Sin teléfono'}</Text>
+                            </Group>
+                          </Stack>
+                        </Group>
+                        {isSelected && (
+                          <ThemeIcon color="blue" variant="light" size="md" radius="xl">
+                            <IconCheck size={18} />
+                          </ThemeIcon>
+                        )}
+                      </Group>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            ) : (
+              <Stack align="center" justify="center" py="xl">
+                <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+                  <IconUser size={32} />
+                </ThemeIcon>
+                <Text size="sm" c="dimmed" ta="center">
+                  {searchTerm ? 'No se encontraron pacientes que coincidan con la búsqueda' : 'No hay pacientes disponibles'}
+                </Text>
+              </Stack>
+            )}
+          </ScrollArea>
+        </Paper>
 
-                {error && (
-                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
+        {/* Selected Patient Action */}
+        {selectedPatient && (
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-green-0)' }}>
+            <Stack gap="md">
+              <Group gap="sm">
+                <IconCheck size={20} color="var(--mantine-color-green-7)" />
+                <Title order={5} size="h6" c="green.9">Paciente Seleccionado</Title>
+              </Group>
+
+              <Paper p="md" radius="md" withBorder bg="white" style={{ borderColor: 'var(--mantine-color-green-3)' }}>
+                <Group gap="md">
+                  <Avatar size="lg" color="green">
+                    <IconUser size={24} />
+                  </Avatar>
+                  <Stack gap={4}>
+                    <Text fw={500}>
+                      {parsePatientData(selectedPatient).nombreCompleto !== 'N/A' ? parsePatientData(selectedPatient).nombreCompleto : `Paciente ${selectedPatient.id}`}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {selectedPatient.tipoDocumento} {selectedPatient.numeroDocumento}
+                    </Text>
+                  </Stack>
+                </Group>
+              </Paper>
+
+              <Group justify="flex-end">
+                <Button
+                  onClick={handleCreateAppointment}
+                  color="green"
+                  leftSection={<IconCalendar size={16} />}
+                >
+                  Crear Cita para este Paciente
+                </Button>
+              </Group>
+            </Stack>
+          </Paper>
+        )}
+
+        {/* Appointment Info */}
+        {selectedSlot && (
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
+            <Stack gap="sm">
+              <Title order={5} size="h6" c="blue.9">Información de la Cita</Title>
+              <Stack gap={4}>
+                <Text size="sm" c="blue.9">
+                  <Text component="span" fw={500}>Fecha:</Text> {selectedSlot.date ? selectedSlot.date.toLocaleDateString('es-ES') : 'N/A'}
+                </Text>
+                <Text size="sm" c="blue.9">
+                  <Text component="span" fw={500}>Horario:</Text> {selectedSlot.label}
+                </Text>
+                {selectedDoctor && (
+                  <Text size="sm" c="blue.9">
+                    <Text component="span" fw={500}>Médico:</Text> {selectedDoctor}
+                  </Text>
                 )}
-              </div>
+              </Stack>
+            </Stack>
+          </Paper>
+        )}
 
-              {/* Patients List Section */}
-              <div className="bg-white border border-gray-200 rounded-lg">
-                <div className="p-4 border-b border-gray-200">
-                  <h4 className="text-lg font-medium text-gray-900 flex items-center">
-                    <UserIcon className="h-5 w-5 mr-2 text-gray-600" />
-                    Pacientes {filteredPatients.length > 0 && `(${filteredPatients.length})`}
-                  </h4>
-                </div>
-
-                <div className="max-h-96 overflow-y-auto">
-                  {loadingPatients ? (
-                    <div className="p-8 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-sm text-gray-600">Cargando pacientes...</p>
-                    </div>
-                  ) : filteredPatients.length > 0 ? (
-                    <div className="divide-y divide-gray-200">
-                      {filteredPatients.map((patient) => {
-                        const patientData = parsePatientData(patient);
-                        return (
-                          <div
-                            key={patient.id}
-                            className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                              selectedPatient?.id === patient.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                            }`}
-                            onClick={() => setSelectedPatient(patient)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex-shrink-0">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                      <UserIcon className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center space-x-2">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
-                                        {patientData.nombreCompleto !== 'N/A' ? patientData.nombreCompleto : `Paciente ${patient.id}`}
-                                      </p>
-                                      <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                                        patient.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                      }`}>
-                                        {patient.activo ? 'Activo' : 'Inactivo'}
-                                      </span>
-                                    </div>
-                                    <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                                      <span>📄 {patient.tipoDocumento} {patient.numeroDocumento}</span>
-                                      <span>📞 {patientData.telefono !== 'N/A' ? patientData.telefono : 'Sin teléfono'}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              {selectedPatient?.id === patient.id && (
-                                <div className="flex-shrink-0">
-                                  <CheckIcon className="h-5 w-5 text-blue-600" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center">
-                      <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-sm text-gray-500">
-                        {searchTerm ? 'No se encontraron pacientes que coincidan con la búsqueda' : 'No hay pacientes disponibles'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Selected Patient Action */}
-              {selectedPatient && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-green-900 mb-4 flex items-center">
-                    <CheckIcon className="h-5 w-5 mr-2 text-green-600" />
-                    Paciente Seleccionado
-                  </h4>
-
-                  <div className="bg-white border border-green-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <UserIcon className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {parsePatientData(selectedPatient).nombreCompleto !== 'N/A' ? parsePatientData(selectedPatient).nombreCompleto : `Paciente ${selectedPatient.id}`}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {selectedPatient.tipoDocumento} {selectedPatient.numeroDocumento}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleCreateAppointment}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                    >
-                      <CalendarDaysIcon className="h-4 w-4 mr-2" />
-                      Crear Cita para este Paciente
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Appointment Info */}
-              {selectedSlot && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-blue-900 mb-2">Información de la Cita</h4>
-                  <div className="text-sm text-blue-700 space-y-1">
-                    <p><span className="font-medium">Fecha:</span> {selectedSlot.date ? selectedSlot.date.toLocaleDateString('es-ES') : 'N/A'}</p>
-                    <p><span className="font-medium">Horario:</span> {selectedSlot.label}</p>
-                    {selectedDoctor && <p><span className="font-medium">Médico:</span> {selectedDoctor}</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleClose}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Footer */}
+        <Group justify="flex-end">
+          <Button onClick={handleClose} variant="default">
+            Cerrar
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
   )
 };
 

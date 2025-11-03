@@ -135,7 +135,7 @@ export const parsePacienteInfo = (cita, patientData, loadingPatients) => {
  * @param {Object} user - Usuario actual
  * @returns {Array} Citas filtradas
  */
-export const filterCitas = (citas, filters, user) => {
+export const filterCitas = (citas, filters, user, patientData = {}, loadingPatients = {}) => {
   // Start with all citas, not just pending ones
   let filtered = [...citas];
 
@@ -172,7 +172,7 @@ export const filterCitas = (citas, filters, user) => {
   // Filter by patient
   if (filters.paciente) {
     filtered = filtered.filter(cita => {
-      const pacienteInfo = parsePacienteInfo(cita, {}, {});
+      const pacienteInfo = parsePacienteInfo(cita, patientData, loadingPatients);
       const searchTerm = filters.paciente.toLowerCase();
       const nombre = pacienteInfo.nombre?.toLowerCase() || '';
       const documento = pacienteInfo.documento?.toLowerCase() || '';

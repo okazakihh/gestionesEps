@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ClockIcon } from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Text, Title, Badge, Grid, ScrollArea, Loader } from '@mantine/core';
+import { IconClock } from '@tabler/icons-react';
 import DoctorScheduleCard from './DoctorScheduleCard.jsx';
 import DailyAppointmentsList from '../appointments/DailyAppointmentsList.jsx';
 
@@ -25,67 +26,72 @@ const MedicalScheduleSection = ({
   const isDoctor = user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO');
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <ClockIcon className="h-5 w-5 mr-2" />
-        Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
-        {isDoctor && (
-          <span className="ml-2 text-sm font-normal text-blue-600">(Vista Personal)</span>
-        )}
-      </h3>
-
-      {/* Multi-Doctor Schedule Display */}
-      <div className="space-y-6">
-        {/* Time slots for all doctors */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
-            {isDoctor
-              ? 'Mis Horarios Disponibles'
-              : 'Horarios Disponibles por Doctor'
-            }
-          </h4>
-
-          {loadingAppointments ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-xs text-gray-500">Cargando horarios...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto overflow-y-auto max-h-96">
-              <div className="grid grid-cols-5 gap-4 pb-4" style={{ minWidth: 'max-content' }}>
-                {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) => {
-                  const { doctorName, appointments: doctorAppointments } = doctorData;
-                  const availableSlots = calculateAvailableSlots(doctorAppointments, selectedDate);
-
-                  return (
-                    <DoctorScheduleCard
-                      key={doctorId}
-                      doctorId={doctorId}
-                      doctorName={doctorName}
-                      appointments={doctorAppointments}
-                      availableSlots={availableSlots}
-                      onSlotClick={handleSlotClick}
-                      getDoctorInitials={getDoctorInitials}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+    <Paper p="lg" radius="md" shadow="sm" withBorder>
+      <Stack gap="lg">
+        <Group gap="sm">
+          <IconClock size={20} />
+          <Title order={3} size="h5">
+            Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
+          </Title>
+          {isDoctor && (
+            <Badge color="blue" variant="light">(Vista Personal)</Badge>
           )}
-        </div>
+        </Group>
 
-        {/* Citas programadas del día */}
-        <DailyAppointmentsList
-          selectedDate={selectedDate}
-          user={user}
-          loadingAppointments={loadingAppointments}
-          allDoctorAppointments={allDoctorAppointments}
-          getAppointmentInfo={getAppointmentInfo}
-          updateAppointmentStatus={updateAppointmentStatus}
-          updatingStatus={updatingStatus}
-        />
-      </div>
-    </div>
+        {/* Multi-Doctor Schedule Display */}
+        <Stack gap="lg">
+          {/* Time slots for all doctors */}
+          <Stack gap="md">
+            <Title order={4} size="h6">
+              {isDoctor
+                ? 'Mis Horarios Disponibles'
+                : 'Horarios Disponibles por Doctor'
+              }
+            </Title>
+
+            {loadingAppointments ? (
+              <Stack align="center" py="md">
+                <Loader color="blue" size="md" />
+                <Text size="xs" c="dimmed">Cargando horarios...</Text>
+              </Stack>
+            ) : (
+              <ScrollArea h={384}>
+                <Grid gutter="md" style={{ minWidth: 'max-content' }}>
+                  {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) => {
+                    const { doctorName, appointments: doctorAppointments } = doctorData;
+                    const availableSlots = calculateAvailableSlots(doctorAppointments, selectedDate);
+
+                    return (
+                      <Grid.Col key={doctorId} span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 2.4 }}>
+                        <DoctorScheduleCard
+                          doctorId={doctorId}
+                          doctorName={doctorName}
+                          appointments={doctorAppointments}
+                          availableSlots={availableSlots}
+                          onSlotClick={handleSlotClick}
+                          getDoctorInitials={getDoctorInitials}
+                        />
+                      </Grid.Col>
+                    );
+                  })}
+                </Grid>
+              </ScrollArea>
+            )}
+          </Stack>
+
+          {/* Citas programadas del día */}
+          <DailyAppointmentsList
+            selectedDate={selectedDate}
+            user={user}
+            loadingAppointments={loadingAppointments}
+            allDoctorAppointments={allDoctorAppointments}
+            getAppointmentInfo={getAppointmentInfo}
+            updateAppointmentStatus={updateAppointmentStatus}
+            updatingStatus={updatingStatus}
+          />
+        </Stack>
+      </Stack>
+    </Paper>
   );
 };
 MedicalScheduleSection.propTypes = {

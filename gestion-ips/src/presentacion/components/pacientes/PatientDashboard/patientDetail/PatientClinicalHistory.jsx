@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { DocumentTextIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Title, Button, Text, Badge, Avatar, Divider } from '@mantine/core';
+import { IconFileText, IconCalendar } from '@tabler/icons-react';
 
 /**
  * Componente para mostrar la historia clínica resumida del paciente
@@ -8,87 +9,95 @@ import { DocumentTextIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
  */
 const PatientClinicalHistory = ({ historiaClinica, consultas, setActiveTab, formatDate }) => {
   return (
-    <div className="patient-detail-container">
-      <div className="flex items-center justify-between">
-        <h4 className="patient-detail-header">Historia Clínica</h4>
+    <Stack gap="md">
+      <Group justify="space-between" align="center">
+        <Title order={4} size="h5">Historia Clínica</Title>
         {historiaClinica && (
-          <button
+          <Button
+            leftSection={<IconFileText size={16} />}
             onClick={() => setActiveTab('clinica_completa')}
-            className="patient-detail-btn-primary"
+            variant="light"
           >
-            <DocumentTextIcon className="patient-detail-icon-blue" />
             Ver Historia Clínica Completa
-          </button>
+          </Button>
         )}
-      </div>
+      </Group>
 
       {historiaClinica ? (
-        <div className="patient-detail-section">
+        <Stack gap="lg">
           {/* Información de la Historia */}
-          <div className="patient-detail-card-blue">
-            <h5 className="patient-history-info">Información General</h5>
-            <div className="patient-history-grid patient-detail-max-width-none">
-              <div>
-                <span className="patient-history-label">Número de Historia:</span>
-                <p className="patient-history-value">{historiaClinica.numeroHistoria}</p>
-              </div>
-              <div>
-                <span className="patient-history-label">Fecha de Apertura:</span>
-                <p className="patient-history-value">{formatDate(historiaClinica.fechaApertura)}</p>
-              </div>
-              <div>
-                <span className="patient-history-label">Estado:</span>
-                <p className="patient-history-value">{historiaClinica.activa ? 'Activa' : 'Inactiva'}</p>
-              </div>
-            </div>
-          </div>
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
+            <Stack gap="md">
+              <Text size="md" fw={600} c="blue.9">Información General</Text>
+              <Group grow align="flex-start">
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Número de Historia:</Text>
+                  <Text size="sm" c="blue.9">{historiaClinica.numeroHistoria}</Text>
+                </Stack>
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Fecha de Apertura:</Text>
+                  <Text size="sm" c="blue.9">{formatDate(historiaClinica.fechaApertura)}</Text>
+                </Stack>
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Estado:</Text>
+                  <Badge color={historiaClinica.activa ? 'green' : 'gray'} variant="light">
+                    {historiaClinica.activa ? 'Activa' : 'Inactiva'}
+                  </Badge>
+                </Stack>
+              </Group>
+            </Stack>
+          </Paper>
 
           {/* Consultas Médicas */}
-          <div>
-            <h5 className="patient-history-consultas-title">Consultas Médicas ({consultas.length})</h5>
+          <Stack gap="md">
+            <Title order={5} size="h6">Consultas Médicas ({consultas.length})</Title>
 
             {consultas.length === 0 ? (
-              <div className="patient-detail-empty-state">
-                <CalendarDaysIcon className="patient-detail-empty-icon" />
-                <p className="patient-detail-empty-text">No hay consultas registradas</p>
-              </div>
+              <Paper p="xl" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                <Stack gap="sm" align="center">
+                  <IconCalendar size={48} color="var(--mantine-color-gray-5)" />
+                  <Text size="sm" c="dimmed" ta="center">No hay consultas registradas</Text>
+                </Stack>
+              </Paper>
             ) : (
-              <div className="patient-detail-list">
+              <Stack gap="sm">
                 {consultas.map((consulta, index) => (
-                  <div key={consulta.id} className="patient-history-consulta-item">
-                    <div className="patient-history-consulta-header">
-                      <div className="patient-history-consulta-avatar">
-                        <div className="patient-history-consulta-number">
-                          <span className="patient-history-consulta-text">{index + 1}</span>
-                        </div>
-                        <div>
-                          <p className="patient-history-consulta-title">Consulta #{consulta.id}</p>
-                          <p className="patient-history-consulta-date">
+                  <Paper key={consulta.id} p="md" radius="md" withBorder>
+                    <Group justify="space-between" align="flex-start">
+                      <Group gap="md">
+                        <Avatar color="blue" radius="xl" size="md">
+                          {index + 1}
+                        </Avatar>
+                        <Stack gap={4}>
+                          <Text size="sm" fw={500}>Consulta #{consulta.id}</Text>
+                          <Text size="xs" c="dimmed">
                             {formatDate(consulta.fechaCreacion)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="patient-history-consulta-right">
-                        <p className="patient-history-consulta-label">Creada</p>
-                        <p className="patient-history-consulta-value">{formatDate(consulta.fechaCreacion)}</p>
-                      </div>
-                    </div>
-                  </div>
+                          </Text>
+                        </Stack>
+                      </Group>
+                      <Stack gap={2} align="flex-end">
+                        <Text size="xs" c="dimmed">Creada</Text>
+                        <Text size="xs" fw={500}>{formatDate(consulta.fechaCreacion)}</Text>
+                      </Stack>
+                    </Group>
+                  </Paper>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       ) : (
-        <div className="patient-detail-empty-state">
-          <DocumentTextIcon className="patient-detail-empty-icon" />
-          <h3 className="patient-detail-empty-title">No hay historia clínica</h3>
-          <p className="patient-detail-empty-text">
-            Este paciente aún no tiene una historia clínica registrada.
-          </p>
-        </div>
+        <Paper p="xl" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Stack gap="sm" align="center">
+            <IconFileText size={64} color="var(--mantine-color-gray-5)" />
+            <Title order={5} size="h6" c="dimmed">No hay historia clínica</Title>
+            <Text size="sm" c="dimmed" ta="center">
+              Este paciente aún no tiene una historia clínica registrada.
+            </Text>
+          </Stack>
+        </Paper>
       )}
-    </div>
+    </Stack>
   )
 };
 

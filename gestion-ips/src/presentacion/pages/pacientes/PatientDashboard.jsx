@@ -41,7 +41,7 @@ const PatientDashboard = () => {
    const { user } = useAuth();
 
    // Usar custom hooks para manejar estado
-   const appointmentManagement = useAppointmentManagement();
+   const appointmentManagement = useAppointmentManagement(user);
    const patientManagement = usePatientManagement();
    const calendarManagement = useCalendarManagement();
 

@@ -1,7 +1,6 @@
 import React from 'react';
-import { ClockIcon } from '@heroicons/react/24/outline';
-import { ActionIcon, Group } from '@mantine/core';
-import { UserIcon } from '@heroicons/react/24/outline';
+import { Paper, Stack, Text, Title, Group, Avatar, Badge, Button, Loader, ActionIcon, ScrollArea, Grid } from '@mantine/core';
+import { IconClock, IconUser, IconFileText, IconCheck, IconX, IconClockCancel } from '@tabler/icons-react';
 
 const AppointmentAvailabilitySection = ({
   selectedDate,
@@ -18,111 +17,117 @@ const AppointmentAvailabilitySection = ({
 }) => {
   if (!selectedDate) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="text-center py-8">
-          <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-sm font-medium text-gray-900 mb-1">Selecciona un día</h3>
-          <p className="text-xs text-gray-500">Haz click en un día del calendario para ver la disponibilidad de citas</p>
-        </div>
-      </div>
+      <Paper shadow="sm" p="xl" radius="md" withBorder>
+        <Stack align="center" gap="md" py="xl">
+          <IconClock size={48} color="gray" />
+          <Title order={4} c="dark">Selecciona un día</Title>
+          <Text size="sm" c="dimmed">Haz click en un día del calendario para ver la disponibilidad de citas</Text>
+        </Stack>
+      </Paper>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-        <ClockIcon className="h-5 w-5 mr-2" />
-        Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
+    <Paper shadow="sm" p="md" radius="md" withBorder>
+      <Group mb="md" gap="xs">
+        <IconClock size={20} />
+        <Title order={4}>
+          Agenda Médica - {selectedDate.toLocaleDateString('es-ES')}
+        </Title>
         {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO') && (
-          <span className="ml-2 text-sm font-normal text-blue-600">(Vista Personal)</span>
+          <Badge color="blue" variant="light" size="sm">Vista Personal</Badge>
         )}
-      </h3>
+      </Group>
 
-      <div className="space-y-6">
+      <Stack gap="xl">
         {/* Time slots for all doctors */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
+          <Title order={5} mb="md">
             {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
               ? 'Mis Horarios Disponibles'
               : 'Horarios Disponibles por Doctor'
             }
-          </h4>
+          </Title>
 
           {loadingAppointments ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-xs text-gray-500">Cargando horarios...</p>
-            </div>
+            <Stack align="center" gap="xs" py="lg">
+              <Loader size="md" />
+              <Text size="sm" c="dimmed">Cargando horarios...</Text>
+            </Stack>
           ) : (
-            <div className="overflow-x-auto overflow-y-auto max-h-96">
-              <div className="grid grid-cols-5 gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+            <ScrollArea h={400}>
+              <Group gap="md" align="flex-start" wrap="nowrap" pb="md">
                 {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) => {
                   const { doctor, doctorName, appointments: doctorAppointments } = doctorData;
                   const availableSlots = calculateAvailableSlots(doctorAppointments, selectedDate);
 
                   return (
-                    <div key={doctorId} className="border border-gray-200 rounded-lg p-3 min-w-72 flex-shrink-0">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-blue-800">
-                            {getDoctorInitials(doctorName)}
-                          </span>
-                        </div>
+                    <Paper key={doctorId} p="md" radius="md" withBorder style={{ minWidth: 288, flexShrink: 0 }}>
+                      <Group gap="sm" mb="sm">
+                        <Avatar color="blue" radius="xl" size="sm">
+                          {getDoctorInitials(doctorName)}
+                        </Avatar>
                         <div>
-                          <h5 className="text-xs font-medium text-gray-900">{doctorName}</h5>
-                          <p className="text-xs text-gray-500">{doctorAppointments.length} citas</p>
+                          <Text size="xs" fw={500}>{doctorName}</Text>
+                          <Text size="xs" c="dimmed">{doctorAppointments.length} citas</Text>
                         </div>
-                      </div>
+                      </Group>
 
-                      <div className="grid grid-cols-6 gap-1">
+                      <Grid gutter={4}>
                         {availableSlots.map((slot) => (
-                          <button
-                            key={`${doctorId}-${slot.time}`}
-                            type="button"
-                            onClick={() => {
-                              console.log('Slot clicked:', { slot, selectedDate, doctorId });
-                              if (slot.available) {
-                                handleSlotClick({
-                                  ...slot,
-                                  date: selectedDate,
-                                  doctorId: doctorId
-                                });
-                              }
-                            }}
-                            disabled={!slot.available}
-                            className={`p-0.5 text-center text-[10px] rounded border transition-colors focus:outline-none ${
-                              slot.available
-                                ? 'bg-green-50 border-green-200 text-green-700 cursor-pointer hover:bg-green-100 hover:shadow-sm'
-                                : 'bg-red-50 border-red-200 text-red-700 cursor-not-allowed opacity-70'
-                            }`}
-                            title={slot.available ? `Click para agendar cita con ${doctorName}` : 'Horario ocupado'}
-                          >
-                            {slot.label}
-                          </button>
+                          <Grid.Col key={`${doctorId}-${slot.time}`} span={2}>
+                            <Button
+                              variant={slot.available ? "light" : "filled"}
+                              color={slot.available ? "green" : "red"}
+                              size="compact-xs"
+                              fullWidth
+                              onClick={() => {
+                                console.log('Slot clicked:', { slot, selectedDate, doctorId });
+                                if (slot.available) {
+                                  handleSlotClick({
+                                    ...slot,
+                                    date: selectedDate,
+                                    doctorId: doctorId
+                                  });
+                                }
+                              }}
+                              disabled={!slot.available}
+                              title={slot.available ? `Click para agendar cita con ${doctorName}` : 'Horario ocupado'}
+                              styles={{
+                                root: {
+                                  padding: '2px',
+                                  height: 'auto',
+                                  fontSize: '10px'
+                                }
+                              }}
+                            >
+                              {slot.label}
+                            </Button>
+                          </Grid.Col>
                         ))}
-                      </div>
-                    </div>
+                      </Grid>
+                    </Paper>
                   );
                 })}
-              </div>
-            </div>
+              </Group>
+            </ScrollArea>
           )}
         </div>
 
         {/* Appointments for all doctors */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
+          <Title order={5} mb="md">
             {user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')
               ? `Mis Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
               : `Todas las Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
             }
-          </h4>
+          </Title>
 
           {loadingAppointments ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
-            </div>
+            <Stack align="center" gap="xs" py="lg">
+              <Loader size="md" />
+              <Text size="sm" c="dimmed">Cargando citas...</Text>
+            </Stack>
           ) : Object.values(allDoctorAppointments).some(doctorData =>
               doctorData.appointments.some(appointment => {
                 try {
@@ -133,179 +138,165 @@ const AppointmentAvailabilitySection = ({
                 }
               })
             ) ? (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) =>
-                doctorData.appointments
-                  .filter(appointment => {
-                    try {
-                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                      return appointmentData.estado !== 'ATENDIDO';
-                    } catch (error) {
-                      return true;
-                    }
-                  })
-                  .map((appointment) => {
-                    console.log('Rendering appointment:', appointment.id, 'patient:', appointment.patient);
-                    return (
-                      <div key={appointment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium text-blue-800">
-                          {getDoctorInitials(doctorData.doctorName)}
-                        </span>
-                      </div>
-                      <ClockIcon className="h-4 w-4 text-gray-400" />
-                      <div>
-                        <span className="text-sm font-medium">{appointment.time} - {appointment.patient || 'Paciente'}</span>
-                        <p className="text-xs text-gray-600">
-                          {(() => {
-                            try {
-                              const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                              const informacionCups = appointmentData.informacionCups;
-                              if (informacionCups && informacionCups.tipo) {
-                                return `Tipo: ${informacionCups.tipo}`;
-                              }
-                              return appointmentData.motivo || 'REVISION PERIODICA';
-                            } catch (error) {
-                              return 'REVISION PERIODICA';
-                            }
-                          })()}
-                          {(() => {
-                            try {
-                              const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                              const duracion = appointmentData.duracion || 30;
-                              return ` (${duracion} min)`;
-                            } catch (error) {
-                              return ' (30 min)';
-                            }
-                          })()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        (() => {
-                          try {
-                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                            const status = appointmentData.estado || 'PROGRAMADO';
-                            return status === 'PROGRAMADO' ? 'bg-blue-100 text-blue-800' :
-                                  status === 'EN_SALA' ? 'bg-yellow-100 text-yellow-800' :
-                                  status === 'ATENDIDO' ? 'bg-green-100 text-green-800' :
-                                  status === 'CANCELADA' ? 'bg-gray-100 text-gray-800' :
-                                  'bg-red-100 text-red-800';
-                          } catch (error) {
-                            return 'bg-blue-100 text-blue-800';
-                          }
-                        })()
-                      }`}>
-                        {(() => {
-                          try {
-                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                            const status = appointmentData.estado || 'PROGRAMADO';
-                            return status === 'PROGRAMADO' ? 'Programado' :
-                                  status === 'EN_SALA' ? 'En Sala' :
-                                  status === 'ATENDIDO' ? 'Atendido' :
-                                  status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                  status === 'CANCELADA' ? 'Cancelada' :
-                                  status;
-                          } catch (error) {
-                            return 'Programado';
-                          }
-                        })()}
-                      </span>
-                      <Group gap="xs">
-                        <ActionIcon
-                          variant="light"
-                          color="gray"
-                          size="sm"
-                          onClick={() => handlePatientClick(appointment.pacienteId)}
-                          title="Ver paciente"
-                        >
-                          <UserIcon className="w-4 h-4" />
-                        </ActionIcon>
-                        <ActionIcon
-                          variant="light"
-                          color="blue"
-                          size="sm"
-                          onClick={() => handleViewAppointmentDetail(appointment)}
-                          title="Detalle de la cita"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </ActionIcon>
-                        {/* Status Change Buttons */}
-                        {(() => {
-                          try {
-                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                            const currentStatus = appointmentData.estado || 'PROGRAMADO';
-                            const availableTransitions = (() => {
-                              if (currentStatus === 'PROGRAMADO') return ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'];
-                              if (currentStatus === 'EN_SALA') return ['ATENDIDO'];
-                              return [];
-                            })().filter(newStatus => newStatus !== 'ATENDIDO');
-
-                            return availableTransitions.map((newStatus) => (
-                              <ActionIcon
-                                key={newStatus}
+            <ScrollArea h={320}>
+              <Stack gap="xs">
+                {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) =>
+                  doctorData.appointments
+                    .filter(appointment => {
+                      try {
+                        const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                        return appointmentData.estado !== 'ATENDIDO';
+                      } catch (error) {
+                        return true;
+                      }
+                    })
+                    .map((appointment) => {
+                      console.log('Rendering appointment:', appointment.id, 'patient:', appointment.patient);
+                      return (
+                        <Paper key={appointment.id} p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Group gap="sm">
+                              <Avatar color="blue" radius="xl" size="sm">
+                                {getDoctorInitials(doctorData.doctorName)}
+                              </Avatar>
+                              <IconClock size={16} color="gray" />
+                              <div>
+                                <Text size="sm" fw={500}>{appointment.time} - {appointment.patient || 'Paciente'}</Text>
+                                <Text size="xs" c="dimmed">
+                                  {(() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      const informacionCups = appointmentData.informacionCups;
+                                      if (informacionCups && informacionCups.tipo) {
+                                        return `Tipo: ${informacionCups.tipo}`;
+                                      }
+                                      return appointmentData.motivo || 'REVISION PERIODICA';
+                                    } catch (error) {
+                                      return 'REVISION PERIODICA';
+                                    }
+                                  })()}
+                                  {(() => {
+                                    try {
+                                      const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                      const duracion = appointmentData.duracion || 30;
+                                      return ` (${duracion} min)`;
+                                    } catch (error) {
+                                      return ' (30 min)';
+                                    }
+                                  })()}
+                                </Text>
+                              </div>
+                            </Group>
+                            <Group gap="xs">
+                              <Badge
+                                color={(() => {
+                                  try {
+                                    const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                    const status = appointmentData.estado || 'PROGRAMADO';
+                                    return status === 'PROGRAMADO' ? 'blue' :
+                                          status === 'EN_SALA' ? 'yellow' :
+                                          status === 'ATENDIDO' ? 'green' :
+                                          status === 'CANCELADA' ? 'gray' :
+                                          'red';
+                                  } catch (error) {
+                                    return 'blue';
+                                  }
+                                })()}
                                 variant="light"
-                                color={
-                                  newStatus === 'EN_SALA' ? 'yellow' :
-                                  newStatus === 'ATENDIDO' ? 'green' :
-                                  newStatus === 'NO_SE_PRESENTO' ? 'red' :
-                                  newStatus === 'CANCELADA' ? 'gray' : 'blue'
-                                }
                                 size="sm"
-                                onClick={() => handleStatusChange(appointment.id, newStatus)}
-                                disabled={updatingStatus[appointment.id]}
-                                title={newStatus === 'EN_SALA' ? 'En Sala' :
-                                      newStatus === 'ATENDIDO' ? 'Atendido' :
-                                      newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                      newStatus === 'CANCELADA' ? 'Cancelar Cita' :
-                                      newStatus}
-                                loading={updatingStatus[appointment.id]}
                               >
-                                {newStatus === 'EN_SALA' && (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                )}
-                                {newStatus === 'ATENDIDO' && (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                                {newStatus === 'NO_SE_PRESENTO' && (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                )}
-                                {newStatus === 'CANCELADA' && (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                )}
-                              </ActionIcon>
-                            ));
-                          } catch (error) {
-                            return null;
-                          }
-                        })()}
-                      </Group>
-                    </div>
-                  </div>
-                    );
-                  })
-              )}
-            </div>
+                                {(() => {
+                                  try {
+                                    const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                    const status = appointmentData.estado || 'PROGRAMADO';
+                                    return status === 'PROGRAMADO' ? 'Programado' :
+                                          status === 'EN_SALA' ? 'En Sala' :
+                                          status === 'ATENDIDO' ? 'Atendido' :
+                                          status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                                          status === 'CANCELADA' ? 'Cancelada' :
+                                          status;
+                                  } catch (error) {
+                                    return 'Programado';
+                                  }
+                                })()}
+                              </Badge>
+                              <Group gap={4}>
+                                <ActionIcon
+                                  variant="light"
+                                  color="gray"
+                                  size="sm"
+                                  onClick={() => handlePatientClick(appointment.pacienteId)}
+                                  title="Ver paciente"
+                                >
+                                  <IconUser size={16} />
+                                </ActionIcon>
+                                <ActionIcon
+                                  variant="light"
+                                  color="blue"
+                                  size="sm"
+                                  onClick={() => handleViewAppointmentDetail(appointment)}
+                                  title="Detalle de la cita"
+                                >
+                                  <IconFileText size={16} />
+                                </ActionIcon>
+                                {/* Status Change Buttons */}
+                                {(() => {
+                                  try {
+                                    const appointmentData = JSON.parse(appointment.datosJson || '{}');
+                                    const currentStatus = appointmentData.estado || 'PROGRAMADO';
+                                    const availableTransitions = (() => {
+                                      if (currentStatus === 'PROGRAMADO') return ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'];
+                                      if (currentStatus === 'EN_SALA') return ['ATENDIDO'];
+                                      return [];
+                                    })().filter(newStatus => newStatus !== 'ATENDIDO');
+
+                                    return availableTransitions.map((newStatus) => (
+                                      <ActionIcon
+                                        key={newStatus}
+                                        variant="light"
+                                        color={
+                                          newStatus === 'EN_SALA' ? 'yellow' :
+                                          newStatus === 'ATENDIDO' ? 'green' :
+                                          newStatus === 'NO_SE_PRESENTO' ? 'red' :
+                                          newStatus === 'CANCELADA' ? 'gray' : 'blue'
+                                        }
+                                        size="sm"
+                                        onClick={() => handleStatusChange(appointment.id, newStatus)}
+                                        disabled={updatingStatus[appointment.id]}
+                                        title={newStatus === 'EN_SALA' ? 'En Sala' :
+                                              newStatus === 'ATENDIDO' ? 'Atendido' :
+                                              newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
+                                              newStatus === 'CANCELADA' ? 'Cancelar Cita' :
+                                              newStatus}
+                                        loading={updatingStatus[appointment.id]}
+                                      >
+                                        {newStatus === 'EN_SALA' && <IconClock size={16} />}
+                                        {newStatus === 'ATENDIDO' && <IconCheck size={16} />}
+                                        {newStatus === 'NO_SE_PRESENTO' && <IconX size={16} />}
+                                        {newStatus === 'CANCELADA' && <IconX size={16} />}
+                                      </ActionIcon>
+                                    ));
+                                  } catch (error) {
+                                    return null;
+                                  }
+                                })()}
+                              </Group>
+                            </Group>
+                          </Group>
+                        </Paper>
+                      );
+                    })
+                )}
+              </Stack>
+            </ScrollArea>
           ) : (
-            <p className="text-sm text-gray-500 text-center py-4">
+            <Text size="sm" c="dimmed" ta="center" py="lg">
               No hay citas programadas para este día
-            </p>
+            </Text>
           )}
         </div>
-      </div>
-    </div>
+      </Stack>
+    </Paper>
   );
 };
 

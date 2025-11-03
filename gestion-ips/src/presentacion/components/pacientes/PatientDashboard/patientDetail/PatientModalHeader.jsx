@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { UserIcon } from '@heroicons/react/24/outline';
+import { IconUser } from '@tabler/icons-react';
 import ModalHeader from '../../../ui/ModalHeader.jsx';
 import { calculateAge } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
@@ -22,7 +22,7 @@ const PatientModalHeader = ({ patient, patientData, onClose }) => {
       title={patientName}
       subtitle={patientSubtitle}
       onClose={onClose}
-      icon={UserIcon}
+      icon={IconUser}
     />
   );
 };

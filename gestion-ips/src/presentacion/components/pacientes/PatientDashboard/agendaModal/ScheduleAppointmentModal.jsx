@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Modal } from '@mantine/core';
 
  // Import extracted components
  import ScheduleAppointmentHeader from './ScheduleAppointmentHeader.jsx';
@@ -73,41 +74,33 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
-        </div>
-
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-11/12 max-w-4xl h-5/6">
-          {/* Header */}
-          <ScheduleAppointmentHeader
-            patientName={patientName}
-            loading={loading}
-            onClose={onClose}
-          />
-
-          {/* Form */}
-          <ScheduleAppointmentForm
-            formData={formData}
-            errors={errors}
-            submitError={submitError}
-            debugInfo={debugInfo}
-            codigosCups={codigosCups}
-            loadingCodigosCups={loadingCodigosCups}
-            medicos={medicos}
-            loadingMedicos={loadingMedicos}
-            selectedCupData={selectedCupData}
-            patientName={patientName}
-            loading={loading}
-            onInputChange={enhancedHandleInputChange}
-            onClose={onClose}
-            onSubmit={handleSubmit}
-            setSubmitError={setSubmitError}
-          />
-        </div>
-      </div>
-    </div>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title={<ScheduleAppointmentHeader patientName={patientName} loading={loading} />}
+      size="xl"
+      closeOnClickOutside={!loading}
+      closeOnEscape={!loading}
+      withCloseButton={!loading}
+    >
+      <ScheduleAppointmentForm
+        formData={formData}
+        errors={errors}
+        submitError={submitError}
+        debugInfo={debugInfo}
+        codigosCups={codigosCups}
+        loadingCodigosCups={loadingCodigosCups}
+        medicos={medicos}
+        loadingMedicos={loadingMedicos}
+        selectedCupData={selectedCupData}
+        patientName={patientName}
+        loading={loading}
+        onInputChange={enhancedHandleInputChange}
+        onClose={onClose}
+        onSubmit={handleSubmit}
+        setSubmitError={setSubmitError}
+      />
+    </Modal>
   )
 };
 

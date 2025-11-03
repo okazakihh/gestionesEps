@@ -14,7 +14,7 @@ export const useCalendarManagement = () => {
     loadingAppointments,
     loadMedicos,
     loadAllDoctorsData
-  } = useAppointmentManagement();
+  } = useAppointmentManagement(user);
 
   // Estados específicos del calendario
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);

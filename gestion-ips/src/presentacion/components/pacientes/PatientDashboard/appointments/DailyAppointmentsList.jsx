@@ -1,4 +1,6 @@
 import React from 'react';
+import { Paper, Stack, Text, Badge, Group, Loader, Button } from '@mantine/core';
+import { IconClock, IconUser } from '@tabler/icons-react';
 
 /**
  * Componente que muestra la lista de citas programadas del día
@@ -28,22 +30,66 @@ const DailyAppointmentsList = ({
     })
   );
 
+  const getStatusColor = (status) => {
+    const colors = {
+      'PROGRAMADO': 'blue',
+      'EN_SALA': 'yellow',
+      'ATENDIDO': 'green',
+      'CANCELADA': 'gray',
+      'NO_SE_PRESENTO': 'red'
+    };
+    return colors[status] || 'blue';
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      'PROGRAMADO': 'Programado',
+      'EN_SALA': 'En Sala',
+      'ATENDIDO': 'Atendido',
+      'NO_SE_PRESENTO': 'No se Presentó',
+      'CANCELADA': 'Cancelada'
+    };
+    return labels[status] || status;
+  };
+
+  const getButtonColor = (status) => {
+    const colors = {
+      'EN_SALA': 'yellow',
+      'ATENDIDO': 'green',
+      'NO_SE_PRESENTO': 'red',
+      'CANCELADA': 'gray'
+    };
+    return colors[status] || 'blue';
+  };
+
+  const getButtonLabel = (status) => {
+    const labels = {
+      'EN_SALA': 'Marcar En Sala',
+      'ATENDIDO': 'Marcar Atendido',
+      'NO_SE_PRESENTO': 'No se Presentó',
+      'CANCELADA': 'Cancelar'
+    };
+    return labels[status] || status;
+  };
+
   return (
-    <div>
-      <h4 className="text-sm font-medium text-gray-900 mb-3">
+    <Stack gap="md">
+      <Text size="sm" fw={500}>
         {isDoctor
           ? `Mis Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
           : `Todas las Citas Programadas - ${selectedDate.toLocaleDateString('es-ES')}`
         }
-      </h4>
+      </Text>
 
       {loadingAppointments ? (
-        <div className="text-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-500">Cargando citas...</p>
-        </div>
+        <Paper p="md" radius="md" withBorder>
+          <Group justify="center" gap="sm">
+            <Loader size="sm" />
+            <Text size="sm" c="dimmed">Cargando citas...</Text>
+          </Group>
+        </Paper>
       ) : hasUnattendedAppointments ? (
-        <div className="space-y-2 max-h-80 overflow-y-auto">
+        <Stack gap="sm" style={{ maxHeight: '320px', overflowY: 'auto' }}>
           {Object.entries(allDoctorAppointments).map(([doctorId, doctorData]) =>
             doctorData.appointments
               .filter(appointment => {
@@ -56,166 +102,96 @@ const DailyAppointmentsList = ({
               })
               .map((appointment) => {
                 const appointmentInfo = getAppointmentInfo(appointment);
+                let appointmentData;
+                try {
+                  appointmentData = JSON.parse(appointment.datosJson || '{}');
+                } catch (error) {
+                  appointmentData = {};
+                }
+
+                const currentStatus = appointmentData.estado || 'PROGRAMADO';
+                const pacienteNombre = appointmentData.pacienteNombre || 'Paciente';
+                const duracion = appointmentData.duracion || 30;
+                const informacionCups = appointmentData.informacionCups || {};
+                const tipo = informacionCups.tipo || 'REVISION PERIODICA';
+
+                const transitions = {
+                  'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'],
+                  'EN_SALA': ['ATENDIDO'],
+                  'ATENDIDO': [],
+                  'NO_SE_PRESENTO': [],
+                  'CANCELADA': []
+                };
+
+                const availableTransitions = transitions[currentStatus] || [];
 
                 return (
-                  <div
+                  <Paper
                     key={appointment.id}
-                    className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50"
+                    p="md"
+                    radius="md"
+                    withBorder
+                    style={{ cursor: 'default' }}
+                    className="hover:bg-gray-50"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {(() => {
-                              try {
-                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                                return appointmentData.pacienteNombre || 'Paciente';
-                              } catch (error) {
-                                return 'N/A';
-                              }
-                            })()}
-                          </span>
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            (() => {
-                              try {
-                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                                const status = appointmentData.estado || 'PROGRAMADO';
-                                return status === 'PROGRAMADO' ? 'bg-blue-100 text-blue-800' :
-                                       status === 'EN_SALA' ? 'bg-yellow-100 text-yellow-800' :
-                                       status === 'ATENDIDO' ? 'bg-green-100 text-green-800' :
-                                       status === 'CANCELADA' ? 'bg-gray-100 text-gray-800' :
-                                       'bg-red-100 text-red-800';
-                              } catch (error) {
-                                return 'bg-blue-100 text-blue-800';
-                              }
-                            })()
-                          }`}>
-                            {(() => {
-                              try {
-                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                                const status = appointmentData.estado || 'PROGRAMADO';
-                                return status === 'PROGRAMADO' ? 'Programado' :
-                                       status === 'EN_SALA' ? 'En Sala' :
-                                       status === 'ATENDIDO' ? 'Atendido' :
-                                       status === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                       status === 'CANCELADA' ? 'Cancelada' :
-                                       status;
-                              } catch (error) {
-                                return 'Programado';
-                              }
-                            })()}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-                          <p>
-                            <span className="font-medium">Tipo:</span>{' '}
-                            {(() => {
-                              try {
-                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                                const informacionCups = appointmentData.informacionCups;
-                                if (informacionCups && informacionCups.tipo) {
-                                  return informacionCups.tipo;
-                                }
-                                return 'REVISION PERIODICA';
-                              } catch (error) {
-                                return 'REVISION PERIODICA';
-                              }
-                            })()}
-                          </p>
-                          <p>
-                            <span className="font-medium">Duración:</span>{' '}
-                            {(() => {
-                              try {
-                                const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                                return `${appointmentData.duracion || 30} min`;
-                              } catch (error) {
-                                return ' (30 min)';
-                              }
-                            })()}
-                          </p>
-                          <p>
-                            <span className="font-medium">Doctor:</span> {doctorData.doctorName}
-                          </p>
-                        </div>
-                      </div>
+                    <Group justify="space-between" align="flex-start" wrap="nowrap">
+                      <Stack gap="xs" style={{ flex: 1 }}>
+                        <Group gap="sm" wrap="wrap">
+                          <Text size="sm" fw={500}>{pacienteNombre}</Text>
+                          <Badge color={getStatusColor(currentStatus)} variant="light" size="sm">
+                            {getStatusLabel(currentStatus)}
+                          </Badge>
+                        </Group>
+                        <Stack gap={4}>
+                          <Group gap="xs">
+                            <Text size="xs" c="dimmed" fw={500}>Tipo:</Text>
+                            <Text size="xs" c="dimmed">{tipo}</Text>
+                          </Group>
+                          <Group gap="xs">
+                            <IconClock size={12} color="gray" />
+                            <Text size="xs" c="dimmed" fw={500}>Duración:</Text>
+                            <Text size="xs" c="dimmed">{duracion} min</Text>
+                          </Group>
+                          <Group gap="xs">
+                            <IconUser size={12} color="gray" />
+                            <Text size="xs" c="dimmed" fw={500}>Doctor:</Text>
+                            <Text size="xs" c="dimmed">{doctorData.doctorName}</Text>
+                          </Group>
+                        </Stack>
+                      </Stack>
 
                       {/* Estado change buttons */}
-                      <div className="flex flex-col space-y-1">
-                        {(() => {
-                          try {
-                            const appointmentData = JSON.parse(appointment.datosJson || '{}');
-                            const currentStatus = appointmentData.estado || 'PROGRAMADO';
-                            const statusLabel = currentStatus === 'PROGRAMADO' ? 'Programado' :
-                                              currentStatus === 'EN_SALA' ? 'En Sala' :
-                                              currentStatus === 'ATENDIDO' ? 'Atendido' :
-                                              currentStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                              currentStatus === 'CANCELADA' ? 'Cancelada' :
-                                              currentStatus;
-
-                            const transitions = {
-                              'PROGRAMADO': ['EN_SALA', 'NO_SE_PRESENTO', 'CANCELADA'],
-                              'EN_SALA': ['ATENDIDO'],
-                              'ATENDIDO': [],
-                              'NO_SE_PRESENTO': [],
-                              'CANCELADA': []
-                            };
-
-                            const availableTransitions = transitions[currentStatus] || [];
-
-                            return availableTransitions.map(newStatus => (
-                              <button
-                                key={newStatus}
-                                onClick={async () => {
-                                  await updateAppointmentStatus(appointment.id, newStatus);
-                                }}
-                                disabled={updatingStatus[appointment.id]}
-                                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
-                                  updatingStatus[appointment.id]
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : `bg-${
-                                        newStatus === 'EN_SALA' ? 'yellow' :
-                                        newStatus === 'ATENDIDO' ? 'green' :
-                                        newStatus === 'NO_SE_PRESENTO' ? 'red' :
-                                        newStatus === 'CANCELADA' ? 'gray' : 'blue'
-                                      }-100 text-${
-                                        newStatus === 'EN_SALA' ? 'yellow' :
-                                        newStatus === 'ATENDIDO' ? 'green' :
-                                        newStatus === 'NO_SE_PRESENTO' ? 'red' :
-                                        newStatus === 'CANCELADA' ? 'gray' : 'blue'
-                                      }-800 hover:bg-${
-                                        newStatus === 'EN_SALA' ? 'yellow' :
-                                        newStatus === 'ATENDIDO' ? 'green' :
-                                        newStatus === 'NO_SE_PRESENTO' ? 'red' :
-                                        newStatus === 'CANCELADA' ? 'gray' : 'blue'
-                                      }-200`
-                                }`}
-                              >
-                                {updatingStatus[appointment.id] ? 'Actualizando...' : 
-                                  newStatus === 'EN_SALA' ? 'Marcar En Sala' :
-                                  newStatus === 'ATENDIDO' ? 'Marcar Atendido' :
-                                  newStatus === 'NO_SE_PRESENTO' ? 'No se Presentó' :
-                                  newStatus === 'CANCELADA' ? 'Cancelar' :
-                                  newStatus
-                                }
-                              </button>
-                            ));
-                          } catch (error) {
-                            return null;
-                          }
-                        })()}
-                      </div>
-                    </div>
-                  </div>
+                      <Stack gap="xs" style={{ minWidth: '140px' }}>
+                        {availableTransitions.map(newStatus => (
+                          <Button
+                            key={newStatus}
+                            size="compact-xs"
+                            color={getButtonColor(newStatus)}
+                            variant="light"
+                            onClick={async () => {
+                              await updateAppointmentStatus(appointment.id, newStatus);
+                            }}
+                            loading={updatingStatus[appointment.id]}
+                            disabled={updatingStatus[appointment.id]}
+                          >
+                            {getButtonLabel(newStatus)}
+                          </Button>
+                        ))}
+                      </Stack>
+                    </Group>
+                  </Paper>
                 );
               })
           )}
-        </div>
+        </Stack>
       ) : (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-500">No hay citas programadas para esta fecha</p>
-        </div>
+        <Paper p="xl" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Text size="sm" c="dimmed" ta="center">
+            No hay citas programadas para esta fecha
+          </Text>
+        </Paper>
       )}
-    </div>
+    </Stack>
   );
 };
 

@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  MagnifyingGlassIcon,
-  UserIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  MapPinIcon,
-  CalendarDaysIcon,
-  EyeIcon,
-  ClockIcon,
-  PencilIcon
-} from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Text, Title, Badge, Table, ScrollArea, Loader, Button, ActionIcon, ThemeIcon } from '@mantine/core';
+import { IconSearch, IconUser, IconPhone, IconMail, IconMapPin, IconCalendar, IconEye, IconClock, IconPencil } from '@tabler/icons-react';
 import { pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
-import { ActionIcon, Group, Button } from '@mantine/core';
 
 const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppointment, onEditPatient, onNewPatient, refreshTrigger }) => {
   const [allPatients, setAllPatients] = useState([]);
@@ -210,161 +200,143 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
 
   const getStatusBadge = (patient) => {
     if (!patient.activo) {
-      return <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Inactivo</span>;
+      return <Badge color="gray" variant="filled">Inactivo</Badge>;
     }
 
     // TODO: Una vez implementada la API de citas, agregar lógica de citas próximas
-    return <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Activo</span>;
+    return <Badge color="green" variant="filled">Activo</Badge>;
   };
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <Stack align="center" justify="center" p="xl">
+        <Loader color="blue" size="xl" />
+        <Text size="sm" c="dimmed">Cargando pacientes...</Text>
+      </Stack>
     );
   }
 
   return (
-    <div className="p-6">
+    <Stack gap="lg" p="lg">
 
       {filteredPatients.length === 0 ? (
-        <div className="text-center py-12">
-          <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No se encontraron pacientes</h3>
-          <p className="mt-1 text-sm text-gray-500">
+        <Stack align="center" justify="center" py="xl">
+          <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+            <IconUser size={32} />
+          </ThemeIcon>
+          <Title order={5} size="h6" c="dimmed">No se encontraron pacientes</Title>
+          <Text size="sm" c="dimmed">
             Intenta ajustar los filtros de búsqueda.
-          </p>
-        </div>
+          </Text>
+        </Stack>
       ) : (
         <>
           {/* Header con botón de crear */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-medium text-gray-900">
+          <Group justify="space-between">
+            <Title order={4} size="h5">
               Lista de Pacientes ({filteredPatients.length})
-            </h3>
+            </Title>
             <Button
               onClick={onNewPatient}
               leftSection={<span>+</span>}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              color="blue"
             >
               Nuevo Paciente
             </Button>
-          </div>
+          </Group>
 
           {/* Table */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="overflow-x-auto overflow-y-auto max-h-80">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Documento
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nombre
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Edad
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Teléfono
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ciudad
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPatients.map((patient) => {
-                      const patientData = parsePatientData(patient);
-                      return (
-                        <tr key={patient.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {patient.numeroDocumento}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {patientData.nombreCompleto}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {calculateAge(patientData.fechaNacimiento)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {patientData.telefono}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {patientData.ciudad}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {getStatusBadge(patient)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <Group gap="xs">
-                              <ActionIcon
-                                variant="light"
-                                color="blue"
-                                size="sm"
-                                onClick={() => onScheduleAppointment(patient.id, patientData.nombreCompleto)}
-                                title="Agendar cita"
-                              >
-                                <ClockIcon className="w-4 h-4" />
-                              </ActionIcon>
-                              <ActionIcon
-                                variant="light"
-                                color="green"
-                                size="sm"
-                                onClick={() => onEditPatient && onEditPatient(patient)}
-                                title="Editar paciente"
-                              >
-                                <PencilIcon className="w-4 h-4" />
-                              </ActionIcon>
-                              <ActionIcon
-                                variant="light"
-                                color="gray"
-                                size="sm"
-                                onClick={() => onPatientClick(patient.id)}
-                                title="Ver detalles"
-                              >
-                                <EyeIcon className="w-4 h-4" />
-                              </ActionIcon>
-                            </Group>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          <Paper withBorder radius="md" shadow="sm">
+            <ScrollArea h={480}>
+              <Table striped highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Documento</Table.Th>
+                    <Table.Th>Nombre</Table.Th>
+                    <Table.Th>Edad</Table.Th>
+                    <Table.Th>Teléfono</Table.Th>
+                    <Table.Th>Ciudad</Table.Th>
+                    <Table.Th>Estado</Table.Th>
+                    <Table.Th>Acciones</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {filteredPatients.map((patient) => {
+                    const patientData = parsePatientData(patient);
+                    return (
+                      <Table.Tr key={patient.id}>
+                        <Table.Td>
+                          <Text size="sm" fw={500}>{patient.numeroDocumento}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{patientData.nombreCompleto}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" c="dimmed">{calculateAge(patientData.fechaNacimiento)}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" c="dimmed">{patientData.telefono}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm" c="dimmed">{patientData.ciudad}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          {getStatusBadge(patient)}
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <ActionIcon
+                              variant="light"
+                              color="blue"
+                              size="sm"
+                              onClick={() => onScheduleAppointment(patient.id, patientData.nombreCompleto)}
+                              title="Agendar cita"
+                            >
+                              <IconClock size={16} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant="light"
+                              color="green"
+                              size="sm"
+                              onClick={() => onEditPatient && onEditPatient(patient)}
+                              title="Editar paciente"
+                            >
+                              <IconPencil size={16} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant="light"
+                              color="gray"
+                              size="sm"
+                              onClick={() => onPatientClick(patient.id)}
+                              title="Ver detalles"
+                            >
+                              <IconEye size={16} />
+                            </ActionIcon>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })}
+                </Table.Tbody>
+              </Table>
 
               {filteredPatients.length === 0 && !loading && (
-                <div className="text-center py-12">
-                  <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No se encontraron pacientes</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                <Stack align="center" justify="center" py="xl">
+                  <ThemeIcon size={64} radius="xl" variant="light" color="gray">
+                    <IconUser size={32} />
+                  </ThemeIcon>
+                  <Title order={5} size="h6" c="dimmed">No se encontraron pacientes</Title>
+                  <Text size="sm" c="dimmed">
                     Intenta ajustar los filtros de búsqueda.
-                  </p>
-                </div>
+                  </Text>
+                </Stack>
               )}
-            </div>
-          </div>
+            </ScrollArea>
+          </Paper>
 
         </>
       )}
-    </div>
+    </Stack>
   );
 };
 

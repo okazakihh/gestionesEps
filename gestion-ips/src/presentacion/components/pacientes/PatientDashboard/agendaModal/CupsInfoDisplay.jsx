@@ -1,38 +1,47 @@
 import React from 'react';
+import { Paper, Title, Grid, Text, Stack } from '@mantine/core';
 
 const CupsInfoDisplay = ({ selectedCupData }) => {
   if (!selectedCupData) return null;
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-      <h4 className="text-sm font-medium text-blue-900 mb-2">Información CUPS</h4>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+    <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
+      <Title order={5} mb="sm" c="blue">Información CUPS</Title>
+      <Grid gutter="md">
         {selectedCupData.categoria && (
-          <div>
-            <span className="font-medium text-blue-800">Categoría:</span>
-            <p className="text-blue-700">{selectedCupData.categoria}</p>
-          </div>
+          <Grid.Col span={{ base: 12, sm: 6, lg: 3 }}>
+            <Stack gap={4}>
+              <Text size="xs" fw={500} c="blue.9">Categoría:</Text>
+              <Text size="xs" c="blue.7">{selectedCupData.categoria}</Text>
+            </Stack>
+          </Grid.Col>
         )}
         {selectedCupData.especialidad && (
-          <div>
-            <span className="font-medium text-blue-800">Especialidad:</span>
-            <p className="text-blue-700">{selectedCupData.especialidad}</p>
-          </div>
+          <Grid.Col span={{ base: 12, sm: 6, lg: 3 }}>
+            <Stack gap={4}>
+              <Text size="xs" fw={500} c="blue.9">Especialidad:</Text>
+              <Text size="xs" c="blue.7">{selectedCupData.especialidad}</Text>
+            </Stack>
+          </Grid.Col>
         )}
         {selectedCupData.tipo && (
-          <div>
-            <span className="font-medium text-blue-800">Tipo:</span>
-            <p className="text-blue-700">{selectedCupData.tipo}</p>
-          </div>
+          <Grid.Col span={{ base: 12, sm: 6, lg: 3 }}>
+            <Stack gap={4}>
+              <Text size="xs" fw={500} c="blue.9">Tipo:</Text>
+              <Text size="xs" c="blue.7">{selectedCupData.tipo}</Text>
+            </Stack>
+          </Grid.Col>
         )}
         {selectedCupData.ambito && (
-          <div>
-            <span className="font-medium text-blue-800">Ámbito:</span>
-            <p className="text-blue-700">{selectedCupData.ambito}</p>
-          </div>
+          <Grid.Col span={{ base: 12, sm: 6, lg: 3 }}>
+            <Stack gap={4}>
+              <Text size="xs" fw={500} c="blue.9">Ámbito:</Text>
+              <Text size="xs" c="blue.7">{selectedCupData.ambito}</Text>
+            </Stack>
+          </Grid.Col>
         )}
-      </div>
-    </div>
+      </Grid>
+    </Paper>
   );
 };
 

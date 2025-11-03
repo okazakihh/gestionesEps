@@ -1,12 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  UserIcon,
-  PhoneIcon,
-  HeartIcon,
-  DocumentTextIcon,
-  IdentificationIcon
-} from '@heroicons/react/24/outline';
+import { Tabs } from '@mantine/core';
+import { IconUser, IconPhone, IconHeart, IconFileText, IconId } from '@tabler/icons-react';
 
 /**
  * Componente para las pestañas de navegación del modal de detalles del paciente
@@ -17,35 +12,31 @@ import {
  */
 const PatientModalTabs = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'personal', name: 'Información Personal', icon: UserIcon },
-    { id: 'contacto', name: 'Contacto', icon: PhoneIcon },
-    { id: 'medica', name: 'Información Médica', icon: HeartIcon },
-    { id: 'emergencia', name: 'Contacto Emergencia', icon: IdentificationIcon },
-    { id: 'consentimiento', name: 'Consentimiento', icon: DocumentTextIcon },
-    { id: 'clinica', name: 'Historia Clínica', icon: DocumentTextIcon },
+    { id: 'personal', name: 'Información Personal', icon: IconUser },
+    { id: 'contacto', name: 'Contacto', icon: IconPhone },
+    { id: 'medica', name: 'Información Médica', icon: IconHeart },
+    { id: 'emergencia', name: 'Contacto Emergencia', icon: IconId },
+    { id: 'consentimiento', name: 'Consentimiento', icon: IconFileText },
+    { id: 'clinica', name: 'Historia Clínica', icon: IconFileText },
   ];
+
   return (
-    <div className="patient-modal-tabs">
-      <nav className="patient-modal-tabs-nav">
+    <Tabs value={activeTab} onChange={setActiveTab} variant="outline">
+      <Tabs.List>
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
-            <button
+            <Tabs.Tab
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`patient-modal-tab ${
-                activeTab === tab.id
-                  ? 'patient-modal-tab-active'
-                  : 'patient-modal-tab-inactive'
-              }`}
+              value={tab.id}
+              leftSection={<IconComponent size={16} />}
             >
-              <IconComponent className="patient-modal-tab-icon" />
-              <span>{tab.name}</span>
-            </button>
+              {tab.name}
+            </Tabs.Tab>
           );
         })}
-      </nav>
-    </div>
+      </Tabs.List>
+    </Tabs>
   );
 };
 

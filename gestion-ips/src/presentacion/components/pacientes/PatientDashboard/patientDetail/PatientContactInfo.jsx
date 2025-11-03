@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { PhoneIcon, EnvelopeIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Text, Title, Grid } from '@mantine/core';
+import { IconPhone, IconMail, IconMapPin } from '@tabler/icons-react';
 
 /**
  * Componente para mostrar la información de contacto del paciente
@@ -8,49 +9,59 @@ import { PhoneIcon, EnvelopeIcon, MapPinIcon } from '@heroicons/react/24/outline
  */
 const PatientContactInfo = ({ patientData }) => {
   return (
-    <div className="patient-detail-container">
-      <h4 className="patient-detail-header">Información de Contacto</h4>
-      <div className="patient-contact-grid patient-detail-max-width-none">
-        <div className="patient-contact-section">
-          <div className="patient-contact-item">
-            <PhoneIcon className="patient-contact-icon-primary" />
-            <div>
-              <p className="patient-contact-label">Teléfono Principal</p>
-              <p className="patient-contact-value">{patientData.informacionContacto?.telefono || 'N/A'}</p>
-            </div>
-          </div>
-          <div className="patient-contact-item">
-            <PhoneIcon className="patient-contact-icon-mobile" />
-            <div>
-              <p className="patient-contact-label">Teléfono Móvil</p>
-              <p className="patient-contact-value">{patientData.informacionPersonal?.telefonoMovil || 'N/A'}</p>
-            </div>
-          </div>
-          <div className="patient-contact-item">
-            <EnvelopeIcon className="patient-contact-icon-primary" />
-            <div>
-              <p className="patient-contact-label">Email</p>
-              <p className="patient-contact-value">{patientData.informacionContacto?.email || 'N/A'}</p>
-            </div>
-          </div>
-        </div>
-        <div className="patient-contact-section">
-          <div className="patient-contact-address">
-            <MapPinIcon className="patient-contact-icon-primary mt-0.5" />
-            <div className="patient-contact-address-content">
-              <p className="patient-contact-label">Dirección</p>
-              <p className="patient-contact-value">{patientData.informacionContacto?.direccion || 'N/A'}</p>
-              <p className="patient-contact-address-city">
-                {patientData.informacionContacto?.ciudad}, {patientData.informacionContacto?.departamento}
-              </p>
-              <p className="patient-contact-address-country">
-                {patientData.informacionContacto?.pais}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Stack gap="lg">
+      <Title order={4} size="h5">Información de Contacto</Title>
+      <Grid gutter="lg">
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <Stack gap="md">
+            <Paper p="md" radius="md" withBorder>
+              <Group gap="md" align="flex-start">
+                <IconPhone size={24} color="var(--mantine-color-blue-6)" />
+                <Stack gap={4}>
+                  <Text size="xs" c="dimmed" fw={500}>Teléfono Principal</Text>
+                  <Text size="sm" fw={500}>{patientData.informacionContacto?.telefono || 'N/A'}</Text>
+                </Stack>
+              </Group>
+            </Paper>
+            <Paper p="md" radius="md" withBorder>
+              <Group gap="md" align="flex-start">
+                <IconPhone size={24} color="var(--mantine-color-green-6)" />
+                <Stack gap={4}>
+                  <Text size="xs" c="dimmed" fw={500}>Teléfono Móvil</Text>
+                  <Text size="sm" fw={500}>{patientData.informacionPersonal?.telefonoMovil || 'N/A'}</Text>
+                </Stack>
+              </Group>
+            </Paper>
+            <Paper p="md" radius="md" withBorder>
+              <Group gap="md" align="flex-start">
+                <IconMail size={24} color="var(--mantine-color-blue-6)" />
+                <Stack gap={4}>
+                  <Text size="xs" c="dimmed" fw={500}>Email</Text>
+                  <Text size="sm" fw={500}>{patientData.informacionContacto?.email || 'N/A'}</Text>
+                </Stack>
+              </Group>
+            </Paper>
+          </Stack>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <Paper p="md" radius="md" withBorder>
+            <Group gap="md" align="flex-start">
+              <IconMapPin size={24} color="var(--mantine-color-blue-6)" style={{ marginTop: 2 }} />
+              <Stack gap={4} style={{ flex: 1 }}>
+                <Text size="xs" c="dimmed" fw={500}>Dirección</Text>
+                <Text size="sm" fw={500}>{patientData.informacionContacto?.direccion || 'N/A'}</Text>
+                <Text size="sm" c="dimmed">
+                  {patientData.informacionContacto?.ciudad}, {patientData.informacionContacto?.departamento}
+                </Text>
+                <Text size="sm" c="dimmed">
+                  {patientData.informacionContacto?.pais}
+                </Text>
+              </Stack>
+            </Group>
+          </Paper>
+        </Grid.Col>
+      </Grid>
+    </Stack>
   );
 };
 

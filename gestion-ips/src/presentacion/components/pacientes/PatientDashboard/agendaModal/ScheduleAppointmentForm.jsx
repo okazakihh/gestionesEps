@@ -1,4 +1,5 @@
 import React from 'react';
+import { Stack, Grid } from '@mantine/core';
 import DateTimeField from './DateTimeField.jsx';
 import DoctorSelect from './DoctorSelect.jsx';
 import CupsSelect from './CupsSelect.jsx';
@@ -27,57 +28,66 @@ const ScheduleAppointmentForm = ({
   setSubmitError
 }) => {
   return (
-    <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6">
-      <div className="space-y-6">
+    <form onSubmit={onSubmit}>
+      <Stack gap="lg">
         {/* Primera fila: Fecha/Hora, Médico, Código CUPS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <DateTimeField
-            value={formData.fechaHoraCita}
-            onChange={onInputChange}
-            min={getMinDateTime()}
-            errors={errors}
-          />
+        <Grid gutter="md">
+          <Grid.Col span={{ base: 12, lg: 4 }}>
+            <DateTimeField
+              value={formData.fechaHoraCita}
+              onChange={onInputChange}
+              min={getMinDateTime()}
+              errors={errors}
+            />
+          </Grid.Col>
 
-          <DoctorSelect
-            value={formData.medicoAsignado}
-            onChange={onInputChange}
-            medicos={medicos}
-            loadingMedicos={loadingMedicos}
-            errors={errors}
-          />
+          <Grid.Col span={{ base: 12, lg: 4 }}>
+            <DoctorSelect
+              value={formData.medicoAsignado}
+              onChange={onInputChange}
+              medicos={medicos}
+              loadingMedicos={loadingMedicos}
+              errors={errors}
+            />
+          </Grid.Col>
 
-          <CupsSelect
-            codigosCups={codigosCups}
-            value={formData.codigoCups}
-            onChange={onInputChange}
-            loadingCodigosCups={loadingCodigosCups}
-            errors={errors}
-          />
-        </div>
-
-        {/* Segunda fila: Motivo y Estado/Duración */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <ReasonTextarea
-            value={formData.motivo}
-            onChange={onInputChange}
-            errors={errors}
-          />
-
-          <StatusAndDurationFields
-            estado={formData.estado}
-            duracion={formData.duracion}
-            onChange={onInputChange}
-          />
-        </div>
+          <Grid.Col span={{ base: 12, lg: 4 }}>
+            <CupsSelect
+              codigosCups={codigosCups}
+              value={formData.codigoCups}
+              onChange={onInputChange}
+              loadingCodigosCups={loadingCodigosCups}
+              errors={errors}
+            />
+          </Grid.Col>
+        </Grid>
 
         {/* Información del Código CUPS seleccionado */}
         <CupsInfoDisplay selectedCupData={selectedCupData} />
 
-        {/* Notas adicionales */}
-        <NotesTextarea
-          value={formData.notas}
+        {/* Segunda fila: Motivo */}
+        <ReasonTextarea
+          value={formData.motivo}
           onChange={onInputChange}
+          errors={errors}
         />
+
+        {/* Tercera fila: Estado y Duración */}
+        <Grid gutter="md">
+          <Grid.Col span={{ base: 12, lg: 6 }}>
+            <StatusAndDurationFields
+              estado={formData.estado}
+              duracion={formData.duracion}
+              onChange={onInputChange}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, lg: 6 }}>
+            <NotesTextarea
+              value={formData.notas}
+              onChange={onInputChange}
+            />
+          </Grid.Col>
+        </Grid>
 
         {/* Error Display */}
         <ErrorDisplay
@@ -92,7 +102,7 @@ const ScheduleAppointmentForm = ({
           loading={loading}
           onClose={onClose}
         />
-      </div>
+      </Stack>
     </form>
   );
 };

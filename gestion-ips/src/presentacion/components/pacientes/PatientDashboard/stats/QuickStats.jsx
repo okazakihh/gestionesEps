@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  UserGroupIcon,
-  CalendarDaysIcon,
-  DocumentTextIcon,
-  ClipboardDocumentListIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Text, Grid, ThemeIcon, Loader, SimpleGrid } from '@mantine/core';
+import { IconUsers, IconCalendar, IconFileText, IconClipboardList, IconClock } from '@tabler/icons-react';
 import { pacientesApiService, historiasClinicasApiService, consultasApiService } from '../../../../data/services/pacientesApiService.js';
 
 const QuickStats = () => {
@@ -60,88 +55,84 @@ const QuickStats = () => {
     {
       title: 'Total Pacientes',
       value: stats.totalPacientes.toLocaleString(),
-      icon: UserGroupIcon,
-      color: 'bg-blue-500',
+      icon: IconUsers,
+      color: 'blue',
       description: 'Pacientes registrados'
     },
     {
       title: 'Pacientes Activos',
       value: stats.pacientesActivos.toLocaleString(),
-      icon: UserGroupIcon,
-      color: 'bg-green-500',
+      icon: IconUsers,
+      color: 'green',
       description: 'Pacientes activos'
     },
     {
       title: 'Citas Hoy',
       value: stats.citasHoy,
-      icon: CalendarDaysIcon,
-      color: 'bg-yellow-500',
+      icon: IconCalendar,
+      color: 'yellow',
       description: 'Citas programadas'
     },
     {
       title: 'Consultas del Mes',
       value: stats.consultasMes,
-      icon: ClipboardDocumentListIcon,
-      color: 'bg-purple-500',
+      icon: IconClipboardList,
+      color: 'grape',
       description: 'Consultas realizadas'
     },
     {
       title: 'Historias Clínicas',
       value: stats.historiasClinicas,
-      icon: DocumentTextIcon,
-      color: 'bg-indigo-500',
+      icon: IconFileText,
+      color: 'indigo',
       description: 'Historias completas'
     }
   ];
 
   if (stats.loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }}>
         {[...Array(5)].map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
-              </div>
-              <div className="ml-4 flex-1">
-                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                <div className="h-6 bg-gray-300 rounded w-1/2"></div>
-              </div>
-            </div>
-          </div>
+          <Paper key={index} p="lg" radius="md" shadow="sm" withBorder>
+            <Group>
+              <Loader size="sm" />
+              <Stack gap={4} style={{ flex: 1 }}>
+                <div style={{ height: 16, backgroundColor: 'var(--mantine-color-gray-3)', borderRadius: 4, width: '75%' }} />
+                <div style={{ height: 24, backgroundColor: 'var(--mantine-color-gray-3)', borderRadius: 4, width: '50%' }} />
+              </Stack>
+            </Group>
+          </Paper>
         ))}
-      </div>
+      </SimpleGrid>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }}>
       {statItems.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
-          <div key={index} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                  <IconComponent className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-600 truncate">
+          <Paper key={index} p="lg" radius="md" shadow="sm" withBorder style={{ transition: 'box-shadow 200ms', cursor: 'pointer' }}>
+            <Group>
+              <ThemeIcon size="xl" radius="md" color={stat.color} variant="filled">
+                <IconComponent size={24} />
+              </ThemeIcon>
+              <Stack gap={4} style={{ flex: 1 }}>
+                <Text size="sm" fw={500} c="dimmed" lineClamp={1}>
                   {stat.title}
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
+                </Text>
+                <Text size="xl" fw={600}>
                   {stat.value}
-                </p>
-                <p className="text-xs text-gray-500">
+                </Text>
+                <Text size="xs" c="dimmed">
                   {stat.description}
-                </p>
-              </div>
-            </div>
-          </div>
+                </Text>
+              </Stack>
+            </Group>
+          </Paper>
         );
       })}
-    </div>
+    </SimpleGrid>
   );
 };
 

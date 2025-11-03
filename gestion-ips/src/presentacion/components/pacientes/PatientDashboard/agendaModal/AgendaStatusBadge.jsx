@@ -1,4 +1,5 @@
 import React from 'react';
+import { Badge } from '@mantine/core';
 
 /**
  * Componente para mostrar el badge de estado de una cita
@@ -20,19 +21,19 @@ const AgendaStatusBadge = ({ status }) => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'PROGRAMADO': 'bg-blue-100 text-blue-800',
-      'EN_SALA': 'bg-yellow-100 text-yellow-800',
-      'ATENDIDO': 'bg-green-100 text-green-800',
-      'NO_SE_PRESENTO': 'bg-red-100 text-red-800',
-      'CANCELADO': 'bg-gray-100 text-gray-800'
+      'PROGRAMADO': 'blue',
+      'EN_SALA': 'yellow',
+      'ATENDIDO': 'green',
+      'NO_SE_PRESENTO': 'red',
+      'CANCELADO': 'gray'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'gray';
   };
 
   return (
-    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(status)}`}>
+    <Badge color={getStatusColor(status)} variant="light" size="sm">
       {getStatusLabel(status)}
-    </span>
+    </Badge>
   );
 };
 

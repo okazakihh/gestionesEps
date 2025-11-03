@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Modal, TextInput, Textarea, Button, Grid, Tabs, Paper, Text, Divider, Box, Group } from '@mantine/core';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService, pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
 
@@ -117,420 +117,381 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleNestedInputChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...(prev[section]),
-        [field]: value
-      }
-    }));
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
-        </div>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title="Crear Historia Clínica"
+      size="xl"
+      centered
+      styles={{
+        title: { fontSize: '1.25rem', fontWeight: 600 }
+      }}
+    >
+      <Box>
+        {error && (
+          <Paper p="md" mb="md" withBorder style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
+            <Text c="red" size="sm">{error}</Text>
+          </Paper>
+        )}
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-3/4 h-3/4">
-          {/* Header */}
-          <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Nueva Historia Clínica</h3>
-            <button
-              onClick={onClose}
-              className="text-white hover:text-gray-200 transition-colors"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
+        <Tabs defaultValue="basica" color="green" variant="pills">
+          <Tabs.List mb="md">
+            <Tabs.Tab value="basica">Información Básica</Tabs.Tab>
+            <Tabs.Tab value="medico">Información Médica</Tabs.Tab>
+            <Tabs.Tab value="consulta">Información de Consulta</Tabs.Tab>
+            <Tabs.Tab value="antecedentes">Antecedentes</Tabs.Tab>
+            <Tabs.Tab value="examen">Examen Clínico</Tabs.Tab>
+            <Tabs.Tab value="diagnostico">Diagnóstico</Tabs.Tab>
+            <Tabs.Tab value="firma">Firma Digital</Tabs.Tab>
+          </Tabs.List>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="flex items-center justify-center min-h-full">
-              <div className="w-full max-w-3xl">
-                {error && (
-                  <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                    <div className="text-sm text-red-700">{error}</div>
-                  </div>
-                )}
+          {/* Información Básica */}
+          <Tabs.Panel value="basica">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="ID del Paciente"
+                    value={formData.pacienteId}
+                    onChange={(e) => setFormData({...formData, pacienteId: e.target.value})}
+                    disabled
+                    required
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Fecha de Apertura"
+                    type="date"
+                    value={formData.fechaApertura}
+                    onChange={(e) => setFormData({...formData, fechaApertura: e.target.value})}
+                    required
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-                {/* Información del Paciente */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-blue-900">Paciente</h4>
-                      <p className="text-xs text-blue-700 mt-1">
-                        {citaData?.nombre || 'No disponible'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          {/* Información Médica */}
+          <Tabs.Panel value="medico">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <TextInput
+                    label="Médico Responsable"
+                    value={formData.informacionMedico.medicoResponsable}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionMedico: { ...formData.informacionMedico, medicoResponsable: e.target.value }
+                    })}
+                    placeholder="Nombre del médico responsable"
+                    required
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Registro Médico"
+                    value={formData.informacionMedico.registroMedico}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionMedico: { ...formData.informacionMedico, registroMedico: e.target.value }
+                    })}
+                    placeholder="Número de registro médico"
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Especialidad"
+                    value={formData.informacionMedico.especialidad}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionMedico: { ...formData.informacionMedico, especialidad: e.target.value }
+                    })}
+                    placeholder="Especialidad médica"
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Información Básica */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-3">
-                      <label htmlFor="pacienteId" className="block text-xs font-medium leading-5 text-gray-900">
-                        ID Paciente
-                      </label>
-                      <input
-                        type="text"
-                        id="pacienteId"
-                        value={formData.pacienteId}
-                        readOnly
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 text-xs"
-                      />
-                    </div>
+          {/* Información de Consulta */}
+          <Tabs.Panel value="consulta">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Motivo de Consulta"
+                    value={formData.informacionConsulta.motivoConsulta}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionConsulta: { ...formData.informacionConsulta, motivoConsulta: e.target.value }
+                    })}
+                    placeholder="Describa el motivo de la consulta"
+                    minRows={3}
+                    required
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Enfermedad Actual"
+                    value={formData.informacionConsulta.enfermedadActual}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionConsulta: { ...formData.informacionConsulta, enfermedadActual: e.target.value }
+                    })}
+                    placeholder="Describa la enfermedad actual"
+                    minRows={3}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Revisión de Sistemas"
+                    value={formData.informacionConsulta.revisionSistemas}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionConsulta: { ...formData.informacionConsulta, revisionSistemas: e.target.value }
+                    })}
+                    placeholder="Revisión por sistemas"
+                    minRows={3}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Medicamentos Actuales"
+                    value={formData.informacionConsulta.medicamentosActuales}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionConsulta: { ...formData.informacionConsulta, medicamentosActuales: e.target.value }
+                    })}
+                    placeholder="Lista de medicamentos que está tomando actualmente"
+                    minRows={2}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Observaciones"
+                    value={formData.informacionConsulta.observaciones}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      informacionConsulta: { ...formData.informacionConsulta, observaciones: e.target.value }
+                    })}
+                    placeholder="Observaciones adicionales"
+                    minRows={2}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-                    <div className="sm:col-span-3">
-                      <label htmlFor="fechaApertura" className="block text-xs font-medium leading-5 text-gray-900">
-                        Fecha de Apertura
-                      </label>
-                      <input
-                        type="date"
-                        id="fechaApertura"
-                        value={formData.fechaApertura}
-                        onChange={(e) => handleInputChange('fechaApertura', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Antecedentes Clínicos */}
+          <Tabs.Panel value="antecedentes">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Antecedentes Personales"
+                    value={formData.antecedentesClinico.antecedentesPersonales}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      antecedentesClinico: { ...formData.antecedentesClinico, antecedentesPersonales: e.target.value }
+                    })}
+                    placeholder="Enfermedades previas, cirugías, etc."
+                    minRows={3}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Antecedentes Familiares"
+                    value={formData.antecedentesClinico.antecedentesFamiliares}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      antecedentesClinico: { ...formData.antecedentesClinico, antecedentesFamiliares: e.target.value }
+                    })}
+                    placeholder="Enfermedades familiares relevantes"
+                    minRows={3}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Antecedentes Quirúrgicos"
+                    value={formData.antecedentesClinico.antecedentesQuirurgicos}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      antecedentesClinico: { ...formData.antecedentesClinico, antecedentesQuirurgicos: e.target.value }
+                    })}
+                    placeholder="Cirugías previas"
+                    minRows={2}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Antecedentes Alérgicos"
+                    value={formData.antecedentesClinico.antecedentesAlergicos}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      antecedentesClinico: { ...formData.antecedentesClinico, antecedentesAlergicos: e.target.value }
+                    })}
+                    placeholder="Alergias conocidas"
+                    minRows={2}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-              {/* Información Médica */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Información Médica</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-2">
-                      <label htmlFor="medicoResponsable" className="block text-xs font-medium leading-5 text-gray-900">
-                        Médico Responsable
-                      </label>
-                      <input
-                        type="text"
-                        id="medicoResponsable"
-                        value={formData.informacionMedico?.medicoResponsable}
-                        onChange={(e) => handleNestedInputChange('informacionMedico', 'medicoResponsable', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
+          {/* Examen Clínico */}
+          <Tabs.Panel value="examen">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Examen Físico"
+                    value={formData.examenClinico.examenFisico}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      examenClinico: { ...formData.examenClinico, examenFisico: e.target.value }
+                    })}
+                    placeholder="Hallazgos del examen físico"
+                    minRows={4}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Signos Vitales"
+                    value={formData.examenClinico.signosVitales}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      examenClinico: { ...formData.examenClinico, signosVitales: e.target.value }
+                    })}
+                    placeholder="Presión arterial, frecuencia cardíaca, temperatura, etc."
+                    minRows={3}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-                    <div className="sm:col-span-2">
-                      <label htmlFor="registroMedico" className="block text-xs font-medium leading-5 text-gray-900">
-                        Registro Médico
-                      </label>
-                      <input
-                        type="text"
-                        id="registroMedico"
-                        value={formData.informacionMedico?.registroMedico}
-                        onChange={(e) => handleNestedInputChange('informacionMedico', 'registroMedico', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                      />
-                    </div>
+          {/* Diagnóstico y Tratamiento */}
+          <Tabs.Panel value="diagnostico">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Diagnósticos"
+                    value={formData.diagnosticoTratamiento.diagnosticos}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      diagnosticoTratamiento: { ...formData.diagnosticoTratamiento, diagnosticos: e.target.value }
+                    })}
+                    placeholder="Lista de diagnósticos"
+                    minRows={4}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Textarea
+                    label="Plan de Tratamiento"
+                    value={formData.diagnosticoTratamiento.planTratamiento}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      diagnosticoTratamiento: { ...formData.diagnosticoTratamiento, planTratamiento: e.target.value }
+                    })}
+                    placeholder="Plan terapéutico, medicamentos, procedimientos, etc."
+                    minRows={4}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
 
-                    <div className="sm:col-span-2">
-                      <label htmlFor="especialidad" className="block text-xs font-medium leading-5 text-gray-900">
-                        Especialidad
-                      </label>
-                      <input
-                        type="text"
-                        id="especialidad"
-                        value={formData.informacionMedico?.especialidad}
-                        onChange={(e) => handleNestedInputChange('informacionMedico', 'especialidad', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Firma Digital */}
+          <Tabs.Panel value="firma">
+            <Paper p="md" withBorder>
+              <Grid gutter="md">
+                <Grid.Col span={12}>
+                  <TextInput
+                    label="Nombre del Médico"
+                    value={formData.firmaDigital.nombreMedico}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      firmaDigital: { ...formData.firmaDigital, nombreMedico: e.target.value }
+                    })}
+                    placeholder="Nombre completo del médico"
+                    required
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Número de Cédula"
+                    value={formData.firmaDigital.numeroCedula}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      firmaDigital: { ...formData.firmaDigital, numeroCedula: e.target.value }
+                    })}
+                    placeholder="Cédula profesional"
+                    required
+                  />
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Especialidad"
+                    value={formData.firmaDigital.especialidad}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      firmaDigital: { ...formData.firmaDigital, especialidad: e.target.value }
+                    })}
+                    placeholder="Especialidad médica"
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <TextInput
+                    label="Fecha de Firma"
+                    type="date"
+                    value={formData.firmaDigital.fechaFirma}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      firmaDigital: { ...formData.firmaDigital, fechaFirma: e.target.value }
+                    })}
+                    required
+                  />
+                </Grid.Col>
 
-              {/* Información de Consulta */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Información de Consulta</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-6">
-                      <label htmlFor="motivoConsulta" className="block text-xs font-medium leading-5 text-gray-900">
-                        Motivo de Consulta
-                      </label>
-                      <textarea
-                        id="motivoConsulta"
-                        rows={2}
-                        value={formData.informacionConsulta?.motivoConsulta}
-                        onChange={(e) => handleNestedInputChange('informacionConsulta', 'motivoConsulta', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Describa el motivo de la consulta..."
-                        required
-                      />
-                    </div>
+                <Grid.Col span={12}>
+                  <Divider my="sm" label="Vista Previa de Firma Digital" labelPosition="center" />
+                  <Paper p="md" withBorder style={{ backgroundColor: '#f9fafb' }}>
+                    <Text size="sm" fw={600}>Firma Digital</Text>
+                    <Text size="sm" mt="xs">Dr(a). {formData.firmaDigital.nombreMedico}</Text>
+                    <Text size="sm">Cédula Profesional: {formData.firmaDigital.numeroCedula}</Text>
+                    <Text size="sm">{formData.firmaDigital.especialidad}</Text>
+                    <Text size="sm" c="dimmed">Fecha: {formData.firmaDigital.fechaFirma}</Text>
+                  </Paper>
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          </Tabs.Panel>
+        </Tabs>
 
-                    <div className="sm:col-span-6">
-                      <label htmlFor="enfermedadActual" className="block text-xs font-medium leading-5 text-gray-900">
-                        Enfermedad Actual
-                      </label>
-                      <textarea
-                        id="enfermedadActual"
-                        rows={2}
-                        value={formData.informacionConsulta?.enfermedadActual}
-                        onChange={(e) => handleNestedInputChange('informacionConsulta', 'enfermedadActual', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Describa la enfermedad actual..."
-                      />
-                    </div>
+        <Divider my="lg" />
 
-                    <div className="sm:col-span-6">
-                      <label htmlFor="observaciones" className="block text-xs font-medium leading-5 text-gray-900">
-                        Observaciones
-                      </label>
-                      <textarea
-                        id="observaciones"
-                        rows={2}
-                        value={formData.informacionConsulta?.observaciones}
-                        onChange={(e) => handleNestedInputChange('informacionConsulta', 'observaciones', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Observaciones adicionales..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Antecedentes Clínicos */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Antecedentes Clínicos</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-6">
-                      <label htmlFor="antecedentesPersonales" className="block text-xs font-medium leading-5 text-gray-900">
-                        Antecedentes Personales
-                      </label>
-                      <textarea
-                        id="antecedentesPersonales"
-                        rows={2}
-                        value={formData.antecedentesClinico?.antecedentesPersonales}
-                        onChange={(e) => handleNestedInputChange('antecedentesClinico', 'antecedentesPersonales', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Antecedentes personales del paciente..."
-                      />
-                    </div>
-
-                    <div className="sm:col-span-6">
-                      <label htmlFor="antecedentesFamiliares" className="block text-xs font-medium leading-5 text-gray-900">
-                        Antecedentes Familiares
-                      </label>
-                      <textarea
-                        id="antecedentesFamiliares"
-                        rows={2}
-                        value={formData.antecedentesClinico?.antecedentesFamiliares}
-                        onChange={(e) => handleNestedInputChange('antecedentesClinico', 'antecedentesFamiliares', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Antecedentes familiares..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Examen Clínico */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Examen Clínico</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-6">
-                      <label htmlFor="examenFisico" className="block text-xs font-medium leading-5 text-gray-900">
-                        Examen Físico
-                      </label>
-                      <textarea
-                        id="examenFisico"
-                        rows={2}
-                        value={formData.examenClinico?.examenFisico}
-                        onChange={(e) => handleNestedInputChange('examenClinico', 'examenFisico', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Resultados del examen físico..."
-                      />
-                    </div>
-
-                    <div className="sm:col-span-6">
-                      <label htmlFor="signosVitales" className="block text-xs font-medium leading-5 text-gray-900">
-                        Signos Vitales
-                      </label>
-                      <textarea
-                        id="signosVitales"
-                        rows={2}
-                        value={formData.examenClinico?.signosVitales}
-                        onChange={(e) => handleNestedInputChange('examenClinico', 'signosVitales', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Signos vitales..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Diagnóstico y Tratamiento */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Diagnóstico y Tratamiento</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-6">
-                      <label htmlFor="diagnosticos" className="block text-xs font-medium leading-5 text-gray-900">
-                        Diagnósticos
-                      </label>
-                      <textarea
-                        id="diagnosticos"
-                        rows={2}
-                        value={formData.diagnosticoTratamiento?.diagnosticos}
-                        onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'diagnosticos', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Diagnósticos realizados..."
-                      />
-                    </div>
-
-                    <div className="sm:col-span-6">
-                      <label htmlFor="planTratamiento" className="block text-xs font-medium leading-5 text-gray-900">
-                        Plan de Tratamiento
-                      </label>
-                      <textarea
-                        id="planTratamiento"
-                        rows={2}
-                        value={formData.diagnosticoTratamiento?.planTratamiento}
-                        onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'planTratamiento', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        placeholder="Plan de tratamiento..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Firma Digital */}
-              <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-                <div className="px-3 py-4 sm:p-6">
-                  <h3 className="text-sm font-medium leading-5 text-gray-900 mb-4">Firma Digital</h3>
-                  <div className="grid max-w-2xl grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-                    <div className="sm:col-span-2">
-                      <label htmlFor="nombreMedico" className="block text-xs font-medium leading-5 text-gray-900">
-                        Nombre del Médico
-                      </label>
-                      <input
-                        type="text"
-                        id="nombreMedico"
-                        value={formData.firmaDigital?.nombreMedico}
-                        onChange={(e) => handleNestedInputChange('firmaDigital', 'nombreMedico', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label htmlFor="numeroCedula" className="block text-xs font-medium leading-5 text-gray-900">
-                        Número de Cédula
-                      </label>
-                      <input
-                        type="text"
-                        id="numeroCedula"
-                        value={formData.firmaDigital?.numeroCedula}
-                        onChange={(e) => handleNestedInputChange('firmaDigital', 'numeroCedula', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label htmlFor="especialidadFirma" className="block text-xs font-medium leading-5 text-gray-900">
-                        Especialidad
-                      </label>
-                      <input
-                        type="text"
-                        id="especialidadFirma"
-                        value={formData.firmaDigital?.especialidad}
-                        onChange={(e) => handleNestedInputChange('firmaDigital', 'especialidad', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label htmlFor="fechaFirma" className="block text-xs font-medium leading-5 text-gray-900">
-                        Fecha de Firma
-                      </label>
-                      <input
-                        type="date"
-                        id="fechaFirma"
-                        value={formData.firmaDigital?.fechaFirma}
-                        onChange={(e) => handleNestedInputChange('firmaDigital', 'fechaFirma', e.target.value)}
-                        className="mt-1 block w-full rounded-md border-0 py-1 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 text-xs"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Mostrar firma digital */}
-                  <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Vista Previa de la Firma Digital</h4>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-gray-800">
-                        {formData.firmaDigital?.nombreMedico || 'Nombre del Médico'}
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        Cédula: {formData.firmaDigital?.numeroCedula || 'Número de Cédula'}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Especialidad: {formData.firmaDigital?.especialidad || 'Especialidad'}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Fecha: {formData.firmaDigital?.fechaFirma ? new Date(formData.firmaDigital.fechaFirma).toLocaleDateString('es-CO') : 'Fecha de Firma'}
-                      </div>
-                      <div className="mt-3 border-t border-gray-300 pt-2">
-                        <div className="text-xs text-gray-500 italic">
-                          Firma Digital Autorizada
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex justify-end gap-x-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="text-xs font-semibold leading-5 text-gray-900 px-3 py-1.5"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? 'Guardando...' : 'Crear Historia Clínica'}
-                  </button>
-                </div>
-              </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Group justify="flex-end">
+          <Button
+            variant="subtle"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            loading={saving}
+            color="green"
+          >
+            Crear Historia Clínica
+          </Button>
+        </Group>
+      </Box>
+    </Modal>
   );
 };
 

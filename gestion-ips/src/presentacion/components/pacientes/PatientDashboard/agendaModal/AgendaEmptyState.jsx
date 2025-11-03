@@ -1,5 +1,6 @@
 import React from 'react';
-import { CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { Stack, Text, ThemeIcon } from '@mantine/core';
+import { IconCalendarOff } from '@tabler/icons-react';
 
 /**
  * Componente para mostrar el estado vacío de la agenda
@@ -11,20 +12,22 @@ import { CalendarDaysIcon } from '@heroicons/react/24/outline';
  */
 const AgendaEmptyState = ({ hasCitas, hasFilters, userRole }) => {
   return (
-    <div className="text-center py-12 bg-gray-50 rounded-lg">
-      <CalendarDaysIcon className="mx-auto h-12 w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">
+    <Stack align="center" gap="md" py={48} style={{ backgroundColor: 'var(--mantine-color-gray-0)', borderRadius: 'var(--mantine-radius-md)' }}>
+      <ThemeIcon size={60} radius="md" variant="light" color="gray">
+        <IconCalendarOff size={36} />
+      </ThemeIcon>
+      <Text size="sm" fw={500} c="dark">
         {hasCitas ? 'No hay citas que coincidan con los filtros' : 'No hay citas programadas'}
-      </h3>
-      <p className="mt-1 text-sm text-gray-500">
+      </Text>
+      <Text size="sm" c="dimmed">
         {hasCitas
           ? (userRole === 'DOCTOR' || userRole === 'AUXILIAR_MEDICO')
             ? 'No tienes citas asignadas en este período.'
             : 'Intenta ajustar los filtros de búsqueda.'
           : 'No hay citas programadas en el sistema.'
         }
-      </p>
-    </div>
+      </Text>
+    </Stack>
   );
 };
 

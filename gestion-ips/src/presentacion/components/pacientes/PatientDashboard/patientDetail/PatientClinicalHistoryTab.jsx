@@ -1,8 +1,6 @@
 import React from 'react';
-import {
-  DocumentTextIcon,
-  CalendarDaysIcon
-} from '@heroicons/react/24/outline';
+import { Paper, Stack, Group, Title, Button, Text, Badge, Avatar } from '@mantine/core';
+import { IconFileText, IconCalendar } from '@tabler/icons-react';
 import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 /**
@@ -15,87 +13,96 @@ import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalU
  */
 const PatientClinicalHistoryTab = ({ historiaClinica, consultas, setActiveTab }) => {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h4 className="text-lg font-semibold text-gray-900">Historia Clínica</h4>
+    <Stack gap="lg">
+      <Group justify="space-between" align="center">
+        <Title order={4} size="h5">Historia Clínica</Title>
         {historiaClinica && (
-          <button
+          <Button
+            leftSection={<IconFileText size={16} />}
             onClick={() => setActiveTab('clinica_completa')}
-            className="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            variant="light"
+            color="blue"
           >
-            <DocumentTextIcon className="h-4 w-4 mr-2" />
             Ver Historia Clínica Completa
-          </button>
+          </Button>
         )}
-      </div>
+      </Group>
 
       {!historiaClinica ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No hay historia clínica</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Este paciente aún no tiene una historia clínica registrada.
-          </p>
-        </div>
+        <Paper p="xl" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Stack gap="sm" align="center" py="lg">
+            <IconFileText size={48} color="var(--mantine-color-gray-5)" />
+            <Title order={5} size="h6" c="dimmed">No hay historia clínica</Title>
+            <Text size="sm" c="dimmed" ta="center">
+              Este paciente aún no tiene una historia clínica registrada.
+            </Text>
+          </Stack>
+        </Paper>
       ) : (
-        <div className="space-y-6">
+        <Stack gap="lg">
           {/* Información de la Historia */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h5 className="font-semibold text-blue-900 mb-2">Información General</h5>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm" style={{ maxWidth: 'none' }}>
-              <div>
-                <span className="text-blue-700">Número de Historia:</span>
-                <p className="font-medium">{historiaClinica.numeroHistoria}</p>
-              </div>
-              <div>
-                <span className="text-blue-700">Fecha de Apertura:</span>
-                <p className="font-medium">{formatDate(historiaClinica.fechaApertura)}</p>
-              </div>
-              <div>
-                <span className="text-blue-700">Estado:</span>
-                <p className="font-medium">{historiaClinica.activa ? 'Activa' : 'Inactiva'}</p>
-              </div>
-            </div>
-          </div>
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
+            <Stack gap="md">
+              <Text size="md" fw={600} c="blue.9">Información General</Text>
+              <Group grow align="flex-start">
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Número de Historia:</Text>
+                  <Text size="sm" c="blue.9" fw={500}>{historiaClinica.numeroHistoria}</Text>
+                </Stack>
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Fecha de Apertura:</Text>
+                  <Text size="sm" c="blue.9" fw={500}>{formatDate(historiaClinica.fechaApertura)}</Text>
+                </Stack>
+                <Stack gap={4}>
+                  <Text size="xs" c="blue.7" fw={500}>Estado:</Text>
+                  <Badge color={historiaClinica.activa ? 'green' : 'gray'} variant="light">
+                    {historiaClinica.activa ? 'Activa' : 'Inactiva'}
+                  </Badge>
+                </Stack>
+              </Group>
+            </Stack>
+          </Paper>
 
           {/* Consultas Médicas */}
-          <div>
-            <h5 className="font-semibold text-gray-900 mb-4">Consultas Médicas ({consultas.length})</h5>
+          <Stack gap="md">
+            <Title order={5} size="h6">Consultas Médicas ({consultas.length})</Title>
 
             {consultas.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <CalendarDaysIcon className="mx-auto h-8 w-8 text-gray-400" />
-                <p className="mt-2 text-sm text-gray-500">No hay consultas registradas</p>
-              </div>
+              <Paper p="xl" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                <Stack gap="sm" align="center">
+                  <IconCalendar size={32} color="var(--mantine-color-gray-5)" />
+                  <Text size="sm" c="dimmed" ta="center">No hay consultas registradas</Text>
+                </Stack>
+              </Paper>
             ) : (
-              <div className="space-y-3">
+              <Stack gap="sm">
                 {consultas.map((consulta, index) => (
-                  <div key={consulta.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600">{index + 1}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Consulta #{consulta.id}</p>
-                          <p className="text-sm text-gray-600">
+                  <Paper key={consulta.id} p="md" radius="md" withBorder>
+                    <Group justify="space-between" align="flex-start">
+                      <Group gap="md">
+                        <Avatar color="blue" radius="xl" size="md">
+                          {index + 1}
+                        </Avatar>
+                        <Stack gap={4}>
+                          <Text size="sm" fw={500}>Consulta #{consulta.id}</Text>
+                          <Text size="xs" c="dimmed">
                             {formatDate(consulta.fechaCreacion)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Creada</p>
-                        <p className="text-sm font-medium">{formatDate(consulta.fechaCreacion)}</p>
-                      </div>
-                    </div>
-                  </div>
+                          </Text>
+                        </Stack>
+                      </Group>
+                      <Stack gap={2} align="flex-end">
+                        <Text size="xs" c="dimmed">Creada</Text>
+                        <Text size="xs" fw={500}>{formatDate(consulta.fechaCreacion)}</Text>
+                      </Stack>
+                    </Group>
+                  </Paper>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 };
 

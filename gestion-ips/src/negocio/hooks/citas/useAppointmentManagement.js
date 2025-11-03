@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { pacientesApiService } from '../../../data/services/pacientesApiService.js';
 import Swal from 'sweetalert2';
 
-export const useAppointmentManagement = () => {
+export const useAppointmentManagement = (user = null) => {
   // Estados para citas
   const [selectedDate, setSelectedDate] = useState(null);
   const [medicos, setMedicos] = useState([]);
@@ -280,9 +280,24 @@ export const useAppointmentManagement = () => {
         doctorMap[doctorName] = medico;
       });
 
-      // Initialize grouped appointments for all doctors
+      // Filtrar médicos según el rol del usuario
+      let filteredMedicos = medicos;
+      if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
+        // Si es doctor o auxiliar médico, solo mostrar sus propias citas
+        const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
+        filteredMedicos = medicos.filter(medico => {
+          const doctorName = getNombreCompletoMedico(medico);
+          return doctorName && (
+            doctorName.toLowerCase().includes(currentUserName.toLowerCase()) ||
+            doctorName.toLowerCase().includes(user.nombres.toLowerCase()) ||
+            doctorName.toLowerCase().includes(user.apellidos.toLowerCase())
+          );
+        });
+      }
+
+      // Initialize grouped appointments for filtered doctors only
       const groupedAppointments = {};
-      medicos.forEach(medico => {
+      filteredMedicos.forEach(medico => {
         const doctorName = getNombreCompletoMedico(medico);
         groupedAppointments[medico.id] = {
           doctor: medico,
