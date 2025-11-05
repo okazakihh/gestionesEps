@@ -1,19 +1,18 @@
 // hooks/facturacion/useCodigosCupsManagement.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { codigosCupsApiService } from '../../../data/services/pacientesApiService.js';
 import Swal from 'sweetalert2';
 
 /**
  * Custom hook para gestionar códigos CUPS
- * Maneja búsqueda, paginación y actualización de valores
+ * Carga todos los códigos al inicio y filtra en el frontend
  */
 export const useCodigosCupsManagement = () => {
   // Estados para códigos CUPS
-  const [codigosCups, setCodigosCups] = useState([]);
+  const [allCodigosCups, setAllCodigosCups] = useState([]); // Todos los códigos cargados
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const pageSize = 20;
 
   // Estados para modal de valor
@@ -22,38 +21,29 @@ export const useCodigosCupsManagement = () => {
   const [valorInput, setValorInput] = useState('');
 
   /**
-   * Carga los códigos CUPS con paginación y búsqueda
+   * Carga TODOS los códigos CUPS una sola vez
    */
-  const loadCodigosCups = useCallback(async (page = 0, search = '') => {
+  const loadAllCodigosCups = useCallback(async () => {
     try {
       setLoading(true);
-      let response;
+      
+      // Cargar todos los códigos sin paginación
+      const response = await codigosCupsApiService.getCodigosCups({
+        page: 0,
+        size: 10000 // Número suficientemente grande para obtener todos
+      });
 
-      if (search.trim()) {
-        // Búsqueda general
-        response = await codigosCupsApiService.searchGeneral(search, {
-          page,
-          size: pageSize
-        });
-      } else {
-        // Obtener todos
-        response = await codigosCupsApiService.getCodigosCups({
-          page,
-          size: pageSize
-        });
-      }
+      console.log('Response completa:', response);
 
       // Verificar formato de respuesta
       if (response && response.content !== undefined) {
-        // Respuesta directa del backend
-        setCodigosCups(response.content || []);
-        setTotalPages(response.totalPages || 0);
-        setCurrentPage(page);
+        console.log('Códigos CUPS cargados:', response.content);
+        console.log('Primer código ejemplo:', response.content[0]);
+        setAllCodigosCups(response.content || []);
       } else if (response && response.success) {
-        // Respuesta con wrapper de success
-        setCodigosCups(response.data.content || []);
-        setTotalPages(response.data.totalPages || 0);
-        setCurrentPage(page);
+        console.log('Códigos CUPS cargados (con success):', response.data.content);
+        console.log('Primer código ejemplo:', response.data.content[0]);
+        setAllCodigosCups(response.data.content || []);
       } else {
         console.error('Unexpected response format:', response);
         throw new Error('Formato de respuesta inesperado');
@@ -66,31 +56,79 @@ export const useCodigosCupsManagement = () => {
         text: 'No se pudieron cargar los códigos CUPS',
         confirmButtonColor: '#EF4444'
       });
+      setAllCodigosCups([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   /**
-   * Maneja la búsqueda de códigos CUPS
+   * Filtra los códigos CUPS en el frontend basándose en el término de búsqueda
+   */
+  const filteredCodigosCups = useMemo(() => {
+    console.log('Filtrando códigos. Total:', allCodigosCups.length, 'Término:', searchTerm);
+    
+    if (!searchTerm.trim()) {
+      return allCodigosCups;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    const filtered = allCodigosCups.filter(codigo => {
+      // Buscar en código (soportando ambos nombres de campo)
+      const codigoField = codigo.codigo || codigo.codigoCup || codigo.cup || '';
+      const codigoMatch = codigoField.toLowerCase().includes(searchLower);
+      
+      // Buscar en nombre (soportando ambos nombres de campo)
+      const nombreField = codigo.nombre || codigo.nombreCup || codigo.descripcion || '';
+      const nombreMatch = nombreField.toLowerCase().includes(searchLower);
+      
+      return codigoMatch || nombreMatch;
+    });
+    
+    console.log('Códigos filtrados:', filtered.length);
+    return filtered;
+  }, [allCodigosCups, searchTerm]);
+
+  /**
+   * Códigos CUPS paginados para mostrar
+   */
+  const paginatedCodigosCups = useMemo(() => {
+    const startIndex = currentPage * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredCodigosCups.slice(startIndex, endIndex);
+  }, [filteredCodigosCups, currentPage, pageSize]);
+
+  /**
+   * Calcula el número total de páginas
+   */
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredCodigosCups.length / pageSize);
+  }, [filteredCodigosCups.length, pageSize]);
+
+  /**
+   * Maneja la búsqueda (ya no hace petición al backend)
    */
   const handleSearch = useCallback((e) => {
     if (e) e.preventDefault();
-    loadCodigosCups(0, searchTerm);
-  }, [searchTerm, loadCodigosCups]);
+    // Resetear a la primera página cuando se busca
+    setCurrentPage(0);
+  }, []);
 
   /**
    * Maneja el cambio de página
    */
   const handlePageChange = useCallback((page) => {
-    loadCodigosCups(page, searchTerm);
-  }, [searchTerm, loadCodigosCups]);
+    setCurrentPage(page);
+  }, []);
 
   /**
    * Actualiza el término de búsqueda
    */
   const updateSearchTerm = useCallback((term) => {
     setSearchTerm(term);
+    // Resetear a la primera página cuando cambia el término
+    setCurrentPage(0);
   }, []);
 
   /**
@@ -164,8 +202,8 @@ export const useCodigosCupsManagement = () => {
         showConfirmButton: false
       });
 
-      // Recargar los datos
-      loadCodigosCups(currentPage, searchTerm);
+      // Recargar todos los códigos para reflejar el cambio
+      await loadAllCodigosCups();
 
       // Cerrar modal
       handleCloseValorModal();
@@ -179,21 +217,25 @@ export const useCodigosCupsManagement = () => {
         confirmButtonColor: '#EF4444'
       });
     }
-  }, [selectedCodigoCups, valorInput, currentPage, searchTerm, loadCodigosCups, handleCloseValorModal]);
+  }, [selectedCodigoCups, valorInput, loadAllCodigosCups, handleCloseValorModal]);
 
-  // Cargar códigos CUPS al montar el componente
+  // Cargar todos los códigos CUPS al montar el componente
   useEffect(() => {
-    loadCodigosCups();
-  }, [loadCodigosCups]);
+    loadAllCodigosCups();
+  }, [loadAllCodigosCups]);
 
   return {
     // Estados
-    codigosCups,
+    codigosCups: paginatedCodigosCups, // Códigos paginados para mostrar
     loading,
     searchTerm,
     currentPage,
     totalPages,
     pageSize,
+    
+    // Información adicional
+    totalCodigosCups: allCodigosCups.length,
+    filteredCount: filteredCodigosCups.length,
     
     // Estados del modal
     isValorModalOpen,
@@ -201,14 +243,14 @@ export const useCodigosCupsManagement = () => {
     valorInput,
     
     // Funciones
-    loadCodigosCups,
     handleSearch,
     handlePageChange,
     updateSearchTerm,
     handleOpenValorModal,
     handleCloseValorModal,
     updateValorInput,
-    handleSaveValor
+    handleSaveValor,
+    reloadCodigosCups: loadAllCodigosCups
   };
 };
 

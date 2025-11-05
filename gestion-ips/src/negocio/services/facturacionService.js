@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
+import { ipsConfig, getEncabezadoDocumento, getPieDocumento } from '../utils/ipsConfig';
 
 /**
  * facturacionService.js
@@ -85,6 +86,84 @@ export const formatCurrency = (amount) => {
 // ============================================================================
 
 /**
+ * Genera el encabezado HTML reutilizable para facturas
+ * @param {string} numeroFactura - Número de la factura
+ * @returns {string} HTML del encabezado
+ */
+const getFacturaHeaderHTML = (numeroFactura) => {
+  return `
+    <!-- Institutional Header -->
+    <div class="header">
+      <div class="institution-info">
+        <h1 style="color: ${ipsConfig.colores.primario}; margin: 0; font-size: 20px; font-weight: bold;">${ipsConfig.nombre}</h1>
+        <p style="margin: 5px 0; color: #374151; font-size: 14px;">Institución Prestadora de Servicios de Salud</p>
+        <p style="margin: 2px 0; color: #6b7280;">NIT: ${ipsConfig.nit} • ${ipsConfig.direccion}, ${ipsConfig.ciudad}</p>
+        <p style="margin: 2px 0; color: #6b7280;">Tel: ${ipsConfig.telefono} • Email: ${ipsConfig.email}</p>
+        <p style="margin: 2px 0; color: #6b7280; font-size: 9px;">${ipsConfig.resolucionHabilitacion} • Código: ${ipsConfig.codigoHabilitacion}</p>
+      </div>
+      <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">FACTURA DE SERVICIOS MÉDICOS</h2>
+      <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Factura No: ${numeroFactura}</p>
+      <p style="margin: 2px 0; color: #6b7280;">Fecha de Emisión: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+    </div>
+  `;
+};
+
+/**
+ * Genera el pie de página HTML reutilizable para facturas
+ * @returns {string} HTML del footer
+ */
+const getFacturaFooterHTML = () => {
+  return `
+    <!-- Footer Legal -->
+    <div class="footer">
+      <div style="border-top: 2px solid ${ipsConfig.colores.primario}; padding-top: 10px; margin-bottom: 15px;">
+        <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
+      </div>
+
+      <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
+        <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🏥 INSTITUCIÓN PRESTADORA DE SERVICIOS</h5>
+        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+          <strong>${ipsConfig.nombre}</strong> - NIT: ${ipsConfig.nit}<br>
+          ${ipsConfig.resolucionHabilitacion} • ${ipsConfig.nivelAtencion}<br>
+          ${ipsConfig.direccion}, ${ipsConfig.ciudad}, ${ipsConfig.departamento}<br>
+          Tel: ${ipsConfig.telefono} • Email: ${ipsConfig.email}
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div>
+          <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
+          <p style="margin: 2px 0; font-size: 9px;">Sistema ${ipsConfig.nombre}</p>
+          <p style="margin: 2px 0; font-size: 9px;">${ipsConfig.sitioWeb}</p>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 9px;"><strong>Información de contacto:</strong></p>
+          <p style="margin: 2px 0; font-size: 9px;">${new Date().toLocaleString('es-ES')}</p>
+          <p style="margin: 2px 0; font-size: 9px;">Horario: ${ipsConfig.horarioAtencion}</p>
+        </div>
+      </div>
+
+      <div style="background: #fefce8; padding: 8px; border-radius: 3px; border: 1px solid #fde68a;">
+        <h5 style="margin: 0 0 5px 0; color: #92400e; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
+        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+          <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
+          <strong>Ley 1122 de 2007:</strong> Régimen de Compensación<br>
+          <strong>Decreto 4747 de 2007:</strong> Manual de Tarifas SOAT<br>
+          <strong>Resolución 3047 de 2008:</strong> Clasificación CUPS
+        </p>
+      </div>
+
+      <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 8px; color: #9ca3af;">
+          ${ipsConfig.notasLegales.factura}<br>
+          Cualquier reclamación debe presentarse por escrito dentro de los 30 días siguientes a la fecha de emisión.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
+/**
  * Crea el contenido HTML completo para una factura a partir de una cita individual
  * @param {Object} cita - Objeto de cita con información completa
  * @returns {string} Contenido HTML listo para imprimir
@@ -122,18 +201,7 @@ export const createFacturaContent = (cita) => {
         </style>
       </head>
       <body>
-        <!-- Institutional Header -->
-        <div class="header">
-          <div class="institution-info">
-            <h1 style="color: #2563eb; margin: 0; font-size: 20px; font-weight: bold;">GESTIÓN IPS</h1>
-            <p style="margin: 5px 0; color: #374151; font-size: 14px;">Institución Prestadora de Servicios de Salud</p>
-            <p style="margin: 2px 0; color: #6b7280;">NIT: 901.234.567-8 • Dirección: Calle 123 # 45-67, Bogotá D.C.</p>
-            <p style="margin: 2px 0; color: #6b7280;">Teléfonos: (601) 123-4567 • Email: info@ips.com.co</p>
-          </div>
-          <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">FACTURA DE SERVICIOS MÉDICOS</h2>
-          <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Factura No: FM-${cita.id}</p>
-          <p style="margin: 2px 0; color: #6b7280;">Fecha de Emisión: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
-        </div>
+        ${getFacturaHeaderHTML(`FM-${cita.id}`)}
 
         <!-- Patient Information -->
         <div class="patient-info">
@@ -191,54 +259,12 @@ export const createFacturaContent = (cita) => {
           <h4 style="margin: 0 0 10px 0; color: #dc2626; font-size: 12px;">💰 INFORMACIÓN DE PAGO</h4>
           <p style="margin: 5px 0; font-size: 10px;">
             • Esta factura tiene una vigencia de 30 días calendario para su cancelación.<br>
-            • Los pagos deben realizarse en las cuentas autorizadas por Gestión IPS.<br>
-            • Para consultas sobre esta factura, contactar al teléfono (601) 123-4567.
+            • Los pagos deben realizarse en las cuentas autorizadas por ${ipsConfig.nombre}.<br>
+            • Para consultas sobre esta factura, contactar al ${ipsConfig.telefono}.
           </p>
         </div>
 
-        <!-- Footer Legal -->
-        <div class="footer">
-          <div style="border-top: 2px solid #2563eb; padding-top: 10px; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
-          </div>
-
-          <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
-            <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🏥 SERVICIOS PRESTADOS</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              Los servicios médicos facturados cumplen con las normas técnicas y científicas establecidas por el Ministerio de Salud y Protección Social de Colombia.
-            </p>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">Sistema de Gestión Médica IPS</p>
-              <p style="margin: 2px 0; font-size: 9px;">Versión 2.1.0</p>
-            </div>
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">${new Date().toLocaleString('es-ES')}</p>
-              <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
-            </div>
-          </div>
-
-          <div style="background: #fefce8; padding: 8px; border-radius: 3px; border: 1px solid #fde68a;">
-            <h5 style="margin: 0 0 5px 0; color: #92400e; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
-              <strong>Ley 1122 de 2007:</strong> Régimen de Compensación<br>
-              <strong>Decreto 4747 de 2007:</strong> Manual de Tarifas SOAT<br>
-              <strong>Resolución 3047 de 2008:</strong> Clasificación CUPS
-            </p>
-          </div>
-
-          <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0; font-size: 8px; color: #9ca3af;">
-              Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a facturación de servicios de salud.
-              Cualquier reclamación debe presentarse por escrito dentro de los 30 días siguientes a la fecha de emisión.
-            </p>
-          </div>
-        </div>
+        ${getFacturaFooterHTML()}
       </body>
     </html>
   `;
@@ -284,18 +310,7 @@ export const createFacturaContentFromFactura = (facturaData) => {
         </style>
       </head>
       <body>
-        <!-- Institutional Header -->
-        <div class="header">
-          <div class="institution-info">
-            <h1 style="color: #2563eb; margin: 0; font-size: 20px; font-weight: bold;">GESTIÓN IPS</h1>
-            <p style="margin: 5px 0; color: #374151; font-size: 14px;">Institución Prestadora de Servicios de Salud</p>
-            <p style="margin: 2px 0; color: #6b7280;">NIT: 901.234.567-8 • Dirección: Calle 123 # 45-67, Bogotá D.C.</p>
-            <p style="margin: 2px 0; color: #6b7280;">Teléfonos: (601) 123-4567 • Email: info@ips.com.co</p>
-          </div>
-          <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">FACTURA DE SERVICIOS MÉDICOS</h2>
-          <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Factura No: ${facturaData.numeroFactura}</p>
-          <p style="margin: 2px 0; color: #6b7280;">Fecha de Emisión: ${formatDate(facturaData.fechaEmision)}</p>
-        </div>
+        ${getFacturaHeaderHTML(facturaData.numeroFactura)}
 
         <!-- Estado de la Factura -->
         <div class="factura-info">
@@ -342,59 +357,7 @@ export const createFacturaContentFromFactura = (facturaData) => {
           </table>
         </div>
 
-        <!-- Legal Information -->
-        <div class="important-note">
-          <h4 style="margin: 0 0 10px 0; color: #dc2626; font-size: 12px;">💰 INFORMACIÓN DE PAGO</h4>
-          <p style="margin: 5px 0; font-size: 10px;">
-            • Esta factura tiene una vigencia de 30 días calendario para su cancelación.<br>
-            • Los pagos deben realizarse en las cuentas autorizadas por Gestión IPS.<br>
-            • Para consultas sobre esta factura, contactar al teléfono (601) 123-4567.
-          </p>
-        </div>
-
-        <!-- Footer Legal -->
-        <div class="footer">
-          <div style="border-top: 2px solid #2563eb; padding-top: 10px; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
-          </div>
-
-          <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
-            <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🏥 SERVICIOS PRESTADOS</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              Los servicios médicos facturados cumplen con las normas técnicas y científicas establecidas por el Ministerio de Salud y Protección Social de Colombia.
-            </p>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">Sistema de Gestión Médica IPS</p>
-              <p style="margin: 2px 0; font-size: 9px;">Versión 2.1.0</p>
-            </div>
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">${new Date().toLocaleString('es-ES')}</p>
-              <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
-            </div>
-          </div>
-
-          <div style="background: #fefce8; padding: 8px; border-radius: 3px; border: 1px solid #fde68a;">
-            <h5 style="margin: 0 0 5px 0; color: #92400e; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
-              <strong>Ley 1122 de 2007:</strong> Régimen de Compensación<br>
-              <strong>Decreto 4747 de 2007:</strong> Manual de Tarifas SOAT<br>
-              <strong>Resolución 3047 de 2008:</strong> Clasificación CUPS
-            </p>
-          </div>
-
-          <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0; font-size: 8px; color: #9ca3af;">
-              Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a facturación de servicios de salud.
-              Cualquier reclamación debe presentarse por escrito dentro de los 30 días siguientes a la fecha de emisión.
-            </p>
-          </div>
-        </div>
+        ${getFacturaFooterHTML()}
       </body>
     </html>
   `;

@@ -1,5 +1,81 @@
 // Utilidades para impresión de historias clínicas y consultas
 
+// Importar configuración centralizada de la IPS
+import { ipsConfig, getEncabezadoDocumento, getPieDocumento } from '../ipsConfig.js';
+
+/**
+ * Genera el encabezado HTML para historias clínicas
+ * @param {string} numeroHistoria - Número de la historia clínica
+ * @returns {string} HTML del encabezado
+ */
+const getHistoriaClinicaHeaderHTML = (numeroHistoria) => {
+  return `
+    <!-- Institutional Header -->
+    <div class="header">
+      <div class="institution-info">
+        <h1 style="color: ${ipsConfig.colores.primario}; margin: 0; font-size: 20px; font-weight: bold;">${ipsConfig.nombre}</h1>
+        <p style="margin: 5px 0; color: #374151; font-size: 14px;">${ipsConfig.descripcion}</p>
+        <p style="margin: 2px 0; color: #6b7280;">NIT: ${ipsConfig.nit} • Dirección: ${ipsConfig.direccion}, ${ipsConfig.ciudad}</p>
+        <p style="margin: 2px 0; color: #6b7280;">Teléfonos: ${ipsConfig.telefono} • Email: ${ipsConfig.email}</p>
+      </div>
+      <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">HISTORIA CLÍNICA ELECTRÓNICA</h2>
+      <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Número de Historia Clínica: ${numeroHistoria}</p>
+      <p style="margin: 2px 0; color: #6b7280;">Fecha de Impresión: ${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}</p>
+    </div>
+  `;
+};
+
+/**
+ * Genera el pie de página HTML para historias clínicas
+ * @returns {string} HTML del pie de página
+ */
+const getHistoriaClinicaFooterHTML = () => {
+  const fechaHoraActual = new Date().toLocaleString('es-CO');
+  return `
+    <!-- Legal Footer -->
+    <div class="footer">
+      <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
+        <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🔒 PROTECCIÓN DE DATOS PERSONALES</h5>
+        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+          ${ipsConfig.notasLegales.historiaClinica}
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div>
+          <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
+          <p style="margin: 2px 0; font-size: 9px;">${ipsConfig.servicios.historiaClinicaElectronica}</p>
+          <p style="margin: 2px 0; font-size: 9px;">Versión ${ipsConfig.version}</p>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
+          <p style="margin: 2px 0; font-size: 9px;">${fechaHoraActual}</p>
+          <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
+        </div>
+      </div>
+
+      <div style="background: #fef2f2; padding: 8px; border-radius: 3px; border: 1px solid #fecaca;">
+        <h5 style="margin: 0 0 5px 0; color: #dc2626; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
+        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
+          <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
+          <strong>Ley 1581 de 2012:</strong> Protección de Datos Personales<br>
+          <strong>Decreto 1377 de 2013:</strong> Reglamentación de la Ley 1581<br>
+          <strong>Ley 1751 de 2015:</strong> Derechos y deberes de los usuarios en salud<br>
+          <strong>Resolución 1995 de 1999:</strong> Historia Clínica<br>
+          <strong>Decreto 780 de 2016:</strong> Historia Clínica Electrónica
+        </p>
+      </div>
+
+      <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 8px; color: #9ca3af;">
+          Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a historias clínicas.
+          Cualquier modificación debe ser autorizada por el profesional responsable.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
 /**
  * Imprime la historia clínica completa
  * @param {Array} consultas - Lista de consultas
@@ -93,6 +169,9 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
   const patientMedical = patientData?.informacionMedica || {};
   const patientName = [patientInfo.primerNombre, patientInfo.segundoNombre, patientInfo.primerApellido, patientInfo.segundoApellido]
     .filter(Boolean).join(' ') || 'N/A';
+  
+  // Calcular la fecha actual para usar en el documento
+  const fechaActual = new Date().toLocaleDateString('es-CO');
 
   let html = `
     <html>
@@ -124,18 +203,7 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
         </style>
       </head>
       <body>
-        <!-- Institutional Header -->
-        <div class="header">
-          <div class="institution-info">
-            <h1 style="color: #2563eb; margin: 0; font-size: 20px; font-weight: bold;">INSTITUCIÓN PRESTADORA DE SALUD IPS</h1>
-            <p style="margin: 5px 0; color: #374151; font-size: 14px;">Sistema de Gestión Médica Integral</p>
-            <p style="margin: 2px 0; color: #6b7280;">NIT: 901.234.567-8 • Dirección: Calle 123 # 45-67, Bogotá D.C.</p>
-            <p style="margin: 2px 0; color: #6b7280;">Teléfonos: (601) 123-4567 • Email: info@ips.com.co</p>
-          </div>
-          <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">HISTORIA CLÍNICA ELECTRÓNICA</h2>
-          <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Número de Historia Clínica: ${historiaClinica.numeroHistoria}</p>
-          <p style="margin: 2px 0; color: #6b7280;">Fecha de Impresión: ${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}</p>
-        </div>
+        ${getHistoriaClinicaHeaderHTML(historiaClinica.numeroHistoria)}
 
         <!-- Patient Information -->
         <div class="patient-info">
@@ -368,7 +436,7 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
                 ` : ''}
 
                 <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
-                  Fecha: ${consulta.firmaDigital?.fechaFirma || consulta.fecha || new Date().toLocaleDateString('es-CO')}
+                  Fecha: ${consulta.firmaDigital?.fechaFirma || (consulta.fecha ? new Date(consulta.fecha).toLocaleDateString('es-CO') : fechaActual)}
                 </p>
 
                 ${consulta.firmaDigital?.selloDigital ? `
@@ -386,7 +454,7 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
                   Firma del Profesional Responsable
                 </p>
                 <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
-                  Fecha: ${new Date().toLocaleDateString('es-CO')}
+                  Fecha: ${fechaActual}
                 </p>
               </div>
             `}
@@ -401,7 +469,7 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
               <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white; display: inline-block;">
                 <p style="margin: 0 0 10px 0; font-size: 9px; color: #6b7280; font-weight: bold;">SELLO OFICIAL</p>
                 <div style="margin: 10px auto; width: 80px; height: 60px; border: 1px dashed #9ca3af;"></div>
-                <p style="margin: 10px 0 0 0; font-size: 8px; color: #9ca3af;">IPS Sistema de Gestión Médica</p>
+                <p style="margin: 10px 0 0 0; font-size: 8px; color: #9ca3af;">${ipsConfig.nombre}</p>
               </div>
             </div>
           </div>
@@ -411,52 +479,7 @@ export const createPrintContent = (consultas, isSingleConsulta = false, historia
   });
 
   html += `
-        <!-- Footer Legal -->
-        <div class="footer">
-          <div style="border-top: 2px solid #2563eb; padding-top: 10px; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 11px; text-align: center;">INFORMACIÓN LEGAL Y NORMATIVA</h4>
-          </div>
-
-          <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
-            <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🔒 PROTECCIÓN DE DATOS PERSONALES</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              Esta historia clínica está protegida por la Ley 1581 de 2012 y el Decreto 1377 de 2013.
-              Los datos personales solo pueden ser utilizados para fines médicos y con autorización del titular.
-            </p>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">Sistema de Gestión Médica IPS</p>
-              <p style="margin: 2px 0; font-size: 9px;">Versión 2.1.0</p>
-            </div>
-            <div>
-              <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
-              <p style="margin: 2px 0; font-size: 9px;">${new Date().toLocaleString('es-CO')}</p>
-              <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
-            </div>
-          </div>
-
-          <div style="background: #fef2f2; padding: 8px; border-radius: 3px; border: 1px solid #fecaca;">
-            <h5 style="margin: 0 0 5px 0; color: #dc2626; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
-            <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-              <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
-              <strong>Ley 1581 de 2012:</strong> Protección de Datos Personales<br>
-              <strong>Decreto 1377 de 2013:</strong> Reglamentación de la Ley 1581<br>
-              <strong>Ley 1751 de 2015:</strong> Derechos y deberes de los usuarios en salud<br>
-              <strong>Resolución 1995 de 1999:</strong> Historia Clínica<br>
-              <strong>Decreto 780 de 2016:</strong> Historia Clínica Electrónica
-            </p>
-          </div>
-
-          <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0; font-size: 8px; color: #9ca3af;">
-              Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a historias clínicas.
-              Cualquier modificación debe ser autorizada por el profesional responsable.
-            </p>
-          </div>
-        </div>
+        ${getHistoriaClinicaFooterHTML()}
       </body>
     </html>
   `;

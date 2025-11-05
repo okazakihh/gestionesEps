@@ -1,6 +1,10 @@
 # Node.js dependencies
 node_modules/
 
+# Build outputs
+dist/
+build/
+
 # Logs
 logs/
 *.log

@@ -157,6 +157,13 @@ export const useFacturacionManagement = () => {
         // Usar las facturas proporcionadas o las del estado
         const facturasParaFiltrar = facturasActualizadas || facturas;
         
+        // Validar que sea un array
+        if (!Array.isArray(facturasParaFiltrar)) {
+          console.warn('⚠️ facturasParaFiltrar no es un array:', facturasParaFiltrar);
+          setCitasAtendidas(citasAtendidasFiltradas);
+          return;
+        }
+        
         console.log(`📊 Total facturas disponibles: ${facturasParaFiltrar.length}`);
         
         const citasIdsFacturadas = new Set();
@@ -278,7 +285,8 @@ export const useFacturacionManagement = () => {
     } finally {
       setLoadingCitas(false);
     }
-  }, [loadMedicosCache, getCupsConCache, getPacienteConCache, cacheMedicos, facturas]);
+  }, [loadMedicosCache, getCupsConCache, getPacienteConCache, cacheMedicos]);
+  // Nota: NO incluir 'facturas' en dependencias porque se pasa como parámetro
 
   /**
    * Carga las facturas del sistema
@@ -286,14 +294,21 @@ export const useFacturacionManagement = () => {
   const loadFacturas = useCallback(async () => {
     try {
       setLoadingFacturas(true);
+      console.log('📥 Solicitando facturas al servidor...');
       const facturasResponse = await facturacionApiService.getFacturaciones({ size: 100 });
+      
       if (facturasResponse && facturasResponse.content) {
+        console.log(`✅ Facturas recibidas del servidor: ${facturasResponse.content.length}`);
         setFacturas(facturasResponse.content);
         return facturasResponse.content; // Retornar las facturas cargadas
       }
+      
+      console.log('⚠️ No se recibieron facturas del servidor');
+      setFacturas([]);
       return [];
     } catch (error) {
-      console.error('Error loading facturas:', error);
+      console.error('❌ Error loading facturas:', error);
+      setFacturas([]);
       return [];
     } finally {
       setLoadingFacturas(false);
@@ -412,10 +427,16 @@ export const useFacturacionManagement = () => {
   // Cargar datos iniciales solo una vez al montar el componente
   useEffect(() => {
     const initializeData = async () => {
-      // Primero cargar facturas
-      await loadFacturas();
-      // Luego cargar citas (que dependen de facturas para el filtro)
-      await loadCitasAtendidas();
+      console.log('🔄 Inicializando datos de facturación...');
+      
+      // Primero cargar facturas y obtener el resultado
+      const facturasIniciales = await loadFacturas();
+      console.log('📊 Facturas cargadas:', facturasIniciales?.length || 0);
+      
+      // Luego cargar citas pasando las facturas recién cargadas
+      await loadCitasAtendidas(facturasIniciales);
+      
+      console.log('✅ Datos de facturación inicializados correctamente');
     };
     
     initializeData();

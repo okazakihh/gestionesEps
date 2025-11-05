@@ -90,10 +90,11 @@ const FacturacionPage = () => {
     codigosCups,
     loading: loadingCups,
     searchTerm,
-    setSearchTerm,
+    updateSearchTerm: setSearchTerm,
     currentPage,
     totalPages,
-    handleSearch,
+    totalCodigosCups,
+    filteredCount,
     handlePageChange,
     isValorModalOpen,
     selectedCodigoCups,
@@ -516,8 +517,8 @@ const FacturacionPage = () => {
                 <CodigosCupsSearch
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
-                  onSearch={handleSearch}
-                  loading={loadingCups}
+                  totalCount={totalCodigosCups}
+                  filteredCount={filteredCount}
                 />
 
                 {/* Tabla de códigos CUPS */}
