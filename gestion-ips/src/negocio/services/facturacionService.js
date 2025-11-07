@@ -374,10 +374,14 @@ export const createFacturaContentFromFactura = (facturaData) => {
  * @param {string} content - Contenido HTML completo listo para imprimir
  */
 export const printFactura = (content) => {
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(content);
-  printWindow.document.close();
-  printWindow.print();
+  const ventana = window.open('', '_blank', 'width=800,height=1000');
+  
+  if (ventana) {
+    ventana.document.write(content);
+    ventana.document.close();
+  } else {
+    alert('Por favor, permita las ventanas emergentes para imprimir la factura.');
+  }
 };
 
 /**

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Paper, Stack, Table, Badge, Divider } from '@mantine/core';
-import { IconX, IconCheck, IconInfoCircle } from '@tabler/icons-react';
+import { IconX, IconCheck, IconInfoCircle, IconPrinter } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
+import { generarFacturaHTML } from './FacturaHTML.js';
 
 /**
  * VerFacturaModal.jsx
@@ -52,6 +53,33 @@ const VerFacturaModal = ({
         return 'red';
       default:
         return 'gray';
+    }
+  };
+
+  /**
+   * Abre ventana para imprimir factura
+   */
+  const handlePrintFactura = () => {
+    // Configuración de empresa (puede venir de un store global)
+    const empresaInfo = {
+      nombre: 'GESTIÓN IPS',
+      nit: '900.123.456-7',
+      direccion: 'Calle 123 #45-67, Bogotá D.C.',
+      telefono: '(601) 234-5678',
+      email: 'contacto@gestionips.com'
+    };
+
+    // Generar HTML de la factura
+    const htmlContent = generarFacturaHTML(factura, facturaData, empresaInfo);
+    
+    // Abrir ventana nueva con la factura
+    const ventana = window.open('', '_blank', 'width=800,height=1000');
+    
+    if (ventana) {
+      ventana.document.write(htmlContent);
+      ventana.document.close();
+    } else {
+      alert('Por favor, permita las ventanas emergentes para imprimir la factura.');
     }
   };
 
@@ -236,26 +264,37 @@ const VerFacturaModal = ({
         <Divider />
 
         {/* Botones de acción */}
-        <Group justify="flex-end">
+        <Group justify="space-between">
           <Button
             variant="light"
-            color="gray"
-            leftSection={<IconX size={18} />}
-            onClick={onClose}
-            disabled={loading}
+            color="blue"
+            leftSection={<IconPrinter size={18} />}
+            onClick={handlePrintFactura}
           >
-            Cerrar
+            Imprimir Factura
           </Button>
-          {estado === 'PENDIENTE' && onProcesar && (
+          
+          <Group>
             <Button
-              color="green"
-              leftSection={<IconCheck size={18} />}
-              onClick={() => onProcesar(factura)}
-              loading={loading}
+              variant="light"
+              color="gray"
+              leftSection={<IconX size={18} />}
+              onClick={onClose}
+              disabled={loading}
             >
-              Procesar Factura
+              Cerrar
             </Button>
-          )}
+            {estado === 'PENDIENTE' && onProcesar && (
+              <Button
+                color="green"
+                leftSection={<IconCheck size={18} />}
+                onClick={() => onProcesar(factura)}
+                loading={loading}
+              >
+                Procesar Factura
+              </Button>
+            )}
+          </Group>
         </Group>
       </Stack>
     </Modal>
