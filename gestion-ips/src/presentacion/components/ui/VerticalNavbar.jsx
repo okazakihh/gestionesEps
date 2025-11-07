@@ -35,6 +35,12 @@ const navItems = [
     module: PERMISSIONS.NOMINA,
   },
   {
+    name: 'Nómina',
+    href: '/nomina',
+    icon: '💵',
+    module: PERMISSIONS.NOMINA,
+  },
+  {
     name: 'Reportes',
     href: '/reportes',
     icon: '📈',

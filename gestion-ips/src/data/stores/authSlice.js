@@ -1,27 +1,32 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-interface User {
-  id: string;
-  nombres: string;
-  apellidos: string;
-  email: string;
-  rol: string;
-  ips?: string;
-  activo: boolean;
-  ultimoAcceso?: string;
-}
+/**
+ * Usuario autenticado
+ * @typedef {Object} User
+ * @property {string} id - ID del usuario
+ * @property {string} nombres - Nombres del usuario
+ * @property {string} apellidos - Apellidos del usuario
+ * @property {string} email - Email del usuario
+ * @property {string} rol - Rol del usuario
+ * @property {string} [ips] - IPS del usuario
+ * @property {boolean} activo - Si el usuario está activo
+ * @property {string} [ultimoAcceso] - Fecha del último acceso
+ */
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  tokenExpiryAt: number | null;
-}
+/**
+ * Estado de autenticación
+ * @typedef {Object} AuthState
+ * @property {User | null} user - Usuario actual
+ * @property {string | null} token - Token de autenticación
+ * @property {string | null} refreshToken - Token de refresco
+ * @property {boolean} isAuthenticated - Si está autenticado
+ * @property {boolean} isLoading - Si está cargando
+ * @property {string | null} error - Error actual
+ * @property {number | null} tokenExpiryAt - Timestamp de expiración del token
+ */
 
-const initialState: AuthState = {
+/** @type {AuthState} */
+const initialState = {
   user: null,
   token: null,
   refreshToken: null,
@@ -34,7 +39,7 @@ const initialState: AuthState = {
 // Thunks para operaciones asíncronas
 export const loginAsync = createAsyncThunk(
   'auth/login',
-  async ({ username, password }: { username: string; password: string }, { rejectWithValue }) => {
+  async ({ username, password }, { rejectWithValue }) => {
     try {
       const response = await fetch('http://localhost:8081/api/auth/login', {
         method: 'POST',
@@ -51,7 +56,7 @@ export const loginAsync = createAsyncThunk(
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
@@ -59,7 +64,7 @@ export const loginAsync = createAsyncThunk(
 
 export const registerAsync = createAsyncThunk(
   'auth/register',
-  async ({ username, password, email }: { username: string; password: string; email: string }, { rejectWithValue }) => {
+  async ({ username, password, email }, { rejectWithValue }) => {
     try {
       const response = await fetch('http://localhost:8081/api/auth/register', {
         method: 'POST',
@@ -76,7 +81,7 @@ export const registerAsync = createAsyncThunk(
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error) {
       return rejectWithValue(error.message);
     }
   }
@@ -86,10 +91,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setLoading: (state, action: PayloadAction<boolean>) => {
+    setLoading: (state, action) => {
       state.isLoading = action.payload;
     },
-    setError: (state, action: PayloadAction<string | null>) => {
+    setError: (state, action) => {
       state.error = action.payload;
     },
     logout: (state) => {
@@ -166,7 +171,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload;
         state.isAuthenticated = false;
       })
       .addCase(registerAsync.pending, (state) => {
@@ -188,7 +193,7 @@ const authSlice = createSlice({
       })
       .addCase(registerAsync.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload;
         state.isAuthenticated = false;
       });
   },

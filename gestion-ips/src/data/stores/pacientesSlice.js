@@ -1,46 +1,46 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { pacientesApiService } from '../services/pacientesApiService';
 
-interface PacienteDTO {
-  id?: number;
-  numeroDocumento: string;
-  tipoDocumento: string;
-  informacionPersonal?: {
-    primerNombre: string;
-    primerApellido: string;
-    fechaNacimiento?: string;
-  };
-  informacionContacto?: {
-    telefono?: string;
-    email?: string;
-  };
-  informacionMedica?: {
-    alergias?: string;
-    medicamentosActuales?: string;
-  };
-  contactoEmergencia?: {
-    nombreContacto?: string;
-    telefonoContacto?: string;
-  };
-  activo: boolean;
-  edad?: number;
-}
+/**
+ * DTO de Paciente
+ * @typedef {Object} PacienteDTO
+ * @property {number} [id] - ID del paciente
+ * @property {string} numeroDocumento - Número de documento
+ * @property {string} tipoDocumento - Tipo de documento
+ * @property {Object} [informacionPersonal] - Información personal
+ * @property {string} informacionPersonal.primerNombre - Primer nombre
+ * @property {string} informacionPersonal.primerApellido - Primer apellido
+ * @property {string} [informacionPersonal.fechaNacimiento] - Fecha de nacimiento
+ * @property {Object} [informacionContacto] - Información de contacto
+ * @property {string} [informacionContacto.telefono] - Teléfono
+ * @property {string} [informacionContacto.email] - Email
+ * @property {Object} [informacionMedica] - Información médica
+ * @property {string} [informacionMedica.alergias] - Alergias
+ * @property {string} [informacionMedica.medicamentosActuales] - Medicamentos actuales
+ * @property {Object} [contactoEmergencia] - Contacto de emergencia
+ * @property {string} [contactoEmergencia.nombreContacto] - Nombre del contacto
+ * @property {string} [contactoEmergencia.telefonoContacto] - Teléfono del contacto
+ * @property {boolean} activo - Si está activo
+ * @property {number} [edad] - Edad
+ */
 
-interface PacientesState {
-  pacientes: PacienteDTO[];
-  loading: boolean;
-  error: string | null;
-  connectionError: boolean;
-  searchParams: {
-    page: number;
-    size: number;
-    search?: string;
-  };
-  totalPages: number;
-  totalElements: number;
-}
+/**
+ * Estado de pacientes
+ * @typedef {Object} PacientesState
+ * @property {PacienteDTO[]} pacientes - Lista de pacientes
+ * @property {boolean} loading - Si está cargando
+ * @property {string | null} error - Error actual
+ * @property {boolean} connectionError - Si hay error de conexión
+ * @property {Object} searchParams - Parámetros de búsqueda
+ * @property {number} searchParams.page - Página actual
+ * @property {number} searchParams.size - Tamaño de página
+ * @property {string} [searchParams.search] - Término de búsqueda
+ * @property {number} totalPages - Total de páginas
+ * @property {number} totalElements - Total de elementos
+ */
 
-const initialState: PacientesState = {
+/** @type {PacientesState} */
+const initialState = {
   pacientes: [],
   loading: false,
   error: null,
@@ -56,7 +56,7 @@ const initialState: PacientesState = {
 // Thunk para cargar pacientes
 export const fetchPacientes = createAsyncThunk(
   'pacientes/fetchPacientes',
-  async (searchParams: { page: number; size: number; search?: string }, { rejectWithValue }) => {
+  async (searchParams, { rejectWithValue }) => {
     try {
       const response = await pacientesApiService.getPacientes(searchParams);
       return {
@@ -64,7 +64,7 @@ export const fetchPacientes = createAsyncThunk(
         totalPages: response.totalPages || 0,
         totalElements: response.totalElements || 0,
       };
-    } catch (error: any) {
+    } catch (error) {
       if (error.name === 'JWT_CONFIG_ERROR') {
         return rejectWithValue({
           type: 'JWT_CONFIG_ERROR',
@@ -89,7 +89,7 @@ const pacientesSlice = createSlice({
   name: 'pacientes',
   initialState,
   reducers: {
-    setSearchParams: (state, action: PayloadAction<{ page?: number; size?: number; search?: string }>) => {
+    setSearchParams: (state, action) => {
       state.searchParams = { ...state.searchParams, ...action.payload };
     },
     clearError: (state) => {
@@ -120,7 +120,7 @@ const pacientesSlice = createSlice({
       })
       .addCase(fetchPacientes.rejected, (state, action) => {
         state.loading = false;
-        const payload = action.payload as any;
+        const payload = action.payload;
         if (payload?.type === 'CONNECTION_ERROR') {
           state.connectionError = true;
           state.error = payload.message;

@@ -1,30 +1,37 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
-  id: string;
-  nombres: string;
-  apellidos: string;
-  email: string;
-  rol: string;
-  ips?: string;
-  activo: boolean;
-  ultimoAcceso?: string;
-}
+/**
+ * Usuario autenticado
+ * @typedef {Object} User
+ * @property {string} id - ID del usuario
+ * @property {string} nombres - Nombres del usuario
+ * @property {string} apellidos - Apellidos del usuario
+ * @property {string} email - Email del usuario
+ * @property {string} rol - Rol del usuario
+ * @property {string} [ips] - IPS del usuario
+ * @property {boolean} activo - Si el usuario está activo
+ * @property {string} [ultimoAcceso] - Fecha del último acceso
+ */
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  setAuth: (user: User, token: string, refreshToken?: string) => void;
-  clearAuth: () => void;
-  setLoading: (loading: boolean) => void;
-  updateToken: (token: string) => void;
-}
+/**
+ * Estado de autenticación
+ * @typedef {Object} AuthState
+ * @property {User | null} user - Usuario actual
+ * @property {string | null} token - Token de autenticación
+ * @property {string | null} refreshToken - Token de refresco
+ * @property {boolean} isAuthenticated - Si está autenticado
+ * @property {boolean} isLoading - Si está cargando
+ * @property {(user: User, token: string, refreshToken?: string) => void} setAuth - Establece la autenticación
+ * @property {() => void} clearAuth - Limpia la autenticación
+ * @property {(loading: boolean) => void} setLoading - Establece el estado de carga
+ * @property {(token: string) => void} updateToken - Actualiza el token
+ */
 
-export const useAuthStore = create<AuthState>()(
+/**
+ * Store de autenticación con Zustand
+ */
+export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
@@ -33,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true,
 
-      setAuth: (user: User, token: string, refreshToken?: string) => {
+      setAuth: (user, token, refreshToken) => {
         set({
           user,
           token,
@@ -53,11 +60,11 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      setLoading: (loading: boolean) => {
+      setLoading: (loading) => {
         set({ isLoading: loading });
       },
 
-      updateToken: (token: string) => {
+      updateToken: (token) => {
         set({ token });
       },
     }),

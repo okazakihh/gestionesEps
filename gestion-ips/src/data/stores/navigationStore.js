@@ -1,30 +1,31 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ViewType =
-  | 'login'
-  | 'dashboard'
-  | 'usuarios'
-  | 'pacientes'
-  | 'empleados'
-  | 'reportes'
-  | 'configuracion';
+/**
+ * Tipos de vistas disponibles en la aplicación
+ * @typedef {'login' | 'dashboard' | 'usuarios' | 'pacientes' | 'empleados' | 'nomina' | 'reportes' | 'configuracion'} ViewType
+ */
 
-interface NavigationState {
-  currentView: ViewType;
-  previousView: ViewType | null;
-  setView: (view: ViewType) => void;
-  goBack: () => void;
-  reset: () => void;
-}
+/**
+ * Estado de navegación
+ * @typedef {Object} NavigationState
+ * @property {ViewType} currentView - Vista actual
+ * @property {ViewType | null} previousView - Vista anterior
+ * @property {(view: ViewType) => void} setView - Establece la vista actual
+ * @property {() => void} goBack - Regresa a la vista anterior
+ * @property {() => void} reset - Reinicia el estado de navegación
+ */
 
-export const useNavigationStore = create<NavigationState>()(
+/**
+ * Store de navegación con Zustand
+ */
+export const useNavigationStore = create(
   persist(
     (set, get) => ({
       currentView: 'dashboard',
       previousView: null,
       
-      setView: (view: ViewType) => {
+      setView: (view) => {
         set({ currentView: view });
       },
       

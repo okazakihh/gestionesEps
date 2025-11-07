@@ -28,6 +28,12 @@ const navItems = [
     icon: '👷',
   },
   {
+    name: 'Nómina',
+    view: 'nomina',
+    icon: '💰',
+    roles: ['ADMIN'],
+  },
+  {
     name: 'Reportes',
     view: 'reportes',
     icon: '📈',
@@ -54,6 +60,7 @@ export const SPANavbar = () => {
       '/usuarios': 'usuarios',
       '/pacientes': 'pacientes',
       '/empleados': 'empleados',
+      '/nomina': 'nomina',
       '/reportes': 'reportes',
       '/configuracion': 'configuracion',
     };
@@ -75,6 +82,7 @@ export const SPANavbar = () => {
       usuarios: '/usuarios',
       pacientes: '/pacientes',
       empleados: '/empleados',
+      nomina: '/nomina',
       reportes: '/reportes',
       configuracion: '/configuracion',
     };
@@ -92,6 +100,7 @@ export const SPANavbar = () => {
       '/usuarios': 'usuarios',
       '/pacientes': 'pacientes',
       '/empleados': 'empleados',
+      '/nomina': 'nomina',
       '/reportes': 'reportes',
       '/configuracion': 'configuracion',
     };

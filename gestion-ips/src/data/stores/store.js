@@ -2,6 +2,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import pacientesReducer from './pacientesSlice';
 
+/**
+ * Store principal de Redux
+ */
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -15,8 +18,9 @@ export const store = configureStore({
     }),
 });
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-
-// Re-export para facilitar el uso
-export type { RootState as AppState };
+/**
+ * Tipos para TypeScript (compatibilidad)
+ * @typedef {ReturnType<typeof store.getState>} RootState
+ * @typedef {typeof store.dispatch} AppDispatch
+ * @typedef {RootState} AppState
+ */
