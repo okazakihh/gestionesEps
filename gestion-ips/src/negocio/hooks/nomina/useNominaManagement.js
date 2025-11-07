@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import nominaApiService from '../../../data/services/nominaApiService';
+import { empleadosApiService } from '../../../data/services/empleadosApiService';
+import Swal from 'sweetalert2';
 
 /**
  * Hook para gestión de nóminas
@@ -22,6 +24,51 @@ export const useNominaManagement = () => {
   const [operationError, setOperationError] = useState(null);
   const [operationSuccess, setOperationSuccess] = useState(null);
 
+  // Cache de empleados
+  const [cacheEmpleados, setCacheEmpleados] = useState(new Map());
+
+  /**
+   * Obtiene información de un empleado usando cache
+   */
+  const getEmpleadoInfo = useCallback(async (empleadoId) => {
+    if (cacheEmpleados.has(empleadoId)) {
+      return cacheEmpleados.get(empleadoId);
+    }
+
+    try {
+      const empleado = await empleadosApiService.getEmpleadoById(empleadoId);
+      
+      // Parsear el doble JSON del empleado
+      const primerNivel = JSON.parse(empleado.jsonData || '{}');
+      const segundoNivel = JSON.parse(primerNivel.jsonData || '{}');
+      
+      const infoPersonal = segundoNivel.informacionPersonal || {};
+      const nombreCompleto = [
+        infoPersonal.primerNombre,
+        infoPersonal.segundoNombre,
+        infoPersonal.primerApellido,
+        infoPersonal.segundoApellido
+      ].filter(Boolean).join(' ');
+
+      const empleadoInfo = {
+        nombreCompleto: nombreCompleto || 'Sin nombre',
+        numeroDocumento: primerNivel.numeroDocumento || '-'
+      };
+
+      // Guardar en cache
+      setCacheEmpleados(prev => {
+        const newCache = new Map(prev);
+        newCache.set(empleadoId, empleadoInfo);
+        return newCache;
+      });
+
+      return empleadoInfo;
+    } catch (error) {
+      console.warn(`Error cargando empleado ${empleadoId}:`, error);
+      return { nombreCompleto: 'Sin nombre', numeroDocumento: '-' };
+    }
+  }, [cacheEmpleados]);
+
   /**
    * Carga nóminas activas con paginación
    */
@@ -37,19 +84,61 @@ export const useNominaManagement = () => {
 
       console.log('📋 Nóminas cargadas:', response);
 
-      setNominas(response.content || []);
+      // Parsear jsonData de cada nómina y enriquecer con info del empleado
+      const nominasParsed = await Promise.all(
+        (response.content || []).map(async (nomina) => {
+          try {
+            // Parsear el jsonData que contiene los detalles de la nómina
+            const datosNomina = JSON.parse(nomina.jsonData || '{}');
+            
+            // Obtener información del empleado
+            const empleadoInfo = await getEmpleadoInfo(nomina.empleadoId);
+            
+            return {
+              ...nomina,
+              // Datos parseados del JSON
+              ...datosNomina,
+              // Mantener los campos del objeto original
+              id: nomina.id,
+              empleadoId: nomina.empleadoId,
+              activo: nomina.activo,
+              fechaCreacion: nomina.fechaCreacion,
+              fechaActualizacion: nomina.fechaActualizacion,
+              // Agregar información del empleado
+              empleadoNombre: empleadoInfo.nombreCompleto,
+              empleadoDocumento: empleadoInfo.numeroDocumento
+            };
+          } catch (error) {
+            console.error('❌ Error parseando nómina:', nomina.id, error);
+            return nomina; // Devolver la nómina sin parsear si hay error
+          }
+        })
+      );
+
+      console.log('✅ Nóminas procesadas:', nominasParsed);
+
+      setNominas(nominasParsed);
       setTotalElements(response.totalElements || 0);
       setTotalPages(response.totalPages || 0);
       setCurrentPage(page);
       setPageSize(size);
     } catch (err) {
       console.error('❌ Error cargando nóminas:', err);
-      setError(err.message || 'Error al cargar nóminas');
+      const errorMessage = err.message || 'Error al cargar nóminas';
+      setError(errorMessage);
       setNominas([]);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Cargar Nóminas',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, getEmpleadoInfo]);
 
   /**
    * Carga nóminas de un empleado específico
@@ -66,7 +155,31 @@ export const useNominaManagement = () => {
 
       console.log(`📋 Nóminas del empleado ${empleadoId}:`, response);
 
-      setNominas(response.content || []);
+      // Obtener información del empleado una sola vez
+      const empleadoInfo = await getEmpleadoInfo(empleadoId);
+
+      // Parsear jsonData de cada nómina
+      const nominasParsed = (response.content || []).map(nomina => {
+        try {
+          const datosNomina = JSON.parse(nomina.jsonData || '{}');
+          return {
+            ...nomina,
+            ...datosNomina,
+            id: nomina.id,
+            empleadoId: nomina.empleadoId,
+            activo: nomina.activo,
+            fechaCreacion: nomina.fechaCreacion,
+            fechaActualizacion: nomina.fechaActualizacion,
+            empleadoNombre: empleadoInfo.nombreCompleto,
+            empleadoDocumento: empleadoInfo.numeroDocumento
+          };
+        } catch (error) {
+          console.error('❌ Error parseando nómina:', nomina.id, error);
+          return nomina;
+        }
+      });
+
+      setNominas(nominasParsed);
       setTotalElements(response.totalElements || 0);
       setTotalPages(response.totalPages || 0);
       setCurrentPage(page);
@@ -78,7 +191,7 @@ export const useNominaManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getEmpleadoInfo]);
 
   /**
    * Obtiene una nómina por ID
@@ -117,6 +230,16 @@ export const useNominaManagement = () => {
       
       console.log('✅ Nómina creada:', nuevaNomina);
       
+      // Mostrar alerta de éxito
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Nómina Creada!',
+        text: 'La nómina se ha registrado exitosamente',
+        confirmButtonColor: '#10B981',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      
       setOperationSuccess('Nómina creada exitosamente');
       
       // Recargar lista
@@ -125,7 +248,17 @@ export const useNominaManagement = () => {
       return nuevaNomina;
     } catch (err) {
       console.error('❌ Error creando nómina:', err);
-      setOperationError(err.message || 'Error al crear nómina');
+      const errorMessage = err.message || 'Error al crear nómina';
+      setOperationError(errorMessage);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Crear Nómina',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
+      
       throw err;
     } finally {
       setOperationLoading(false);
@@ -147,6 +280,16 @@ export const useNominaManagement = () => {
       
       console.log('✅ Nómina actualizada:', nominaActualizada);
       
+      // Mostrar alerta de éxito
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Nómina Actualizada!',
+        text: 'Los cambios se han guardado correctamente',
+        confirmButtonColor: '#10B981',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      
       setOperationSuccess('Nómina actualizada exitosamente');
       
       // Recargar lista
@@ -155,7 +298,17 @@ export const useNominaManagement = () => {
       return nominaActualizada;
     } catch (err) {
       console.error('❌ Error actualizando nómina:', err);
-      setOperationError(err.message || 'Error al actualizar nómina');
+      const errorMessage = err.message || 'Error al actualizar nómina';
+      setOperationError(errorMessage);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Actualizar Nómina',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
+      
       throw err;
     } finally {
       setOperationLoading(false);
@@ -177,13 +330,33 @@ export const useNominaManagement = () => {
       
       console.log('✅ Nómina desactivada');
       
+      // Mostrar alerta de éxito
+      await Swal.fire({
+        icon: 'success',
+        title: 'Nómina Desactivada',
+        text: 'La nómina ha sido desactivada',
+        confirmButtonColor: '#10B981',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      
       setOperationSuccess('Nómina desactivada exitosamente');
       
       // Recargar lista
       await loadNominas();
     } catch (err) {
       console.error('❌ Error desactivando nómina:', err);
-      setOperationError(err.message || 'Error al desactivar nómina');
+      const errorMessage = err.message || 'Error al desactivar nómina';
+      setOperationError(errorMessage);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Desactivar',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
+      
       throw err;
     } finally {
       setOperationLoading(false);
@@ -205,13 +378,33 @@ export const useNominaManagement = () => {
       
       console.log('✅ Nómina eliminada');
       
+      // Mostrar alerta de éxito
+      await Swal.fire({
+        icon: 'success',
+        title: 'Nómina Eliminada',
+        text: 'La nómina ha sido eliminada permanentemente',
+        confirmButtonColor: '#10B981',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      
       setOperationSuccess('Nómina eliminada exitosamente');
       
       // Recargar lista
       await loadNominas();
     } catch (err) {
       console.error('❌ Error eliminando nómina:', err);
-      setOperationError(err.message || 'Error al eliminar nómina');
+      const errorMessage = err.message || 'Error al eliminar nómina';
+      setOperationError(errorMessage);
+      
+      // Mostrar alerta de error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Eliminar',
+        text: errorMessage,
+        confirmButtonColor: '#EF4444'
+      });
+      
       throw err;
     } finally {
       setOperationLoading(false);

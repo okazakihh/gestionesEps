@@ -1,5 +1,5 @@
-import { Paper, Button, Group, Pagination, LoadingOverlay, Alert, Box } from '@mantine/core';
-import { IconPlus, IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { Paper, Button, Group, Pagination, LoadingOverlay, Alert, Box, Title, Text, Badge, Divider, Stack, SimpleGrid } from '@mantine/core';
+import { IconPlus, IconAlertCircle, IconCheck, IconUser, IconCalendar, IconCash, IconReceipt, IconPrinter } from '@tabler/icons-react';
 import { useState } from 'react';
 import { modals } from '@mantine/modals';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
@@ -8,6 +8,7 @@ import { useNominaFilters } from '../../../negocio/hooks/nomina/useNominaFilters
 import { NominaTable } from '../../components/nomina/NominaTable';
 import { NominaFilters } from '../../components/nomina/NominaFilters';
 import { NominaForm } from '../../components/nomina/NominaForm';
+import { generarDesprendibleHTML } from '../../components/nomina/DesprendiblePagoHTML';
 
 /**
  * Página principal del módulo de Nómina
@@ -68,14 +69,9 @@ export const NominaPage = () => {
     setFormOpened(true);
   };
 
-  /**
-   * Abre modal para editar nómina
-   */
-  const handleOpenEdit = (nomina) => {
-    setNominaToEdit(nomina);
-    setFormOpened(true);
-  };
-
+  // NOTA: Las nóminas NO se pueden editar una vez creadas
+  // Solo se pueden ver, desactivar o eliminar
+  
   /**
    * Cierra el modal de formulario
    */
@@ -90,13 +86,8 @@ export const NominaPage = () => {
    */
   const handleSubmit = async (nominaData) => {
     try {
-      if (nominaToEdit) {
-        // Actualizar
-        await updateNomina(nominaToEdit.id, nominaData);
-      } else {
-        // Crear
-        await createNomina(nominaData.empleadoId, nominaData);
-      }
+      // Solo se permite crear nóminas, no editar
+      await createNomina(nominaData.empleadoId, nominaData);
       
       handleCloseForm();
     } catch (err) {
@@ -124,6 +115,31 @@ export const NominaPage = () => {
   };
 
   /**
+   * Abre ventana para imprimir desprendible
+   */
+  const handlePrintDesprendible = (nomina) => {
+    // Configuración de empresa (puede venir de un store global)
+    const empresaInfo = {
+      nombre: 'GESTIÓN IPS',
+      nit: '900.123.456-7',
+      direccion: 'Calle 123 #45-67, Bogotá D.C.'
+    };
+
+    // Generar HTML del desprendible
+    const htmlContent = generarDesprendibleHTML(nomina, empresaInfo);
+    
+    // Abrir ventana nueva con el desprendible
+    const ventana = window.open('', '_blank', 'width=800,height=1000');
+    
+    if (ventana) {
+      ventana.document.write(htmlContent);
+      ventana.document.close();
+    } else {
+      alert('Por favor, permita las ventanas emergentes para imprimir el desprendible.');
+    }
+  };
+
+  /**
    * Confirma eliminación de nómina
    */
   const handleConfirmDelete = (nomina) => {
@@ -146,70 +162,159 @@ export const NominaPage = () => {
    * Ver detalles de nómina
    */
   const handleView = (nomina) => {
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0);
+    };
+
     modals.open({
-      title: 'Detalles de Nómina',
+      title: (
+        <Group>
+          <IconReceipt size={24} color="#228BE6" />
+          <Title order={3}>Detalle de Nómina</Title>
+        </Group>
+      ),
       size: 'lg',
       children: (
-        <Box>
-          <Paper p="md" withBorder mb="sm">
-            <Title order={6} mb="xs">Información del Empleado</Title>
-            <div>
-              <strong>Nombre:</strong> {nomina.empleadoNombre || nomina.empleado?.nombre || '-'}
-            </div>
-            <div>
-              <strong>Documento:</strong> {nomina.empleadoDocumento || nomina.empleado?.documento || '-'}
-            </div>
+        <Stack gap="md">
+          {/* Información del Empleado */}
+          <Paper p="md" withBorder radius="md" bg="blue.0">
+            <Group mb="xs">
+              <IconUser size={20} color="#228BE6" />
+              <Title order={5} c="blue.7">Información del Empleado</Title>
+            </Group>
+            <SimpleGrid cols={2} spacing="xs">
+              <Box>
+                <Text size="xs" c="dimmed" fw={500}>Nombre Completo</Text>
+                <Text size="sm" fw={600}>{nomina.empleadoNombre || '-'}</Text>
+              </Box>
+              <Box>
+                <Text size="xs" c="dimmed" fw={500}>Documento</Text>
+                <Text size="sm" fw={600}>{nomina.empleadoDocumento || '-'}</Text>
+              </Box>
+            </SimpleGrid>
           </Paper>
 
-          <Paper p="md" withBorder mb="sm">
-            <Title order={6} mb="xs">Información de la Nómina</Title>
-            <div>
-              <strong>Periodo:</strong> {nomina.periodo || '-'}
-            </div>
-            <div>
-              <strong>Fecha de Pago:</strong> {nomina.fechaPago || nomina.fecha || '-'}
-            </div>
-            <div>
-              <strong>Estado:</strong> {nomina.activo ? 'Activa' : 'Inactiva'}
-            </div>
+          {/* Información del Periodo */}
+          <Paper p="md" withBorder radius="md">
+            <Group mb="xs">
+              <IconCalendar size={20} color="#228BE6" />
+              <Title order={5} c="blue.7">Periodo y Pago</Title>
+            </Group>
+            <SimpleGrid cols={3} spacing="md">
+              <Box>
+                <Text size="xs" c="dimmed" fw={500}>Periodo</Text>
+                <Text size="sm" fw={600}>{nomina.periodo || '-'}</Text>
+              </Box>
+              <Box>
+                <Text size="xs" c="dimmed" fw={500}>Fecha de Pago</Text>
+                <Text size="sm" fw={600}>{nomina.fechaPago || '-'}</Text>
+              </Box>
+              <Box>
+                <Text size="xs" c="dimmed" fw={500}>Estado</Text>
+                <Badge color={nomina.activo ? 'green' : 'red'} variant="light">
+                  {nomina.activo ? 'Activa' : 'Inactiva'}
+                </Badge>
+              </Box>
+            </SimpleGrid>
           </Paper>
 
-          <Paper p="md" withBorder mb="sm">
-            <Title order={6} mb="xs">Devengados</Title>
-            <div>
-              <strong>Salario Base:</strong> ${Number(nomina.salarioBase || 0).toLocaleString('es-CO')}
-            </div>
-            <div>
-              <strong>Horas Extras:</strong> ${Number(nomina.horasExtras || 0).toLocaleString('es-CO')}
-            </div>
-            <div>
-              <strong>Bonificaciones:</strong> ${Number(nomina.bonificaciones || 0).toLocaleString('es-CO')}
-            </div>
-            <div>
-              <strong>Total Devengado:</strong> ${Number(nomina.totalDevengado || 0).toLocaleString('es-CO')}
-            </div>
+          {/* Resumen Financiero */}
+          <SimpleGrid cols={2} spacing="md">
+            {/* Devengados */}
+            <Paper p="md" withBorder radius="md" bg="green.0">
+              <Group mb="sm">
+                <IconCash size={18} color="#37B24D" />
+                <Title order={6} c="green.7">Devengados</Title>
+              </Group>
+              <Stack gap={4}>
+                <Group justify="space-between">
+                  <Text size="xs" c="dimmed">Salario Base</Text>
+                  <Text size="xs" fw={600}>{formatCurrency(nomina.salarioBase)}</Text>
+                </Group>
+                <Group justify="space-between">
+                  <Text size="xs" c="dimmed">Aux. Transporte</Text>
+                  <Text size="xs" fw={600}>{formatCurrency(nomina.auxilioTransporte || 0)}</Text>
+                </Group>
+                {(nomina.bonificaciones > 0 || nomina.comisiones > 0 || nomina.otrosIngresos > 0) && (
+                  <Group justify="space-between">
+                    <Text size="xs" c="dimmed">Otros</Text>
+                    <Text size="xs" fw={600}>{formatCurrency((nomina.bonificaciones || 0) + (nomina.comisiones || 0) + (nomina.otrosIngresos || 0))}</Text>
+                  </Group>
+                )}
+              </Stack>
+              <Divider my="xs" variant="dashed" />
+              <Group justify="space-between">
+                <Text fw={700} size="sm" c="green.7">Total</Text>
+                <Text size="md" fw={700} c="green.7">{formatCurrency(nomina.totalDevengado)}</Text>
+              </Group>
+            </Paper>
+
+            {/* Deducciones */}
+            <Paper p="md" withBorder radius="md" bg="red.0">
+              <Group mb="sm">
+                <IconReceipt size={18} color="#F03E3E" />
+                <Title order={6} c="red.7">Deducciones</Title>
+              </Group>
+              <Stack gap={4}>
+                <Group justify="space-between">
+                  <Text size="xs" c="dimmed">Salud</Text>
+                  <Text size="xs" fw={600}>{formatCurrency(nomina.deduccionSalud || 0)}</Text>
+                </Group>
+                <Group justify="space-between">
+                  <Text size="xs" c="dimmed">Pensión</Text>
+                  <Text size="xs" fw={600}>{formatCurrency(nomina.deduccionPension || 0)}</Text>
+                </Group>
+                {(nomina.prestamos > 0 || nomina.embargos > 0 || nomina.otrasDeducciones > 0) && (
+                  <Group justify="space-between">
+                    <Text size="xs" c="dimmed">Otros</Text>
+                    <Text size="xs" fw={600}>{formatCurrency((nomina.prestamos || 0) + (nomina.embargos || 0) + (nomina.otrasDeducciones || 0))}</Text>
+                  </Group>
+                )}
+              </Stack>
+              <Divider my="xs" variant="dashed" />
+              <Group justify="space-between">
+                <Text fw={700} size="sm" c="red.7">Total</Text>
+                <Text size="md" fw={700} c="red.7">{formatCurrency(nomina.totalDeducciones)}</Text>
+              </Group>
+            </Paper>
+          </SimpleGrid>
+
+          {/* Total Neto a Pagar */}
+          <Paper p="sm" withBorder radius="md" bg="blue.6">
+            <Group justify="space-between" align="center">
+              <Text size="sm" c="white" fw={600}>NETO A PAGAR</Text>
+              <Text size="xl" fw={900} c="white">
+                {formatCurrency(nomina.netoPagar || nomina.totalPagar)}
+              </Text>
+            </Group>
           </Paper>
 
-          <Paper p="md" withBorder mb="sm">
-            <Title order={6} mb="xs">Deducciones</Title>
-            <div>
-              <strong>Deducciones:</strong> ${Number(nomina.deducciones || 0).toLocaleString('es-CO')}
-            </div>
-          </Paper>
-
-          <Paper p="md" withBorder bg="blue.0">
-            <Title order={5} c="blue">
-              Total a Pagar: ${Number(nomina.totalPagar || 0).toLocaleString('es-CO')}
-            </Title>
-          </Paper>
-
+          {/* Observaciones */}
           {nomina.observaciones && (
-            <Paper p="md" withBorder mt="sm">
-              <Title order={6} mb="xs">Observaciones</Title>
-              <div>{nomina.observaciones}</div>
+            <Paper p="sm" withBorder radius="md" bg="gray.0">
+              <Text size="xs" fw={600} mb={4} c="gray.7">Observaciones</Text>
+              <Text size="xs" c="dimmed">{nomina.observaciones}</Text>
             </Paper>
           )}
-        </Box>
+
+          {/* Botón para imprimir desprendible */}
+          <Button
+            fullWidth
+            leftSection={<IconPrinter size={16} />}
+            variant="light"
+            onClick={() => {
+              modals.closeAll();
+              handlePrintDesprendible(nomina);
+            }}
+          >
+            Imprimir Desprendible de Pago
+          </Button>
+        </Stack>
       )
     });
   };
@@ -297,7 +402,6 @@ export const NominaPage = () => {
           <NominaTable
             nominas={filteredNominas}
             loading={loading}
-            onEdit={handleOpenEdit}
             onDelete={handleConfirmDelete}
             onDeactivate={handleConfirmDeactivate}
             onView={handleView}

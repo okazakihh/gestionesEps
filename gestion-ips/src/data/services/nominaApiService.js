@@ -17,7 +17,7 @@
 
 import { apiClient } from '../api/apiClient.js';
 
-const NOMINA_BASE_URL = '/administrative/nomina';
+const NOMINA_BASE_URL = '/api/nomina';
 
 /**
  * Servicio de API para gestión de nóminas

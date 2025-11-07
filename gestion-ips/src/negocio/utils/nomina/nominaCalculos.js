@@ -1,0 +1,278 @@
+/**
+ * nominaCalculos.js
+ * 
+ * Cálculos de nómina según normativa colombiana 2025
+ * Actualizado a Noviembre 2025
+ */
+
+// ========== CONSTANTES 2025 ==========
+
+/**
+ * Salario Mínimo Legal Mensual Vigente (SMLMV) 2025
+ * Decreto 2613 de 2024
+ */
+export const SMLMV_2025 = 1423500;
+
+/**
+ * Auxilio de transporte 2025
+ * Aplica para empleados que ganen hasta 2 SMLMV
+ */
+export const AUXILIO_TRANSPORTE_2025 = 200000;
+
+/**
+ * Límite para aplicar auxilio de transporte
+ */
+export const LIMITE_AUXILIO_TRANSPORTE = SMLMV_2025 * 2;
+
+/**
+ * Unidad de Valor Tributario (UVT) 2025
+ */
+export const UVT_2025 = 47065;
+
+/**
+ * Porcentajes de seguridad social
+ */
+export const PORCENTAJES_SEGURIDAD_SOCIAL = {
+  // Salud - Empleado
+  SALUD_EMPLEADO: 0.04, // 4%
+  // Pensión - Empleado
+  PENSION_EMPLEADO: 0.04, // 4%
+  // Salud - Empleador
+  SALUD_EMPLEADOR: 0.085, // 8.5%
+  // Pensión - Empleador
+  PENSION_EMPLEADOR: 0.12, // 12%
+  // ARL - Empleador (nivel de riesgo I)
+  ARL_MINIMO: 0.00522, // 0.522%
+  ARL_MAXIMO: 0.0696 // 6.96%
+};
+
+/**
+ * Porcentajes parafiscales (aplican para empresas con ciertos criterios)
+ */
+export const PORCENTAJES_PARAFISCALES = {
+  SENA: 0.02, // 2%
+  ICBF: 0.03, // 3%
+  CAJA_COMPENSACION: 0.04 // 4%
+};
+
+// ========== FUNCIONES DE CÁLCULO ==========
+
+/**
+ * Calcula si aplica auxilio de transporte
+ */
+export const aplicaAuxilioTransporte = (salarioBase) => {
+  return salarioBase <= LIMITE_AUXILIO_TRANSPORTE;
+};
+
+/**
+ * Calcula el auxilio de transporte
+ */
+export const calcularAuxilioTransporte = (salarioBase) => {
+  return aplicaAuxilioTransporte(salarioBase) ? AUXILIO_TRANSPORTE_2025 : 0;
+};
+
+/**
+ * Calcula la base de cotización para seguridad social
+ * Base = Salario + Auxilio de transporte (si aplica)
+ */
+export const calcularBaseCotizacion = (salarioBase) => {
+  const auxilioTransporte = calcularAuxilioTransporte(salarioBase);
+  return salarioBase + auxilioTransporte;
+};
+
+/**
+ * Calcula deducciones de salud (empleado)
+ */
+export const calcularSalud = (salarioBase) => {
+  return Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.SALUD_EMPLEADO);
+};
+
+/**
+ * Calcula deducciones de pensión (empleado)
+ */
+export const calcularPension = (salarioBase) => {
+  return Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.PENSION_EMPLEADO);
+};
+
+/**
+ * Calcula total deducciones de seguridad social (empleado)
+ */
+export const calcularDeduccionesSeguridad = (salarioBase) => {
+  const salud = calcularSalud(salarioBase);
+  const pension = calcularPension(salarioBase);
+  return salud + pension;
+};
+
+/**
+ * Calcula aportes del empleador
+ */
+export const calcularAportesEmpleador = (salarioBase, nivelRiesgoARL = 1) => {
+  const salud = Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.SALUD_EMPLEADOR);
+  const pension = Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.PENSION_EMPLEADOR);
+  
+  // ARL según nivel de riesgo (por defecto nivel I)
+  const porcentajeARL = PORCENTAJES_SEGURIDAD_SOCIAL.ARL_MINIMO;
+  const arl = Math.round(salarioBase * porcentajeARL);
+  
+  return {
+    salud,
+    pension,
+    arl,
+    total: salud + pension + arl
+  };
+};
+
+/**
+ * Calcula valor de horas extras diurnas (25% recargo)
+ */
+export const calcularHoraExtraDiurna = (salarioBase, horasExtrasDiurnas = 0) => {
+  const valorHoraOrdinaria = salarioBase / 240; // 30 días * 8 horas
+  const valorHoraExtraDiurna = valorHoraOrdinaria * 1.25;
+  return Math.round(valorHoraExtraDiurna * horasExtrasDiurnas);
+};
+
+/**
+ * Calcula valor de horas extras nocturnas (75% recargo)
+ */
+export const calcularHoraExtraNocturna = (salarioBase, horasExtrasNocturnas = 0) => {
+  const valorHoraOrdinaria = salarioBase / 240;
+  const valorHoraExtraNocturna = valorHoraOrdinaria * 1.75;
+  return Math.round(valorHoraExtraNocturna * horasExtrasNocturnas);
+};
+
+/**
+ * Calcula valor de horas extras dominicales/festivas (100% recargo)
+ */
+export const calcularHoraExtraDominical = (salarioBase, horasExtrasDominicales = 0) => {
+  const valorHoraOrdinaria = salarioBase / 240;
+  const valorHoraExtraDominical = valorHoraOrdinaria * 2.0;
+  return Math.round(valorHoraExtraDominical * horasExtrasDominicales);
+};
+
+/**
+ * Calcula recargo nocturno (35% del valor hora ordinaria)
+ */
+export const calcularRecargoNocturno = (salarioBase, horasRecargoNocturno = 0) => {
+  const valorHoraOrdinaria = salarioBase / 240;
+  const valorRecargoNocturno = valorHoraOrdinaria * 0.35;
+  return Math.round(valorRecargoNocturno * horasRecargoNocturno);
+};
+
+/**
+ * Calcula recargo dominical/festivo (75% adicional)
+ */
+export const calcularRecargoDominical = (salarioBase, horasRecargoDominical = 0) => {
+  const valorHoraOrdinaria = salarioBase / 240;
+  const valorRecargoDominical = valorHoraOrdinaria * 0.75;
+  return Math.round(valorRecargoDominical * horasRecargoDominical);
+};
+
+/**
+ * Calcula nómina completa
+ */
+export const calcularNominaCompleta = (datos) => {
+  const {
+    salarioBase = 0,
+    horasExtrasDiurnas = 0,
+    horasExtrasNocturnas = 0,
+    horasExtrasDominicales = 0,
+    horasRecargoNocturno = 0,
+    horasRecargoDominical = 0,
+    bonificaciones = 0,
+    comisiones = 0,
+    otrosIngresos = 0,
+    prestamos = 0,
+    embargos = 0,
+    otrasDeducciones = 0,
+    diasTrabajados = 30
+  } = datos;
+
+  // Ajustar salario si no trabajó todos los días
+  const salarioAjustado = diasTrabajados < 30 
+    ? Math.round((salarioBase / 30) * diasTrabajados)
+    : salarioBase;
+
+  // DEVENGADOS
+  const auxilioTransporte = calcularAuxilioTransporte(salarioBase);
+  const valorHorasExtrasDiurnas = calcularHoraExtraDiurna(salarioBase, horasExtrasDiurnas);
+  const valorHorasExtrasNocturnas = calcularHoraExtraNocturna(salarioBase, horasExtrasNocturnas);
+  const valorHorasExtrasDominicales = calcularHoraExtraDominical(salarioBase, horasExtrasDominicales);
+  const valorRecargoNocturno = calcularRecargoNocturno(salarioBase, horasRecargoNocturno);
+  const valorRecargoDominical = calcularRecargoDominical(salarioBase, horasRecargoDominical);
+
+  const totalDevengado = 
+    salarioAjustado +
+    auxilioTransporte +
+    valorHorasExtrasDiurnas +
+    valorHorasExtrasNocturnas +
+    valorHorasExtrasDominicales +
+    valorRecargoNocturno +
+    valorRecargoDominical +
+    bonificaciones +
+    comisiones +
+    otrosIngresos;
+
+  // DEDUCCIONES
+  const salud = calcularSalud(salarioAjustado);
+  const pension = calcularPension(salarioAjustado);
+  const totalDeduccionesSeguridad = salud + pension;
+  const totalOtrasDeducciones = prestamos + embargos + otrasDeducciones;
+  const totalDeducciones = totalDeduccionesSeguridad + totalOtrasDeducciones;
+
+  // NETO A PAGAR
+  const netoPagar = totalDevengado - totalDeducciones;
+
+  // APORTES EMPLEADOR
+  const aportesEmpleador = calcularAportesEmpleador(salarioAjustado);
+
+  return {
+    // Devengados
+    salarioBase: salarioAjustado,
+    auxilioTransporte,
+    horasExtras: {
+      diurnas: valorHorasExtrasDiurnas,
+      nocturnas: valorHorasExtrasNocturnas,
+      dominicales: valorHorasExtrasDominicales
+    },
+    recargos: {
+      nocturno: valorRecargoNocturno,
+      dominical: valorRecargoDominical
+    },
+    bonificaciones,
+    comisiones,
+    otrosIngresos,
+    totalDevengado,
+
+    // Deducciones
+    deducciones: {
+      salud,
+      pension,
+      prestamos,
+      embargos,
+      otras: otrasDeducciones,
+      total: totalDeducciones
+    },
+
+    // Neto
+    netoPagar,
+
+    // Info empleador
+    aportesEmpleador,
+    
+    // Información adicional
+    diasTrabajados,
+    aplicaAuxilioTransporte: aplicaAuxilioTransporte(salarioBase)
+  };
+};
+
+/**
+ * Formatea valor en pesos colombianos
+ */
+export const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value || 0);
+};

@@ -141,7 +141,7 @@ export const useNominaFilters = (nominas = []) => {
   const statistics = useMemo(() => {
     const totalNominas = filteredNominas.length;
     const totalPagado = filteredNominas.reduce((sum, nomina) => {
-      const total = nomina.totalPagar || nomina.total || 0;
+      const total = nomina.netoPagar || nomina.totalPagar || nomina.total || 0;
       return sum + Number(total);
     }, 0);
 

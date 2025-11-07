@@ -1,9 +1,9 @@
 import { Table, ActionIcon, Badge, Text, Group, Tooltip } from '@mantine/core';
-import { IconEdit, IconTrash, IconEye, IconBan } from '@tabler/icons-react';
+import { IconTrash, IconEye, IconBan } from '@tabler/icons-react';
 
 /**
  * Componente tabla de nóminas
- * Muestra nóminas con acciones CRUD
+ * Muestra nóminas con acciones CRUD (sin edición)
  */
 export const NominaTable = ({
   nominas = [],
@@ -157,7 +157,7 @@ export const NominaTable = ({
               
               <Table.Td>
                 <Text size="sm" fw={600} c="blue">
-                  {formatCurrency(nomina.totalPagar || nomina.total)}
+                  {formatCurrency(nomina.netoPagar || nomina.totalPagar || nomina.total)}
                 </Text>
               </Table.Td>
               
@@ -180,18 +180,7 @@ export const NominaTable = ({
                     </Tooltip>
                   )}
                   
-                  {onEdit && (nomina.activo ?? nomina.estado === 'ACTIVO') && (
-                    <Tooltip label="Editar">
-                      <ActionIcon
-                        variant="light"
-                        color="orange"
-                        size="sm"
-                        onClick={() => onEdit(nomina)}
-                      >
-                        <IconEdit size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
+                  {/* Las nóminas NO se pueden editar una vez creadas */}
                   
                   {onDeactivate && (nomina.activo ?? nomina.estado === 'ACTIVO') && (
                     <Tooltip label="Desactivar">
