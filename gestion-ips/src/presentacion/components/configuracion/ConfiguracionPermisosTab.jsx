@@ -23,44 +23,112 @@ import {
 } from '@mantine/core';
 import { IconShieldLock, IconAlertCircle, IconDeviceFloppy, IconRefresh } from '@tabler/icons-react';
 import { useConfiguracionManagement } from '../../../negocio/hooks/configuracion/useConfiguracionManagement.js';
+import { useRoles } from '../../../negocio/hooks/roles/useRoles.js';
 import Swal from 'sweetalert2';
 
-const ROLES_DISPONIBLES = [
-  { key: 'ADMIN', label: 'Administrador', color: 'red' },
-  { key: 'ADMINISTRATIVO', label: 'Administrativo', color: 'blue' },
-  { key: 'AUXILIAR_ADMINISTRATIVO', label: 'Auxiliar Administrativo', color: 'cyan' },
-  { key: 'DOCTOR', label: 'Doctor', color: 'green' },
-  { key: 'AUXILIAR_MEDICO', label: 'Auxiliar Médico', color: 'teal' }
-];
-
 const MODULOS_DISPONIBLES = [
-  { key: 'pacientes', label: 'Pacientes' },
-  { key: 'facturacion', label: 'Facturación' },
-  { key: 'nomina', label: 'Nómina' },
-  { key: 'usuarios', label: 'Usuarios' },
-  { key: 'reportes', label: 'Reportes' },
-  { key: 'configuracion', label: 'Configuración' }
+  { 
+    key: 'pacientes', 
+    label: 'Pacientes',
+    acciones: [
+      { key: 'ver', label: 'Ver pacientes' },
+      { key: 'crear', label: 'Crear paciente' },
+      { key: 'editar', label: 'Editar paciente' },
+      { key: 'eliminar', label: 'Eliminar paciente' },
+      { key: 'programar_cita', label: 'Programar cita' },
+      { key: 'editar_cita', label: 'Editar cita' },
+      { key: 'cancelar_cita', label: 'Cancelar cita' },
+      { key: 'atender_cita', label: 'Atender cita' },
+      { key: 'marcar_en_sala', label: 'Marcar en sala de espera' },
+      { key: 'marcar_no_presento', label: 'Marcar no se presentó' },
+      { key: 'ver_historia', label: 'Ver historia clínica' },
+      { key: 'crear_historia', label: 'Crear historia clínica' },
+      { key: 'editar_historia', label: 'Editar historia clínica' }
+    ]
+  },
+  { 
+    key: 'facturacion', 
+    label: 'Facturación',
+    acciones: [
+      { key: 'ver', label: 'Ver facturas' },
+      { key: 'crear', label: 'Crear factura' },
+      { key: 'editar', label: 'Editar factura' },
+      { key: 'eliminar', label: 'Eliminar factura' },
+      { key: 'anular', label: 'Anular factura' },
+      { key: 'generar_reportes', label: 'Generar reportes' }
+    ]
+  },
+  { 
+    key: 'nomina', 
+    label: 'Nómina',
+    acciones: [
+      { key: 'ver', label: 'Ver nómina' },
+      { key: 'crear', label: 'Crear registro' },
+      { key: 'editar', label: 'Editar registro' },
+      { key: 'eliminar', label: 'Eliminar registro' },
+      { key: 'procesar', label: 'Procesar nómina' },
+      { key: 'aprobar', label: 'Aprobar nómina' },
+      { key: 'generar_reportes', label: 'Generar reportes' }
+    ]
+  },
+  { 
+    key: 'usuarios', 
+    label: 'Usuarios',
+    acciones: [
+      { key: 'ver', label: 'Ver usuarios' },
+      { key: 'crear', label: 'Crear usuario' },
+      { key: 'editar', label: 'Editar usuario' },
+      { key: 'eliminar', label: 'Eliminar usuario' },
+      { key: 'gestionar_roles', label: 'Gestionar roles' },
+      { key: 'cambiar_estado', label: 'Activar/Desactivar' }
+    ]
+  },
+  { 
+    key: 'reportes', 
+    label: 'Reportes',
+    acciones: [
+      { key: 'ver', label: 'Ver reportes' },
+      { key: 'generar', label: 'Generar reportes' },
+      { key: 'exportar', label: 'Exportar reportes' },
+      { key: 'programar', label: 'Programar reportes' }
+    ]
+  },
+  { 
+    key: 'configuracion', 
+    label: 'Configuración',
+    acciones: [
+      { key: 'ver', label: 'Ver configuración' },
+      { key: 'editar', label: 'Editar configuración' },
+      { key: 'gestionar_permisos', label: 'Gestionar permisos' },
+      { key: 'gestionar_roles', label: 'Gestionar roles' }
+    ]
+  }
 ];
-
-const PERMISOS_ACCIONES = ['read', 'write', 'delete'];
 
 export const ConfiguracionPermisosTab = () => {
   const { 
-    configuraciones, 
-    loading, 
-    error, 
     getConfiguracionByClave, 
     updateConfiguracionByClave 
   } = useConfiguracionManagement();
+
+  // Hook para cargar roles desde la API
+  const { roles, loading: loadingRoles, error: errorRoles } = useRoles();
 
   const [permisos, setPermisos] = useState({});
   const [loadingPermisos, setLoadingPermisos] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Cargar configuración de permisos
+  // Cargar configuración de permisos cuando los roles estén disponibles
   useEffect(() => {
-    cargarPermisos();
-  }, []);
+    if (!loadingRoles) {
+      if (roles.length > 0) {
+        cargarPermisos();
+      } else {
+        // Si no hay roles después de cargar, inicializar con valores por defecto
+        setLoadingPermisos(false);
+      }
+    }
+  }, [loadingRoles, roles]);
 
   const cargarPermisos = async () => {
     setLoadingPermisos(true);
@@ -68,7 +136,41 @@ export const ConfiguracionPermisosTab = () => {
       const config = await getConfiguracionByClave('PERMISOS_MODULOS');
       
       if (config && config.jsonData) {
-        setPermisos(config.jsonData);
+        // Mergear permisos guardados con roles actuales
+        const permisosGuardados = config.jsonData;
+        const permisosActualizados = {};
+        
+        // Para cada rol disponible en la API
+        roles.forEach(rol => {
+          if (permisosGuardados[rol.key]) {
+            // Si existe en la configuración guardada, usarlo
+            permisosActualizados[rol.key] = permisosGuardados[rol.key];
+          } else {
+            // Si es un rol nuevo, inicializarlo
+            permisosActualizados[rol.key] = {};
+            MODULOS_DISPONIBLES.forEach(modulo => {
+              permisosActualizados[rol.key][modulo.key] = {};
+              modulo.acciones.forEach(accion => {
+                permisosActualizados[rol.key][modulo.key][accion.key] = false;
+              });
+            });
+          }
+          
+          // Asegurar que todos los módulos y acciones existen para cada rol
+          MODULOS_DISPONIBLES.forEach(modulo => {
+            if (!permisosActualizados[rol.key][modulo.key]) {
+              permisosActualizados[rol.key][modulo.key] = {};
+            }
+            // Asegurar que todas las acciones del módulo existen
+            modulo.acciones.forEach(accion => {
+              if (permisosActualizados[rol.key][modulo.key][accion.key] === undefined) {
+                permisosActualizados[rol.key][modulo.key][accion.key] = false;
+              }
+            });
+          });
+        });
+        
+        setPermisos(permisosActualizados);
       } else {
         // Inicializar con estructura vacía
         inicializarPermisosDefecto();
@@ -84,14 +186,15 @@ export const ConfiguracionPermisosTab = () => {
   const inicializarPermisosDefecto = () => {
     const permisosDefault = {};
     
-    ROLES_DISPONIBLES.forEach(rol => {
+    // Usar roles cargados desde la API
+    roles.forEach(rol => {
       permisosDefault[rol.key] = {};
       MODULOS_DISPONIBLES.forEach(modulo => {
-        permisosDefault[rol.key][modulo.key] = {
-          read: false,
-          write: false,
-          delete: false
-        };
+        permisosDefault[rol.key][modulo.key] = {};
+        // Inicializar todas las acciones del módulo en false
+        modulo.acciones.forEach(accion => {
+          permisosDefault[rol.key][modulo.key][accion.key] = false;
+        });
       });
     });
 
@@ -149,12 +252,28 @@ export const ConfiguracionPermisosTab = () => {
     }
   };
 
-  if (loadingPermisos) {
+  if (loadingRoles || loadingPermisos) {
     return (
       <Stack align="center" justify="center" style={{ minHeight: '300px' }}>
         <Loader size="lg" />
-        <Text c="dimmed">Cargando permisos...</Text>
+        <Text c="dimmed">
+          {loadingRoles ? 'Cargando roles...' : 'Cargando permisos...'}
+        </Text>
       </Stack>
+    );
+  }
+
+  if (errorRoles) {
+    return (
+      <Alert
+        icon={<IconAlertCircle size={20} />}
+        title="Error al cargar roles"
+        color="red"
+        variant="filled"
+      >
+        <Text size="sm">{errorRoles}</Text>
+        <Text size="sm">Se usarán los roles por defecto.</Text>
+      </Alert>
     );
   }
 
@@ -179,84 +298,65 @@ export const ConfiguracionPermisosTab = () => {
         variant="light"
       >
         <Text size="sm">
-          Los cambios en los permisos afectan inmediatamente el acceso de los usuarios.
-          <br />
-          <strong>Read:</strong> Ver información | <strong>Write:</strong> Crear/Editar | <strong>Delete:</strong> Eliminar
+          Los cambios en los permisos afectan inmediatamente el acceso de los usuarios al sistema.
         </Text>
       </Alert>
 
-      {/* Tabla de permisos */}
-      <Paper shadow="xs" p="md" withBorder>
-        <Stack gap="md">
-          {ROLES_DISPONIBLES.map(rol => (
-            <Paper key={rol.key} shadow="xs" p="md" withBorder>
-              <Stack gap="md">
-                <Group>
-                  <Badge color={rol.color} size="lg" variant="filled">
-                    {rol.label}
-                  </Badge>
-                </Group>
+      {/* Permisos por Rol */}
+      <Stack gap="lg">
+        {roles.map(rol => (
+          <Paper key={rol.key} shadow="md" p="md" withBorder>
+            <Stack gap="md">
+              {/* Header del Rol */}
+              <Group>
+                <Badge color={rol.color} size="lg" variant="filled">
+                  {rol.label}
+                </Badge>
+              </Group>
 
-                <Table striped highlightOnHover withTableBorder>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Módulo</Table.Th>
-                      <Table.Th style={{ textAlign: 'center' }}>Leer</Table.Th>
-                      <Table.Th style={{ textAlign: 'center' }}>Escribir</Table.Th>
-                      <Table.Th style={{ textAlign: 'center' }}>Eliminar</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {MODULOS_DISPONIBLES.map(modulo => (
-                      <Table.Tr key={modulo.key}>
-                        <Table.Td>
-                          <Text fw={500}>{modulo.label}</Text>
-                        </Table.Td>
-                        <Table.Td style={{ textAlign: 'center' }}>
-                          <Switch
-                            checked={permisos[rol.key]?.[modulo.key]?.read || false}
-                            onChange={(e) => handlePermisoChange(
-                              rol.key, 
-                              modulo.key, 
-                              'read', 
-                              e.currentTarget.checked
-                            )}
-                            color="green"
-                          />
-                        </Table.Td>
-                        <Table.Td style={{ textAlign: 'center' }}>
-                          <Switch
-                            checked={permisos[rol.key]?.[modulo.key]?.write || false}
-                            onChange={(e) => handlePermisoChange(
-                              rol.key, 
-                              modulo.key, 
-                              'write', 
-                              e.currentTarget.checked
-                            )}
-                            color="blue"
-                          />
-                        </Table.Td>
-                        <Table.Td style={{ textAlign: 'center' }}>
-                          <Switch
-                            checked={permisos[rol.key]?.[modulo.key]?.delete || false}
-                            onChange={(e) => handlePermisoChange(
-                              rol.key, 
-                              modulo.key, 
-                              'delete', 
-                              e.currentTarget.checked
-                            )}
-                            color="red"
-                          />
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
+              {/* Permisos por Módulo */}
+              <Stack gap="lg">
+                {MODULOS_DISPONIBLES.map(modulo => (
+                  <Paper key={modulo.key} p="sm" withBorder style={{ backgroundColor: '#f8f9fa' }}>
+                    <Stack gap="sm">
+                      {/* Título del Módulo */}
+                      <Text fw={700} size="md" c="blue">
+                        {modulo.label}
+                      </Text>
+
+                      {/* Grid de Acciones */}
+                      <Grid gutter="xs">
+                        {modulo.acciones.map(accion => (
+                          <Grid.Col key={accion.key} span={{ base: 12, sm: 6, md: 4, lg: 3 }}>
+                            <Paper p="xs" withBorder style={{ backgroundColor: 'white' }}>
+                              <Group justify="space-between" wrap="nowrap">
+                                <Text size="sm" style={{ flex: 1, minWidth: 0 }}>
+                                  {accion.label}
+                                </Text>
+                                <Switch
+                                  size="sm"
+                                  checked={permisos[rol.key]?.[modulo.key]?.[accion.key] || false}
+                                  onChange={(e) => handlePermisoChange(
+                                    rol.key,
+                                    modulo.key,
+                                    accion.key,
+                                    e.currentTarget.checked
+                                  )}
+                                  color="green"
+                                />
+                              </Group>
+                            </Paper>
+                          </Grid.Col>
+                        ))}
+                      </Grid>
+                    </Stack>
+                  </Paper>
+                ))}
               </Stack>
-            </Paper>
-          ))}
-        </Stack>
-      </Paper>
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
 
       {/* Botones de acción */}
       <Group justify="flex-end">

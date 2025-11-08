@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../../data/context/AuthContext.jsx';
+import { ProtectedRoute } from '../components/auth/ProtectedRoute.jsx';
+import { PERMISSIONS } from '../../negocio/utils/auth/permissions.js';
 import { LoginPage } from '../pages/LoginPage.jsx';
 import { DashboardPage } from '../pages/DashboardPage.jsx';
 import UsuariosPage from '../pages/UsersPage.jsx';
@@ -9,24 +11,6 @@ import EmpleadosPage from '../pages/empleados/EmpleadosPage.jsx';
 import FacturacionPage from '../pages/facturacion/FacturacionPage.jsx';
 import { NominaPage } from '../pages/nomina/NominaPage.jsx';
 import ConfiguracionPage from '../pages/configuracion/ConfiguracionPage.jsx';
-
-// Componente para rutas protegidas
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
-};
 
 const AppRouter = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,7 +49,7 @@ const AppRouter = () => {
       <Route
         path="/usuarios"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.USUARIOS}>
             <UsuariosPage />
           </ProtectedRoute>
         }
@@ -74,7 +58,7 @@ const AppRouter = () => {
       <Route
         path="/empleados"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.NOMINA}>
             <EmpleadosPage />
           </ProtectedRoute>
         }
@@ -83,7 +67,7 @@ const AppRouter = () => {
       <Route
         path="/facturacion"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.FACTURACION}>
             <FacturacionPage />
           </ProtectedRoute>
         }
@@ -92,7 +76,7 @@ const AppRouter = () => {
       <Route
         path="/nomina"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.NOMINA}>
             <NominaPage />
           </ProtectedRoute>
         }
@@ -101,7 +85,7 @@ const AppRouter = () => {
       <Route
         path="/configuracion"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.CONFIGURACION}>
             <ConfiguracionPage />
           </ProtectedRoute>
         }
@@ -111,7 +95,7 @@ const AppRouter = () => {
       <Route
         path="/pacientes/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.PACIENTES}>
             <PatientDashboard />
           </ProtectedRoute>
         }
@@ -120,7 +104,7 @@ const AppRouter = () => {
       <Route
         path="/pacientes/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute module={PERMISSIONS.PACIENTES}>
             <PatientDashboard />
           </ProtectedRoute>
         }

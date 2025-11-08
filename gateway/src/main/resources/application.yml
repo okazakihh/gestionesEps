@@ -36,6 +36,12 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=0
+        - id: roles_route
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/roles/**
+          filters:
+            - StripPrefix=0
         - id: users_route
           uri: http://localhost:8080
           predicates:

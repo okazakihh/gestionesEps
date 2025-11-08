@@ -148,8 +148,40 @@ export const getAccessibleModules = (userRole) => {
   if (!rolePermissions) return [];
 
   return Object.keys(rolePermissions).filter(module =>
-    rolePermissions[module].read === true
+    rolePermissions[module]?.read === true
   );
+};
+
+/**
+ * Crear permisos desde configuración dinámica
+ * Esta función permite verificar permisos desde la configuración guardada
+ * @param {Object} permissionsConfig - Configuración de permisos desde BD
+ * @param {string} userRole - Rol del usuario
+ * @param {string} module - Módulo del sistema
+ * @param {string} action - Acción (read, write, delete, u otra específica)
+ * @returns {boolean} - True si tiene permiso
+ */
+export const hasPermissionFromConfig = (permissionsConfig, userRole, module, action) => {
+  if (!permissionsConfig || !userRole || !module || !action) return false;
+
+  const rolePermissions = permissionsConfig[userRole];
+  if (!rolePermissions) return false;
+
+  const modulePermissions = rolePermissions[module];
+  if (!modulePermissions) return false;
+
+  return modulePermissions[action] === true;
+};
+
+/**
+ * Verificar acceso a módulo desde configuración
+ * @param {Object} permissionsConfig - Configuración de permisos desde BD
+ * @param {string} userRole - Rol del usuario
+ * @param {string} module - Módulo del sistema
+ * @returns {boolean} - True si puede acceder
+ */
+export const canAccessModuleFromConfig = (permissionsConfig, userRole, module) => {
+  return hasPermissionFromConfig(permissionsConfig, userRole, module, 'read');
 };
 
 /**

@@ -1,7 +1,9 @@
 import React from 'react';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
 import { Link, useLocation } from 'react-router-dom';
-import { canAccessModule, PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
+import { PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
+import { usePermissionsContext } from '../../../negocio/contexts/PermissionsContext.jsx';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 
 const navItems = [
   {
@@ -57,6 +59,8 @@ const navItems = [
 export const VerticalNavbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { checkModuleAccess } = usePermissionsContext();
+  const { tema } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -64,13 +68,16 @@ export const VerticalNavbar = () => {
 
   const filteredNavItems = navItems.filter(item => {
     if (!item.module) return true; // Dashboard siempre visible
-    return user?.rol && canAccessModule(user.rol, item.module);
+    return user?.rol && checkModuleAccess(user.rol, item.module);
   });
 
   return (
     <div className="flex flex-col h-screen w-64 bg-white shadow-lg border-r border-gray-200">
       {/* Logo/Brand Section */}
-      <div className="flex items-center justify-center h-16 px-4 bg-blue-600">
+      <div 
+        className="flex items-center justify-center h-16 px-4"
+        style={{ background: tema.gradient }}
+      >
         <h1 className="text-white text-lg font-semibold">
           Gestión IPS
         </h1>
@@ -79,7 +86,10 @@ export const VerticalNavbar = () => {
       {/* User Info Section */}
       <div className="px-4 py-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: tema.gradient }}
+          >
             <span className="text-white text-sm font-medium">
               {user?.nombres?.charAt(0)}{user?.apellidos?.charAt(0)}
             </span>
@@ -88,7 +98,10 @@ export const VerticalNavbar = () => {
             <p className="text-sm font-medium text-gray-900 truncate">
               {user?.nombres} {user?.apellidos}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p 
+              className="text-xs truncate font-medium"
+              style={{ color: tema.primaryColor }}
+            >
               {user?.rol}
             </p>
           </div>
@@ -105,9 +118,14 @@ export const VerticalNavbar = () => {
               to={item.href}
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                 isActive
-                  ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
+                  ? 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
+              style={isActive ? {
+                background: `linear-gradient(90deg, ${tema.primaryColor}20 0%, transparent 100%)`,
+                color: tema.primaryColor,
+                borderRight: `3px solid ${tema.primaryColor}`
+              } : {}}
             >
               <span className="mr-3 text-lg">{item.icon}</span>
               {item.name}

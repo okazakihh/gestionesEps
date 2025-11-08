@@ -1,40 +1,51 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../data/context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { useTheme } from '../../negocio/contexts/ThemeContext.jsx';
+import {
+  Paper,
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Text,
+  Container,
+  Stack,
+  Image,
+  Box,
+  Alert
+} from '@mantine/core';
+import { IconUser, IconLock, IconAlertCircle } from '@tabler/icons-react';
+import { ThemedSwal } from '../../negocio/utils/themedSwal.js';
 
 export const LoginPage = () => {
-  // Credenciales según la información proporcionada
-  const [username, setUsername] = useState('administrador');
-  const [password, setPassword] = useState('admnin0836');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { login } = useAuth();
+  const { tema } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  setIsLoading(true);
-  setError(null);
+    setIsLoading(true);
+    setError(null);
 
     try {
-  await login({ username, password });
-  navigate('/');
+      await login({ username, password });
+      navigate('/');
     } catch (err) {
       console.error('Login failed:', err);
 
-      // Mostrar mensaje del backend si existe
       const backendMsg = err?.message || err?.response?.data?.error || err?.response?.data?.message;
       const errorMessage = backendMsg || 'Error en el login. Verifica tus credenciales.';
 
-      // Mostrar SweetAlert para error de login
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error de Inicio de Sesión',
-        text: errorMessage,
-        confirmButtonColor: '#EF4444',
-        footer: 'Verifica tu usuario y contraseña.'
-      });
+      await ThemedSwal.error(
+        'Error de Inicio de Sesión',
+        errorMessage,
+        'Verifica tu usuario y contraseña.'
+      );
 
       setError(errorMessage);
     } finally {
@@ -43,79 +54,136 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sistema de Gestión IPS
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Iniciar sesión para continuar
-        </p>
-      </div>
+    <Box
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: tema.gradient,
+        padding: '20px'
+      }}
+    >
+      <Container size={460}>
+        <Paper
+          shadow="xl"
+          p={40}
+          radius="lg"
+          withBorder
+          style={{
+            background: 'white',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          <Stack gap="lg">
+            {/* Logo */}
+            <Box style={{ textAlign: 'center' }}>
+              <Image
+                src="/logo-source.png"
+                alt="Logo IPS"
+                h={80}
+                w="auto"
+                fit="contain"
+                mx="auto"
+                mb="md"
+              />
+              <Title
+                order={2}
+                ta="center"
+                style={{
+                  color: tema.primaryColor,
+                  fontWeight: 700,
+                  marginBottom: 8
+                }}
+              >
+                Sistema de Gestión IPS
+              </Title>
+              <Text c="dimmed" size="sm" ta="center">
+                Ingresa tus credenciales para continuar
+              </Text>
+            </Box>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Usuario
-              </label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  autoComplete="username"
-                  required
+            {/* Formulario */}
+            <form onSubmit={handleSubmit}>
+              <Stack gap="md">
+                <TextInput
+                  label="Usuario"
+                  placeholder="Ingresa tu usuario"
+                  leftSection={<IconUser size={18} />}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Contraseña
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
                   required
+                  size="md"
+                  styles={{
+                    input: {
+                      borderColor: '#e0e0e0',
+                      '&:focus': {
+                        borderColor: tema.primaryColor
+                      }
+                    }
+                  }}
+                />
+
+                <PasswordInput
+                  label="Contraseña"
+                  placeholder="Ingresa tu contraseña"
+                  leftSection={<IconLock size={18} />}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  required
+                  size="md"
+                  styles={{
+                    input: {
+                      borderColor: '#e0e0e0',
+                      '&:focus': {
+                        borderColor: tema.primaryColor
+                      }
+                    }
+                  }}
                 />
-              </div>
-            </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="text-sm text-red-800">{error}</div>
-              </div>
-            )}
+                {error && (
+                  <Alert
+                    icon={<IconAlertCircle size={18} />}
+                    title="Error"
+                    color="red"
+                    variant="filled"
+                  >
+                    {error}
+                  </Alert>
+                )}
 
-            {/* no success message UI */}
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="md"
+                  loading={isLoading}
+                  style={{
+                    background: tema.gradient,
+                    marginTop: 16
+                  }}
+                  styles={{
+                    root: {
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 16px ${tema.primaryColor}4D`
+                      },
+                      transition: 'all 0.2s ease'
+                    }
+                  }}
+                >
+                  {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                </Button>
+              </Stack>
+            </form>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-              </button>
-            </div>
-
-            {/* Información de soporte removida */}
-          </form>
-
-          {/* soporte técnico y debug removidos */}
-        </div>
-      </div>
-    </div>
+            {/* Footer */}
+            <Text c="dimmed" size="xs" ta="center" mt="md">
+              © 2024 Sistema de Gestión IPS. Todos los derechos reservados.
+            </Text>
+          </Stack>
+        </Paper>
+      </Container>
+    </Box>
   );
 };

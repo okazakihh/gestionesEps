@@ -231,10 +231,15 @@ class ApiClient {
   handleError(error) {
     if (error.response) {
       // Error con response del servidor
+      const errorMessage = error.response.data?.message || 
+                          error.response.data?.error || 
+                          'Error del servidor';
+      
       return {
         success: false,
-        error: error.response.data?.message || error.response.data?.error || 'Error del servidor',
+        error: errorMessage,
         errors: error.response.data?.errors,
+        statusCode: error.response.status
       };
     } else if (error.request) {
       // Error de red

@@ -5,10 +5,12 @@ import CreateUserForm from '../components/auth/CreateUserForm.jsx';
 import { Modal, Table, Badge, ActionIcon, Group, Text, TextInput, Button, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Usuario } from '../../data/types/index.js';
-import Swal from 'sweetalert2';
+import { ThemedSwal } from '../../negocio/utils/themedSwal.js';
+import { useTheme } from '../../negocio/contexts/ThemeContext.jsx';
 
 const UsuariosPage = () => {
   const location = useLocation();
+  const { tema } = useTheme();
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,13 +73,11 @@ const UsuariosPage = () => {
       setError('Error de conexión al cargar usuarios');
 
       // Mostrar SweetAlert para error de carga
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error al Cargar Usuarios',
-        text: 'No se pudieron cargar los usuarios. Verifica tu conexión a internet.',
-        confirmButtonColor: '#EF4444',
-        footer: 'Si el problema persiste, contacta al administrador del sistema.'
-      });
+      await ThemedSwal.error(
+        'Error al Cargar Usuarios',
+        'No se pudieron cargar los usuarios. Verifica tu conexión a internet.',
+        'Si el problema persiste, contacta al administrador del sistema.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -117,11 +117,10 @@ const UsuariosPage = () => {
       
       if (response.success) {
         // Mostrar SweetAlert de éxito
-        await Swal.fire({
+        await ThemedSwal.fire({
           icon: 'success',
           title: '¡Usuario Eliminado!',
           text: `El usuario ${expectedUsername} ha sido eliminado correctamente.`,
-          confirmButtonColor: '#10B981',
           timer: 3000,
           timerProgressBar: true,
           showConfirmButton: false
@@ -138,13 +137,11 @@ const UsuariosPage = () => {
       console.error('Error al eliminar usuario:', error);
 
       // Mostrar SweetAlert para error de eliminación
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error al Eliminar Usuario',
-        text: 'No se pudo eliminar el usuario seleccionado.',
-        confirmButtonColor: '#EF4444',
-        footer: 'Verifica que el usuario no tenga dependencias activas.'
-      });
+      await ThemedSwal.error(
+        'Error al Eliminar Usuario',
+        'No se pudo eliminar el usuario seleccionado.',
+        'Verifica que el usuario no tenga dependencias activas.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -167,11 +164,10 @@ const UsuariosPage = () => {
         
         if (response.success) {
           // Mostrar SweetAlert de éxito
-          await Swal.fire({
+          await ThemedSwal.fire({
             icon: 'success',
             title: '¡Usuario Actualizado!',
             text: 'Los datos del usuario se han actualizado correctamente.',
-            confirmButtonColor: '#10B981',
             timer: 3000,
             timerProgressBar: true,
             showConfirmButton: false
@@ -193,11 +189,10 @@ const UsuariosPage = () => {
         console.log('Usuario registrado exitosamente:', response);
 
         // Mostrar SweetAlert de éxito
-        await Swal.fire({
+        await ThemedSwal.fire({
           icon: 'success',
           title: '¡Usuario Registrado!',
           text: 'El usuario ha sido registrado correctamente.',
-          confirmButtonColor: '#10B981',
           timer: 3000,
           timerProgressBar: true,
           showConfirmButton: false
@@ -212,13 +207,11 @@ const UsuariosPage = () => {
       console.error('Error al procesar usuario:', error);
 
       // Mostrar SweetAlert para error de creación/actualización
-      await Swal.fire({
-        icon: 'error',
-        title: isEditMode ? 'Error al Actualizar Usuario' : 'Error al Registrar Usuario',
-        text: error.message || 'Ha ocurrido un error inesperado.',
-        confirmButtonColor: '#EF4444',
-        footer: isEditMode ? 'Verifica los datos e intenta nuevamente.' : 'Verifica que el usuario no exista y que todos los campos sean válidos.'
-      });
+      await ThemedSwal.error(
+        isEditMode ? 'Error al Actualizar Usuario' : 'Error al Registrar Usuario',
+        error.message || 'Ha ocurrido un error inesperado.',
+        isEditMode ? 'Verifica los datos e intenta nuevamente.' : 'Verifica que el usuario no exista y que todos los campos sean válidos.'
+      );
 
       setError(error.message || (isEditMode ? 'Error al actualizar usuario' : 'Error al registrar usuario'));
     } finally {
@@ -369,7 +362,7 @@ const UsuariosPage = () => {
                     <Group gap="xs">
                       <ActionIcon
                         variant="light"
-                        color="blue"
+                        color={tema.mantineColor}
                         size="sm"
                         onClick={() => handleEdit(usuario)}
                       >

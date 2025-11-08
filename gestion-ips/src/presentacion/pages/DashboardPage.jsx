@@ -1,9 +1,11 @@
 import React from 'react';
 import { useAuth } from '../../data/context/AuthContext.jsx';
+import { useTheme } from '../../negocio/contexts/ThemeContext.jsx';
 import { MainLayout } from '../components/ui/MainLayout.jsx';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
+  const { tema } = useTheme();
 
   return (
     <MainLayout
@@ -36,11 +38,23 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">
+              <div 
+                className="border rounded-lg p-4"
+                style={{ 
+                  backgroundColor: `${tema.primaryColor}10`,
+                  borderColor: `${tema.primaryColor}40`
+                }}
+              >
+                <h3 
+                  className="text-lg font-medium mb-2"
+                  style={{ color: tema.primaryColor }}
+                >
                   Estado de Servicios:
                 </h3>
-                <div className="text-sm text-blue-700">
+                <div 
+                  className="text-sm"
+                  style={{ color: tema.secondaryColor }}
+                >
                   <p>✅ Frontend React: http://localhost:5173</p>
                   <p>✅ Backend Spring Boot: http://localhost:8080/api</p>
                   <p>✅ PostgreSQL: localhost:5432</p>
@@ -54,12 +68,18 @@ export const DashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
+                <div 
+                  className="p-2 rounded-lg"
+                  style={{ backgroundColor: `${tema.primaryColor}20` }}
+                >
                   <span className="text-2xl">👥</span>
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
-                  <p className="text-2xl font-semibold text-gray-900">--</p>
+                  <p 
+                    className="text-2xl font-semibold"
+                    style={{ color: tema.primaryColor }}
+                  >--</p>
                 </div>
               </div>
             </div>

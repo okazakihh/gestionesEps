@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import { Container, Stack, Title, Text, Paper, Alert, Tabs, Button, Group } from '@mantine/core';
-import { IconSettings, IconInfoCircle, IconBuilding, IconBell, IconFileInvoice, IconCash, IconPlus, IconShieldLock } from '@tabler/icons-react';
+import { IconSettings, IconInfoCircle, IconBuilding, IconBell, IconFileInvoice, IconCash, IconPlus, IconShieldLock, IconPalette } from '@tabler/icons-react';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import { ConfiguracionIPSTab } from '../../components/configuracion/ConfiguracionIPSTab.jsx';
 import { ConfiguracionSistemaTab } from '../../components/configuracion/ConfiguracionSistemaTab.jsx';
@@ -17,6 +17,7 @@ import { ConfiguracionNotificacionesTab } from '../../components/configuracion/C
 import { ConfiguracionFacturacionTab } from '../../components/configuracion/ConfiguracionFacturacionTab.jsx';
 import { ConfiguracionNominaTab } from '../../components/configuracion/ConfiguracionNominaTab.jsx';
 import { ConfiguracionPermisosTab } from '../../components/configuracion/ConfiguracionPermisosTab.jsx';
+import { ThemeSelector } from '../../components/configuracion/ThemeSelector.jsx';
 import { CrearConfiguracionModal } from '../../components/configuracion/CrearConfiguracionModal.jsx';
 
 const ConfiguracionPage = () => {
@@ -100,6 +101,12 @@ const ConfiguracionPage = () => {
                 >
                   Permisos a Módulos
                 </Tabs.Tab>
+                <Tabs.Tab 
+                  value="tema" 
+                  leftSection={<IconPalette size={16} />}
+                >
+                  Tema
+                </Tabs.Tab>
               </Tabs.List>
 
               <Tabs.Panel value="ips" pt="lg">
@@ -124,6 +131,10 @@ const ConfiguracionPage = () => {
 
               <Tabs.Panel value="permisos" pt="lg">
                 <ConfiguracionPermisosTab />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="tema" pt="lg">
+                <ThemeSelector />
               </Tabs.Panel>
             </Tabs>
           </Paper>
@@ -159,6 +170,9 @@ const ConfiguracionPage = () => {
               </Text>
               <Text size="sm">
                 <strong>Permisos a Módulos:</strong> Gestión de permisos y accesos por rol a cada módulo del sistema.
+              </Text>
+              <Text size="sm">
+                <strong>Tema:</strong> Personalización de colores y apariencia de la interfaz.
               </Text>
             </Stack>
           </Alert>

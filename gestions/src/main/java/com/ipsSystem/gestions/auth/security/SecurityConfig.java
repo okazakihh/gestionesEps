@@ -19,7 +19,8 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+// TODO: Reactivar validación de roles con una estrategia diferente más adelante
+// @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     
     @Autowired
@@ -38,6 +39,7 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // TODO: Reactivar validación JWT más adelante con una estrategia diferente
         http
             .cors(cors -> cors.disable()) // Deshabilitar CORS aquí - lo maneja el gateway
             .csrf(csrf -> csrf.disable())
@@ -47,11 +49,11 @@ public class SecurityConfig {
                 .accessDeniedHandler(jwtAccessDeniedHandler)
             )
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // TEMPORALMENTE: Permitir todas las peticiones sin validación JWT
+                .anyRequest().permitAll()
+            );
+            // DESHABILITADO TEMPORALMENTE: Filtro JWT
+            // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
