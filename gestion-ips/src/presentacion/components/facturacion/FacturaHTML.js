@@ -8,6 +8,8 @@
  * - generarFacturaHTML(factura, facturaData, empresa)
  */
 
+import { ipsConfig } from '../../../negocio/utils/ipsConfig.js';
+
 /**
  * Formatea moneda en pesos colombianos
  * @param {number} value - Valor numérico
@@ -63,67 +65,20 @@ const formatDateShort = (dateString) => {
 const generarEncabezadoHTML = (empresa, numeroFactura) => {
   return `
     <div class="header">
-      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
         <div class="company-info">
-          <h1 style="color: #228BE6; margin: 0 0 5px 0; font-size: 22px; font-weight: bold;">
-            ${empresa.nombre}
-          </h1>
-          <p style="margin: 2px 0; color: #495057; font-size: 12px;">
-            <strong>NIT:</strong> ${empresa.nit}
-          </p>
-          <p style="margin: 2px 0; color: #495057; font-size: 12px;">
-            ${empresa.direccion}
-          </p>
-          <p style="margin: 2px 0; color: #495057; font-size: 12px;">
-            <strong>Tel:</strong> ${empresa.telefono || 'N/A'} | <strong>Email:</strong> ${empresa.email || 'N/A'}
-          </p>
+          <h1>${empresa.nombre}</h1>
+          <p><strong>NIT:</strong> ${empresa.nit}</p>
+          <p>${empresa.direccion}</p>
+          <p><strong>Tel:</strong> ${empresa.telefono || 'N/A'} | <strong>Email:</strong> ${empresa.email || 'N/A'}</p>
         </div>
-        <div class="invoice-info" style="text-align: right;">
-          <div style="background: #228BE6; color: white; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px;">
-            <h2 style="margin: 0; font-size: 18px;">FACTURA</h2>
+        <div class="invoice-info">
+          <div class="invoice-badge">
+            <h2>FACTURA</h2>
           </div>
-          <p style="margin: 5px 0; font-size: 14px; font-weight: bold; color: #228BE6;">
-            ${numeroFactura}
-          </p>
-          <p style="margin: 2px 0; font-size: 11px; color: #868e96;">
+          <p class="invoice-number">${numeroFactura}</p>
+          <p style="margin: 2px 0; font-size: 10px; color: #868e96;">
             <strong>Fecha:</strong> ${formatDate(new Date())}
-          </p>
-        </div>
-      </div>
-    </div>
-  `;
-};
-
-/**
- * Genera información del cliente/paciente
- * @param {Array} citas - Lista de citas facturadas
- * @returns {string} HTML con información del cliente
- */
-const generarInfoClienteHTML = (citas) => {
-  // Tomar información del primer paciente (normalmente todas las citas son del mismo)
-  const primeraCita = citas[0] || {};
-  const paciente = primeraCita.paciente || {};
-  
-  return `
-    <div class="client-info">
-      <h3 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; border-bottom: 2px solid #228BE6; padding-bottom: 5px;">
-        INFORMACIÓN DEL PACIENTE/CLIENTE
-      </h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div>
-          <p style="margin: 3px 0; font-size: 12px;">
-            <strong>Nombre:</strong> ${paciente.nombre || 'N/A'}
-          </p>
-          <p style="margin: 3px 0; font-size: 12px;">
-            <strong>Documento:</strong> ${paciente.tipoDocumento || 'CC'} ${paciente.documento || 'N/A'}
-          </p>
-        </div>
-        <div>
-          <p style="margin: 3px 0; font-size: 12px;">
-            <strong>EPS:</strong> ${paciente.eps || 'PARTICULAR'}
-          </p>
-          <p style="margin: 3px 0; font-size: 12px;">
-            <strong>Tipo de Atención:</strong> ${paciente.tipoAtencion || 'Particular'}
           </p>
         </div>
       </div>
@@ -139,47 +94,43 @@ const generarInfoClienteHTML = (citas) => {
 const generarTablaServiciosHTML = (citas) => {
   const filas = citas.map((cita, index) => {
     const valor = cita.valor || 0;
+    const paciente = cita.paciente || {};
     
     return `
       <tr>
-        <td style="text-align: center; padding: 10px; border: 1px solid #dee2e6;">${index + 1}</td>
-        <td style="padding: 10px; border: 1px solid #dee2e6;">
-          <strong>${cita.procedimiento || 'Consulta Médica'}</strong><br>
-          <span style="font-size: 10px; color: #868e96;">
-            Código CUPS: ${cita.codigoCups || 'N/A'}
-          </span>
+        <td style="text-align: center;">${index + 1}</td>
+        <td>
+          <div style="font-weight: 600; font-size: 10px; margin-bottom: 2px;">${paciente.nombre || 'N/A'}</div>
+          <div style="font-size: 9px; color: #868e96;">Doc: ${paciente.tipoDocumento || 'CC'} ${paciente.documento || 'N/A'}</div>
         </td>
-        <td style="padding: 10px; border: 1px solid #dee2e6;">
-          <span style="font-size: 11px;">${cita.medico?.nombre || 'N/A'}</span><br>
-          <span style="font-size: 10px; color: #868e96;">
-            ${formatDateShort(cita.fechaAtencion)}
-          </span>
+        <td>
+          <div class="service-desc">${cita.procedimiento || 'Consulta Médica'}</div>
+          <div class="service-code">Código CUPS: ${cita.codigoCups || 'N/A'}</div>
         </td>
-        <td style="text-align: center; padding: 10px; border: 1px solid #dee2e6;">1</td>
-        <td style="text-align: right; padding: 10px; border: 1px solid #dee2e6; font-family: monospace;">
-          ${formatCurrency(valor)}
+        <td>
+          <div style="font-size: 10px;">${cita.medico?.nombre || 'N/A'}</div>
+          <div class="service-code">${formatDateShort(cita.fechaAtencion)}</div>
         </td>
-        <td style="text-align: right; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; font-family: monospace;">
-          ${formatCurrency(valor)}
-        </td>
+        <td style="text-align: center;">1</td>
+        <td style="text-align: right; font-family: monospace;">${formatCurrency(valor)}</td>
+        <td style="text-align: right; font-weight: 600; font-family: monospace;">${formatCurrency(valor)}</td>
       </tr>
     `;
   }).join('');
 
   return `
     <div class="services-table">
-      <h3 style="margin: 20px 0 10px 0; color: #495057; font-size: 14px;">
-        DETALLE DE SERVICIOS
-      </h3>
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+      <h3>DETALLE DE SERVICIOS</h3>
+      <table>
         <thead>
-          <tr style="background: #f1f3f5;">
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 50px;">Item</th>
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Descripción del Servicio</th>
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left; width: 180px;">Profesional / Fecha</th>
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center; width: 60px;">Cant.</th>
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: right; width: 100px;">Valor Unit.</th>
-            <th style="padding: 10px; border: 1px solid #dee2e6; text-align: right; width: 120px;">Valor Total</th>
+          <tr>
+            <th style="text-align: center; width: 40px;">Item</th>
+            <th style="text-align: left; width: 160px;">Paciente</th>
+            <th style="text-align: left;">Descripción del Servicio</th>
+            <th style="text-align: left; width: 140px;">Profesional / Fecha</th>
+            <th style="text-align: center; width: 50px;">Cant.</th>
+            <th style="text-align: right; width: 90px;">Valor Unit.</th>
+            <th style="text-align: right; width: 100px;">Valor Total</th>
           </tr>
         </thead>
         <tbody>
@@ -198,23 +149,19 @@ const generarTablaServiciosHTML = (citas) => {
  */
 const generarTotalesHTML = (subtotal, total) => {
   return `
-    <div class="totals" style="margin-top: 20px;">
-      <div style="display: flex; justify-content: flex-end;">
-        <div style="width: 300px; border: 2px solid #dee2e6; border-radius: 5px; padding: 15px; background: #f8f9fa;">
-          <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
-            <span style="font-size: 13px;"><strong>Subtotal:</strong></span>
-            <span style="font-size: 13px; font-family: monospace;">${formatCurrency(subtotal)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dee2e6;">
-            <span style="font-size: 13px;"><strong>IVA (0%):</strong></span>
-            <span style="font-size: 13px; font-family: monospace;">${formatCurrency(0)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding: 12px 0; background: #228BE6; margin: -15px -15px 0 -15px; padding: 15px; border-radius: 0 0 3px 3px;">
-            <span style="font-size: 16px; font-weight: bold; color: white;">TOTAL A PAGAR:</span>
-            <span style="font-size: 18px; font-weight: bold; color: white; font-family: monospace;">
-              ${formatCurrency(total)}
-            </span>
-          </div>
+    <div style="margin-top: 15px;">
+      <div class="totals-box">
+        <div class="total-row">
+          <span><strong>Subtotal:</strong></span>
+          <span style="font-family: monospace;">${formatCurrency(subtotal)}</span>
+        </div>
+        <div class="total-row">
+          <span><strong>IVA (0%):</strong></span>
+          <span style="font-family: monospace;">${formatCurrency(0)}</span>
+        </div>
+        <div class="total-final">
+          <span class="total-final-label">TOTAL A PAGAR:</span>
+          <span class="total-final-amount">${formatCurrency(total)}</span>
         </div>
       </div>
     </div>
@@ -230,27 +177,25 @@ const generarNotasHTML = (facturaData) => {
   const observaciones = facturaData.observaciones || '';
   
   return `
-    <div class="notes" style="margin-top: 30px;">
+    <div class="notes">
       ${observaciones ? `
-      <div style="margin-bottom: 15px;">
-        <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #495057;">OBSERVACIONES:</h4>
-        <p style="margin: 0; font-size: 11px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px;">
-          ${observaciones}
-        </p>
+      <div class="note-box obs-box">
+        <h4>OBSERVACIONES:</h4>
+        <p>${observaciones}</p>
       </div>
       ` : ''}
 
-      <div style="background: #e7f5ff; padding: 12px; border-radius: 5px; border: 1px solid #74c0fc; margin-bottom: 15px;">
-        <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #1971c2;">💳 INFORMACIÓN DE PAGO</h4>
-        <p style="margin: 3px 0; font-size: 10px; color: #495057;">
+      <div class="note-box payment-box">
+        <h4>💳 INFORMACIÓN DE PAGO</h4>
+        <p>
           <strong>Banco:</strong> Bancolombia | <strong>Cuenta Corriente:</strong> 123-456789-01<br>
           <strong>Nequi:</strong> 300 123 4567 | <strong>Daviplata:</strong> 301 234 5678
         </p>
       </div>
 
-      <div style="background: #f8f9fa; padding: 12px; border-radius: 5px; border: 1px solid #dee2e6;">
-        <h4 style="margin: 0 0 8px 0; font-size: 12px; color: #495057;">📋 TÉRMINOS Y CONDICIONES</h4>
-        <ul style="margin: 5px 0; padding-left: 20px; font-size: 10px; line-height: 1.6; color: #6c757d;">
+      <div class="note-box terms-box">
+        <h4>📋 TÉRMINOS Y CONDICIONES</h4>
+        <ul>
           <li>Los servicios médicos prestados están sujetos a la regulación colombiana en salud</li>
           <li>Esta factura es válida como soporte de gastos médicos ante EPS y entidades tributarias</li>
           <li>Los servicios particulares deben ser pagados en un plazo máximo de 30 días</li>
@@ -269,18 +214,18 @@ const generarNotasHTML = (facturaData) => {
  */
 const generarFirmasHTML = (empresa) => {
   return `
-    <div class="signatures" style="margin-top: 40px; display: flex; justify-content: space-between; gap: 30px;">
-      <div style="flex: 1; text-align: center;">
-        <div style="border-top: 2px solid #000; width: 200px; margin: 60px auto 10px;"></div>
-        <p style="margin: 0; font-size: 11px; font-weight: bold;">Firma Autorizada</p>
-        <p style="margin: 2px 0; font-size: 10px; color: #6c757d;">${empresa.nombre}</p>
-        <p style="margin: 2px 0; font-size: 9px; color: #6c757d;">Representante Legal</p>
+    <div class="signatures">
+      <div class="signature-line">
+        <div class="line"></div>
+        <p class="signature-name">Firma Autorizada</p>
+        <p class="signature-role">${empresa.nombre}</p>
+        <p class="signature-role">Representante Legal</p>
       </div>
-      <div style="flex: 1; text-align: center;">
-        <div style="border-top: 2px solid #000; width: 200px; margin: 60px auto 10px;"></div>
-        <p style="margin: 0; font-size: 11px; font-weight: bold;">Recibido por</p>
-        <p style="margin: 2px 0; font-size: 10px; color: #6c757d;">Nombre y Firma</p>
-        <p style="margin: 2px 0; font-size: 9px; color: #6c757d;">Fecha: ______________</p>
+      <div class="signature-line">
+        <div class="line"></div>
+        <p class="signature-name">Recibido por</p>
+        <p class="signature-role">Nombre y Firma</p>
+        <p class="signature-role">Fecha: ______________</p>
       </div>
     </div>
   `;
@@ -295,10 +240,10 @@ const generarPieHTML = (empresa) => {
   const fechaGeneracion = new Date().toLocaleString('es-CO');
   
   return `
-    <div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6;">
-      <div style="background: #f1f3f5; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
-        <h5 style="margin: 0 0 5px 0; color: #495057; font-size: 10px;">⚖️ INFORMACIÓN LEGAL Y TRIBUTARIA</h5>
-        <p style="margin: 0; font-size: 8px; line-height: 1.4; color: #6c757d;">
+    <div class="footer">
+      <div class="legal-box">
+        <h5>⚖️ INFORMACIÓN LEGAL Y TRIBUTARIA</h5>
+        <p>
           <strong>Régimen Común - Responsable de IVA</strong><br>
           Esta factura se asimila en todos sus efectos a una letra de cambio según Art. 774 del Código de Comercio.<br>
           Factura electrónica válida según Resolución DIAN 000042 de 2020.<br>
@@ -307,13 +252,9 @@ const generarPieHTML = (empresa) => {
         </p>
       </div>
 
-      <div style="text-align: center; padding-top: 10px;">
-        <p style="margin: 0; font-size: 8px; color: #adb5bd;">
-          ${empresa.nombre} - ${empresa.nit} | Generado el ${fechaGeneracion}
-        </p>
-        <p style="margin: 5px 0 0 0; font-size: 8px; color: #adb5bd;">
-          Sistema de Gestión Médica - Versión 1.0
-        </p>
+      <div class="footer-center">
+        <p>${empresa.nombre} - ${empresa.nit} | Generado el ${fechaGeneracion}</p>
+        <p style="margin-top: 4px;">Sistema de Gestión Médica - Versión 1.0</p>
       </div>
     </div>
   `;
@@ -323,17 +264,17 @@ const generarPieHTML = (empresa) => {
  * Genera HTML completo de la factura médica
  * @param {Object} factura - Objeto de la factura
  * @param {Object} facturaData - Datos parseados de la factura
- * @param {Object} empresa - Información de la empresa/IPS
+ * @param {Object} empresa - Información de la empresa/IPS (opcional, usa ipsConfig por defecto)
  * @returns {string} HTML completo listo para imprimir
  */
-export const generarFacturaHTML = (factura, facturaData = {}, empresa = {}) => {
-  // Valores por defecto
-  const empresaInfo = {
-    nombre: empresa.nombre || 'GESTIÓN IPS',
-    nit: empresa.nit || '900.123.456-7',
-    direccion: empresa.direccion || 'Calle 123 #45-67, Bogotá D.C.',
-    telefono: empresa.telefono || '(601) 234-5678',
-    email: empresa.email || 'contacto@gestionips.com'
+export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) => {
+  // Usar configuración centralizada de la IPS si no se proporciona empresa
+  const empresaInfo = empresa || {
+    nombre: ipsConfig.nombre,
+    nit: ipsConfig.nit,
+    direccion: `${ipsConfig.direccion}, ${ipsConfig.ciudad}`,
+    telefono: ipsConfig.telefono,
+    email: ipsConfig.email
   };
 
   // Parsear datos si vienen como JSON string
@@ -356,59 +297,217 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = {}) => {
   // Estilos CSS
   const styles = `
     <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        padding: 15mm; 
+        font-size: 11px;
+        color: #212529;
+        line-height: 1.4;
+      }
+      .header { 
+        border-bottom: 3px solid #228BE6; 
+        padding-bottom: 12px; 
+        margin-bottom: 15px; 
+      }
+      .company-info h1 { 
+        color: #228BE6; 
+        font-size: 20px; 
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      .company-info p {
+        margin: 2px 0;
+        font-size: 10px;
+        color: #495057;
+      }
+      .invoice-info {
+        text-align: right;
+      }
+      .invoice-badge {
+        background: #228BE6;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        display: inline-block;
+      }
+      .invoice-badge h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .invoice-number {
+        font-size: 13px;
+        font-weight: 600;
+        color: #228BE6;
+        margin: 4px 0;
+      }
+      .services-table {
+        margin: 15px 0;
+      }
+      .services-table h3 {
+        margin: 0 0 8px 0;
+        color: #495057;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-bottom: 15px;
+        font-size: 10px;
+      }
+      th { 
+        background: #f1f3f5; 
+        padding: 8px; 
+        text-align: left; 
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+        font-size: 10px;
+      }
+      td { 
+        padding: 8px; 
+        border: 1px solid #dee2e6;
+        vertical-align: top;
+      }
+      .service-desc {
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .service-code {
+        font-size: 9px;
+        color: #868e96;
+      }
+      .totals-box { 
+        width: 280px;
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        padding: 12px;
+        background: #f8f9fa;
+        margin-left: auto;
+      }
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #dee2e6;
+        font-size: 11px;
+      }
+      .total-final {
+        background: #228BE6;
+        margin: 8px -12px -12px -12px;
+        padding: 12px;
+        border-radius: 0 0 3px 3px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .total-final-label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .total-final-amount {
+        font-size: 16px;
+        font-weight: 700;
+        font-family: monospace;
+      }
+      .notes {
+        margin-top: 20px;
+      }
+      .note-box {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        font-size: 10px;
+      }
+      .note-box h4 {
+        margin: 0 0 6px 0;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .note-box p, .note-box ul {
+        margin: 4px 0;
+        line-height: 1.5;
+      }
+      .note-box ul {
+        padding-left: 18px;
+      }
+      .note-box li {
+        margin: 3px 0;
+      }
+      .obs-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border: 1px solid #ffe69c;
+      }
+      .payment-box {
+        background: #e7f5ff;
+        border: 1px solid #74c0fc;
+      }
+      .terms-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+      }
+      .signatures {
+        margin-top: 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+      }
+      .signature-line {
+        text-align: center;
+      }
+      .signature-line .line {
+        border-top: 2px solid #000;
+        width: 180px;
+        margin: 50px auto 8px;
+      }
+      .signature-name {
+        font-size: 10px;
+        font-weight: 600;
+        margin: 2px 0;
+      }
+      .signature-role {
+        font-size: 9px;
+        color: #6c757d;
+        margin: 2px 0;
+      }
+      .footer { 
+        margin-top: 25px; 
+        padding-top: 15px; 
+        border-top: 2px solid #dee2e6;
+        font-size: 8px;
+        color: #6c757d;
+      }
+      .legal-box {
+        background: #f1f3f5;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+      .legal-box h5 {
+        margin: 0 0 4px 0;
+        font-size: 9px;
+        color: #495057;
+        font-weight: 600;
+      }
+      .legal-box p {
+        margin: 0;
+        font-size: 8px;
+        line-height: 1.4;
+      }
+      .footer-center {
+        text-align: center;
+        padding-top: 8px;
+      }
       @media print {
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-          padding: 20mm; 
-          font-size: 12px;
-          color: #212529;
-        }
-        .header { 
-          border-bottom: 3px solid #228BE6; 
-          padding-bottom: 15px; 
-          margin-bottom: 20px; 
-        }
-        .company-info h1 { 
-          color: #228BE6; 
-          font-size: 22px; 
-          margin-bottom: 5px; 
-        }
-        .client-info { 
-          background: #f8f9fa; 
-          padding: 15px; 
-          border-radius: 5px; 
-          margin-bottom: 20px;
-          border: 1px solid #dee2e6;
-        }
-        table { 
-          width: 100%; 
-          border-collapse: collapse; 
-          margin-bottom: 20px;
-        }
-        th { 
-          background: #f1f3f5; 
-          padding: 10px; 
-          text-align: left; 
-          font-weight: 600;
-          border: 1px solid #dee2e6;
-        }
-        td { 
-          padding: 10px; 
-          border: 1px solid #dee2e6;
-        }
-        .totals { 
-          margin-top: 20px; 
-        }
-        .footer { 
-          margin-top: 30px; 
-          padding-top: 20px; 
-          border-top: 2px solid #dee2e6;
-          font-size: 9px;
-          color: #6c757d;
+          padding: 12mm; 
         }
         @page { 
-          margin: 15mm; 
+          margin: 10mm; 
           size: A4; 
         }
       }
@@ -427,7 +526,6 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = {}) => {
     </head>
     <body>
       ${generarEncabezadoHTML(empresaInfo, numeroFactura)}
-      ${generarInfoClienteHTML(citas)}
       ${generarTablaServiciosHTML(citas)}
       ${generarTotalesHTML(subtotal, total)}
       ${generarNotasHTML(datosFactura)}

@@ -118,15 +118,8 @@ export const NominaPage = () => {
    * Abre ventana para imprimir desprendible
    */
   const handlePrintDesprendible = (nomina) => {
-    // Configuración de empresa (puede venir de un store global)
-    const empresaInfo = {
-      nombre: 'GESTIÓN IPS',
-      nit: '900.123.456-7',
-      direccion: 'Calle 123 #45-67, Bogotá D.C.'
-    };
-
-    // Generar HTML del desprendible
-    const htmlContent = generarDesprendibleHTML(nomina, empresaInfo);
+    // Generar HTML del desprendible (usa ipsConfig por defecto)
+    const htmlContent = generarDesprendibleHTML(nomina);
     
     // Abrir ventana nueva con el desprendible
     const ventana = window.open('', '_blank', 'width=800,height=1000');

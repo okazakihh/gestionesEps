@@ -60,17 +60,8 @@ const VerFacturaModal = ({
    * Abre ventana para imprimir factura
    */
   const handlePrintFactura = () => {
-    // Configuración de empresa (puede venir de un store global)
-    const empresaInfo = {
-      nombre: 'GESTIÓN IPS',
-      nit: '900.123.456-7',
-      direccion: 'Calle 123 #45-67, Bogotá D.C.',
-      telefono: '(601) 234-5678',
-      email: 'contacto@gestionips.com'
-    };
-
-    // Generar HTML de la factura
-    const htmlContent = generarFacturaHTML(factura, facturaData, empresaInfo);
+    // Generar HTML de la factura (usa ipsConfig por defecto)
+    const htmlContent = generarFacturaHTML(factura, facturaData);
     
     // Abrir ventana nueva con la factura
     const ventana = window.open('', '_blank', 'width=800,height=1000');

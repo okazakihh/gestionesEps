@@ -527,101 +527,102 @@ export const generarHistoriaClinicaHTML = (
         body { 
           font-family: Arial, sans-serif; 
           margin: 0; 
-          padding: 20px; 
-          font-size: 11px; 
-          line-height: 1.4; 
+          padding: 12px; 
+          font-size: 10px; 
+          line-height: 1.3; 
+          color: #111827;
         }
         .header { 
-          border-bottom: 3px solid #2563eb; 
-          padding-bottom: 15px; 
-          margin-bottom: 20px; 
+          border-bottom: 2px solid #2563eb; 
+          padding-bottom: 8px; 
+          margin-bottom: 12px; 
           text-align: center; 
         }
         .institution-info { 
           background: #f0f9ff; 
-          padding: 10px; 
-          border-radius: 5px; 
-          margin-bottom: 15px; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 10px; 
         }
         .patient-info { 
           background: #f8fafc; 
-          padding: 15px; 
-          border-radius: 5px; 
-          margin-bottom: 20px; 
-          border: 2px solid #e5e7eb; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 12px; 
+          border: 1px solid #e5e7eb; 
         }
         .medical-antecedents { 
           background: #fef3c7; 
-          padding: 15px; 
-          border-radius: 5px; 
-          margin-bottom: 20px; 
-          border-left: 4px solid #f59e0b; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 12px; 
+          border-left: 3px solid #f59e0b; 
         }
         .consulta { 
           border: 1px solid #e5e7eb; 
-          padding: 15px; 
-          margin-bottom: 15px; 
+          padding: 8px; 
+          margin-bottom: 12px; 
           page-break-inside: avoid; 
         }
         .consulta-header { 
           background: #f3f4f6; 
-          padding: 8px; 
-          margin: -15px -15px 10px -15px; 
-          border-radius: 5px 5px 0 0; 
+          padding: 6px; 
+          margin: -8px -8px 8px -8px; 
+          border-radius: 4px 4px 0 0; 
           border-bottom: 1px solid #d1d5db; 
         }
         .section { 
-          margin-bottom: 10px; 
+          margin-bottom: 6px; 
         }
         .section-title { 
-          font-weight: bold; 
+          font-weight: 600; 
           color: #374151; 
           border-bottom: 1px solid #e5e7eb; 
-          padding-bottom: 3px; 
-          font-size: 12px; 
+          padding-bottom: 2px; 
+          font-size: 11px; 
         }
         .field { 
-          margin-bottom: 5px; 
+          margin-bottom: 4px; 
         }
         .field-label { 
-          font-weight: bold; 
+          font-weight: 600; 
           display: inline-block; 
-          min-width: 120px; 
+          min-width: 100px; 
           color: #6b7280; 
         }
         .footer { 
-          margin-top: 30px; 
-          padding-top: 15px; 
-          border-top: 2px solid #e5e7eb; 
+          margin-top: 20px; 
+          padding-top: 10px; 
+          border-top: 1px solid #e5e7eb; 
           font-size: 9px; 
           color: #6b7280; 
         }
         .consent-section { 
           background: #ecfdf5; 
-          padding: 10px; 
-          border-radius: 5px; 
-          margin-bottom: 15px; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 10px; 
           border: 1px solid #d1fae5; 
         }
         .grid-2 { 
           display: grid; 
           grid-template-columns: 1fr 1fr; 
-          gap: 10px; 
+          gap: 6px; 
         }
         .grid-3 { 
           display: grid; 
           grid-template-columns: 1fr 1fr 1fr; 
-          gap: 10px; 
+          gap: 6px; 
         }
         .important-note { 
           background: #fee2e2; 
           border: 1px solid #fecaca; 
-          padding: 8px; 
+          padding: 6px; 
           border-radius: 3px; 
-          margin: 5px 0; 
+          margin: 4px 0; 
         }
         @page { 
-          margin: 1.5cm; 
+          margin: 1cm; 
           size: A4; 
         }
       }

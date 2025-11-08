@@ -27,7 +27,7 @@ const PatientClinicalHistoryComplete = ({
   patientData
 }) => {
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <Group justify="space-between" align="center">
         <Title order={4} size="h5">Historia Clínica Completa</Title>
         <Group gap="sm">
@@ -49,10 +49,10 @@ const PatientClinicalHistoryComplete = ({
         </Group>
       </Group>
 
-      <Stack gap="lg">
+  <Stack gap="md">
         {/* Información Completa de la Historia */}
-        <Paper p="lg" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
-          <Stack gap="lg">
+          <Paper p="sm" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Stack gap="md">
             <Group>
               <Title order={5} size="h6" style={{ borderBottom: '2px solid var(--mantine-color-gray-3)', paddingBottom: '8px', width: '100%' }}>
                 Información General de la Historia Clínica
@@ -60,23 +60,23 @@ const PatientClinicalHistoryComplete = ({
             </Group>
 
             {/* Header con información básica */}
-            <Grid gutter="md">
+            <Grid gutter="sm">
               <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-                <Stack gap={4}>
+                <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={500}>Número de Historia:</Text>
-                  <Text size="lg" fw={700}>{historiaClinica.numeroHistoria}</Text>
+                  <Text size="md" fw={700}>{historiaClinica.numeroHistoria}</Text>
                 </Stack>
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-                <Stack gap={4}>
+                <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={500}>Fecha de Apertura:</Text>
-                  <Text size="sm" fw={500}>{formatDate(historiaClinica.fechaApertura)}</Text>
+                  <Text size="xs" fw={500}>{formatDate(historiaClinica.fechaApertura)}</Text>
                 </Stack>
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-                <Stack gap={4}>
+                <Stack gap={2}>
                   <Text size="xs" c="dimmed" fw={500}>Estado:</Text>
-                  <Badge color={historiaClinica.activa ? 'green' : 'gray'} variant="light">
+                  <Badge color={historiaClinica.activa ? 'green' : 'gray'} variant="light" size="sm">
                     {historiaClinica.activa ? 'Activa' : 'Inactiva'}
                   </Badge>
                 </Stack>
@@ -91,21 +91,21 @@ const PatientClinicalHistoryComplete = ({
 
             {/* Datos Detallados de la Historia Clínica */}
             {historiaClinica.datosJson && (
-              <Stack gap="lg">
+              <Stack gap="md">
                 {(() => {
                   try {
                     const parsed = JSON.parse(historiaClinica.datosJson);
                     const datosHistoria = parsed.datosJson ? JSON.parse(parsed.datosJson) : {};
 
                     return (
-                      <Stack gap="lg">
+                      <Stack gap="md">
                         {/* Información del Médico e Información de Consulta en una fila */}
-                        <Grid gutter="lg">
+                        <Grid gutter="md">
                           {/* Información del Médico */}
                           {(datosHistoria.informacionMedico || datosHistoria.detalleConsulta) && (
                             <Grid.Col span={{ base: 12, lg: 6 }}>
-                              <Paper p="md" radius="md" withBorder>
-                                <Stack gap="md">
+                              <Paper p="sm" radius="md" withBorder>
+                                <Stack gap="sm">
                                   <Group gap="xs">
                                     <IconUser size={16} color="var(--mantine-color-blue-6)" />
                                     <Text size="sm" fw={600} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)', paddingBottom: '4px', width: '100%' }}>
@@ -134,8 +134,8 @@ const PatientClinicalHistoryComplete = ({
                           {/* Información de la Consulta */}
                           {datosHistoria.informacionConsulta && (
                             <Grid.Col span={{ base: 12, lg: 6 }}>
-                              <Paper p="md" radius="md" withBorder>
-                                <Stack gap="md">
+                              <Paper p="sm" radius="md" withBorder>
+                                <Stack gap="sm">
                                   <Group gap="xs">
                                     <IconFileText size={16} color="var(--mantine-color-green-6)" />
                                     <Text size="sm" fw={600} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)', paddingBottom: '4px', width: '100%' }}>
@@ -160,17 +160,17 @@ const PatientClinicalHistoryComplete = ({
 
                         {/* Antecedentes Clínicos */}
                         {datosHistoria.antecedentesClinico && (
-                          <Paper p="md" radius="md" withBorder>
-                            <Stack gap="md">
+                          <Paper p="sm" radius="md" withBorder>
+                            <Stack gap="sm">
                               <Group gap="xs">
                                 <IconHeart size={16} color="var(--mantine-color-red-6)" />
                                 <Text size="sm" fw={600} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)', paddingBottom: '4px', width: '100%' }}>
                                   Antecedentes Clínicos
                                 </Text>
                               </Group>
-                              <Grid gutter="md">
+                              <Grid gutter="sm">
                                 <Grid.Col span={{ base: 12, md: 6 }}>
-                                  <Stack gap={4}>
+                                  <Stack gap={2}>
                                     <Text size="xs" c="dimmed" fw={500}>Personales:</Text>
                                     <Text size="xs">{datosHistoria.antecedentesClinico.antecedentesPersonales || 'N/A'}</Text>
                                   </Stack>
@@ -199,12 +199,12 @@ const PatientClinicalHistoryComplete = ({
                         )}
 
                         {/* Examen Clínico y Diagnóstico/Tratamiento en una fila */}
-                        <Grid gutter="lg">
+                        <Grid gutter="md">
                           {/* Examen Clínico */}
                           {datosHistoria.examenClinico && (
                             <Grid.Col span={{ base: 12, lg: 6 }}>
-                              <Paper p="md" radius="md" withBorder>
-                                <Stack gap="md">
+                              <Paper p="sm" radius="md" withBorder>
+                                <Stack gap="sm">
                                   <Group gap="xs">
                                     <IconId size={16} color="var(--mantine-color-violet-6)" />
                                     <Text size="sm" fw={600} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)', paddingBottom: '4px', width: '100%' }}>
@@ -229,8 +229,8 @@ const PatientClinicalHistoryComplete = ({
                           {/* Diagnóstico y Tratamiento */}
                           {datosHistoria.diagnosticoTratamiento && (
                             <Grid.Col span={{ base: 12, lg: 6 }}>
-                              <Paper p="md" radius="md" withBorder>
-                                <Stack gap="md">
+                              <Paper p="sm" radius="md" withBorder>
+                                <Stack gap="sm">
                                   <Group gap="xs">
                                     <IconFileText size={16} color="var(--mantine-color-orange-6)" />
                                     <Text size="sm" fw={600} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)', paddingBottom: '4px', width: '100%' }}>
@@ -323,15 +323,15 @@ const PatientClinicalHistoryComplete = ({
           ) : (
             <Stack gap="md">
               {consultas.map((consulta, index) => (
-                <Paper key={consulta.id} p="lg" radius="md" withBorder shadow="sm">
+                <Paper key={consulta.id} p="md" radius="md" withBorder shadow="sm">
                   {/* Header de la consulta */}
-                  <Group justify="space-between" mb="lg" pb="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+                  <Group justify="space-between" mb="md" pb="sm" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
                     <Group gap="md">
                       <Avatar color="blue" radius="xl" size="lg">
                         {index + 1}
                       </Avatar>
-                      <Stack gap={4}>
-                        <Title order={6} size="h5">Consulta #{consulta.id}</Title>
+                      <Stack gap={2}>
+                        <Title order={6} size="h6">Consulta #{consulta.id}</Title>
                         <Group gap="xs">
                           <IconCalendar size={16} color="var(--mantine-color-dimmed)" />
                           <Text size="sm" c="dimmed">{formatDate(consulta.fechaCreacion)}</Text>
@@ -357,20 +357,20 @@ const PatientClinicalHistoryComplete = ({
 
                   {/* Información Detallada de la Consulta */}
                   {consulta.datosJson && (
-                    <Stack gap="lg">
+                    <Stack gap="md">
                       {(() => {
                         try {
                           const parsed = JSON.parse(consulta.datosJson);
 
                           return (
-                            <Stack gap="lg">
+                            <Stack gap="md">
                               {/* Primera fila: Detalle de consulta e Información médica */}
-                              <Grid gutter="lg">
+                              <Grid gutter="md">
                                 {/* Detalle de la Consulta */}
                                 {parsed.detalleConsulta && (
                                   <Grid.Col span={{ base: 12, lg: 6 }}>
-                                    <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
-                                      <Stack gap="md">
+                                    <Paper p="sm" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                                      <Stack gap="sm">
                                         <Group gap="xs">
                                           <IconCalendar size={16} color="var(--mantine-color-blue-6)" />
                                           <Text size="sm" fw={600}>Detalle de la Consulta</Text>
@@ -403,8 +403,8 @@ const PatientClinicalHistoryComplete = ({
                                 {/* Información médica adicional */}
                                 {parsed.informacionMedico && (
                                   <Grid.Col span={{ base: 12, lg: 6 }}>
-                                    <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
-                                      <Stack gap="md">
+                                    <Paper p="sm" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                                      <Stack gap="sm">
                                         <Group gap="xs">
                                           <IconUser size={16} color="var(--mantine-color-green-6)" />
                                           <Text size="sm" fw={600}>Información Médica</Text>
