@@ -8,6 +8,7 @@ import PatientDashboard from '../pages/pacientes/PatientDashboard.jsx';
 import EmpleadosPage from '../pages/empleados/EmpleadosPage.jsx';
 import FacturacionPage from '../pages/facturacion/FacturacionPage.jsx';
 import { NominaPage } from '../pages/nomina/NominaPage.jsx';
+import ConfiguracionPage from '../pages/configuracion/ConfiguracionPage.jsx';
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -93,6 +94,15 @@ const AppRouter = () => {
         element={
           <ProtectedRoute>
             <NominaPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/configuracion"
+        element={
+          <ProtectedRoute>
+            <ConfiguracionPage />
           </ProtectedRoute>
         }
       />
