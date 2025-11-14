@@ -1,10 +1,10 @@
 // Utilidades para impresión de historias clínicas y consultas
 
-// Importar configuración centralizada de la IPS
-import { ipsConfig } from '../ipsConfig.js';
-
 // Importar módulo de generación HTML
 import { generarHistoriaClinicaHTML } from '../../../presentacion/components/pacientes/HistoriaClinicaHTML.js';
+
+// Importar servicio de configuración
+import { getIpsConfig } from '../../../data/services/configuracionApiService.js';
 
 /**
  * Imprime la historia clínica completa
@@ -13,7 +13,9 @@ import { generarHistoriaClinicaHTML } from '../../../presentacion/components/pac
  * @param {Object} patient - Datos del paciente
  * @param {Object} patientData - Datos parseados del paciente
  */
-export const printHistoriaClinica = (consultas, historiaClinica, patient, patientData) => {
+export const printHistoriaClinica = async (consultas, historiaClinica, patient, patientData) => {
+  // Cargar configuración de IPS desde la base de datos
+  const ipsData = await getIpsConfig();
   // Parsear datos JSON de la historia clínica
   let historiaData = null;
   try {
@@ -86,7 +88,7 @@ export const printHistoriaClinica = (consultas, historiaClinica, patient, patien
     patient,
     patientData,
     historiaData,
-    ipsConfig
+    ipsData
   );
 
   // Imprimir documento
@@ -100,7 +102,9 @@ export const printHistoriaClinica = (consultas, historiaClinica, patient, patien
  * @param {Object} patient - Datos del paciente
  * @param {Object} patientData - Datos parseados del paciente
  */
-export const printConsulta = (consulta, historiaClinica, patient, patientData) => {
+export const printConsulta = async (consulta, historiaClinica, patient, patientData) => {
+  // Cargar configuración de IPS desde la base de datos
+  const ipsData = await getIpsConfig();
   // Procesar la consulta individual
   let processedConsulta = null;
   try {
@@ -154,7 +158,7 @@ export const printConsulta = (consulta, historiaClinica, patient, patientData) =
     patient,
     patientData,
     null,
-    ipsConfig
+    ipsData
   );
 
   // Imprimir documento

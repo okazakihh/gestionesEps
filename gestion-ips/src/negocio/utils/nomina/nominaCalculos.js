@@ -5,17 +5,64 @@
  * Actualizado a Noviembre 2025
  */
 
-// ========== CONSTANTES 2025 ==========
+import { configuracionApiService } from '../../../data/services/configuracionApiService.js';
+
+// ========== CACHE DE CONFIGURACIÓN ==========
+
+let cachedNominaConfig = null;
 
 /**
+ * Obtener configuración de nómina (con cache)
+ */
+export const getNominaConfig = async () => {
+  if (cachedNominaConfig) return cachedNominaConfig;
+  
+  try {
+    const config = await configuracionApiService.getConfiguracionByClave('NOMINA');
+    if (config && config.jsonData) {
+      cachedNominaConfig = config.jsonData;
+      return cachedNominaConfig;
+    }
+  } catch (error) {
+    console.warn('No se pudo cargar NOMINA, usando configuración por defecto');
+  }
+  
+  // Configuración por defecto
+  return {
+    salarioMinimo: 1300000,
+    auxilioTransporte: 162000,
+    porcentajeSalud: 4.0,
+    porcentajePension: 4.0,
+    diasPeriodo: 30,
+    horasLaboralesDia: 8,
+    horasLaboralesSemana: 48,
+    recargoNocturno: 35,
+    recargoFestivo: 75,
+    horaExtraDiurna: 25,
+    horaExtraNocturna: 75,
+    horaExtraFestivaDiurna: 100,
+    horaExtraFestivaNocturna: 150
+  };
+};
+
+/**
+ * Limpiar cache (útil cuando se actualiza la configuración)
+ */
+export const clearNominaConfigCache = () => {
+  cachedNominaConfig = null;
+};
+
+// ========== CONSTANTES 2025 (Ahora deprecadas, usar getNominaConfig) ==========
+
+/**
+ * @deprecated Usar getNominaConfig().salarioMinimo
  * Salario Mínimo Legal Mensual Vigente (SMLMV) 2025
- * Decreto 2613 de 2024
  */
 export const SMLMV_2025 = 1423500;
 
 /**
+ * @deprecated Usar getNominaConfig().auxilioTransporte
  * Auxilio de transporte 2025
- * Aplica para empleados que ganen hasta 2 SMLMV
  */
 export const AUXILIO_TRANSPORTE_2025 = 200000;
 
@@ -33,9 +80,9 @@ export const UVT_2025 = 47065;
  * Porcentajes de seguridad social
  */
 export const PORCENTAJES_SEGURIDAD_SOCIAL = {
-  // Salud - Empleado
+  // Salud - Empleado (ahora se obtiene de configuración)
   SALUD_EMPLEADO: 0.04, // 4%
-  // Pensión - Empleado
+  // Pensión - Empleado (ahora se obtiene de configuración)
   PENSION_EMPLEADO: 0.04, // 4%
   // Salud - Empleador
   SALUD_EMPLEADOR: 0.085, // 8.5%
@@ -60,46 +107,51 @@ export const PORCENTAJES_PARAFISCALES = {
 /**
  * Calcula si aplica auxilio de transporte
  */
-export const aplicaAuxilioTransporte = (salarioBase) => {
-  return salarioBase <= LIMITE_AUXILIO_TRANSPORTE;
+export const aplicaAuxilioTransporte = async (salarioBase) => {
+  const config = await getNominaConfig();
+  return salarioBase <= (config.salarioMinimo * 2);
 };
 
 /**
  * Calcula el auxilio de transporte
  */
-export const calcularAuxilioTransporte = (salarioBase) => {
-  return aplicaAuxilioTransporte(salarioBase) ? AUXILIO_TRANSPORTE_2025 : 0;
+export const calcularAuxilioTransporte = async (salarioBase) => {
+  const config = await getNominaConfig();
+  const aplica = await aplicaAuxilioTransporte(salarioBase);
+  return aplica ? config.auxilioTransporte : 0;
 };
 
 /**
  * Calcula la base de cotización para seguridad social
  * Base = Salario + Auxilio de transporte (si aplica)
  */
-export const calcularBaseCotizacion = (salarioBase) => {
-  const auxilioTransporte = calcularAuxilioTransporte(salarioBase);
+export const calcularBaseCotizacion = async (salarioBase) => {
+  const auxilioTransporte = await calcularAuxilioTransporte(salarioBase);
   return salarioBase + auxilioTransporte;
 };
 
 /**
  * Calcula deducciones de salud (empleado)
  */
-export const calcularSalud = (salarioBase) => {
-  return Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.SALUD_EMPLEADO);
+export const calcularSalud = async (salarioBase) => {
+  const config = await getNominaConfig();
+  return Math.round(salarioBase * (config.porcentajeSalud / 100));
 };
 
 /**
  * Calcula deducciones de pensión (empleado)
  */
-export const calcularPension = (salarioBase) => {
-  return Math.round(salarioBase * PORCENTAJES_SEGURIDAD_SOCIAL.PENSION_EMPLEADO);
+export const calcularPension = async (salarioBase) => {
+  const config = await getNominaConfig();
+  return Math.round(salarioBase * (config.porcentajePension / 100));
 };
 
 /**
  * Calcula total deducciones de seguridad social (empleado)
  */
-export const calcularDeduccionesSeguridad = (salarioBase) => {
-  const salud = calcularSalud(salarioBase);
-  const pension = calcularPension(salarioBase);
+export const calcularDeduccionesSeguridad = async (salarioBase) => {
+  const salud = await calcularSalud(salarioBase);
+  const pension = await calcularPension(salarioBase);
   return salud + pension;
 };
 
@@ -170,7 +222,7 @@ export const calcularRecargoDominical = (salarioBase, horasRecargoDominical = 0)
 /**
  * Calcula nómina completa
  */
-export const calcularNominaCompleta = (datos) => {
+export const calcularNominaCompleta = async (datos) => {
   const {
     salarioBase = 0,
     horasExtrasDiurnas = 0,
@@ -193,7 +245,7 @@ export const calcularNominaCompleta = (datos) => {
     : salarioBase;
 
   // DEVENGADOS
-  const auxilioTransporte = calcularAuxilioTransporte(salarioBase);
+  const auxilioTransporte = await calcularAuxilioTransporte(salarioBase);
   const valorHorasExtrasDiurnas = calcularHoraExtraDiurna(salarioBase, horasExtrasDiurnas);
   const valorHorasExtrasNocturnas = calcularHoraExtraNocturna(salarioBase, horasExtrasNocturnas);
   const valorHorasExtrasDominicales = calcularHoraExtraDominical(salarioBase, horasExtrasDominicales);
@@ -213,8 +265,8 @@ export const calcularNominaCompleta = (datos) => {
     otrosIngresos;
 
   // DEDUCCIONES
-  const salud = calcularSalud(salarioAjustado);
-  const pension = calcularPension(salarioAjustado);
+  const salud = await calcularSalud(salarioAjustado);
+  const pension = await calcularPension(salarioAjustado);
   const totalDeduccionesSeguridad = salud + pension;
   const totalOtrasDeducciones = prestamos + embargos + otrasDeducciones;
   const totalDeducciones = totalDeduccionesSeguridad + totalOtrasDeducciones;
@@ -228,6 +280,7 @@ export const calcularNominaCompleta = (datos) => {
   return {
     // Devengados
     salarioBase: salarioAjustado,
+    salarioProporcional: salarioAjustado, // Salario ajustado por días trabajados
     auxilioTransporte,
     horasExtras: {
       diurnas: valorHorasExtrasDiurnas,

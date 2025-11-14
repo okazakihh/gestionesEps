@@ -5,8 +5,6 @@ import { usePatientForm } from "../../../../../negocio/hooks/pacientes/usePatien
 import BasicInfoSection from './BasicInfoSection.jsx';
 import PersonalInfoSection from './PersonalInfoSection.jsx';
 import ContactInfoSection from './ContactInfoSection.jsx';
-import MedicalInfoSection from './MedicalInfoSection.jsx';
-import ConsentSection from './ConsentSection.jsx';
 import EmergencyContactSection from './EmergencyContactSection.jsx';
 import '/src/styles/createPatientModal.css';
 
@@ -82,18 +80,6 @@ const CreatePatientModal = ({
                />
 
                <ContactInfoSection
-                 parsedData={parsedData}
-                 handleNestedInputChange={handleNestedInputChange}
-                 validationErrors={validationErrors}
-               />
-
-               <MedicalInfoSection
-                 parsedData={parsedData}
-                 handleNestedInputChange={handleNestedInputChange}
-                 validationErrors={validationErrors}
-               />
-
-               <ConsentSection
                  parsedData={parsedData}
                  handleNestedInputChange={handleNestedInputChange}
                  validationErrors={validationErrors}

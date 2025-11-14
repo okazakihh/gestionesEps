@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { TextInput, Select, Textarea } from '@mantine/core';
-import { GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS, ESTRATO_SOCIOECONOMICO_OPTIONS, NIVEL_EDUCATIVO_OPTIONS } from '../../../../../negocio/utils/listHelps.js';
+import { GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS, ESTRATO_SOCIOECONOMICO_OPTIONS, NIVEL_EDUCATIVO_OPTIONS, TIPO_SANGRE_OPTIONS, EPS_OPTIONS, REGIMEN_AFILIACION_OPTIONS } from '../../../../../negocio/utils/listHelps.js';
 
 const PersonalInfoSection = ({ parsedData, handleNestedInputChange, validationErrors }) => {
   return (
@@ -127,6 +127,54 @@ const PersonalInfoSection = ({ parsedData, handleNestedInputChange, validationEr
               data={NIVEL_EDUCATIVO_OPTIONS}
               value={parsedData.informacionPersonal?.nivelEducativo || ''}
               onChange={(value) => handleNestedInputChange('informacionPersonal', 'nivelEducativo', value)}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <Select
+              label="Tipo de Sangre"
+              placeholder="Seleccionar..."
+              data={TIPO_SANGRE_OPTIONS}
+              value={parsedData.informacionPersonal?.tipoSangre || ''}
+              onChange={(value) => handleNestedInputChange('informacionPersonal', 'tipoSangre', value)}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <TextInput
+              label="Estatura (cm)"
+              placeholder="Ej: 170"
+              value={parsedData.informacionPersonal?.estatura || ''}
+              onChange={(e) => handleNestedInputChange('informacionPersonal', 'estatura', e.target.value)}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <TextInput
+              label="Peso (kg)"
+              placeholder="Ej: 70"
+              value={parsedData.informacionPersonal?.peso || ''}
+              onChange={(e) => handleNestedInputChange('informacionPersonal', 'peso', e.target.value)}
+            />
+          </div>
+
+          <div className="sm:col-span-3">
+            <Select
+              label="EPS/Aseguradora"
+              placeholder="Seleccionar..."
+              data={EPS_OPTIONS}
+              value={parsedData.informacionMedica?.eps || ''}
+              onChange={(value) => handleNestedInputChange('informacionMedica', 'eps', value)}
+            />
+          </div>
+
+          <div className="sm:col-span-3">
+            <Select
+              label="Régimen de Afiliación"
+              placeholder="Seleccionar..."
+              data={REGIMEN_AFILIACION_OPTIONS}
+              value={parsedData.informacionMedica?.regimenAfiliacion || ''}
+              onChange={(value) => handleNestedInputChange('informacionMedica', 'regimenAfiliacion', value)}
             />
           </div>
         </div>

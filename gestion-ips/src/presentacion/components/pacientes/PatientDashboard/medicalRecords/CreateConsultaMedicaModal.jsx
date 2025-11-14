@@ -1,44 +1,68 @@
 import React, { useState } from 'react';
-import { Modal, TextInput, Textarea, Button, Grid, Tabs, Paper, Text, Divider, Box, Group } from '@mantine/core';
+import { Modal, TextInput, Textarea, Button, Grid, Tabs, Paper, Text, Box, Group, Stack, ScrollArea, Select } from '@mantine/core';
+import { IconFileText, IconStethoscope, IconClipboard, IconCalendar, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService } from '../../../../../data/services/pacientesApiService.js';
+import SignosVitalesForm from './components/SignosVitalesForm.jsx';
+import DiagnosticosTable from './components/DiagnosticosTable.jsx';
+import MedicamentosTable from './components/MedicamentosTable.jsx';
 
-const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, historiaClinicaId, citaData }) => {
+const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, historiaClinicaId, citaData, patientData }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('consulta');
 
   const [formData, setFormData] = useState({
     historiaClinicaId: historiaClinicaId || '',
+    
+    // Detalle de consulta
     detalleConsulta: {
       medicoTratante: citaData?.medicoAsignado || '',
       especialidad: citaData?.especialidad || '',
-      fechaConsulta: new Date().toISOString().slice(0, 16), // Formato datetime-local
+      fechaConsulta: new Date().toISOString().slice(0, 16),
+      tipoConsulta: 'control',
       proximaCita: ''
     },
-    informacionMedico: {
-      registroMedico: '',
-      especialidad: citaData?.especialidad || ''
-    },
+    
+    // Información de consulta
     informacionConsulta: {
       motivoConsulta: citaData?.motivo || '',
       enfermedadActual: '',
-      revisionSistemas: '',
-      medicamentosActuales: '',
       observaciones: citaData?.notas || ''
     },
-    examenClinico: {
-      examenFisico: '',
-      signosVitales: ''
+    
+    // Examen físico
+    examenFisico: {
+      signosVitales: {
+        presionArterial: '',
+        frecuenciaCardiaca: '',
+        frecuenciaRespiratoria: '',
+        temperatura: '',
+        peso: '',
+        talla: '',
+        imc: '',
+        spo2: ''
+      },
+      estadoGeneral: '',
+      hallazgos: ''
     },
+    
+    // Diagnóstico y tratamiento
     diagnosticoTratamiento: {
-      diagnosticos: '',
-      planTratamiento: ''
+      diagnosticos: [],
+      planTratamiento: '',
+      medicamentos: [],
+      procedimientos: ''
     },
+    
+    // Seguimiento
     seguimientoConsulta: {
       evolucion: '',
-      complicaciones: '',
+      complicaciones: 'ninguna',
       recomendaciones: ''
     },
+    
+    // Firma
     firmaDigital: {
       nombreMedico: citaData?.medicoAsignado || '',
       numeroCedula: '',
@@ -49,55 +73,54 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validaciones
+    if (!formData.informacionConsulta.motivoConsulta) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Motivo de Consulta Requerido',
+        text: 'Debe ingresar el motivo de la consulta',
+        confirmButtonColor: '#EF4444'
+      });
+      setActiveTab('consulta');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      // Convert form data to JSON string for datosJson
       const datosJson = JSON.stringify({
         detalleConsulta: formData.detalleConsulta,
-        informacionMedico: formData.informacionMedico,
         informacionConsulta: formData.informacionConsulta,
-        examenClinico: formData.examenClinico,
+        examenFisico: formData.examenFisico,
         diagnosticoTratamiento: formData.diagnosticoTratamiento,
         seguimientoConsulta: formData.seguimientoConsulta,
         firmaDigital: formData.firmaDigital
       });
 
-      const submitData = {
-        historiaClinicaId: formData.historiaClinicaId,
-        datosJson: datosJson
-      };
+      console.log('🩺 Enviando Consulta Médica:', JSON.stringify({ historiaClinicaId: formData.historiaClinicaId, datosJson }, null, 2));
 
-      console.log('Enviando datos de consulta médica:', JSON.stringify(submitData, null, 2));
+      const result = await historiasClinicasApiService.crearConsulta(formData.historiaClinicaId, datosJson);
 
-      const result = await historiasClinicasApiService.crearConsulta(formData.historiaClinicaId, submitData.datosJson);
-
-      console.log('Respuesta del backend:', result);
-
-      // Mostrar SweetAlert de éxito
       await Swal.fire({
         icon: 'success',
-        title: '¡Consulta Médica Creada!',
-        text: `La consulta médica ha sido registrada exitosamente.`,
-        confirmButtonText: 'Aceptar',
+        title: '✅ Consulta Médica Creada',
+        text: 'La consulta ha sido registrada exitosamente.',
         confirmButtonColor: '#8B5CF6',
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
+        timer: 2500,
+        timerProgressBar: true
       });
 
       onConsultaCreated && onConsultaCreated(result);
       onClose();
     } catch (err) {
-      console.error('Error al guardar consulta médica:', err);
+      console.error('❌ Error al guardar consulta médica:', err);
 
-      // Mostrar SweetAlert de error
       await Swal.fire({
         icon: 'error',
-        title: 'Error al Crear Consulta Médica',
-        text: err instanceof Error ? err.message : 'Ha ocurrido un error al guardar la consulta médica. Por favor, inténtelo nuevamente.',
-        confirmButtonText: 'Aceptar',
+        title: 'Error al Crear Consulta',
+        text: err instanceof Error ? err.message : 'Ha ocurrido un error al guardar la consulta médica.',
         confirmButtonColor: '#EF4444'
       });
 
@@ -107,300 +130,371 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
     }
   };
 
-  const handleNestedInputChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...(prev[section]),
-        [field]: value
-      }
-    }));
-  };
+  if (!isOpen) return null;
 
   return (
     <Modal
       opened={isOpen}
       onClose={onClose}
-      title="Nueva Consulta Médica"
+      title={
+        <Group gap="xs">
+          <IconStethoscope size={24} color="var(--mantine-color-violet-6)" />
+          <Text size="lg" fw={700}>Nueva Consulta Médica</Text>
+        </Group>
+      }
       size="xl"
       centered
       styles={{
-        title: { fontSize: '1.125rem', fontWeight: 600, color: '#7C3AED' }
+        content: { maxHeight: '90vh' },
+        body: { padding: 0 }
       }}
     >
-      {/* Información del Paciente */}
-      <Paper p="md" mb="md" style={{ backgroundColor: '#F3E8FF', border: '1px solid #C084FC' }}>
-        <Group position="apart">
-          <div>
-            <Text size="sm" weight={600} style={{ color: '#581C87' }}>
-              Paciente
-            </Text>
-            <Text size="xs" style={{ color: '#7C3AED', marginTop: 4 }}>
-              {citaData?.nombre || 'No disponible'}
-            </Text>
-          </div>
-        </Group>
-      </Paper>
-
-      {error && (
-        <Paper p="sm" mb="md" style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
-          <Text size="xs" style={{ color: '#991B1B' }}>{error}</Text>
-        </Paper>
-      )}
-
       <form onSubmit={handleSubmit}>
-        <Tabs defaultValue="detalle" variant="pills">
-          <Tabs.List>
-            <Tabs.Tab value="detalle">Detalle de Consulta</Tabs.Tab>
-            <Tabs.Tab value="clinico">Examen Clínico</Tabs.Tab>
-            <Tabs.Tab value="diagnostico">Diagnóstico</Tabs.Tab>
-            <Tabs.Tab value="firma">Firma Digital</Tabs.Tab>
-          </Tabs.List>
-
-          {/* Tab: Detalle de Consulta */}
-          <Tabs.Panel value="detalle" pt="md">
-            <Grid>
+        <Stack gap={0}>
+          {/* Info del Paciente */}
+          <Paper p="md" m="md" mb={0} style={{ backgroundColor: 'var(--mantine-color-violet-0)', border: '1px solid var(--mantine-color-violet-3)' }}>
+            <Grid gutter="xs">
               <Grid.Col span={6}>
-                <TextInput
-                  label="ID Historia Clínica"
-                  value={formData.historiaClinicaId}
-                  readOnly
-                  styles={{ input: { backgroundColor: '#F9FAFB' } }}
-                  size="sm"
-                />
+                <Text size="xs" c="dimmed" fw={500}>Paciente</Text>
+                <Text size="sm" fw={600}>
+                  {patientData?.informacionPersonal?.primerNombre} {patientData?.informacionPersonal?.primerApellido}
+                </Text>
               </Grid.Col>
-              <Grid.Col span={6}>
-                <TextInput
-                  label="Médico Tratante"
-                  value={formData.detalleConsulta?.medicoTratante}
-                  onChange={(e) => handleNestedInputChange('detalleConsulta', 'medicoTratante', e.target.value)}
-                  required
-                  size="sm"
-                />
+              <Grid.Col span={3}>
+                <Text size="xs" c="dimmed" fw={500}>Documento</Text>
+                <Text size="sm" fw={600}>{patientData?.numeroDocumento}</Text>
               </Grid.Col>
-              <Grid.Col span={6}>
-                <TextInput
-                  label="Especialidad"
-                  value={formData.detalleConsulta?.especialidad}
-                  onChange={(e) => handleNestedInputChange('detalleConsulta', 'especialidad', e.target.value)}
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <TextInput
-                  label="Fecha de Consulta"
-                  type="datetime-local"
-                  value={formData.detalleConsulta?.fechaConsulta}
-                  onChange={(e) => handleNestedInputChange('detalleConsulta', 'fechaConsulta', e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={12}>
-                <TextInput
-                  label="Próxima Cita"
-                  type="datetime-local"
-                  value={formData.detalleConsulta?.proximaCita}
-                  onChange={(e) => handleNestedInputChange('detalleConsulta', 'proximaCita', e.target.value)}
-                  size="sm"
-                />
+              <Grid.Col span={3}>
+                <Text size="xs" c="dimmed" fw={500}>HC #</Text>
+                <Text size="sm" fw={600} c="violet">{historiaClinicaId}</Text>
               </Grid.Col>
             </Grid>
+          </Paper>
 
-            <Divider my="md" label="Información de Consulta" labelPosition="center" />
+          {error && (
+            <Paper p="md" m="md" mb={0} withBorder style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
+              <Text c="red" size="sm" fw={500}>{error}</Text>
+            </Paper>
+          )}
 
-            <Grid>
-              <Grid.Col span={6}>
-                <Textarea
-                  label="Motivo de Consulta"
-                  value={formData.informacionConsulta?.motivoConsulta}
-                  onChange={(e) => handleNestedInputChange('informacionConsulta', 'motivoConsulta', e.target.value)}
-                  placeholder="Describa el motivo..."
-                  minRows={3}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Textarea
-                  label="Enfermedad Actual"
-                  value={formData.informacionConsulta?.enfermedadActual}
-                  onChange={(e) => handleNestedInputChange('informacionConsulta', 'enfermedadActual', e.target.value)}
-                  placeholder="Describa la enfermedad..."
-                  minRows={3}
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={12}>
-                <Textarea
-                  label="Observaciones"
-                  value={formData.informacionConsulta?.observaciones}
-                  onChange={(e) => handleNestedInputChange('informacionConsulta', 'observaciones', e.target.value)}
-                  placeholder="Observaciones adicionales..."
-                  minRows={2}
-                  size="sm"
-                />
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
+          {/* Tabs */}
+          <Box px="md" pt="md">
+            <Tabs value={activeTab} onChange={setActiveTab} color="violet" variant="pills">
+              <Tabs.List>
+                <Tabs.Tab value="consulta" leftSection={<IconFileText size={14} />}>
+                  Información
+                </Tabs.Tab>
+                <Tabs.Tab value="examen" leftSection={<IconStethoscope size={14} />}>
+                  Examen Físico
+                </Tabs.Tab>
+                <Tabs.Tab value="diagnostico" leftSection={<IconClipboard size={14} />}>
+                  Diagnóstico
+                </Tabs.Tab>
+                <Tabs.Tab value="seguimiento" leftSection={<IconCalendar size={14} />}>
+                  Seguimiento
+                </Tabs.Tab>
+              </Tabs.List>
 
-          {/* Tab: Examen Clínico */}
-          <Tabs.Panel value="clinico" pt="md">
-            <Grid>
-              <Grid.Col span={6}>
-                <Textarea
-                  label="Examen Físico"
-                  value={formData.examenClinico?.examenFisico}
-                  onChange={(e) => handleNestedInputChange('examenClinico', 'examenFisico', e.target.value)}
-                  placeholder="Resultados del examen..."
-                  minRows={4}
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Textarea
-                  label="Signos Vitales"
-                  value={formData.examenClinico?.signosVitales}
-                  onChange={(e) => handleNestedInputChange('examenClinico', 'signosVitales', e.target.value)}
-                  placeholder="Signos vitales..."
-                  minRows={4}
-                  size="sm"
-                />
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
+              <ScrollArea h="calc(90vh - 300px)" mt="md">
+                <Box p="md">
+                  {/* TAB 1: Información de Consulta */}
+                  <Tabs.Panel value="consulta">
+                    <Paper p="md" withBorder>
+                      <Text size="sm" fw={600} mb="md" c="violet">Tipo de Consulta</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Select
+                            label="Tipo de Consulta"
+                            placeholder="Seleccione el tipo"
+                            value={formData.detalleConsulta?.tipoConsulta}
+                            onChange={(value) => setFormData(prev => ({
+                              ...prev,
+                              detalleConsulta: { ...prev.detalleConsulta, tipoConsulta: value }
+                            }))}
+                            data={[
+                              { value: 'primera_vez', label: 'Primera Vez' },
+                              { value: 'control', label: 'Control' },
+                              { value: 'urgencia', label: 'Urgencia' }
+                            ]}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
 
-          {/* Tab: Diagnóstico y Tratamiento */}
-          <Tabs.Panel value="diagnostico" pt="md">
-            <Grid>
-              <Grid.Col span={12}>
-                <Textarea
-                  label="Diagnósticos"
-                  value={formData.diagnosticoTratamiento?.diagnosticos}
-                  onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'diagnosticos', e.target.value)}
-                  placeholder="Diagnósticos realizados..."
-                  minRows={3}
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={12}>
-                <Textarea
-                  label="Plan de Tratamiento"
-                  value={formData.diagnosticoTratamiento?.planTratamiento}
-                  onChange={(e) => handleNestedInputChange('diagnosticoTratamiento', 'planTratamiento', e.target.value)}
-                  placeholder="Plan de tratamiento..."
-                  minRows={3}
-                  size="sm"
-                />
-              </Grid.Col>
-            </Grid>
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" c="violet">Motivo y Anamnesis</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Motivo de Consulta"
+                            placeholder="Describa el motivo de la consulta..."
+                            value={formData.informacionConsulta?.motivoConsulta}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              informacionConsulta: { ...prev.informacionConsulta, motivoConsulta: e.target.value }
+                            }))}
+                            minRows={3}
+                            required
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Enfermedad Actual"
+                            placeholder="Historia de la enfermedad actual..."
+                            value={formData.informacionConsulta?.enfermedadActual}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              informacionConsulta: { ...prev.informacionConsulta, enfermedadActual: e.target.value }
+                            }))}
+                            minRows={4}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Observaciones Adicionales"
+                            placeholder="Información adicional relevante..."
+                            value={formData.informacionConsulta?.observaciones}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              informacionConsulta: { ...prev.informacionConsulta, observaciones: e.target.value }
+                            }))}
+                            minRows={2}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
+                  </Tabs.Panel>
 
-            <Divider my="md" label="Seguimiento de Consulta" labelPosition="center" />
+                  {/* TAB 2: Examen Físico */}
+                  <Tabs.Panel value="examen">
+                    <Paper p="md" withBorder>
+                      <Text size="sm" fw={600} mb="md" c="violet">Signos Vitales</Text>
+                      <SignosVitalesForm
+                        values={formData.examenFisico?.signosVitales || {}}
+                        onChange={(signosVitales) => setFormData(prev => ({
+                          ...prev,
+                          examenFisico: { ...prev.examenFisico, signosVitales }
+                        }))}
+                      />
+                    </Paper>
 
-            <Grid>
-              <Grid.Col span={12}>
-                <Textarea
-                  label="Evolución"
-                  value={formData.seguimientoConsulta?.evolucion}
-                  onChange={(e) => handleNestedInputChange('seguimientoConsulta', 'evolucion', e.target.value)}
-                  placeholder="Evolución del paciente..."
-                  minRows={2}
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={12}>
-                <Textarea
-                  label="Recomendaciones"
-                  value={formData.seguimientoConsulta?.recomendaciones}
-                  onChange={(e) => handleNestedInputChange('seguimientoConsulta', 'recomendaciones', e.target.value)}
-                  placeholder="Recomendaciones médicas..."
-                  minRows={2}
-                  size="sm"
-                />
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" c="violet">Estado General y Hallazgos</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Estado General"
+                            placeholder="Descripción del estado general del paciente..."
+                            value={formData.examenFisico?.estadoGeneral}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              examenFisico: { ...prev.examenFisico, estadoGeneral: e.target.value }
+                            }))}
+                            minRows={3}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Hallazgos del Examen Físico"
+                            placeholder="Hallazgos relevantes del examen físico..."
+                            value={formData.examenFisico?.hallazgos}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              examenFisico: { ...prev.examenFisico, hallazgos: e.target.value }
+                            }))}
+                            minRows={4}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
+                  </Tabs.Panel>
 
-          {/* Tab: Firma Digital */}
-          <Tabs.Panel value="firma" pt="md">
-            <Grid>
-              <Grid.Col span={4}>
-                <TextInput
-                  label="Nombre del Médico"
-                  value={formData.firmaDigital?.nombreMedico}
-                  onChange={(e) => handleNestedInputChange('firmaDigital', 'nombreMedico', e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <TextInput
-                  label="Número de Cédula"
-                  value={formData.firmaDigital?.numeroCedula}
-                  onChange={(e) => handleNestedInputChange('firmaDigital', 'numeroCedula', e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <TextInput
-                  label="Especialidad"
-                  value={formData.firmaDigital?.especialidad}
-                  onChange={(e) => handleNestedInputChange('firmaDigital', 'especialidad', e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <TextInput
-                  label="Fecha de Firma"
-                  type="date"
-                  value={formData.firmaDigital?.fechaFirma}
-                  onChange={(e) => handleNestedInputChange('firmaDigital', 'fechaFirma', e.target.value)}
-                  required
-                  size="sm"
-                />
-              </Grid.Col>
-            </Grid>
+                  {/* TAB 3: Diagnóstico y Tratamiento */}
+                  <Tabs.Panel value="diagnostico">
+                    <Paper p="md" withBorder>
+                      <Text size="sm" fw={600} mb="md" c="violet">Diagnósticos CIE-10</Text>
+                      <DiagnosticosTable
+                        diagnosticos={formData.diagnosticoTratamiento?.diagnosticos || []}
+                        onChange={(diagnosticos) => setFormData(prev => ({
+                          ...prev,
+                          diagnosticoTratamiento: { ...prev.diagnosticoTratamiento, diagnosticos }
+                        }))}
+                      />
+                    </Paper>
 
-            <Box mt="xl">
-              <Paper p="lg" style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
-                <Text size="sm" weight={500} mb="md" align="center">Vista Previa de la Firma Digital</Text>
-                <div style={{ textAlign: 'center' }}>
-                  <Text size="lg" weight={700} style={{ color: '#1F2937' }}>
-                    {formData.firmaDigital?.nombreMedico || 'Nombre del Médico'}
-                  </Text>
-                  <Text size="sm" style={{ color: '#6B7280', marginTop: 4 }}>
-                    Cédula: {formData.firmaDigital?.numeroCedula || 'Número de Cédula'}
-                  </Text>
-                  <Text size="sm" style={{ color: '#6B7280' }}>
-                    Especialidad: {formData.firmaDigital?.especialidad || 'Especialidad'}
-                  </Text>
-                  <Text size="xs" style={{ color: '#9CA3AF', marginTop: 8 }}>
-                    Fecha: {formData.firmaDigital?.fechaFirma ? new Date(formData.firmaDigital.fechaFirma).toLocaleDateString('es-CO') : 'Fecha de Firma'}
-                  </Text>
-                  <Divider my="sm" />
-                  <Text size="xs" italic style={{ color: '#9CA3AF' }}>
-                    Firma Digital Autorizada
-                  </Text>
-                </div>
-              </Paper>
-            </Box>
-          </Tabs.Panel>
-        </Tabs>
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" c="violet">Plan de Tratamiento</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Plan de Tratamiento"
+                            placeholder="Descripción del plan de tratamiento..."
+                            value={formData.diagnosticoTratamiento?.planTratamiento}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              diagnosticoTratamiento: { ...prev.diagnosticoTratamiento, planTratamiento: e.target.value }
+                            }))}
+                            minRows={3}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
 
-        <Group position="right" mt="xl">
-          <Button variant="subtle" onClick={onClose} color="gray">
-            Cancelar
-          </Button>
-          <Button 
-            type="submit" 
-            loading={saving}
-            style={{ backgroundColor: '#7C3AED' }}
-          >
-            {saving ? 'Guardando...' : 'Crear Consulta'}
-          </Button>
-        </Group>
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" c="violet">Medicamentos Formulados</Text>
+                      <MedicamentosTable
+                        medicamentos={formData.diagnosticoTratamiento?.medicamentos || []}
+                        onChange={(medicamentos) => setFormData(prev => ({
+                          ...prev,
+                          diagnosticoTratamiento: { ...prev.diagnosticoTratamiento, medicamentos }
+                        }))}
+                      />
+                    </Paper>
+
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" c="violet">Procedimientos</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Procedimientos Realizados"
+                            placeholder="Describa los procedimientos realizados..."
+                            value={formData.diagnosticoTratamiento?.procedimientos}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              diagnosticoTratamiento: { ...prev.diagnosticoTratamiento, procedimientos: e.target.value }
+                            }))}
+                            minRows={3}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
+                  </Tabs.Panel>
+
+                  {/* TAB 4: Seguimiento */}
+                  <Tabs.Panel value="seguimiento">
+                    <Paper p="md" withBorder>
+                      <Text size="sm" fw={600} mb="md" c="violet">Evolución y Seguimiento</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Evolución del Paciente"
+                            placeholder="Evolución del paciente durante la consulta..."
+                            value={formData.seguimientoConsulta?.evolucion}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              seguimientoConsulta: { ...prev.seguimientoConsulta, evolucion: e.target.value }
+                            }))}
+                            minRows={3}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Complicaciones"
+                            placeholder="Complicaciones presentadas (si aplica)..."
+                            value={formData.seguimientoConsulta?.complicaciones}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              seguimientoConsulta: { ...prev.seguimientoConsulta, complicaciones: e.target.value }
+                            }))}
+                            minRows={2}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <Textarea
+                            label="Recomendaciones"
+                            placeholder="Recomendaciones médicas para el paciente..."
+                            value={formData.seguimientoConsulta?.recomendaciones}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              seguimientoConsulta: { ...prev.seguimientoConsulta, recomendaciones: e.target.value }
+                            }))}
+                            minRows={3}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={12}>
+                          <TextInput
+                            label="Próxima Cita (Opcional)"
+                            type="date"
+                            value={formData.seguimientoConsulta?.proximaCita}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              seguimientoConsulta: { ...prev.seguimientoConsulta, proximaCita: e.target.value }
+                            }))}
+                            size="sm"
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
+                  </Tabs.Panel>
+                </Box>
+              </ScrollArea>
+            </Tabs>
+          </Box>
+        </Stack>
+
+        {/* Footer con botones */}
+        <Paper p="md" shadow="sm" style={{ borderTop: '1px solid #E5E7EB' }}>
+          <Group justify="space-between">
+            <Button
+              variant="subtle"
+              onClick={onClose}
+              color="gray"
+            >
+              Cancelar
+            </Button>
+            <Group>
+              {activeTab !== 'consulta' && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento'];
+                    const currentIndex = tabs.indexOf(activeTab);
+                    if (currentIndex > 0) {
+                      setActiveTab(tabs[currentIndex - 1]);
+                    }
+                  }}
+                  color="violet"
+                >
+                  Anterior
+                </Button>
+              )}
+              {activeTab !== 'seguimiento' ? (
+                <Button
+                  onClick={() => {
+                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento'];
+                    const currentIndex = tabs.indexOf(activeTab);
+                    if (currentIndex < tabs.length - 1) {
+                      setActiveTab(tabs[currentIndex + 1]);
+                    }
+                  }}
+                  color="violet"
+                >
+                  Siguiente
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  loading={saving}
+                  leftSection={<IconDeviceFloppy size={16} />}
+                  color="violet"
+                >
+                  Guardar Consulta
+                </Button>
+              )}
+            </Group>
+          </Group>
+        </Paper>
       </form>
     </Modal>
   );

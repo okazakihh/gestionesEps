@@ -56,25 +56,6 @@ export const validatePatientForm = (formData, parsedData) => {
     errors.email = 'El correo electrónico no es válido';
   }
 
-  // Consent validation (required by law)
-  if (!parsedData.consentimientoInformado.aceptaTratamiento) {
-    errors.consentimientoTratamiento = 'Debe aceptar el consentimiento informado para tratamiento médico';
-  }
-  if (!parsedData.consentimientoInformado.aceptaPrivacidad) {
-    errors.consentimientoPrivacidad = 'Debe aceptar las políticas de privacidad y protección de datos';
-  }
-  if (!parsedData.consentimientoInformado.aceptaDatosPersonales) {
-    errors.consentimientoDatos = 'Debe aceptar el tratamiento de datos personales según la Ley 1581 de 2012';
-  }
-
-  // Medical information validation (required by law)
-  if (!parsedData.informacionMedica.eps.trim()) {
-    errors.eps = 'La EPS es requerida por ley para atención médica';
-  }
-  if (!parsedData.informacionMedica.regimenAfiliacion) {
-    errors.regimenAfiliacion = 'El régimen de afiliación es requerido';
-  }
-
   // Emergency contact validation (required by law)
   if (!parsedData.contactoEmergencia.nombreContacto.trim()) {
     errors.nombreContactoEmergencia = 'El contacto de emergencia es obligatorio por ley';
@@ -111,6 +92,8 @@ const getDefaultParsedData = () => ({
     genero: '',
     estadoCivil: '',
     tipoSangre: '',
+    estatura: '',
+    peso: '',
     ocupacion: '',
     nivelEducativo: '',
     nacionalidad: 'Colombiana',
@@ -252,6 +235,8 @@ const parsePatientDataForEdit = (patient) => {
             genero: secondLevel.informacionPersonal?.genero || '',
             estadoCivil: secondLevel.informacionPersonal?.estadoCivil || '',
             tipoSangre: secondLevel.informacionPersonal?.tipoSangre || '',
+            estatura: secondLevel.informacionPersonal?.estatura ? String(secondLevel.informacionPersonal.estatura).replace(/[^\d.]/g, '') : '',
+            peso: secondLevel.informacionPersonal?.peso ? String(secondLevel.informacionPersonal.peso).replace(/[^\d.]/g, '') : '',
             ocupacion: secondLevel.informacionPersonal?.ocupacion || '',
             nivelEducativo: secondLevel.informacionPersonal?.nivelEducativo || '',
             nacionalidad: secondLevel.informacionPersonal?.nacionalidad || 'Colombiana',
@@ -327,6 +312,8 @@ const parsePatientDataForEdit = (patient) => {
             genero: infoPersonal.genero || '',
             estadoCivil: infoPersonal.estadoCivil || '',
             tipoSangre: infoPersonal.tipoSangre || '',
+            estatura: infoPersonal.estatura ? String(infoPersonal.estatura).replace(/[^\d.]/g, '') : '',
+            peso: infoPersonal.peso ? String(infoPersonal.peso).replace(/[^\d.]/g, '') : '',
             ocupacion: infoPersonal.ocupacion || '',
             nivelEducativo: infoPersonal.nivelEducativo || '',
             nacionalidad: infoPersonal.nacionalidad || 'Colombiana',
@@ -415,6 +402,11 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
     if (editingPatient) {
       try {
         const patientData = parsePatientDataForEdit(editingPatient);
+        
+        console.log('🔍 Paciente para editar:', editingPatient);
+        console.log('📋 Datos parseados:', patientData);
+        console.log('⚖️ Estatura parseada:', patientData.informacionPersonal?.estatura);
+        console.log('🏋️ Peso parseado:', patientData.informacionPersonal?.peso);
 
         setFormData({
           numeroDocumento: editingPatient.numeroDocumento || '',
@@ -470,6 +462,15 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
       setSaving(true);
       setError(null);
 
+      // Limpiar valores de estatura y peso (remover unidades)
+      const cleanInformacionPersonal = { ...parsedData.informacionPersonal };
+      if (cleanInformacionPersonal.estatura) {
+        cleanInformacionPersonal.estatura = String(cleanInformacionPersonal.estatura).replace(/[^\d.]/g, '');
+      }
+      if (cleanInformacionPersonal.peso) {
+        cleanInformacionPersonal.peso = String(cleanInformacionPersonal.peso).replace(/[^\d.]/g, '');
+      }
+
       // Filtrar valores por defecto antes de enviar
       const cleanInformacionMedica = { ...parsedData.informacionMedica };
       if (cleanInformacionMedica.alergias === 'Ninguna') cleanInformacionMedica.alergias = '';
@@ -485,7 +486,7 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
       // Convertir los objetos parsedData a JSON strings antes de enviar
       const dataToSend = {
         ...formData,
-        informacionPersonalJson: stringifyJsonSafely(parsedData.informacionPersonal),
+        informacionPersonalJson: stringifyJsonSafely(cleanInformacionPersonal),
         informacionContactoJson: stringifyJsonSafely(parsedData.informacionContacto),
         informacionMedicaJson: stringifyJsonSafely(cleanInformacionMedica),
         contactoEmergenciaJson: stringifyJsonSafely(parsedData.contactoEmergencia),

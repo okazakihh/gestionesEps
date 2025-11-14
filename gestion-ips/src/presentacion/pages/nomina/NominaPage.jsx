@@ -9,6 +9,7 @@ import { NominaTable } from '../../components/nomina/NominaTable';
 import { NominaFilters } from '../../components/nomina/NominaFilters';
 import { NominaForm } from '../../components/nomina/NominaForm';
 import { generarDesprendibleHTML } from '../../components/nomina/DesprendiblePagoHTML';
+import { getIpsConfig } from '../../../data/services/configuracionApiService';
 
 /**
  * Página principal del módulo de Nómina
@@ -117,9 +118,12 @@ export const NominaPage = () => {
   /**
    * Abre ventana para imprimir desprendible
    */
-  const handlePrintDesprendible = (nomina) => {
-    // Generar HTML del desprendible (usa ipsConfig por defecto)
-    const htmlContent = generarDesprendibleHTML(nomina);
+  const handlePrintDesprendible = async (nomina) => {
+    // Cargar configuración de IPS desde la base de datos
+    const ipsData = await getIpsConfig();
+    
+    // Generar HTML del desprendible con configuración actual
+    const htmlContent = generarDesprendibleHTML(nomina, ipsData);
     
     // Abrir ventana nueva con el desprendible
     const ventana = window.open('', '_blank', 'width=800,height=1000');

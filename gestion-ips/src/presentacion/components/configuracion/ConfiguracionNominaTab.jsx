@@ -20,6 +20,7 @@ import {
 } from '@mantine/core';
 import { IconDeviceFloppy, IconAlertCircle, IconCash } from '@tabler/icons-react';
 import { useConfiguracionManagement } from '../../../negocio/hooks/configuracion/useConfiguracionManagement.js';
+import { clearNominaConfigCache } from '../../../negocio/utils/nomina/nominaCalculos.js';
 import Swal from 'sweetalert2';
 
 export const ConfiguracionNominaTab = () => {
@@ -110,24 +111,16 @@ export const ConfiguracionNominaTab = () => {
       console.log('Updated Config (Nómina):', updatedConfig);
 
       // Enviar solo el objeto de configuración
-      await updateConfiguracionByClave('NOMINA', updatedConfig);
-
-      await Swal.fire({
-        title: '¡Configuración guardada!',
-        text: 'La configuración de nómina se ha actualizado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      await cargarConfiguracion();
+      const result = await updateConfiguracionByClave('NOMINA', updatedConfig);
+      
+      if (result.success) {
+        // Limpiar cache de nómina
+        clearNominaConfigCache();
+        await cargarConfiguracion();
+      }
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la configuración de nómina',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }

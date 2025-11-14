@@ -114,24 +114,14 @@ export const ConfiguracionNotificacionesTab = () => {
       console.log('Updated Config (Notificaciones):', updatedConfig);
 
       // Enviar solo el objeto de configuración
-      await updateConfiguracionByClave('NOTIFICACIONES', updatedConfig);
+      const result = await updateConfiguracionByClave('NOTIFICACIONES', updatedConfig);
 
-      await Swal.fire({
-        title: '¡Configuración guardada!',
-        text: 'La configuración de notificaciones se ha actualizado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      await cargarConfiguracion();
+      if (result.success) {
+        await cargarConfiguracion();
+      }
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la configuración de notificaciones',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }

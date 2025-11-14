@@ -2,7 +2,8 @@ import { Modal, TextInput, NumberInput, Textarea, Button, Group, Text, Paper, Gr
 import { IconDeviceFloppy, IconX, IconCalculator, IconUser } from '@tabler/icons-react';
 import { useNominaForm } from '../../../negocio/hooks/nomina/useNominaForm';
 import { useEmpleadosSelect } from '../../../negocio/hooks/nomina/useEmpleadosSelect';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getNominaConfig } from '../../../negocio/utils/nomina/nominaCalculos';
 
 /**
  * Componente modal de formulario de nómina
@@ -34,6 +35,23 @@ export const NominaForm = ({
     empleadosFormatted,
     loading: loadingEmpleados
   } = useEmpleadosSelect();
+
+  // Estado para la configuración de nómina
+  const [nominaConfig, setNominaConfig] = useState({
+    salarioMinimo: 1300000,
+    auxilioTransporte: 162000,
+    porcentajeSalud: 4.0,
+    porcentajePension: 4.0
+  });
+
+  // Cargar configuración de nómina
+  useEffect(() => {
+    const loadConfig = async () => {
+      const config = await getNominaConfig();
+      setNominaConfig(config);
+    };
+    loadConfig();
+  }, []);
 
   // Cargar datos cuando cambia la nómina a editar
   useEffect(() => {
@@ -226,6 +244,7 @@ export const NominaForm = ({
               <Grid.Col span={6}>
                 <NumberInput
                   label="Salario Base"
+                  description={`Salario mínimo: ${formatCurrency(nominaConfig.salarioMinimo)}`}
                   placeholder="0"
                   required
                   min={0}
@@ -259,7 +278,7 @@ export const NominaForm = ({
 
               <Grid.Col span={4}>
                 <NumberInput
-                  label="HE Diurnas (+25%)"
+                  label={`HE Diurnas (+${nominaConfig.horaExtraDiurna || 25}%)`}
                   placeholder="0"
                   min={0}
                   value={formData.horasExtrasDiurnas}
@@ -271,7 +290,7 @@ export const NominaForm = ({
 
               <Grid.Col span={4}>
                 <NumberInput
-                  label="HE Nocturnas (+75%)"
+                  label={`HE Nocturnas (+${nominaConfig.horaExtraNocturna || 75}%)`}
                   placeholder="0"
                   min={0}
                   value={formData.horasExtrasNocturnas}
@@ -283,7 +302,7 @@ export const NominaForm = ({
 
               <Grid.Col span={4}>
                 <NumberInput
-                  label="HE Dominicales (+100%)"
+                  label={`HE Dominicales (+${nominaConfig.horaExtraFestivaDiurna || 100}%)`}
                   placeholder="0"
                   min={0}
                   value={formData.horasExtrasDominicales}
@@ -299,7 +318,7 @@ export const NominaForm = ({
 
               <Grid.Col span={6}>
                 <NumberInput
-                  label="Recargo Nocturno (+35%)"
+                  label={`Recargo Nocturno (+${nominaConfig.recargoNocturno || 35}%)`}
                   placeholder="0"
                   min={0}
                   value={formData.horasRecargoNocturno}
@@ -311,7 +330,7 @@ export const NominaForm = ({
 
               <Grid.Col span={6}>
                 <NumberInput
-                  label="Recargo Dominical (+75%)"
+                  label={`Recargo Dominical (+${nominaConfig.recargoFestivo || 75}%)`}
                   placeholder="0"
                   min={0}
                   value={formData.horasRecargoDominical}
@@ -420,7 +439,7 @@ export const NominaForm = ({
 
               <Grid.Col span={12}>
                 <Text size="xs" c="dimmed">
-                  Las deducciones de salud (4%) y pensión (4%) se calculan automáticamente
+                  Las deducciones de salud ({nominaConfig.porcentajeSalud || 4}%) y pensión ({nominaConfig.porcentajePension || 4}%) se calculan automáticamente
                 </Text>
               </Grid.Col>
             </Grid>
@@ -435,16 +454,28 @@ export const NominaForm = ({
 
             <Grid gutter="md">
               <Grid.Col span={4}>
-                <Text size="xs" c="dimmed">Salario Proporcional</Text>
+                <Text size="xs" c="dimmed">
+                  Salario por Días Trabajados
+                </Text>
                 <Text size="sm" fw={600}>
-                  {formatCurrency(calculatedValues.salarioProporcional)}
+                  {formatCurrency(calculatedValues.salarioProporcional || 0)}
+                </Text>
+                <Text size="xs" c="dimmed" mt={2}>
+                  {formData.diasTrabajados < 30 
+                    ? `${formData.diasTrabajados}/30 días`
+                    : 'Mes completo'}
                 </Text>
               </Grid.Col>
 
               <Grid.Col span={4}>
-                <Text size="xs" c="dimmed">Auxilio de Transporte</Text>
+                <Text size="xs" c="dimmed">Auxilio de Transporte ({formatCurrency(nominaConfig.auxilioTransporte)})</Text>
                 <Text size="sm" fw={600} c={calculatedValues.auxilioTransporte > 0 ? 'green' : 'dimmed'}>
                   {formatCurrency(calculatedValues.auxilioTransporte)}
+                </Text>
+                <Text size="xs" c="dimmed" mt={2}>
+                  {calculatedValues.auxilioTransporte > 0 
+                    ? 'Aplica (≤ 2 SMLMV)' 
+                    : 'No aplica (> 2 SMLMV)'}
                 </Text>
               </Grid.Col>
 

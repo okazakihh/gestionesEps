@@ -206,11 +206,16 @@ const FacturacionPage = () => {
           showConfirmButton: false
         });
 
+        // Limpiar selección
+        selectedCitas.clear();
+        
         // Limpiar y recargar
         setIsFacturaModalOpen(false);
         setFacturaPreview(null);
-        loadFacturas();
-        loadCitasAtendidas();
+        
+        // Recargar facturas primero y luego citas
+        const facturasActualizadas = await loadFacturas();
+        await loadCitasAtendidas(facturasActualizadas);
       } else {
         throw new Error('Respuesta inválida del servidor');
       }

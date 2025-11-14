@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AuthService from '../services/authService.js';
+import { configuracionApiService } from '../services/configuracionApiService.js';
 
 const AuthContext = createContext(undefined);
+
+// Cache de configuración del sistema
+let sistemaConfigCache = null;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -9,6 +13,37 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(null);
   const [tokenExpiryAt, setTokenExpiryAt] = useState(null);
+  const [sistemaConfig, setSistemaConfig] = useState(null);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Cargar configuración del sistema
+  useEffect(() => {
+    const loadSistemaConfig = async () => {
+      if (sistemaConfigCache) {
+        setSistemaConfig(sistemaConfigCache);
+        return;
+      }
+      
+      try {
+        const config = await configuracionApiService.getConfiguracionByClave('SISTEMA_GENERAL');
+        if (config && config.jsonData) {
+          sistemaConfigCache = config.jsonData;
+          setSistemaConfig(config.jsonData);
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar SISTEMA_GENERAL, usando valores por defecto');
+        const defaultConfig = {
+          limiteIntentosFallidos: 5,
+          tiempoBloqueoMinutos: 30,
+          tiempoSesionMinutos: 120
+        };
+        setSistemaConfig(defaultConfig);
+      }
+    };
+    
+    loadSistemaConfig();
+  }, []);
 
   // Verificar token almacenado al cargar la aplicación
   useEffect(() => {
@@ -50,8 +85,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (loginData) => {
     try {
+      // Verificar si está bloqueado
+      const blockData = localStorage.getItem('loginBlock');
+      if (blockData) {
+        const { until } = JSON.parse(blockData);
+        if (Date.now() < until) {
+          const minutesLeft = Math.ceil((until - Date.now()) / 60000);
+          throw new Error(`Usuario bloqueado. Intente nuevamente en ${minutesLeft} minuto(s).`);
+        } else {
+          localStorage.removeItem('loginBlock');
+          setIsBlocked(false);
+          setLoginAttempts(0);
+        }
+      }
+
       setIsLoading(true);
       const authResponse = await AuthService.login(loginData);
+      
+      // Login exitoso, resetear intentos
+      setLoginAttempts(0);
+      localStorage.removeItem('loginBlock');
+      setIsBlocked(false);
+      
       // authResponse expected to be { token: string, user: any }
       const tokenFromBackend = authResponse.token;
       const userData = authResponse.user;
@@ -105,7 +160,29 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.error('Error en login', error);
-      throw error; // re-lanzar para UI
+      
+      // Incrementar intentos fallidos
+      const nuevosIntentos = loginAttempts + 1;
+      setLoginAttempts(nuevosIntentos);
+      
+      const limite = sistemaConfig?.limiteIntentosFallidos || 5;
+      const tiempoBloqueo = sistemaConfig?.tiempoBloqueoMinutos || 30;
+      
+      // Si se alcanza el límite, bloquear usuario
+      if (nuevosIntentos >= limite) {
+        const tiempoDeBloqueo = Date.now() + (tiempoBloqueo * 60 * 1000);
+        localStorage.setItem('loginBlock', JSON.stringify({
+          blockedUntil: tiempoDeBloqueo,
+          attempts: nuevosIntentos
+        }));
+        setIsBlocked(true);
+        setLoginAttempts(0);
+        throw new Error(`Has superado el límite de ${limite} intentos fallidos. Tu cuenta ha sido bloqueada temporalmente por ${tiempoBloqueo} minutos.`);
+      }
+      
+      // Lanzar error con información de intentos restantes
+      const intentosRestantes = limite - nuevosIntentos;
+      throw new Error(`${error.message || 'Error de autenticación'}. Intentos restantes: ${intentosRestantes}`);
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +210,40 @@ export const AuthProvider = ({ children }) => {
       window.location.href = '/login';
     }
   }, []);
+
+  // Gestión de sesión con timeout por inactividad
+  useEffect(() => {
+    if (!user || !sistemaConfig?.tiempoSesionMinutos) return;
+    
+    let lastActivity = Date.now();
+    const sessionTimeout = sistemaConfig.tiempoSesionMinutos * 60 * 1000;
+    
+    const updateActivity = () => {
+      lastActivity = Date.now();
+    };
+    
+    // Eventos que indican actividad del usuario
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity);
+    });
+    
+    // Verificar inactividad cada minuto
+    const checkInactivity = setInterval(() => {
+      const inactiveTime = Date.now() - lastActivity;
+      if (inactiveTime >= sessionTimeout) {
+        console.log('Sesión expirada por inactividad');
+        logout();
+      }
+    }, 60000); // Verificar cada minuto
+    
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity);
+      });
+      clearInterval(checkInactivity);
+    };
+  }, [user, sistemaConfig, logout]);
 
   const refresh = useCallback(async () => {
     const rt = refreshToken || localStorage.getItem('refreshToken');

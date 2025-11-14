@@ -55,14 +55,9 @@ const GestionEmpleadosComponent = () => {
       Swal.fire({ title: 'Error de Validación', text: validationError, icon: 'error' });
       return;
     }
-    try {
-      await createEmpleado(formData);
-      Swal.fire({ title: 'Éxito!', text: 'Empleado creado correctamente', icon: 'success' });
+    const result = await createEmpleado(formData);
+    if (result.success) {
       handleCloseCreateModal();
-      loadEmpleados();
-    } catch (error) {
-      console.error('Error al crear empleado:', error);
-      Swal.fire({ title: 'Error', text: 'No se pudo crear el empleado', icon: 'error' });
     }
   };
 
@@ -73,7 +68,7 @@ const GestionEmpleadosComponent = () => {
       setIsViewModalOpen(true);
     } catch (error) {
       console.error('Error al cargar empleado para ver:', error);
-      Swal.fire({ title: 'Error', text: 'No se pudo cargar la información del empleado', icon: 'error' });
+      // Error ya manejado en el hook
     }
   };
 
@@ -87,7 +82,7 @@ const GestionEmpleadosComponent = () => {
       setIsEditModalOpen(true);
     } catch (error) {
       console.error('Error al cargar empleado para editar:', error);
-      Swal.fire({ title: 'Error', text: 'No se pudo cargar la información del empleado', icon: 'error' });
+      // Error ya manejado en el hook
     }
   };
 
@@ -99,33 +94,15 @@ const GestionEmpleadosComponent = () => {
       Swal.fire({ title: 'Error de Validación', text: validationError, icon: 'error' });
       return;
     }
-    try {
-      await updateEmpleado(selectedEmpleadoId, formData);
-      Swal.fire({ title: 'Éxito!', text: 'Empleado actualizado correctamente', icon: 'success' });
+    const result = await updateEmpleado(selectedEmpleadoId, formData);
+    if (result.success) {
       handleCloseEditModal();
-      loadEmpleados();
-    } catch (error) {
-      console.error('Error al actualizar empleado:', error);
-      Swal.fire({ title: 'Error', text: 'No se pudo actualizar el empleado', icon: 'error' });
     }
   };
 
   const handleDeactivateEmpleado = async (empleado) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?', text: `Desea desactivar al empleado ${empleado.id}?`, icon: 'warning',
-      showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, desactivar', cancelButtonText: 'Cancelar'
-    });
-    if (result.isConfirmed) {
-      try {
-        await deactivateEmpleado(empleado.id);
-        Swal.fire({ title: 'Éxito!', text: 'Empleado desactivado correctamente', icon: 'success' });
-        loadEmpleados();
-      } catch (error) {
-        console.error('Error al desactivar empleado:', error);
-        Swal.fire({ title: 'Error', text: 'No se pudo desactivar el empleado', icon: 'error' });
-      }
-    }
+    // El hook ya maneja la confirmación y los mensajes
+    await deactivateEmpleado(empleado.id);
   };
 
   const handleCreateUser = async (empleado) => {

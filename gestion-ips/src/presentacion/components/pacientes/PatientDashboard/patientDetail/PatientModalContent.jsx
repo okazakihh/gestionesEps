@@ -1,15 +1,11 @@
 import React from 'react';
-import { Paper, Stack, Group, Text, Title, Grid, Loader } from '@mantine/core';
-import { IconPhone, IconId, IconFileText } from '@tabler/icons-react';
+import { Stack, Loader } from '@mantine/core';
 
 // Importar utilidades
 import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 // Importar componentes extraídos para clean code
-import PatientPersonalInfo from './PatientPersonalInfo.jsx';
-import PatientContactInfo from './PatientContactInfo.jsx';
-import PatientMedicalInfo from './PatientMedicalInfo.jsx';
-import PatientConsentInfo from './PatientConsentInfo.jsx';
+import PatientGeneralInfo from './PatientGeneralInfo.jsx';
 import PatientClinicalHistory from './PatientClinicalHistory.jsx';
 import PatientClinicalHistoryComplete from './PatientClinicalHistoryComplete.jsx';
 
@@ -44,78 +40,12 @@ const PatientModalContent = ({
 
   return (
     <Stack gap="lg">
-      {/* Información Personal */}
+      {/* Información General (Personal + Contacto + Emergencia) */}
       {activeTab === 'personal' && (
-        <PatientPersonalInfo
+        <PatientGeneralInfo
           patientData={patientData}
           patient={patient}
         />
-      )}
-
-      {/* Información de Contacto */}
-      {activeTab === 'contacto' && (
-        <PatientContactInfo patientData={patientData} />
-      )}
-
-      {/* Información Médica */}
-      {activeTab === 'medica' && (
-        <PatientMedicalInfo patientData={patientData} />
-      )}
-
-      {/* Contacto de Emergencia */}
-      {activeTab === 'emergencia' && (
-        <Stack gap="lg">
-          <Title order={4} size="h5">Contacto de Emergencia</Title>
-          <Paper p="lg" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-red-0)' }}>
-            <Stack gap="lg">
-              <Group gap="sm">
-                <IconId size={20} color="var(--mantine-color-red-6)" />
-                <Title order={5} size="h6" c="red.9">Información de Emergencia</Title>
-              </Group>
-              <Grid gutter="md">
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Paper p="md" radius="md" withBorder bg="white">
-                    <Stack gap="md">
-                      <Stack gap={4}>
-                        <Text size="xs" c="dimmed" fw={500}>Nombre Completo</Text>
-                        <Text size="sm" fw={500}>{patientData.contactoEmergencia?.nombreContacto || 'N/A'}</Text>
-                      </Stack>
-                      <Stack gap={4}>
-                        <Text size="xs" c="dimmed" fw={500}>Relación</Text>
-                        <Text size="sm" fw={500} c="red.8">{patientData.contactoEmergencia?.relacion || 'N/A'}</Text>
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                </Grid.Col>
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Paper p="md" radius="md" withBorder bg="white">
-                    <Stack gap="md">
-                      <Group gap="md" align="flex-start">
-                        <IconPhone size={20} color="var(--mantine-color-red-6)" />
-                        <Stack gap={4}>
-                          <Text size="xs" c="dimmed" fw={500}>Teléfono Principal</Text>
-                          <Text size="sm" fw={500}>{patientData.contactoEmergencia?.telefonoContacto || 'N/A'}</Text>
-                        </Stack>
-                      </Group>
-                      <Group gap="md" align="flex-start">
-                        <IconPhone size={20} color="var(--mantine-color-orange-6)" />
-                        <Stack gap={4}>
-                          <Text size="xs" c="dimmed" fw={500}>Teléfono Secundario</Text>
-                          <Text size="sm" fw={500} c="red.8">{patientData.contactoEmergencia?.telefonoContactoSecundario || 'N/A'}</Text>
-                        </Stack>
-                      </Group>
-                    </Stack>
-                  </Paper>
-                </Grid.Col>
-              </Grid>
-            </Stack>
-          </Paper>
-        </Stack>
-      )}
-
-      {/* Consentimiento Informado */}
-      {activeTab === 'consentimiento' && (
-        <PatientConsentInfo patientData={patientData} formatDate={formatDate} />
       )}
 
       {/* Historia Clínica */}

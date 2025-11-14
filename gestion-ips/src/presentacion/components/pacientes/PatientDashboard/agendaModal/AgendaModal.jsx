@@ -11,7 +11,6 @@ import { useAuth } from '../../../../../data/context/AuthContext.jsx';
 import { hasPermission, PERMISSIONS } from '../../../../../negocio/utils/auth/permissions.js';
 
 // Import extracted components
-import AgendaStatsCards from './AgendaStatsCards.jsx';
 import AgendaFilters from './AgendaFilters.jsx';
 import AgendaStatusBadge from './AgendaStatusBadge.jsx';
 import AgendaEmptyState from './AgendaEmptyState.jsx';
@@ -41,15 +40,15 @@ const AgendaModal = ({ isOpen, onClose }) => {
     page: 0,
     size: 10
   });
-  // Initialize filters with today's date
+  // Initialize filters with no date filter to show all appointments
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   };
 
   const [filters, setFilters] = useState({
-    fechaInicio: getTodayDate(),
-    fechaFin: getTodayDate(),
+    fechaInicio: '',
+    fechaFin: '',
     estado: '',
     paciente: ''
   });
@@ -241,10 +240,9 @@ const AgendaModal = ({ isOpen, onClose }) => {
   };
 
   const clearFilters = () => {
-    const today = getTodayDate();
     setFilters({
-      fechaInicio: today,
-      fechaFin: today,
+      fechaInicio: '',
+      fechaFin: '',
       estado: '',
       paciente: ''
     });
@@ -383,15 +381,6 @@ const AgendaModal = ({ isOpen, onClose }) => {
               </div>
             ) : (
               <Stack gap="lg">
-                {/* Stats */}
-                <AgendaStatsCards
-                  pendingCitas={getPendingCitas(citas, user)}
-                  citas={citas}
-                  filters={filters}
-                  user={user}
-                  formatDate={formatDate}
-                />
-
                 {/* Filters */}
                 <AgendaFilters
                   filters={filters}

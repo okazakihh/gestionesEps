@@ -23,20 +23,21 @@ import {
 } from '@mantine/core';
 import { IconDeviceFloppy, IconAlertCircle, IconFileInvoice } from '@tabler/icons-react';
 import { useConfiguracionManagement } from '../../../negocio/hooks/configuracion/useConfiguracionManagement.js';
+import { clearFacturacionConfigCache } from '../../../negocio/services/facturacionService.js';
 import Swal from 'sweetalert2';
 
 export const ConfiguracionFacturacionTab = () => {
   const { getConfiguracionByClave, updateConfiguracionByClave } = useConfiguracionManagement();
   
   const [formData, setFormData] = useState({
-    prefijoFactura: '',
+    prefijoFactura: 'FM',
     consecutivoInicial: 1000,
     iva: 0,
     retencionFuente: 0,
     diasVencimientoFactura: 30,
     notasLegales: '',
     incluirFirmaDigital: false,
-    formatoNumeroFactura: ''
+    formatoNumeroFactura: '{PREFIJO}-{CONSECUTIVO}'
   });
 
   const [loading, setLoading] = useState(true);
@@ -56,14 +57,14 @@ export const ConfiguracionFacturacionTab = () => {
         setConfigOriginal(config.jsonData);
         
         setFormData({
-          prefijoFactura: config.jsonData.prefijoFactura || '',
+          prefijoFactura: config.jsonData.prefijoFactura || 'FM',
           consecutivoInicial: config.jsonData.consecutivoInicial || 1000,
           iva: config.jsonData.iva || 0,
           retencionFuente: config.jsonData.retencionFuente || 0,
           diasVencimientoFactura: config.jsonData.diasVencimientoFactura || 30,
           notasLegales: config.jsonData.notasLegales || '',
           incluirFirmaDigital: config.jsonData.incluirFirmaDigital || false,
-          formatoNumeroFactura: config.jsonData.formatoNumeroFactura || ''
+          formatoNumeroFactura: config.jsonData.formatoNumeroFactura || '{PREFIJO}-{CONSECUTIVO}'
         });
       }
     } catch (error) {
@@ -75,6 +76,25 @@ export const ConfiguracionFacturacionTab = () => {
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Generar ejemplo de formato con valores actuales
+  const generarEjemploFormato = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const prefijo = formData.prefijoFactura || 'FM';
+    const consecutivo = String(formData.consecutivoInicial || 1000).padStart(6, '0');
+    
+    return formData.formatoNumeroFactura
+      .replace('{PREFIJO}', prefijo)
+      .replace('{prefijo}', prefijo)
+      .replace('{CONSECUTIVO}', consecutivo)
+      .replace('{consecutivo}', consecutivo)
+      .replace('{YEAR}', currentYear.toString())
+      .replace('{year}', currentYear.toString())
+      .replace('{MES}', currentMonth)
+      .replace('{mes}', currentMonth)
+      .replace('{MONTH}', currentMonth);
   };
 
   const handleGuardar = async () => {
@@ -103,24 +123,16 @@ export const ConfiguracionFacturacionTab = () => {
       console.log('Updated Config (Facturación):', updatedConfig);
 
       // Enviar solo el objeto de configuración
-      await updateConfiguracionByClave('FACTURACION', updatedConfig);
-
-      await Swal.fire({
-        title: '¡Configuración guardada!',
-        text: 'La configuración de facturación se ha actualizado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      await cargarConfiguracion();
+      const result = await updateConfiguracionByClave('FACTURACION', updatedConfig);
+      
+      if (result.success) {
+        // Limpiar cache de facturación
+        clearFacturacionConfigCache();
+        await cargarConfiguracion();
+      }
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la configuración de facturación',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }
@@ -185,13 +197,28 @@ export const ConfiguracionFacturacionTab = () => {
             <Grid.Col span={{ base: 12, md: 4 }}>
               <TextInput
                 label="Formato de Número"
-                placeholder="FM-{YEAR}-{CONSECUTIVE}"
-                description="Variables: {YEAR}, {CONSECUTIVE}"
+                placeholder="Ejemplo: {PREFIJO}-{YEAR}-{CONSECUTIVO}"
+                description="Variables: {PREFIJO}, {CONSECUTIVO}, {YEAR}, {MES}"
                 value={formData.formatoNumeroFactura}
                 onChange={(e) => handleChange('formatoNumeroFactura', e.target.value)}
               />
             </Grid.Col>
           </Grid>
+
+          {/* Vista previa del formato */}
+          {formData.formatoNumeroFactura && (
+            <Alert color="blue" variant="light" mt="sm">
+              <Text size="sm" fw={500}>
+                Vista previa del formato:
+              </Text>
+              <Text size="lg" fw={700} c="blue">
+                {generarEjemploFormato()}
+              </Text>
+              <Text size="xs" c="dimmed" mt={4}>
+                Este es un ejemplo de cómo se verá el número de factura con la configuración actual
+              </Text>
+            </Alert>
+          )}
 
           {/* Impuestos y Retenciones */}
           <Title order={4} mt="md">Impuestos y Retenciones</Title>

@@ -26,6 +26,16 @@ const PatientClinicalHistoryComplete = ({
   patient,
   patientData
 }) => {
+  // Componente reutilizable para mostrar información en formato label:value
+  const InfoRow = ({ label, value, icon: Icon }) => (
+    <Group gap="md" wrap="nowrap">
+      <Group gap="xs" style={{ minWidth: '180px' }}>
+        {Icon && <Icon size={14} color="var(--mantine-color-gray-6)" />}
+        <Text size="sm" c="dimmed" fw={500}>{label}:</Text>
+      </Group>
+      <Text size="sm" fw={500}>{value || 'N/A'}</Text>
+    </Group>
+  );
   return (
     <Stack gap="md">
       <Group justify="space-between" align="center">
@@ -113,18 +123,21 @@ const PatientClinicalHistoryComplete = ({
                                     </Text>
                                   </Group>
                                   <Stack gap="xs">
-                                    <Group justify="space-between">
-                                      <Text size="xs" c="dimmed">Nombre:</Text>
-                                      <Text size="xs" fw={500}>{(datosHistoria.informacionMedico?.medicoResponsable || datosHistoria.detalleConsulta?.medicoTratante) || 'N/A'}</Text>
-                                    </Group>
-                                    <Group justify="space-between">
-                                      <Text size="xs" c="dimmed">Registro:</Text>
-                                      <Text size="xs" fw={500}>{(datosHistoria.informacionMedico?.registroMedico) || 'N/A'}</Text>
-                                    </Group>
-                                    <Group justify="space-between">
-                                      <Text size="xs" c="dimmed">Especialidad:</Text>
-                                      <Text size="xs" fw={500}>{(datosHistoria.informacionMedico?.especialidad || datosHistoria.detalleConsulta?.especialidad) || 'N/A'}</Text>
-                                    </Group>
+                                    <InfoRow 
+                                      label="Nombre" 
+                                      value={datosHistoria.informacionMedico?.medicoResponsable || datosHistoria.detalleConsulta?.medicoTratante}
+                                      icon={IconUser}
+                                    />
+                                    <InfoRow 
+                                      label="Registro" 
+                                      value={datosHistoria.informacionMedico?.registroMedico}
+                                      icon={IconId}
+                                    />
+                                    <InfoRow 
+                                      label="Especialidad" 
+                                      value={datosHistoria.informacionMedico?.especialidad || datosHistoria.detalleConsulta?.especialidad}
+                                      icon={IconHeart}
+                                    />
                                   </Stack>
                                 </Stack>
                               </Paper>
@@ -142,15 +155,17 @@ const PatientClinicalHistoryComplete = ({
                                       Consulta Inicial
                                     </Text>
                                   </Group>
-                                  <Stack gap="sm">
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Motivo:</Text>
-                                      <Text size="xs">{datosHistoria.informacionConsulta.motivoConsulta || 'Apertura de historia clínica'}</Text>
-                                    </Stack>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Enfermedad Actual:</Text>
-                                      <Text size="xs">{datosHistoria.informacionConsulta.enfermedadActual || 'N/A'}</Text>
-                                    </Stack>
+                                  <Stack gap="xs">
+                                    <InfoRow 
+                                      label="Motivo" 
+                                      value={datosHistoria.informacionConsulta.motivoConsulta || 'Apertura de historia clínica'}
+                                      icon={IconFileText}
+                                    />
+                                    <InfoRow 
+                                      label="Enfermedad Actual" 
+                                      value={datosHistoria.informacionConsulta.enfermedadActual}
+                                      icon={IconHeart}
+                                    />
                                   </Stack>
                                 </Stack>
                               </Paper>
@@ -168,30 +183,34 @@ const PatientClinicalHistoryComplete = ({
                                   Antecedentes Clínicos
                                 </Text>
                               </Group>
-                              <Grid gutter="sm">
-                                <Grid.Col span={{ base: 12, md: 6 }}>
-                                  <Stack gap={2}>
-                                    <Text size="xs" c="dimmed" fw={500}>Personales:</Text>
-                                    <Text size="xs">{datosHistoria.antecedentesClinico.antecedentesPersonales || 'N/A'}</Text>
-                                  </Stack>
+                              <Grid gutter="xs">
+                                <Grid.Col span={6}>
+                                  <InfoRow 
+                                    label="Personales" 
+                                    value={datosHistoria.antecedentesClinico.antecedentesPersonales}
+                                    icon={IconUser}
+                                  />
                                 </Grid.Col>
-                                <Grid.Col span={{ base: 12, md: 6 }}>
-                                  <Stack gap={4}>
-                                    <Text size="xs" c="dimmed" fw={500}>Familiares:</Text>
-                                    <Text size="xs">{datosHistoria.antecedentesClinico.antecedentesFamiliares || 'N/A'}</Text>
-                                  </Stack>
+                                <Grid.Col span={6}>
+                                  <InfoRow 
+                                    label="Familiares" 
+                                    value={datosHistoria.antecedentesClinico.antecedentesFamiliares}
+                                    icon={IconHeart}
+                                  />
                                 </Grid.Col>
-                                <Grid.Col span={{ base: 12, md: 6 }}>
-                                  <Stack gap={4}>
-                                    <Text size="xs" c="dimmed" fw={500}>Quirúrgicos:</Text>
-                                    <Text size="xs">{datosHistoria.antecedentesClinico.antecedentesQuirurgicos || 'N/A'}</Text>
-                                  </Stack>
+                                <Grid.Col span={6}>
+                                  <InfoRow 
+                                    label="Quirúrgicos" 
+                                    value={datosHistoria.antecedentesClinico.antecedentesQuirurgicos}
+                                    icon={IconFileText}
+                                  />
                                 </Grid.Col>
-                                <Grid.Col span={{ base: 12, md: 6 }}>
-                                  <Stack gap={4}>
-                                    <Text size="xs" c="dimmed" fw={500}>Alérgicos:</Text>
-                                    <Text size="xs">{datosHistoria.antecedentesClinico.antecedentesAlergicos || 'N/A'}</Text>
-                                  </Stack>
+                                <Grid.Col span={6}>
+                                  <InfoRow 
+                                    label="Alérgicos" 
+                                    value={datosHistoria.antecedentesClinico.antecedentesAlergicos}
+                                    icon={IconHeart}
+                                  />
                                 </Grid.Col>
                               </Grid>
                             </Stack>
@@ -211,15 +230,17 @@ const PatientClinicalHistoryComplete = ({
                                       Examen Clínico
                                     </Text>
                                   </Group>
-                                  <Stack gap="sm">
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Examen Físico:</Text>
-                                      <Text size="xs">{datosHistoria.examenClinico.examenFisico || 'N/A'}</Text>
-                                    </Stack>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Signos Vitales:</Text>
-                                      <Text size="xs">{datosHistoria.examenClinico.signosVitales || 'N/A'}</Text>
-                                    </Stack>
+                                  <Stack gap="xs">
+                                    <InfoRow 
+                                      label="Examen Físico" 
+                                      value={datosHistoria.examenClinico.examenFisico}
+                                      icon={IconUser}
+                                    />
+                                    <InfoRow 
+                                      label="Signos Vitales" 
+                                      value={datosHistoria.examenClinico.signosVitales}
+                                      icon={IconHeart}
+                                    />
                                   </Stack>
                                 </Stack>
                               </Paper>
@@ -237,15 +258,17 @@ const PatientClinicalHistoryComplete = ({
                                       Diagnóstico y Tratamiento
                                     </Text>
                                   </Group>
-                                  <Stack gap="sm">
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Diagnósticos:</Text>
-                                      <Text size="xs">{datosHistoria.diagnosticoTratamiento.diagnosticos || 'N/A'}</Text>
-                                    </Stack>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Plan de Tratamiento:</Text>
-                                      <Text size="xs">{datosHistoria.diagnosticoTratamiento.planTratamiento || 'N/A'}</Text>
-                                    </Stack>
+                                  <Stack gap="xs">
+                                    <InfoRow 
+                                      label="Diagnósticos" 
+                                      value={datosHistoria.diagnosticoTratamiento.diagnosticos}
+                                      icon={IconFileText}
+                                    />
+                                    <InfoRow 
+                                      label="Plan de Tratamiento" 
+                                      value={datosHistoria.diagnosticoTratamiento.planTratamiento}
+                                      icon={IconHeart}
+                                    />
                                   </Stack>
                                 </Stack>
                               </Paper>
@@ -257,32 +280,36 @@ const PatientClinicalHistoryComplete = ({
                         {datosHistoria.informacionConsulta && (datosHistoria.informacionConsulta.revisionSistemas || datosHistoria.informacionConsulta.medicamentosActuales || datosHistoria.informacionConsulta.observaciones) && (
                           <Paper p="md" radius="md" withBorder>
                             <Stack gap="md">
-                              <Text size="sm" fw={600}>Información Adicional de la Consulta</Text>
-                              <Grid gutter="md">
+                              <Group gap="xs">
+                                <IconFileText size={16} color="var(--mantine-color-blue-6)" />
+                                <Text size="sm" fw={600}>Información Adicional de la Consulta</Text>
+                              </Group>
+                              <Grid gutter="xs">
                                 {datosHistoria.informacionConsulta.revisionSistemas && (
-                                  <Grid.Col span={{ base: 12, md: 4 }}>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Revisión de Sistemas:</Text>
-                                      <Text size="xs">{datosHistoria.informacionConsulta.revisionSistemas}</Text>
-                                    </Stack>
+                                  <Grid.Col span={6}>
+                                    <InfoRow 
+                                      label="Revisión de Sistemas" 
+                                      value={datosHistoria.informacionConsulta.revisionSistemas}
+                                      icon={IconFileText}
+                                    />
                                   </Grid.Col>
                                 )}
                                 {datosHistoria.informacionConsulta.medicamentosActuales && (
-                                  <Grid.Col span={{ base: 12, md: 4 }}>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Medicamentos:</Text>
-                                      <Text size="xs">{datosHistoria.informacionConsulta.medicamentosActuales}</Text>
-                                    </Stack>
+                                  <Grid.Col span={6}>
+                                    <InfoRow 
+                                      label="Medicamentos" 
+                                      value={datosHistoria.informacionConsulta.medicamentosActuales}
+                                      icon={IconHeart}
+                                    />
                                   </Grid.Col>
                                 )}
                                 {datosHistoria.informacionConsulta.observaciones && (
                                   <Grid.Col span={12}>
-                                    <Stack gap={4}>
-                                      <Text size="xs" c="dimmed" fw={500}>Observaciones:</Text>
-                                      <Paper p="sm" radius="md" style={{ backgroundColor: 'var(--mantine-color-gray-1)' }}>
-                                        <Text size="xs">{datosHistoria.informacionConsulta.observaciones}</Text>
-                                      </Paper>
-                                    </Stack>
+                                    <InfoRow 
+                                      label="Observaciones" 
+                                      value={datosHistoria.informacionConsulta.observaciones}
+                                      icon={IconFileText}
+                                    />
                                   </Grid.Col>
                                 )}
                               </Grid>
@@ -376,23 +403,27 @@ const PatientClinicalHistoryComplete = ({
                                           <Text size="sm" fw={600}>Detalle de la Consulta</Text>
                                         </Group>
                                         <Stack gap="xs">
-                                          <Group justify="space-between">
-                                            <Text size="xs" c="dimmed">Médico Tratante:</Text>
-                                            <Text size="xs" fw={500}>{parsed.detalleConsulta.medicoTratante || 'N/A'}</Text>
-                                          </Group>
-                                          <Group justify="space-between">
-                                            <Text size="xs" c="dimmed">Especialidad:</Text>
-                                            <Text size="xs" fw={500}>{parsed.detalleConsulta.especialidad || 'N/A'}</Text>
-                                          </Group>
-                                          <Group justify="space-between">
-                                            <Text size="xs" c="dimmed">Fecha Consulta:</Text>
-                                            <Text size="xs" fw={500}>{parsed.detalleConsulta.fechaConsulta ? formatDate(parsed.detalleConsulta.fechaConsulta) : 'N/A'}</Text>
-                                          </Group>
+                                          <InfoRow 
+                                            label="Médico Tratante" 
+                                            value={parsed.detalleConsulta.medicoTratante}
+                                            icon={IconUser}
+                                          />
+                                          <InfoRow 
+                                            label="Especialidad" 
+                                            value={parsed.detalleConsulta.especialidad}
+                                            icon={IconHeart}
+                                          />
+                                          <InfoRow 
+                                            label="Fecha Consulta" 
+                                            value={parsed.detalleConsulta.fechaConsulta ? formatDate(parsed.detalleConsulta.fechaConsulta) : null}
+                                            icon={IconCalendar}
+                                          />
                                           {parsed.detalleConsulta.proximaCita && (
-                                            <Group justify="space-between">
-                                              <Text size="xs" c="dimmed">Próxima Cita:</Text>
-                                              <Text size="xs" fw={500}>{parsed.detalleConsulta.proximaCita}</Text>
-                                            </Group>
+                                            <InfoRow 
+                                              label="Próxima Cita" 
+                                              value={parsed.detalleConsulta.proximaCita}
+                                              icon={IconClock}
+                                            />
                                           )}
                                         </Stack>
                                       </Stack>
@@ -410,14 +441,16 @@ const PatientClinicalHistoryComplete = ({
                                           <Text size="sm" fw={600}>Información Médica</Text>
                                         </Group>
                                         <Stack gap="xs">
-                                          <Group justify="space-between">
-                                            <Text size="xs" c="dimmed">Registro Médico:</Text>
-                                            <Text size="xs" fw={500}>{parsed.informacionMedico.registroMedico || 'N/A'}</Text>
-                                          </Group>
-                                          <Group justify="space-between">
-                                            <Text size="xs" c="dimmed">Especialidad:</Text>
-                                            <Text size="xs" fw={500}>{parsed.informacionMedico.especialidad || 'N/A'}</Text>
-                                          </Group>
+                                          <InfoRow 
+                                            label="Registro Médico" 
+                                            value={parsed.informacionMedico.registroMedico}
+                                            icon={IconId}
+                                          />
+                                          <InfoRow 
+                                            label="Especialidad" 
+                                            value={parsed.informacionMedico.especialidad}
+                                            icon={IconHeart}
+                                          />
                                         </Stack>
                                       </Stack>
                                     </Paper>
@@ -433,43 +466,46 @@ const PatientClinicalHistoryComplete = ({
                                       <IconFileText size={16} color="var(--mantine-color-green-6)" />
                                       <Text size="sm" fw={600}>Información de la Consulta</Text>
                                     </Group>
-                                    <Grid gutter="md">
-                                      <Grid.Col span={{ base: 12, md: 6 }}>
-                                        <Stack gap={4}>
-                                          <Text size="xs" c="dimmed" fw={500}>Motivo de Consulta:</Text>
-                                          <Text size="xs" fw={500}>{parsed.informacionConsulta.motivoConsulta || 'N/A'}</Text>
-                                        </Stack>
+                                    <Grid gutter="xs">
+                                      <Grid.Col span={6}>
+                                        <InfoRow 
+                                          label="Motivo de Consulta" 
+                                          value={parsed.informacionConsulta.motivoConsulta}
+                                          icon={IconFileText}
+                                        />
                                       </Grid.Col>
-                                      <Grid.Col span={{ base: 12, md: 6 }}>
-                                        <Stack gap={4}>
-                                          <Text size="xs" c="dimmed" fw={500}>Enfermedad Actual:</Text>
-                                          <Text size="xs" fw={500}>{parsed.informacionConsulta.enfermedadActual || 'N/A'}</Text>
-                                        </Stack>
+                                      <Grid.Col span={6}>
+                                        <InfoRow 
+                                          label="Enfermedad Actual" 
+                                          value={parsed.informacionConsulta.enfermedadActual}
+                                          icon={IconHeart}
+                                        />
                                       </Grid.Col>
                                       {parsed.informacionConsulta.revisionSistemas && (
-                                        <Grid.Col span={{ base: 12, md: 6 }}>
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Revisión de Sistemas:</Text>
-                                            <Text size="xs">{parsed.informacionConsulta.revisionSistemas}</Text>
-                                          </Stack>
+                                        <Grid.Col span={6}>
+                                          <InfoRow 
+                                            label="Revisión de Sistemas" 
+                                            value={parsed.informacionConsulta.revisionSistemas}
+                                            icon={IconFileText}
+                                          />
                                         </Grid.Col>
                                       )}
                                       {parsed.informacionConsulta.medicamentosActuales && (
-                                        <Grid.Col span={{ base: 12, md: 6 }}>
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Medicamentos Actuales:</Text>
-                                            <Text size="xs">{parsed.informacionConsulta.medicamentosActuales}</Text>
-                                          </Stack>
+                                        <Grid.Col span={6}>
+                                          <InfoRow 
+                                            label="Medicamentos Actuales" 
+                                            value={parsed.informacionConsulta.medicamentosActuales}
+                                            icon={IconHeart}
+                                          />
                                         </Grid.Col>
                                       )}
                                       {parsed.informacionConsulta.observaciones && (
                                         <Grid.Col span={12}>
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Observaciones:</Text>
-                                            <Paper p="sm" radius="md" style={{ backgroundColor: 'var(--mantine-color-gray-1)' }}>
-                                              <Text size="xs">{parsed.informacionConsulta.observaciones}</Text>
-                                            </Paper>
-                                          </Stack>
+                                          <InfoRow 
+                                            label="Observaciones" 
+                                            value={parsed.informacionConsulta.observaciones}
+                                            icon={IconFileText}
+                                          />
                                         </Grid.Col>
                                       )}
                                     </Grid>
@@ -488,15 +524,17 @@ const PatientClinicalHistoryComplete = ({
                                           <IconId size={16} color="var(--mantine-color-violet-6)" />
                                           <Text size="sm" fw={600}>Examen Clínico</Text>
                                         </Group>
-                                        <Stack gap="sm">
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Examen Físico:</Text>
-                                            <Text size="xs">{parsed.examenClinico.examenFisico || 'N/A'}</Text>
-                                          </Stack>
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Signos Vitales:</Text>
-                                            <Text size="xs">{parsed.examenClinico.signosVitales || 'N/A'}</Text>
-                                          </Stack>
+                                        <Stack gap="xs">
+                                          <InfoRow 
+                                            label="Examen Físico" 
+                                            value={parsed.examenClinico.examenFisico}
+                                            icon={IconUser}
+                                          />
+                                          <InfoRow 
+                                            label="Signos Vitales" 
+                                            value={parsed.examenClinico.signosVitales}
+                                            icon={IconHeart}
+                                          />
                                         </Stack>
                                       </Stack>
                                     </Paper>
@@ -512,15 +550,17 @@ const PatientClinicalHistoryComplete = ({
                                           <IconHeart size={16} color="var(--mantine-color-red-6)" />
                                           <Text size="sm" fw={600}>Diagnóstico y Tratamiento</Text>
                                         </Group>
-                                        <Stack gap="sm">
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Diagnósticos:</Text>
-                                            <Text size="xs">{parsed.diagnosticoTratamiento.diagnosticos || 'N/A'}</Text>
-                                          </Stack>
-                                          <Stack gap={4}>
-                                            <Text size="xs" c="dimmed" fw={500}>Plan de Tratamiento:</Text>
-                                            <Text size="xs">{parsed.diagnosticoTratamiento.planTratamiento || 'N/A'}</Text>
-                                          </Stack>
+                                        <Stack gap="xs">
+                                          <InfoRow 
+                                            label="Diagnósticos" 
+                                            value={parsed.diagnosticoTratamiento.diagnosticos}
+                                            icon={IconFileText}
+                                          />
+                                          <InfoRow 
+                                            label="Plan de Tratamiento" 
+                                            value={parsed.diagnosticoTratamiento.planTratamiento}
+                                            icon={IconHeart}
+                                          />
                                         </Stack>
                                       </Stack>
                                     </Paper>
@@ -536,24 +576,27 @@ const PatientClinicalHistoryComplete = ({
                                       <IconClock size={16} color="var(--mantine-color-orange-6)" />
                                       <Text size="sm" fw={600}>Seguimiento de la Consulta</Text>
                                     </Group>
-                                    <Grid gutter="md">
-                                      <Grid.Col span={{ base: 12, md: 4 }}>
-                                        <Stack gap={4}>
-                                          <Text size="xs" c="dimmed" fw={500}>Evolución:</Text>
-                                          <Text size="xs">{parsed.seguimientoConsulta.evolucion || 'N/A'}</Text>
-                                        </Stack>
+                                    <Grid gutter="xs">
+                                      <Grid.Col span={6}>
+                                        <InfoRow 
+                                          label="Evolución" 
+                                          value={parsed.seguimientoConsulta.evolucion}
+                                          icon={IconClock}
+                                        />
                                       </Grid.Col>
-                                      <Grid.Col span={{ base: 12, md: 4 }}>
-                                        <Stack gap={4}>
-                                          <Text size="xs" c="dimmed" fw={500}>Complicaciones:</Text>
-                                          <Text size="xs">{parsed.seguimientoConsulta.complicaciones || 'N/A'}</Text>
-                                        </Stack>
+                                      <Grid.Col span={6}>
+                                        <InfoRow 
+                                          label="Complicaciones" 
+                                          value={parsed.seguimientoConsulta.complicaciones}
+                                          icon={IconHeart}
+                                        />
                                       </Grid.Col>
-                                      <Grid.Col span={{ base: 12, md: 4 }}>
-                                        <Stack gap={4}>
-                                          <Text size="xs" c="dimmed" fw={500}>Recomendaciones:</Text>
-                                          <Text size="xs">{parsed.seguimientoConsulta.recomendaciones || 'N/A'}</Text>
-                                        </Stack>
+                                      <Grid.Col span={12}>
+                                        <InfoRow 
+                                          label="Recomendaciones" 
+                                          value={parsed.seguimientoConsulta.recomendaciones}
+                                          icon={IconFileText}
+                                        />
                                       </Grid.Col>
                                     </Grid>
                                   </Stack>

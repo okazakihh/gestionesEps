@@ -3,8 +3,6 @@
  * Según normativa colombiana
  */
 
-import { ipsConfig } from '../../../negocio/utils/ipsConfig.js';
-
 /**
  * Formatea valor monetario
  */
@@ -33,14 +31,14 @@ const formatDate = (dateString) => {
 /**
  * Genera el HTML completo del desprendible de pago
  * @param {Object} nomina - Datos de la nómina
- * @param {Object} empresa - Información de la empresa (opcional, usa ipsConfig por defecto)
+ * @param {Object} ipsData - Información de la empresa (requerido desde configuración)
  * @returns {string} HTML del desprendible
  */
-export const generarDesprendibleHTML = (nomina, empresa = null) => {
-  // Usar configuración centralizada de la IPS si no se proporciona empresa
-  const empresaNombre = empresa?.nombre || ipsConfig.nombre;
-  const empresaNit = empresa?.nit || ipsConfig.nit;
-  const empresaDireccion = empresa?.direccion || `${ipsConfig.direccion}, ${ipsConfig.ciudad}`;
+export const generarDesprendibleHTML = (nomina, ipsData) => {
+  // Usar configuración de IPS desde la base de datos
+  const empresaNombre = ipsData?.nombre || 'IPS';
+  const empresaNit = ipsData?.nit || 'N/A';
+  const empresaDireccion = ipsData?.direccion ? `${ipsData.direccion}, ${ipsData.ciudad || ''}` : 'N/A';
 
   return `
     <!DOCTYPE html>

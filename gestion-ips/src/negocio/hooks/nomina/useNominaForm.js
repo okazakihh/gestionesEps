@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { calcularNominaCompleta } from '../../utils/nomina/nominaCalculos';
 
 /**
@@ -59,6 +59,22 @@ export const useNominaForm = (initialData = null) => {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [calculatedValues, setCalculatedValues] = useState({
+    salarioBase: 0,
+    salarioProporcional: 0,
+    auxilioTransporte: 0,
+    horasExtras: { diurnas: 0, nocturnas: 0, dominicales: 0 },
+    recargos: { nocturno: 0, dominical: 0 },
+    bonificaciones: 0,
+    comisiones: 0,
+    otrosIngresos: 0,
+    totalDevengado: 0,
+    deducciones: { salud: 0, pension: 0, prestamos: 0, embargos: 0, otras: 0, total: 0 },
+    netoPagar: 0,
+    aportesEmpleador: {},
+    diasTrabajados: 30,
+    aplicaAuxilioTransporte: false
+  });
 
   /**
    * Actualiza un campo del formulario
@@ -112,24 +128,36 @@ export const useNominaForm = (initialData = null) => {
   /**
    * Cálculos automáticos usando normativa colombiana 2025
    */
-  const calculatedValues = useMemo(() => {
-    const resultado = calcularNominaCompleta({
-      salarioBase: Number(formData.salarioBase) || 0,
-      diasTrabajados: Number(formData.diasTrabajados) || 30,
-      horasExtrasDiurnas: Number(formData.horasExtrasDiurnas) || 0,
-      horasExtrasNocturnas: Number(formData.horasExtrasNocturnas) || 0,
-      horasExtrasDominicales: Number(formData.horasExtrasDominicales) || 0,
-      horasRecargoNocturno: Number(formData.horasRecargoNocturno) || 0,
-      horasRecargoDominical: Number(formData.horasRecargoDominical) || 0,
-      bonificaciones: Number(formData.bonificaciones) || 0,
-      comisiones: Number(formData.comisiones) || 0,
-      otrosIngresos: Number(formData.otrosIngresos) || 0,
-      prestamos: Number(formData.prestamos) || 0,
-      embargos: Number(formData.embargos) || 0,
-      otrasDeducciones: Number(formData.otrasDeducciones) || 0
-    });
-
-    return resultado;
+  useEffect(() => {
+    const calcular = async () => {
+      try {
+        const resultado = await calcularNominaCompleta({
+          salarioBase: Number(formData.salarioBase) || 0,
+          diasTrabajados: Number(formData.diasTrabajados) || 30,
+          horasExtrasDiurnas: Number(formData.horasExtrasDiurnas) || 0,
+          horasExtrasNocturnas: Number(formData.horasExtrasNocturnas) || 0,
+          horasExtrasDominicales: Number(formData.horasExtrasDominicales) || 0,
+          horasRecargoNocturno: Number(formData.horasRecargoNocturno) || 0,
+          horasRecargoDominical: Number(formData.horasRecargoDominical) || 0,
+          bonificaciones: Number(formData.bonificaciones) || 0,
+          comisiones: Number(formData.comisiones) || 0,
+          otrosIngresos: Number(formData.otrosIngresos) || 0,
+          prestamos: Number(formData.prestamos) || 0,
+          embargos: Number(formData.embargos) || 0,
+          otrasDeducciones: Number(formData.otrasDeducciones) || 0
+        });
+        console.log('💰 Cálculo de nómina:', {
+          salarioBase: formData.salarioBase,
+          diasTrabajados: formData.diasTrabajados,
+          resultado
+        });
+        setCalculatedValues(resultado);
+      } catch (error) {
+        console.error('❌ Error calculando nómina:', error);
+      }
+    };
+    
+    calcular();
   }, [
     formData.salarioBase,
     formData.diasTrabajados,

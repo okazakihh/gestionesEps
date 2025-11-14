@@ -107,24 +107,14 @@ export const ConfiguracionSistemaTab = () => {
       console.log('Updated Config (Sistema):', updatedConfig);
 
       // Enviar solo el objeto de configuración
-      await updateConfiguracionByClave('SISTEMA_GENERAL', updatedConfig);
+      const result = await updateConfiguracionByClave('SISTEMA_GENERAL', updatedConfig);
 
-      await Swal.fire({
-        title: '¡Configuración guardada!',
-        text: 'La configuración del sistema se ha actualizado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      await cargarConfiguracion();
+      if (result.success) {
+        await cargarConfiguracion();
+      }
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la configuración del sistema',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }

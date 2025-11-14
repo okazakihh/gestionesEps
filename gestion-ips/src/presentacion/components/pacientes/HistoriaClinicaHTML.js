@@ -73,10 +73,10 @@ const generarEncabezadoHTML = (numeroHistoria, config) => {
   return `
     <div class="header">
       <div class="institution-info">
-        <h1 style="color: ${config.colores.primario}; margin: 0; font-size: 20px; font-weight: bold;">${config.nombre}</h1>
-        <p style="margin: 5px 0; color: #374151; font-size: 14px;">${config.descripcion}</p>
-        <p style="margin: 2px 0; color: #6b7280;">NIT: ${config.nit} • Dirección: ${config.direccion}, ${config.ciudad}</p>
-        <p style="margin: 2px 0; color: #6b7280;">Teléfonos: ${config.telefono} • Email: ${config.email}</p>
+        <h1 style="color: ${config.colores?.primario || '#1e40af'}; margin: 0; font-size: 20px; font-weight: bold;">${config.nombre || 'IPS'}</h1>
+        <p style="margin: 5px 0; color: #374151; font-size: 14px;">${config.descripcion || ''}</p>
+        <p style="margin: 2px 0; color: #6b7280;">NIT: ${config.nit || 'N/A'} • Dirección: ${config.direccion || 'N/A'}, ${config.ciudad || ''}</p>
+        <p style="margin: 2px 0; color: #6b7280;">Teléfonos: ${config.telefono || 'N/A'} • Email: ${config.email || 'N/A'}</p>
       </div>
       <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">HISTORIA CLÍNICA ELECTRÓNICA</h2>
       <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Número de Historia Clínica: ${numeroHistoria}</p>
@@ -98,15 +98,15 @@ const generarPieHTML = (config) => {
       <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
         <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🔒 PROTECCIÓN DE DATOS PERSONALES</h5>
         <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-          ${config.notasLegales.historiaClinica}
+          ${config.notasLegales?.historiaClinica || 'Los datos contenidos en este documento son confidenciales y están protegidos por la Ley 1581 de 2012 de Protección de Datos Personales de Colombia.'}
         </p>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
         <div>
           <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
-          <p style="margin: 2px 0; font-size: 9px;">${config.servicios.historiaClinicaElectronica}</p>
-          <p style="margin: 2px 0; font-size: 9px;">Versión ${config.version}</p>
+          <p style="margin: 2px 0; font-size: 9px;">${config.servicios?.historiaClinicaElectronica || config.nombre || 'Sistema de Historia Clínica Electrónica'}</p>
+          <p style="margin: 2px 0; font-size: 9px;">Versión ${config.version || '1.0'}</p>
         </div>
         <div>
           <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>

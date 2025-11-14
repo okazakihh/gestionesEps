@@ -203,3 +203,43 @@ export const configuracionApiService = {
 };
 
 export default configuracionApiService;
+
+// ==================== CACHE PARA CONFIGURACIONES ====================
+
+let ipsConfigCache = null;
+
+/**
+ * Obtener configuración de IPS (con cache)
+ * @returns {Promise<Object>} Datos de configuración de la IPS
+ */
+export const getIpsConfig = async () => {
+  if (ipsConfigCache) {
+    return ipsConfigCache;
+  }
+
+  try {
+    const config = await configuracionApiService.getConfiguracionByClave('IPS_INFO');
+    ipsConfigCache = config.jsonData || {};
+    return ipsConfigCache;
+  } catch (error) {
+    console.error('Error cargando configuración de IPS:', error);
+    // Valores por defecto si no se puede cargar
+    return {
+      nombre: 'IPS',
+      nit: 'N/A',
+      direccion: 'N/A',
+      telefono: 'N/A',
+      email: 'N/A',
+      ciudad: 'N/A',
+      departamento: 'N/A'
+    };
+  }
+};
+
+/**
+ * Limpiar cache de configuración de IPS
+ * Llamar después de actualizar la configuración de IPS
+ */
+export const clearIpsConfigCache = () => {
+  ipsConfigCache = null;
+};

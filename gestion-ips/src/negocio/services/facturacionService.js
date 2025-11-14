@@ -2,6 +2,109 @@ import * as XLSX from 'xlsx';
 import Swal from 'sweetalert2';
 import { ipsConfig, getEncabezadoDocumento, getPieDocumento } from '../utils/ipsConfig';
 import { generarFacturaHTML } from '../../presentacion/components/facturacion/FacturaHTML.js';
+import { configuracionApiService } from '../../data/services/configuracionApiService.js';
+
+// Cache de configuración IPS
+let cachedIpsConfig = null;
+let cachedFacturacionConfig = null;
+
+// Obtener configuración IPS (con cache)
+export const getIpsConfig = async () => {
+  if (cachedIpsConfig) return cachedIpsConfig;
+  
+  try {
+    const config = await configuracionApiService.getConfiguracionByClave('IPS_INFO');
+    if (config && config.jsonData) {
+      cachedIpsConfig = config.jsonData;
+      return cachedIpsConfig;
+    }
+  } catch (error) {
+    console.warn('No se pudo cargar IPS_INFO, usando configuración por defecto');
+  }
+  
+  // Fallback a configuración estática
+  return ipsConfig;
+};
+
+// Obtener configuración de facturación (con cache)
+export const getFacturacionConfig = async () => {
+  if (cachedFacturacionConfig) return cachedFacturacionConfig;
+  
+  try {
+    const config = await configuracionApiService.getConfiguracionByClave('FACTURACION');
+    if (config && config.jsonData) {
+      cachedFacturacionConfig = config.jsonData;
+      return cachedFacturacionConfig;
+    }
+  } catch (error) {
+    console.warn('No se pudo cargar FACTURACION, usando configuración por defecto');
+  }
+  
+  // Configuración por defecto
+  return {
+    prefijoFactura: 'FM',
+    consecutivoInicial: 1000,
+    iva: 0,
+    retencionFuente: 0,
+    diasVencimientoFactura: 30,
+    notasLegales: '',
+    incluirFirmaDigital: false,
+    formatoNumeroFactura: '{PREFIJO}-{CONSECUTIVO}'
+  };
+};
+
+// Generar número de factura según configuración
+export const generateInvoiceNumber = async () => {
+  const config = await getFacturacionConfig();
+  
+  // Inicializar contador si es necesario
+  if (invoiceCounter === null) {
+    invoiceCounter = config.consecutivoInicial || 1000;
+  }
+  
+  const consecutivo = invoiceCounter++;
+  const formato = config.formatoNumeroFactura || '{prefijo}-{consecutivo}';
+  const currentYear = new Date().getFullYear();
+  const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+  
+  return formato
+    .replace('{prefijo}', config.prefijoFactura || 'FM')
+    .replace('{PREFIJO}', config.prefijoFactura || 'FM')
+    .replace('{consecutivo}', consecutivo.toString().padStart(6, '0'))
+    .replace('{CONSECUTIVO}', consecutivo.toString().padStart(6, '0'))
+    .replace('{year}', currentYear.toString())
+    .replace('{YEAR}', currentYear.toString())
+    .replace('{mes}', currentMonth)
+    .replace('{MES}', currentMonth)
+    .replace('{MONTH}', currentMonth);
+};
+
+// Calcular totales con IVA y retención
+export const calculateInvoiceTotals = async (subtotal) => {
+  const config = await getFacturacionConfig();
+  
+  const iva = (subtotal * (config.iva || 0)) / 100;
+  const retencionFuente = (subtotal * (config.retencionFuente || 0)) / 100;
+  const total = subtotal + iva - retencionFuente;
+  
+  return {
+    subtotal,
+    iva,
+    ivaPercent: config.iva || 0,
+    retencionFuente,
+    retencionPercent: config.retencionFuente || 0,
+    total
+  };
+};
+
+// Limpiar cache (útil cuando se actualiza la configuración)
+export const clearIpsConfigCache = () => {
+  cachedIpsConfig = null;
+};
+
+export const clearFacturacionConfigCache = () => {
+  cachedFacturacionConfig = null;
+};
 
 /**
  * facturacionService.js
@@ -89,9 +192,12 @@ export const formatCurrency = (amount) => {
 /**
  * Crea el contenido HTML completo para una factura a partir de una cita individual
  * @param {Object} cita - Objeto de cita con información completa
- * @returns {string} Contenido HTML listo para imprimir
+ * @returns {Promise<string>} Contenido HTML listo para imprimir
  */
-export const createFacturaContent = (cita) => {
+export const createFacturaContent = async (cita) => {
+  // Obtener configuración de IPS
+  const ipsData = await getIpsConfig();
+  
   // Preparar datos en formato de factura
   const facturaData = {
     numeroFactura: `FM-${cita.id}`,
@@ -116,18 +222,21 @@ export const createFacturaContent = (cita) => {
     }]
   };
 
-  // Usar el nuevo módulo profesional
-  return generarFacturaHTML({ id: cita.id }, facturaData);
+  // Usar el nuevo módulo profesional con configuración de IPS
+  return generarFacturaHTML({ id: cita.id }, facturaData, ipsData);
 };
 
 /**
  * Crea el contenido HTML completo para una factura guardada (con múltiples citas)
  * @param {Object} facturaData - Datos de la factura guardada (parseados del jsonData)
- * @returns {string} Contenido HTML listo para imprimir
+ * @returns {Promise<string>} Contenido HTML listo para imprimir
  */
-export const createFacturaContentFromFactura = (facturaData) => {
-  // Usar el nuevo módulo profesional
-  return generarFacturaHTML({ id: facturaData.id || 0 }, facturaData);
+export const createFacturaContentFromFactura = async (facturaData) => {
+  // Obtener configuración de IPS
+  const ipsData = await getIpsConfig();
+  
+  // Usar el nuevo módulo profesional con configuración de IPS
+  return generarFacturaHTML({ id: facturaData.id || 0 }, facturaData, ipsData);
 };
 
 // ============================================================================
@@ -153,8 +262,8 @@ export const printFactura = (content) => {
  * Genera e imprime PDF de una cita individual
  * @param {Object} cita - Objeto de cita con información completa
  */
-export const generarFacturaPDF = (cita) => {
-  const contenidoHTML = createFacturaContent(cita);
+export const generarFacturaPDF = async (cita) => {
+  const contenidoHTML = await createFacturaContent(cita);
   printFactura(contenidoHTML);
 };
 
@@ -165,7 +274,7 @@ export const generarFacturaPDF = (cita) => {
 export const generarFacturaPDFFactura = async (factura) => {
   try {
     const facturaData = JSON.parse(factura.jsonData || '{}');
-    const contenidoHTML = createFacturaContentFromFactura(facturaData);
+    const contenidoHTML = await createFacturaContentFromFactura(facturaData);
     printFactura(contenidoHTML);
   } catch (error) {
     console.error('Error generando PDF de factura:', error);

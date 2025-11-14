@@ -12,11 +12,7 @@ import { IconUser, IconPhone, IconHeart, IconFileText, IconId } from '@tabler/ic
  */
 const PatientModalTabs = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'personal', name: 'Información Personal', icon: IconUser },
-    { id: 'contacto', name: 'Contacto', icon: IconPhone },
-    { id: 'medica', name: 'Información Médica', icon: IconHeart },
-    { id: 'emergencia', name: 'Contacto Emergencia', icon: IconId },
-    { id: 'consentimiento', name: 'Consentimiento', icon: IconFileText },
+    { id: 'personal', name: 'Información General', icon: IconUser },
     { id: 'clinica', name: 'Historia Clínica', icon: IconFileText },
   ];
 

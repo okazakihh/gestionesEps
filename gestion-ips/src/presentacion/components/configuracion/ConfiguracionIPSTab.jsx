@@ -187,24 +187,17 @@ export const ConfiguracionIPSTab = () => {
 
       // Enviar solo el objeto de configuración, no un wrapper con metadata
       // El servicio se encargará de convertirlo a JSON string
-      await updateConfiguracionByClave('IPS_INFO', updatedConfig);
+      const result = await updateConfiguracionByClave('IPS_INFO', updatedConfig);
 
-      await Swal.fire({
-        title: '¡Configuración guardada!',
-        text: 'La configuración de la IPS se ha actualizado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      await cargarConfiguracion();
+      if (result.success) {
+        // Limpiar cache de configuración IPS en facturación
+        const { clearIpsConfigCache } = await import('../../../data/services/configuracionApiService.js');
+        clearIpsConfigCache();
+        await cargarConfiguracion();
+      }
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la configuración de la IPS',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }

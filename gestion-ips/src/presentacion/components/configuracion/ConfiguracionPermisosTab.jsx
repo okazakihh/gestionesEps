@@ -232,21 +232,10 @@ export const ConfiguracionPermisosTab = () => {
     try {
       // Enviar solo el objeto de permisos
       await updateConfiguracionByClave('PERMISOS_MODULOS', permisos);
-
-      await Swal.fire({
-        title: '¡Permisos actualizados!',
-        text: 'Los cambios se han guardado correctamente',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
+      // Éxito/error ya manejado en el hook
     } catch (error) {
       console.error('Error al guardar permisos:', error);
-      await Swal.fire({
-        title: 'Error',
-        text: 'No se pudieron guardar los permisos',
-        icon: 'error'
-      });
+      // Error ya manejado en el hook
     } finally {
       setSaving(false);
     }
