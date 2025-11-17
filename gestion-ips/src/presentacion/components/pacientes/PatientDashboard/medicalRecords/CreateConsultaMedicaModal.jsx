@@ -3,14 +3,48 @@ import { Modal, TextInput, Textarea, Button, Grid, Tabs, Paper, Text, Box, Group
 import { IconFileText, IconStethoscope, IconClipboard, IconCalendar, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService } from '../../../../../data/services/pacientesApiService.js';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import SignosVitalesForm from './components/SignosVitalesForm.jsx';
 import DiagnosticosTable from './components/DiagnosticosTable.jsx';
 import MedicamentosTable from './components/MedicamentosTable.jsx';
+import ExamenFisicoPorDependencia from './components/ExamenFisicoPorDependencia.jsx';
+import { DEPENDENCIA_MEDICA_OPTIONS, REQUIERE_SIGNOS_VITALES } from '../../../../../negocio/utils/listHelps.js';
 
 const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, historiaClinicaId, citaData, patientData }) => {
+  const { tema } = useTheme();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('consulta');
+
+  // Parse patient data si viene como JSON string
+  const parsedPatientData = React.useMemo(() => {
+    if (!patientData) return null;
+    
+    // Si ya tiene informacionPersonal parseado, usarlo
+    if (patientData.informacionPersonal) {
+      return patientData;
+    }
+    
+    // Si tiene datosJson como string, parsearlo
+    if (patientData.datosJson && typeof patientData.datosJson === 'string') {
+      try {
+        const datosJson = JSON.parse(patientData.datosJson);
+        const informacionPersonal = datosJson.informacionPersonalJson 
+          ? JSON.parse(datosJson.informacionPersonalJson) 
+          : null;
+        
+        return {
+          ...patientData,
+          informacionPersonal
+        };
+      } catch (e) {
+        console.error('Error parsing patient data:', e);
+        return patientData;
+      }
+    }
+    
+    return patientData;
+  }, [patientData]);
 
   const [formData, setFormData] = useState({
     historiaClinicaId: historiaClinicaId || '',
@@ -33,6 +67,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
     
     // Examen físico
     examenFisico: {
+      dependenciaMedica: '',
       signosVitales: {
         presionArterial: '',
         frecuenciaCardiaca: '',
@@ -44,7 +79,8 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         spo2: ''
       },
       estadoGeneral: '',
-      hallazgos: ''
+      hallazgos: '',
+      camposEspecificos: {}
     },
     
     // Diagnóstico y tratamiento
@@ -138,7 +174,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       onClose={onClose}
       title={
         <Group gap="xs">
-          <IconStethoscope size={24} color="var(--mantine-color-violet-6)" />
+          <IconStethoscope size={24} style={{ color: tema.primaryColor }} />
           <Text size="lg" fw={700}>Nueva Consulta Médica</Text>
         </Group>
       }
@@ -152,21 +188,21 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       <form onSubmit={handleSubmit}>
         <Stack gap={0}>
           {/* Info del Paciente */}
-          <Paper p="md" m="md" mb={0} style={{ backgroundColor: 'var(--mantine-color-violet-0)', border: '1px solid var(--mantine-color-violet-3)' }}>
+          <Paper p="md" m="md" mb={0} style={{ backgroundColor: `${tema.primaryColor}15`, border: `1px solid ${tema.primaryColor}40` }}>
             <Grid gutter="xs">
               <Grid.Col span={6}>
                 <Text size="xs" c="dimmed" fw={500}>Paciente</Text>
                 <Text size="sm" fw={600}>
-                  {patientData?.informacionPersonal?.primerNombre} {patientData?.informacionPersonal?.primerApellido}
+                  {parsedPatientData?.informacionPersonal?.primerNombre || citaData?.nombre || 'N/A'} {parsedPatientData?.informacionPersonal?.primerApellido || ''}
                 </Text>
               </Grid.Col>
               <Grid.Col span={3}>
                 <Text size="xs" c="dimmed" fw={500}>Documento</Text>
-                <Text size="sm" fw={600}>{patientData?.numeroDocumento}</Text>
+                <Text size="sm" fw={600}>{parsedPatientData?.numeroDocumento || citaData?.documento || 'N/A'}</Text>
               </Grid.Col>
               <Grid.Col span={3}>
                 <Text size="xs" c="dimmed" fw={500}>HC #</Text>
-                <Text size="sm" fw={600} c="violet">{historiaClinicaId}</Text>
+                <Text size="sm" fw={600} style={{ color: tema.primaryColor }}>{historiaClinicaId || 'N/A'}</Text>
               </Grid.Col>
             </Grid>
           </Paper>
@@ -179,7 +215,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
           {/* Tabs */}
           <Box px="md" pt="md">
-            <Tabs value={activeTab} onChange={setActiveTab} color="violet" variant="pills">
+            <Tabs value={activeTab} onChange={setActiveTab} color={tema.mantineColor} variant="pills">
               <Tabs.List>
                 <Tabs.Tab value="consulta" leftSection={<IconFileText size={14} />}>
                   Información
@@ -200,7 +236,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                   {/* TAB 1: Información de Consulta */}
                   <Tabs.Panel value="consulta">
                     <Paper p="md" withBorder>
-                      <Text size="sm" fw={600} mb="md" c="violet">Tipo de Consulta</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Tipo de Consulta</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Select
@@ -223,7 +259,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                     </Paper>
 
                     <Paper p="md" withBorder mt="md">
-                      <Text size="sm" fw={600} mb="md" c="violet">Motivo y Anamnesis</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Motivo y Anamnesis</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Textarea
@@ -272,18 +308,47 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                   {/* TAB 2: Examen Físico */}
                   <Tabs.Panel value="examen">
                     <Paper p="md" withBorder>
-                      <Text size="sm" fw={600} mb="md" c="violet">Signos Vitales</Text>
-                      <SignosVitalesForm
-                        values={formData.examenFisico?.signosVitales || {}}
-                        onChange={(signosVitales) => setFormData(prev => ({
-                          ...prev,
-                          examenFisico: { ...prev.examenFisico, signosVitales }
-                        }))}
-                      />
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Dependencia Médica</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Select
+                            label="Seleccione la Dependencia Médica"
+                            placeholder="Ej: Otorrinolaringología, Optometría, etc."
+                            data={DEPENDENCIA_MEDICA_OPTIONS}
+                            value={formData.examenFisico?.dependenciaMedica}
+                            onChange={(value) => setFormData(prev => ({
+                              ...prev,
+                              examenFisico: { 
+                                ...prev.examenFisico, 
+                                dependenciaMedica: value,
+                                camposEspecificos: {} // Reset campos al cambiar dependencia
+                              }
+                            }))}
+                            required
+                            size="sm"
+                            searchable
+                          />
+                        </Grid.Col>
+                      </Grid>
                     </Paper>
 
+                    {/* Signos Vitales - Solo si la dependencia lo requiere */}
+                    {formData.examenFisico?.dependenciaMedica && 
+                     REQUIERE_SIGNOS_VITALES[formData.examenFisico.dependenciaMedica] && (
+                      <Paper p="md" withBorder mt="md">
+                        <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Signos Vitales</Text>
+                        <SignosVitalesForm
+                          values={formData.examenFisico?.signosVitales || {}}
+                          onChange={(signosVitales) => setFormData(prev => ({
+                            ...prev,
+                            examenFisico: { ...prev.examenFisico, signosVitales }
+                          }))}
+                        />
+                      </Paper>
+                    )}
+
                     <Paper p="md" withBorder mt="md">
-                      <Text size="sm" fw={600} mb="md" c="violet">Estado General y Hallazgos</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Estado General y Hallazgos</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Textarea
@@ -300,8 +365,8 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         </Grid.Col>
                         <Grid.Col span={12}>
                           <Textarea
-                            label="Hallazgos del Examen Físico"
-                            placeholder="Hallazgos relevantes del examen físico..."
+                            label="Hallazgos Generales"
+                            placeholder="Hallazgos relevantes del examen físico general..."
                             value={formData.examenFisico?.hallazgos}
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
@@ -313,12 +378,26 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         </Grid.Col>
                       </Grid>
                     </Paper>
+
+                    {/* Campos específicos por dependencia */}
+                    {formData.examenFisico?.dependenciaMedica && (
+                      <Box mt="md">
+                        <ExamenFisicoPorDependencia
+                          dependencia={formData.examenFisico.dependenciaMedica}
+                          valores={formData.examenFisico?.camposEspecificos || {}}
+                          onChange={(camposEspecificos) => setFormData(prev => ({
+                            ...prev,
+                            examenFisico: { ...prev.examenFisico, camposEspecificos }
+                          }))}
+                        />
+                      </Box>
+                    )}
                   </Tabs.Panel>
 
                   {/* TAB 3: Diagnóstico y Tratamiento */}
                   <Tabs.Panel value="diagnostico">
                     <Paper p="md" withBorder>
-                      <Text size="sm" fw={600} mb="md" c="violet">Diagnósticos CIE-10</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Diagnósticos CIE-10</Text>
                       <DiagnosticosTable
                         diagnosticos={formData.diagnosticoTratamiento?.diagnosticos || []}
                         onChange={(diagnosticos) => setFormData(prev => ({
@@ -329,7 +408,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                     </Paper>
 
                     <Paper p="md" withBorder mt="md">
-                      <Text size="sm" fw={600} mb="md" c="violet">Plan de Tratamiento</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Plan de Tratamiento</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Textarea
@@ -348,7 +427,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                     </Paper>
 
                     <Paper p="md" withBorder mt="md">
-                      <Text size="sm" fw={600} mb="md" c="violet">Medicamentos Formulados</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Medicamentos Formulados</Text>
                       <MedicamentosTable
                         medicamentos={formData.diagnosticoTratamiento?.medicamentos || []}
                         onChange={(medicamentos) => setFormData(prev => ({
@@ -359,7 +438,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                     </Paper>
 
                     <Paper p="md" withBorder mt="md">
-                      <Text size="sm" fw={600} mb="md" c="violet">Procedimientos</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Procedimientos</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Textarea
@@ -381,7 +460,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                   {/* TAB 4: Seguimiento */}
                   <Tabs.Panel value="seguimiento">
                     <Paper p="md" withBorder>
-                      <Text size="sm" fw={600} mb="md" c="violet">Evolución y Seguimiento</Text>
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Evolución y Seguimiento</Text>
                       <Grid>
                         <Grid.Col span={12}>
                           <Textarea
@@ -464,7 +543,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                       setActiveTab(tabs[currentIndex - 1]);
                     }
                   }}
-                  color="violet"
+                  color={tema.mantineColor}
                 >
                   Anterior
                 </Button>
@@ -478,7 +557,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                       setActiveTab(tabs[currentIndex + 1]);
                     }
                   }}
-                  color="violet"
+                  color={tema.mantineColor}
                 >
                   Siguiente
                 </Button>
@@ -487,7 +566,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                   type="submit"
                   loading={saving}
                   leftSection={<IconDeviceFloppy size={16} />}
-                  color="violet"
+                  color={tema.mantineColor}
                 >
                   Guardar Consulta
                 </Button>

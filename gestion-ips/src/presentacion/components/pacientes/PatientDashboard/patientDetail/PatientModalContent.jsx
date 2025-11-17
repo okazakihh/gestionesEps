@@ -7,7 +7,7 @@ import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalU
 // Importar componentes extraídos para clean code
 import PatientGeneralInfo from './PatientGeneralInfo.jsx';
 import PatientClinicalHistory from './PatientClinicalHistory.jsx';
-import PatientClinicalHistoryComplete from './PatientClinicalHistoryComplete.jsx';
+import PatientClinicalHistoryCompleteNew from './PatientClinicalHistoryCompleteNew.jsx';
 
 /**
  * Componente que maneja el contenido de cada pestaña del modal de detalles del paciente
@@ -60,7 +60,7 @@ const PatientModalContent = ({
 
       {/* Historia Clínica Completa */}
       {activeTab === 'clinica_completa' && historiaClinica && (
-        <PatientClinicalHistoryComplete
+        <PatientClinicalHistoryCompleteNew
           historiaClinica={historiaClinica}
           consultas={consultas}
           setActiveTab={setActiveTab}

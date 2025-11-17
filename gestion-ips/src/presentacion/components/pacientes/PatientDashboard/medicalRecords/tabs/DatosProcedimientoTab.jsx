@@ -1,11 +1,13 @@
 import React from 'react';
 import { Grid, TextInput, Select, Paper, Stack, Group, Text } from '@mantine/core';
 import { IconUser, IconCalendar, IconBuilding } from '@tabler/icons-react';
+import { useTheme } from '../../../../../../negocio/contexts/ThemeContext.jsx';
 
 /**
  * Tab 1: Datos del Paciente y Procedimiento
  */
 const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
+  const { tema } = useTheme();
   const ambitoOptions = [
     { value: 'ambulatorio', label: 'Ambulatorio' },
     { value: 'hospitalizacion', label: 'Hospitalización' },
@@ -21,92 +23,10 @@ const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
 
   return (
     <Stack gap="md">
-      {/* Información del Paciente - Read Only */}
-      <Paper p="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
-        <Group gap="xs" mb="md">
-          <IconUser size={18} color="var(--mantine-color-blue-6)" />
-          <Text size="sm" fw={600}>Información del Paciente</Text>
-        </Group>
-        <Grid gutter="md">
-          <Grid.Col span={6}>
-            <TextInput
-              label="Nombre Completo"
-              value={`${patientData?.informacionPersonal?.primerNombre || ''} ${patientData?.informacionPersonal?.primerApellido || ''}`}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="Tipo Documento"
-              value={patientData?.tipoDocumento || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="# Documento"
-              value={patientData?.numeroDocumento || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="Edad"
-              value={patientData?.informacionPersonal?.edad || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="Sexo"
-              value={patientData?.informacionPersonal?.sexo || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="RH"
-              value={patientData?.informacionPersonal?.tipoSangre || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={3}>
-            <TextInput
-              label="Estado Civil"
-              value={patientData?.informacionPersonal?.estadoCivil || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={6}>
-            <TextInput
-              label="EPS/Aseguradora"
-              value={patientData?.informacionMedica?.eps || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-          <Grid.Col span={6}>
-            <TextInput
-              label="Régimen"
-              value={patientData?.informacionMedica?.regimenAfiliacion || ''}
-              readOnly
-              size="sm"
-            />
-          </Grid.Col>
-        </Grid>
-      </Paper>
-
       {/* Datos del Procedimiento */}
       <Paper p="md" withBorder>
         <Group gap="xs" mb="md">
-          <IconCalendar size={18} color="var(--mantine-color-green-6)" />
+          <IconCalendar size={18} style={{ color: tema.primaryColor }} />
           <Text size="sm" fw={600}>Datos del Procedimiento Inicial</Text>
         </Group>
         <Grid gutter="md">
@@ -140,6 +60,8 @@ const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
               })}
               required
               leftSection={<IconUser size={16} />}
+              leftSectionWidth={45}
+              styles={{ input: { paddingLeft: '50px' } }}
               size="sm"
             />
           </Grid.Col>
@@ -176,6 +98,8 @@ const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
                 procedimiento: { ...formData.procedimiento, entidadPrestadora: e.target.value }
               })}
               leftSection={<IconBuilding size={16} />}
+              leftSectionWidth={45}
+              styles={{ input: { paddingLeft: '50px' } }}
               size="sm"
             />
           </Grid.Col>

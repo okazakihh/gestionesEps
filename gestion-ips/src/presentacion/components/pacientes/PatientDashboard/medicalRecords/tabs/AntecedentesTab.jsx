@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Textarea, Paper, Stack, Group, Text, Checkbox, Select } from '@mantine/core';
-import { IconAlertCircle, IconActivityHeartbeat, IconPill } from '@tabler/icons-react';
+import { IconAlertCircle, IconActivityHeartbeat, IconPill, IconCheck } from '@tabler/icons-react';
 import { AntecedentesPatologicosForm, AntecedentesFamiliaresForm } from '../components/AntecedentesForm.jsx';
 
 /**
@@ -68,6 +68,7 @@ const AntecedentesTab = ({ formData, setFormData }) => {
                 }
               }
             })}
+            icon={IconCheck}
             size="sm"
           />
           

@@ -62,25 +62,35 @@ const calcularEdad = (fechaNacimiento) => {
 };
 
 /**
- * Genera el encabezado HTML para historias clínicas
+ * Genera el encabezado HTML para historias clínicas en formato tabla
  * @param {string} numeroHistoria - Número de la historia clínica
  * @param {Object} config - Configuración de la IPS
  * @returns {string} HTML del encabezado
  */
 const generarEncabezadoHTML = (numeroHistoria, config) => {
-  const fechaHoraActual = `${new Date().toLocaleDateString('es-CO')} ${new Date().toLocaleTimeString('es-CO')}`;
+  const fechaHoraActual = `${new Date().toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
   
   return `
-    <div class="header">
-      <div class="institution-info">
-        <h1 style="color: ${config.colores?.primario || '#1e40af'}; margin: 0; font-size: 20px; font-weight: bold;">${config.nombre || 'IPS'}</h1>
-        <p style="margin: 5px 0; color: #374151; font-size: 14px;">${config.descripcion || ''}</p>
-        <p style="margin: 2px 0; color: #6b7280;">NIT: ${config.nit || 'N/A'} • Dirección: ${config.direccion || 'N/A'}, ${config.ciudad || ''}</p>
-        <p style="margin: 2px 0; color: #6b7280;">Teléfonos: ${config.telefono || 'N/A'} • Email: ${config.email || 'N/A'}</p>
-      </div>
-      <h2 style="margin: 10px 0; color: #1f2937; font-size: 16px;">HISTORIA CLÍNICA ELECTRÓNICA</h2>
-      <p style="margin: 5px 0; color: #6b7280; font-weight: bold;">Número de Historia Clínica: ${numeroHistoria}</p>
-      <p style="margin: 2px 0; color: #6b7280;">Fecha de Impresión: ${fechaHoraActual}</p>
+    <table class="header-table" style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+      <tr>
+        <td style="width: 20%; text-align: center; padding: 8px; border: 1px solid #000;">
+          ${config.logo ? `<img src="${config.logo}" alt="Logo" style="max-width: 80px; max-height: 60px;">` : '<div style="font-size: 10px; color: #666;">LOGO IPS</div>'}
+        </td>
+        <td style="width: 60%; text-align: center; padding: 8px; border: 1px solid #000; border-left: none;">
+          <strong style="font-size: 11px; display: block;">${config.nombre || 'IPS'}</strong>
+          <div style="font-size: 9px; margin-top: 2px;">${config.nit || 'N/A'}</div>
+          <div style="font-size: 9px;">${config.direccion || 'N/A'}</div>
+        </td>
+        <td style="width: 20%; padding: 4px; border: 1px solid #000; border-left: none; font-size: 8px;">
+          <strong>Tipo Doc:</strong> HC<br>
+          <strong># Doc:</strong> ${numeroHistoria}<br>
+          <strong>Fecha:</strong> ${fechaHoraActual}
+        </td>
+      </tr>
+    </table>
+    
+    <div style="text-align: center; background-color: #000; color: white; padding: 4px; font-size: 12px; font-weight: bold; margin-bottom: 5px;">
+      HISTORIA CLÍNICA
     </div>
   `;
 };
@@ -94,45 +104,13 @@ const generarPieHTML = (config) => {
   const fechaHoraActual = new Date().toLocaleString('es-CO');
   
   return `
-    <div class="footer">
-      <div style="background: #f0f9ff; padding: 8px; border-radius: 3px; margin-bottom: 10px; border: 1px solid #bae6fd;">
-        <h5 style="margin: 0 0 5px 0; color: #0369a1; font-size: 10px;">🔒 PROTECCIÓN DE DATOS PERSONALES</h5>
-        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-          ${config.notasLegales?.historiaClinica || 'Los datos contenidos en este documento son confidenciales y están protegidos por la Ley 1581 de 2012 de Protección de Datos Personales de Colombia.'}
-        </p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-        <div>
-          <p style="margin: 0; font-size: 9px;"><strong>Documento generado por:</strong></p>
-          <p style="margin: 2px 0; font-size: 9px;">${config.servicios?.historiaClinicaElectronica || config.nombre || 'Sistema de Historia Clínica Electrónica'}</p>
-          <p style="margin: 2px 0; font-size: 9px;">Versión ${config.version || '1.0'}</p>
-        </div>
-        <div>
-          <p style="margin: 0; font-size: 9px;"><strong>Fecha y hora de generación:</strong></p>
-          <p style="margin: 2px 0; font-size: 9px;">${fechaHoraActual}</p>
-          <p style="margin: 2px 0; font-size: 9px;">Usuario: Sistema Automatizado</p>
-        </div>
-      </div>
-
-      <div style="background: #fef2f2; padding: 8px; border-radius: 3px; border: 1px solid #fecaca;">
-        <h5 style="margin: 0 0 5px 0; color: #dc2626; font-size: 10px;">⚖️ NORMATIVA APLICABLE</h5>
-        <p style="margin: 0; font-size: 8px; line-height: 1.2;">
-          <strong>Ley 100 de 1993:</strong> Sistema General de Seguridad Social en Salud<br>
-          <strong>Ley 1581 de 2012:</strong> Protección de Datos Personales<br>
-          <strong>Decreto 1377 de 2013:</strong> Reglamentación de la Ley 1581<br>
-          <strong>Ley 1751 de 2015:</strong> Derechos y deberes de los usuarios en salud<br>
-          <strong>Resolución 1995 de 1999:</strong> Historia Clínica<br>
-          <strong>Decreto 780 de 2016:</strong> Historia Clínica Electrónica
-        </p>
-      </div>
-
-      <div style="margin-top: 15px; text-align: center; padding-top: 10px; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 0; font-size: 8px; color: #9ca3af;">
-          Este documento tiene carácter oficial y cumple con todas las normativas colombianas aplicables a historias clínicas.
-          Cualquier modificación debe ser autorizada por el profesional responsable.
-        </p>
-      </div>
+    <div class="footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000; text-align: center;">
+      <p style="margin: 0; font-size: 8px; color: #666;">
+        Fecha Impresión: ${fechaHoraActual}
+      </p>
+      <p style="margin: 5px 0 0 0; font-size: 8px; color: #666;">
+        Página 1 de 1
+      </p>
     </div>
   `;
 };
@@ -148,50 +126,59 @@ const generarInfoPacienteHTML = (patient, patientData) => {
   const patientContact = patientData?.informacionContacto || {};
   const patientMedical = patientData?.informacionMedica || {};
   
-  const patientName = [
-    patientInfo.primerNombre,
-    patientInfo.segundoNombre,
-    patientInfo.primerApellido,
-    patientInfo.segundoApellido
-  ].filter(Boolean).join(' ') || 'N/A';
+  const nombres = [patientInfo.primerNombre, patientInfo.segundoNombre].filter(Boolean).join(' ') || 'N/A';
+  const apellidos = [patientInfo.primerApellido, patientInfo.segundoApellido].filter(Boolean).join(' ') || 'N/A';
+  const edad = calcularEdad(patientInfo.fechaNacimiento);
+  const ciudad = patientContact.ciudad || 'N/A';
 
   return `
-    <!-- Información del Paciente -->
-    <div class="patient-info">
-      <h3 style="margin-top: 0; color: #1f2937; font-size: 14px; border-bottom: 2px solid #2563eb; padding-bottom: 5px;">
-        INFORMACIÓN DEL PACIENTE
-      </h3>
-      <div class="grid-2">
-        <div><strong>Nombre Completo:</strong> ${patientName}</div>
-        <div><strong>Tipo y Número de Documento:</strong> ${patient?.tipoDocumento || 'N/A'} ${patient?.numeroDocumento || 'N/A'}</div>
-        <div><strong>Fecha de Nacimiento:</strong> ${formatDate(patientInfo.fechaNacimiento)}</div>
-        <div><strong>Edad:</strong> ${calcularEdad(patientInfo.fechaNacimiento)}</div>
-        <div><strong>Sexo:</strong> ${patientInfo.genero || 'N/A'}</div>
-        <div><strong>Estado Civil:</strong> ${patientInfo.estadoCivil || 'N/A'}</div>
-        <div><strong>Dirección:</strong> ${patientContact.direccion || 'N/A'}</div>
-        <div><strong>Ciudad:</strong> ${patientContact.ciudad || 'N/A'}, ${patientContact.departamento || 'N/A'}</div>
-        <div><strong>Teléfono:</strong> ${patientContact.telefono || 'N/A'}</div>
-        <div><strong>Email:</strong> ${patientContact.email || 'N/A'}</div>
-        <div><strong>Ocupación:</strong> ${patientInfo.ocupacion || 'N/A'}</div>
-        <div><strong>Nivel Educativo:</strong> ${patientInfo.nivelEducativo || 'N/A'}</div>
-      </div>
-    </div>
-
-    <!-- Información Médica Básica -->
-    <div class="patient-info">
-      <h3 style="margin-top: 0; color: #1f2937; font-size: 14px; border-bottom: 2px solid #dc2626; padding-bottom: 5px;">
-        INFORMACIÓN MÉDICA BÁSICA
-      </h3>
-      <div class="grid-3">
-        <div><strong>Tipo de Sangre:</strong> ${patientMedical.tipoSangre || patientInfo.tipoSangre || 'N/A'}</div>
-        <div><strong>EPS:</strong> ${patientMedical.eps || patientMedical.regimenAfiliacion || 'NUEVA EPS'}</div>
-        <div><strong>Tipo de Seguro:</strong> ${patientMedical.tipoSeguro || 'N/A'}</div>
-      </div>
-      <div style="margin-top: 10px;">
-        <div><strong>Alergias:</strong> ${patientMedical.alergias || 'NINGUNA'}</div>
-        <div style="margin-top: 5px;"><strong>Medicamentos Actuales:</strong> ${patientMedical.medicamentosActuales || 'NINGUNO'}</div>
-      </div>
-    </div>
+    <!-- Información del Paciente en formato tabla -->
+    <table class="patient-table" style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px;">
+      <tr>
+        <td class="label-cell">Nombres:</td>
+        <td class="value-cell">${nombres}</td>
+        <td class="label-cell">Apellidos:</td>
+        <td class="value-cell">${apellidos}</td>
+        <td class="label-cell">Ciudad:</td>
+        <td class="value-cell">${ciudad}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Tipo Doc:</td>
+        <td class="value-cell">${patient?.tipoDocumento || 'N/A'}</td>
+        <td class="label-cell"># Doc:</td>
+        <td class="value-cell">${patient?.numeroDocumento || 'N/A'}</td>
+        <td class="label-cell">RH:</td>
+        <td class="value-cell">${patientMedical.tipoSangre || patientInfo.tipoSangre || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">FN:</td>
+        <td class="value-cell">${patientInfo.fechaNacimiento || 'N/A'}</td>
+        <td class="label-cell">Edad:</td>
+        <td class="value-cell">${edad}</td>
+        <td class="label-cell">Teléfono:</td>
+        <td class="value-cell">${patientContact.telefono || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Sexo:</td>
+        <td class="value-cell">${patientInfo.genero || 'N/A'}</td>
+        <td class="label-cell">E.Civil:</td>
+        <td class="value-cell">${patientInfo.estadoCivil || 'N/A'}</td>
+        <td class="label-cell">Entidad:</td>
+        <td class="value-cell">${patientMedical.eps || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Dirección:</td>
+        <td class="value-cell" colspan="3">${patientContact.direccion || 'N/A'}</td>
+        <td class="label-cell">Ocupación</td>
+        <td class="value-cell">${patientInfo.ocupacion || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Fecha de realización</td>
+        <td class="value-cell" colspan="3">${new Date().toLocaleString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+        <td class="label-cell">Estado</td>
+        <td class="value-cell">ACTIVA</td>
+      </tr>
+    </table>
   `;
 };
 
@@ -269,233 +256,72 @@ const generarConsentimientoHTML = () => {
  * @returns {string} HTML de la consulta
  */
 const generarConsultaHTML = (consulta, numeroHistoria, config) => {
-  const fechaActual = new Date().toLocaleDateString('es-CO');
+  const fechaConsulta = formatDate(consulta.fecha);
 
   return `
-    <div class="consulta">
-      <div class="consulta-header">
-        <h4 style="margin: 0; color: #1f2937; font-size: 14px;">${consulta.tipo} #${consulta.numero}</h4>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-          <p style="margin: 0; color: #6b7280; font-size: 11px;">
-            <strong>Fecha:</strong> ${formatDate(consulta.fecha)}
-            ${formatTime(consulta.fecha) ? ` | <strong>Hora:</strong> ${formatTime(consulta.fecha)}` : ''}
-          </p>
-          <p style="margin: 0; color: #6b7280; font-size: 10px;">
-            <strong>Historia Clínica:</strong> ${numeroHistoria}
-          </p>
-        </div>
-      </div>
-
-      <!-- Información del Médico -->
-      <div class="section">
-        <div class="section-title">👨‍⚕️ INFORMACIÓN DEL PROFESIONAL DE LA SALUD</div>
-        <div class="grid-2">
-          <div><span class="field-label">Médico Tratante:</span> ${consulta.medico || 'N/A'}</div>
-          <div><span class="field-label">Especialidad:</span> ${consulta.especialidad || 'N/A'}</div>
-          <div><span class="field-label">Registro Médico:</span> ${consulta.registroMedico || 'N/A'}</div>
-          <div><span class="field-label">Tipo de Consulta:</span> ${consulta.tipo || 'Consulta General'}</div>
-        </div>
-      </div>
-
-      <!-- Anamnesis -->
-      <div class="section">
-        <div class="section-title">📝 ANAMNESIS</div>
-        ${consulta.motivo && consulta.motivo !== 'N/A' ? `
-        <div class="field">
-          <span class="field-label">Motivo de Consulta:</span>
-          <div style="margin-top: 3px; padding: 6px; background: #f8fafc; border-radius: 3px; border-left: 3px solid #3b82f6;">
-            ${consulta.motivo}
-          </div>
-        </div>
-        ` : ''}
-
-        ${consulta.enfermedadActual && consulta.enfermedadActual !== 'N/A' ? `
-        <div class="field">
-          <span class="field-label">Enfermedad Actual:</span>
-          <div style="margin-top: 3px; padding: 6px; background: #fef3c7; border-radius: 3px; border-left: 3px solid #f59e0b;">
-            ${consulta.enfermedadActual}
-          </div>
-        </div>
-        ` : ''}
-      </div>
-
-      <!-- Examen Clínico -->
-      ${(consulta.examenFisico && consulta.examenFisico !== 'N/A') || (consulta.signosVitales && consulta.signosVitales !== 'N/A') ? `
-      <div class="section">
-        <div class="section-title">🔍 EXAMEN CLÍNICO</div>
-        <div class="grid-2">
-          ${consulta.examenFisico && consulta.examenFisico !== 'N/A' ? `
-          <div>
-            <span class="field-label">Examen Físico:</span><br>
-            <span style="padding: 4px; background: #ecfdf5; border-radius: 3px; display: inline-block; margin-top: 2px;">
-              ${consulta.examenFisico}
-            </span>
-          </div>
-          ` : '<div></div>'}
-          ${consulta.signosVitales && consulta.signosVitales !== 'N/A' ? `
-          <div>
-            <span class="field-label">Signos Vitales:</span><br>
-            <span style="padding: 4px; background: #ecfdf5; border-radius: 3px; display: inline-block; margin-top: 2px;">
-              ${consulta.signosVitales}
-            </span>
-          </div>
-          ` : '<div></div>'}
-        </div>
-      </div>
+    <div class="section-header">
+      ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
+    </div>
+    
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; page-break-inside: avoid;">
+      <tr>
+        <td class="label-cell" style="width: 18%;">Médico:</td>
+        <td class="value-cell" style="width: 32%;">${consulta.medico || 'N/A'}</td>
+        <td class="label-cell" style="width: 18%;">Especialidad:</td>
+        <td class="value-cell" style="width: 32%;">${consulta.especialidad || 'N/A'}</td>
+      </tr>
+      ${consulta.motivo && consulta.motivo !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Motivo:</td>
+        <td class="value-cell" colspan="3">${consulta.motivo}</td>
+      </tr>
       ` : ''}
-
-      <!-- Diagnóstico -->
-      ${(consulta.diagnosticos && consulta.diagnosticos !== 'N/A') || (consulta.planTratamiento && consulta.planTratamiento !== 'N/A') ? `
-      <div class="section">
-        <div class="section-title">💊 DIAGNÓSTICO Y TRATAMIENTO</div>
-        ${consulta.diagnosticos && consulta.diagnosticos !== 'N/A' ? `
-        <div class="field">
-          <span class="field-label">Diagnósticos CIE-10:</span>
-          <div style="margin-top: 3px; padding: 8px; background: #fee2e2; border-radius: 3px; border-left: 4px solid #dc2626; font-family: monospace;">
-            ${consulta.diagnosticos}
-          </div>
-        </div>
-        ` : ''}
-
-        ${consulta.planTratamiento && consulta.planTratamiento !== 'N/A' ? `
-        <div class="field">
-          <span class="field-label">Plan de Manejo:</span>
-          <div style="margin-top: 3px; padding: 8px; background: #f0f9ff; border-radius: 3px; border-left: 4px solid #2563eb;">
-            ${consulta.planTratamiento}
-          </div>
-        </div>
-        ` : ''}
-      </div>
+      ${consulta.enfermedadActual && consulta.enfermedadActual !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Enfermedad Actual:</td>
+        <td class="value-cell" colspan="3">${consulta.enfermedadActual}</td>
+      </tr>
       ` : ''}
-
-      <!-- Órdenes Médicas -->
+      ${consulta.examenFisico && consulta.examenFisico !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Examen Físico:</td>
+        <td class="value-cell" colspan="3">${consulta.examenFisico}</td>
+      </tr>
+      ` : ''}
+      ${consulta.signosVitales && consulta.signosVitales !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Signos Vitales:</td>
+        <td class="value-cell" colspan="3">${consulta.signosVitales}</td>
+      </tr>
+      ` : ''}
+      ${consulta.diagnosticos && consulta.diagnosticos !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Diagnóstico:</td>
+        <td class="value-cell" colspan="3"><strong>${consulta.diagnosticos}</strong></td>
+      </tr>
+      ` : ''}
+      ${consulta.planTratamiento && consulta.planTratamiento !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Plan:</td>
+        <td class="value-cell" colspan="3">${consulta.planTratamiento}</td>
+      </tr>
+      ` : ''}
       ${consulta.formulaMedica && consulta.formulaMedica !== 'N/A' ? `
-      <div class="section">
-        <div class="section-title">📋 ÓRDENES MÉDICAS</div>
-        <div style="padding: 10px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 5px;">
-          <strong style="color: #dc2626;">💊 FORMULA MÉDICA:</strong><br>
-          <div style="margin-top: 5px; padding: 8px; background: white; border-radius: 3px; font-family: monospace; white-space: pre-line;">
-            ${consulta.formulaMedica}
-          </div>
-        </div>
-      </div>
+      <tr>
+        <td class="label-cell">Fórmula Médica:</td>
+        <td class="value-cell" colspan="3">${consulta.formulaMedica}</td>
+      </tr>
       ` : ''}
-
-      <!-- Incapacidad -->
-      ${consulta.incapacidad?.tipo || consulta.incapacidad?.dias ? `
-      <div class="section">
-        <div class="section-title">📄 INCAPACIDAD MÉDICA</div>
-        <div class="important-note">
-          <strong>⚠️ INCAPACIDAD CERTIFICADA</strong><br>
-          ${consulta.incapacidad.tipo ? `<strong>Tipo:</strong> ${consulta.incapacidad.tipo}<br>` : ''}
-          ${consulta.incapacidad.dias ? `<strong>Días:</strong> ${consulta.incapacidad.dias}` : ''}
-        </div>
-      </div>
+      ${consulta.indicaciones && consulta.indicaciones !== 'N/A' ? `
+      <tr>
+        <td class="label-cell">Indicaciones:</td>
+        <td class="value-cell" colspan="3">${consulta.indicaciones}</td>
+      </tr>
       ` : ''}
-
-      <!-- Seguimiento y Recomendaciones -->
-      ${(consulta.indicaciones && consulta.indicaciones !== 'N/A') || (consulta.proximaCita && consulta.proximaCita !== 'N/A') || (consulta.observaciones && consulta.observaciones !== 'N/A') ? `
-      <div class="section">
-        <div class="section-title">📅 SEGUIMIENTO Y RECOMENDACIONES</div>
-        <div class="grid-2">
-          ${consulta.indicaciones && consulta.indicaciones !== 'N/A' ? `
-          <div>
-            <span class="field-label">Indicaciones:</span><br>
-            <span style="padding: 4px; background: #f0fdf4; border-radius: 3px; display: inline-block; margin-top: 2px;">
-              ${consulta.indicaciones}
-            </span>
-          </div>
-          ` : '<div></div>'}
-          ${consulta.proximaCita && consulta.proximaCita !== 'N/A' ? `
-          <div>
-            <span class="field-label">Próxima Cita:</span><br>
-            <span style="padding: 4px; background: #fef3c7; border-radius: 3px; display: inline-block; margin-top: 2px; font-weight: bold;">
-              ${consulta.proximaCita}
-            </span>
-          </div>
-          ` : '<div></div>'}
-        </div>
-
-        ${consulta.observaciones && consulta.observaciones !== 'N/A' ? `
-        <div class="field" style="margin-top: 10px;">
-          <span class="field-label">Observaciones:</span>
-          <div style="margin-top: 3px; padding: 8px; background: #f9fafb; border-radius: 3px; border: 1px solid #e5e7eb;">
-            ${consulta.observaciones}
-          </div>
-        </div>
-        ` : ''}
-      </div>
-      ` : ''}
-
-      <!-- Firma y Sello -->
-      <div style="margin-top: 25px; display: flex; justify-content: space-between; gap: 15px; page-break-inside: avoid;">
-        <!-- Firma Digital del Profesional -->
-        <div style="flex: 1; padding: 12px; background: white; border: 1.5px solid #000; border-radius: 3px;">
-          <div style="text-align: center; border-bottom: 1px solid #666; padding-bottom: 6px; margin-bottom: 12px;">
-            <strong style="font-size: 10px; color: #000;">✍️ FIRMA DEL PROFESIONAL</strong>
-          </div>
-
-          ${consulta.firmaDigital || consulta.medico ? `
-            <!-- Línea de firma -->
-            <div style="border-top: 1.5px solid #000; width: 180px; margin: 20px auto 10px;"></div>
-
-            <!-- Información del profesional -->
-            <div style="text-align: center;">
-              <p style="margin: 3px 0; font-weight: bold; font-size: 11px; color: #000;">
-                ${consulta.firmaDigital?.nombreMedico || consulta.medico || 'Profesional de la Salud'}
-              </p>
-
-              ${consulta.firmaDigital?.registroProfesional ? `
-              <p style="margin: 2px 0; font-size: 9px; color: #333;">
-                Reg. Prof.: ${consulta.firmaDigital.registroProfesional}
-              </p>
-              ` : ''}
-
-              ${consulta.firmaDigital?.especialidad || consulta.especialidad ? `
-              <p style="margin: 2px 0; font-size: 9px; color: #555;">
-                ${consulta.firmaDigital?.especialidad || consulta.especialidad}
-              </p>
-              ` : ''}
-
-              <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
-                Fecha: ${consulta.firmaDigital?.fechaFirma || formatDate(consulta.fecha) || fechaActual}
-              </p>
-
-              ${consulta.firmaDigital?.selloDigital ? `
-              <p style="margin: 2px 0; font-size: 7px; color: #888; font-style: italic;">
-                Firmado digitalmente
-              </p>
-              ` : ''}
-            </div>
-          ` : `
-            <!-- Espacio para firma manual -->
-            <div style="margin-top: 50px;"></div>
-            <div style="border-top: 1.5px solid #000; width: 180px; margin: 0 auto 8px;"></div>
-            <div style="text-align: center;">
-              <p style="margin: 3px 0; font-size: 9px; color: #333;">
-                Firma del Profesional Responsable
-              </p>
-              <p style="margin: 8px 0 2px 0; font-size: 8px; color: #666;">
-                Fecha: ${fechaActual}
-              </p>
-            </div>
-          `}
-        </div>
-
-        <!-- Sello de la Institución -->
-        <div style="flex: 1; padding: 12px; background: white; border: 1.5px solid #000; border-radius: 3px;">
-          <div style="text-align: center; border-bottom: 1px solid #666; padding-bottom: 6px; margin-bottom: 12px;">
-            <strong style="font-size: 10px; color: #000;">🏛️ SELLO DE LA INSTITUCIÓN</strong>
-          </div>
-          <div style="text-align: center; margin-top: 20px;">
-            <div style="padding: 10px; border: 1px solid #d1d5db; border-radius: 3px; background: white; display: inline-block;">
-              <p style="margin: 0 0 10px 0; font-size: 9px; color: #6b7280; font-weight: bold;">SELLO OFICIAL</p>
-              <div style="margin: 10px auto; width: 80px; height: 60px; border: 1px dashed #9ca3af;"></div>
-              <p style="margin: 10px 0 0 0; font-size: 8px; color: #9ca3af;">${config.nombre}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    </table>
+    
+    <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
+      <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>
     </div>
   `;
 };
@@ -520,15 +346,15 @@ export const generarHistoriaClinicaHTML = (
 ) => {
   const numeroHistoria = historiaClinica.numeroHistoria || 'N/A';
 
-  // Estilos CSS para impresión
+  // Estilos CSS para impresión en formato tabla
   const styles = `
     <style>
       @media print {
         body { 
           font-family: Arial, sans-serif; 
           margin: 0; 
-          padding: 12px; 
-          font-size: 10px; 
+          padding: 8px; 
+          font-size: 9px; 
           line-height: 1.3; 
           color: #111827;
         }
@@ -544,24 +370,40 @@ export const generarHistoriaClinicaHTML = (
           border-radius: 4px; 
           margin-bottom: 10px; 
         }
-        .patient-info { 
-          background: #f8fafc; 
-          padding: 8px; 
-          border-radius: 4px; 
-          margin-bottom: 12px; 
-          border: 1px solid #e5e7eb; 
+        .patient-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 10px;
         }
-        .medical-antecedents { 
-          background: #fef3c7; 
-          padding: 8px; 
-          border-radius: 4px; 
-          margin-bottom: 12px; 
-          border-left: 3px solid #f59e0b; 
+        .patient-table td {
+          border: 1px solid #000;
+          padding: 3px 5px;
+          font-size: 9px;
+        }
+        .label-cell {
+          background-color: #f0f0f0;
+          font-weight: bold;
+          width: 15%;
+          text-align: left;
+        }
+        .value-cell {
+          background-color: white;
+          text-align: left;
+          width: 18%;
+        }
+        .section-header {
+          background-color: #e0e0e0;
+          padding: 4px 6px;
+          font-weight: bold;
+          font-size: 10px;
+          border: 1px solid #000;
+          margin-top: 10px;
+          margin-bottom: 5px;
         }
         .consulta { 
-          border: 1px solid #e5e7eb; 
-          padding: 8px; 
-          margin-bottom: 12px; 
+          border: 1px solid #000; 
+          padding: 6px; 
+          margin-bottom: 10px; 
           page-break-inside: avoid; 
         }
         .consulta-header { 
@@ -642,8 +484,6 @@ export const generarHistoriaClinicaHTML = (
     <body>
       ${generarEncabezadoHTML(numeroHistoria, config)}
       ${generarInfoPacienteHTML(patient, patientData)}
-      ${generarAntecedentesHTML(historiaData)}
-      ${generarConsentimientoHTML()}
 
       <!-- Consultas -->
       ${consultas.map(consulta => generarConsultaHTML(consulta, numeroHistoria, config)).join('\n')}

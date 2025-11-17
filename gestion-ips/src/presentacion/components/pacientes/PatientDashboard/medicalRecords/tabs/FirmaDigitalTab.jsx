@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, TextInput, Paper, Stack, Group, Text, Checkbox } from '@mantine/core';
-import { IconSignature, IconShieldCheck, IconCalendar } from '@tabler/icons-react';
+import { IconSignature, IconShieldCheck, IconCalendar, IconCheck } from '@tabler/icons-react';
 
 /**
  * Tab 6: Firma Digital y Validación
@@ -63,8 +63,10 @@ const FirmaDigitalTab = ({ formData, setFormData }) => {
               value={`${formData.firmaDigital.fechaFirma} ${new Date().toLocaleTimeString('es-CO')}`}
               readOnly
               leftSection={<IconCalendar size={16} />}
+              leftSectionWidth={45}
               styles={{
                 input: {
+                  paddingLeft: '50px',
                   backgroundColor: 'var(--mantine-color-gray-1)',
                   fontWeight: 600
                 }
@@ -97,6 +99,7 @@ const FirmaDigitalTab = ({ formData, setFormData }) => {
               </Text>
             }
             checked={formData.firmaDigital.certificacion}
+            icon={IconCheck}
             onChange={(e) => setFormData({
               ...formData,
               firmaDigital: { ...formData.firmaDigital, certificacion: e.currentTarget.checked }

@@ -30,6 +30,8 @@ const CodigosCupsSearch = ({
         value={searchTerm}
         onChange={(e) => onSearchChange(e.currentTarget.value)}
         leftSection={<IconSearch size={16} />}
+        leftSectionWidth={45}
+        styles={{ input: { paddingLeft: '50px' } }}
         size="md"
         description={`Mostrando ${filteredCount} de ${totalCount} códigos CUPS`}
       />

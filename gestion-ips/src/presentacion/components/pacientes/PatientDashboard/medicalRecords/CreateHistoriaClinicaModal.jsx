@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, Button, Tabs, Paper, Text, Box, Group, Stack, ScrollArea } from '@mantine/core';
+import { Modal, Button, Tabs, Paper, Text, Box, Group, Stack, ScrollArea, Grid } from '@mantine/core';
 import { IconUser, IconFileText, IconHeart, IconStethoscope, IconClipboard, IconSignature, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService, pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 
 // Importar tabs
 import DatosProcedimientoTab from './tabs/DatosProcedimientoTab.jsx';
@@ -13,9 +14,40 @@ import DiagnosticoPlanTab from './tabs/DiagnosticoPlanTab.jsx';
 import FirmaDigitalTab from './tabs/FirmaDigitalTab.jsx';
 
 const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacienteId, citaId, citaData, patientData }) => {
+  const { tema } = useTheme();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('datos');
+
+  // Parse patient data si viene como JSON string
+  const parsedPatientData = React.useMemo(() => {
+    if (!patientData) return null;
+    
+    // Si ya tiene informacionPersonal parseado, usarlo
+    if (patientData.informacionPersonal) {
+      return patientData;
+    }
+    
+    // Si tiene datosJson como string, parsearlo
+    if (patientData.datosJson && typeof patientData.datosJson === 'string') {
+      try {
+        const datosJson = JSON.parse(patientData.datosJson);
+        const informacionPersonal = datosJson.informacionPersonalJson 
+          ? JSON.parse(datosJson.informacionPersonalJson) 
+          : null;
+        
+        return {
+          ...patientData,
+          informacionPersonal
+        };
+      } catch (e) {
+        console.error('Error parsing patient data:', e);
+        return patientData;
+      }
+    }
+    
+    return patientData;
+  }, [patientData]);
 
   const [formData, setFormData] = useState({
     pacienteId: pacienteId || '',
@@ -57,6 +89,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     
     // Examen físico
     examenFisico: {
+      dependenciaMedica: '',
       signosVitales: {
         presionArterial: '',
         frecuenciaCardiaca: '',
@@ -69,14 +102,15 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       },
       estadoGeneral: '',
       sistemasRevisados: {
-        cabezaCuello: { normal: true, hallazgos: '' },
-        toraxPulmones: { normal: true, hallazgos: '' },
-        cardiovascular: { normal: true, hallazgos: '' },
-        abdomen: { normal: true, hallazgos: '' },
-        extremidades: { normal: true, hallazgos: '' },
-        neurologico: { normal: true, hallazgos: '' },
-        pielFaneras: { normal: true, hallazgos: '' }
-      }
+        cabezaCuello: { normal: false, hallazgos: '' },
+        toraxPulmones: { normal: false, hallazgos: '' },
+        cardiovascular: { normal: false, hallazgos: '' },
+        abdomen: { normal: false, hallazgos: '' },
+        extremidades: { normal: false, hallazgos: '' },
+        neurologico: { normal: false, hallazgos: '' },
+        pielFaneras: { normal: false, hallazgos: '' }
+      },
+      camposEspecificos: {}
     },
     
     // Diagnóstico y plan
@@ -210,7 +244,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       onClose={onClose}
       title={
         <Group gap="xs">
-          <IconFileText size={24} color="var(--mantine-color-green-6)" />
+          <IconFileText size={24} style={{ color: tema.primaryColor }} />
           <Text size="lg" fw={700}>Nueva Historia Clínica</Text>
         </Group>
       }
@@ -223,16 +257,36 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     >
       <form onSubmit={handleSubmit}>
         <Stack gap={0}>
+          {/* Info del Paciente */}
+          <Paper p="md" m="md" mb={0} style={{ backgroundColor: `${tema.primaryColor}15`, border: `1px solid ${tema.primaryColor}40` }}>
+            <Grid>
+              <Grid.Col span={6}>
+                <Text size="xs" c="dimmed" fw={500}>Paciente</Text>
+                <Text size="sm" fw={600}>
+                  {parsedPatientData?.informacionPersonal?.primerNombre || citaData?.nombre || 'N/A'} {parsedPatientData?.informacionPersonal?.primerApellido || ''}
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Text size="xs" c="dimmed" fw={500}>Documento</Text>
+                <Text size="sm" fw={600}>{parsedPatientData?.numeroDocumento || citaData?.documento || 'N/A'}</Text>
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <Text size="xs" c="dimmed" fw={500}>Edad</Text>
+                <Text size="sm" fw={600}>{parsedPatientData?.informacionPersonal?.edad || 'N/A'} años</Text>
+              </Grid.Col>
+            </Grid>
+          </Paper>
+
           {/* Error Banner */}
           {error && (
-            <Paper p="md" m="md" withBorder style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
+            <Paper p="md" m="md" mb={0} withBorder style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}>
               <Text c="red" size="sm" fw={500}>{error}</Text>
             </Paper>
           )}
 
           {/* Tabs Navigation */}
           <Box px="md" pt="md">
-            <Tabs value={activeTab} onChange={setActiveTab} color="green" variant="pills">
+            <Tabs value={activeTab} onChange={setActiveTab} color={tema.mantineColor} variant="pills">
               <Tabs.List>
                 <Tabs.Tab value="datos" leftSection={<IconUser size={14} />}>
                   Datos
@@ -261,7 +315,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
                     <DatosProcedimientoTab 
                       formData={formData} 
                       setFormData={setFormData} 
-                      patientData={patientData}
+                      patientData={parsedPatientData}
                     />
                   </Tabs.Panel>
 

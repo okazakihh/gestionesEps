@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table, Checkbox, Text, Badge, Group, Loader, Paper, Stack } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 
 /**
@@ -71,6 +72,7 @@ const CitasTable = ({
                   checked={allSelected}
                   onChange={() => onSelectAll(citas)}
                   aria-label="Seleccionar todas las citas"
+                  icon={IconCheck}
                 />
               </Table.Th>
               <Table.Th>Fecha</Table.Th>
@@ -95,6 +97,7 @@ const CitasTable = ({
                     checked={selectedCitas.has(cita.id)}
                     onChange={() => onSelectCita(cita.id)}
                     aria-label={`Seleccionar cita de ${cita.nombrePaciente}`}
+                    icon={IconCheck}
                   />
                 </Table.Td>
                 <Table.Td>

@@ -6,6 +6,7 @@ import { useTheme } from './negocio/contexts/ThemeContext.jsx';
 import AppRouter from './presentacion/routes/AppRouter.jsx';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import './styles/checkbox-fix.css';
 
 function AppContent() {
   const { tema } = useTheme();

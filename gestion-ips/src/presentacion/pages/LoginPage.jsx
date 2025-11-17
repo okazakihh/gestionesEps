@@ -57,11 +57,18 @@ export const LoginPage = () => {
     <Box
       style={{
         minHeight: '100vh',
+        width: '100vw',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: tema.gradient,
-        padding: '20px'
+        padding: '20px',
+        margin: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
       }}
     >
       <Container size={460}>
@@ -69,7 +76,6 @@ export const LoginPage = () => {
           shadow="xl"
           p={40}
           radius="lg"
-          withBorder
           style={{
             background: 'white',
             backdropFilter: 'blur(10px)'
@@ -109,7 +115,6 @@ export const LoginPage = () => {
                 <TextInput
                   label="Usuario"
                   placeholder="Ingresa tu usuario"
-                  leftSection={<IconUser size={18} />}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -127,7 +132,6 @@ export const LoginPage = () => {
                 <PasswordInput
                   label="Contraseña"
                   placeholder="Ingresa tu contraseña"
-                  leftSection={<IconLock size={18} />}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

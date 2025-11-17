@@ -594,6 +594,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
           onClose={handleBackToAgenda}
           onConsultaCreated={handleConsultaMedicaCreated}
           historiaClinicaId={historiaClinicaId}
+          patientData={patientData[currentCita.pacienteId]}
           citaData={{
             ...parseCitaInfo(currentCita),
             ...parsePacienteInfo(currentCita, patientData, loadingPatients)

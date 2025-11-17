@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Paper, Stack, Title, Text, Checkbox } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
 
 const ConsentSection = ({ parsedData, handleNestedInputChange, validationErrors }) => {
   return (
@@ -26,6 +27,7 @@ const ConsentSection = ({ parsedData, handleNestedInputChange, validationErrors 
               }
               description="Acepto recibir atención médica y procedimientos diagnósticos necesarios para mi salud."
               error={validationErrors.consentimientoTratamiento}
+              icon={IconCheck}
             />
           </Stack>
 
@@ -42,6 +44,7 @@ const ConsentSection = ({ parsedData, handleNestedInputChange, validationErrors 
               }
               description="Acepto el tratamiento de mis datos personales según la Ley 1581 de 2012 y normas de protección de datos."
               error={validationErrors.consentimientoPrivacidad}
+              icon={IconCheck}
             />
           </Stack>
 
@@ -58,6 +61,7 @@ const ConsentSection = ({ parsedData, handleNestedInputChange, validationErrors 
               }
               description="Acepto el tratamiento de datos sensibles de salud según la legislación colombiana."
               error={validationErrors.consentimientoDatos}
+              icon={IconCheck}
             />
           </Stack>
 
@@ -69,6 +73,7 @@ const ConsentSection = ({ parsedData, handleNestedInputChange, validationErrors 
               onChange={(e) => handleNestedInputChange('consentimientoInformado', 'aceptaImagenes', e.currentTarget.checked)}
               label={<Text size="sm" fw={500}>Uso de Imágenes y Fotografías</Text>}
               description="Acepto el uso de imágenes y fotografías para fines médicos y académicos (opcional)."
+              icon={IconCheck}
             />
           </Stack>
         </Stack>

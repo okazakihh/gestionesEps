@@ -1,6 +1,6 @@
 import React from 'react';
 import { Checkbox, Grid, Textarea, Stack, Text, Group, Paper } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 
 /**
  * Componente para manejar antecedentes patológicos con checkboxes
@@ -60,6 +60,7 @@ const AntecedentesPatologicosForm = ({ values, onChange }) => {
                 checked={(values.selected || []).includes(option.value)}
                 onChange={(e) => handleCheckboxChange(option.value, e.currentTarget.checked)}
                 size="sm"
+                icon={IconCheck}
               />
             </Grid.Col>
           ))}
@@ -138,6 +139,7 @@ const AntecedentesFamiliaresForm = ({ values, onChange }) => {
                 checked={(values.selected || []).includes(option.value)}
                 onChange={(e) => handleCheckboxChange(option.value, e.currentTarget.checked)}
                 size="sm"
+                icon={IconCheck}
               />
             </Grid.Col>
           ))}

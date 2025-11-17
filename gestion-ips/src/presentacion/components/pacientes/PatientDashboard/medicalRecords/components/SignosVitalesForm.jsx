@@ -46,8 +46,10 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.presionArterial || ''}
           onChange={(e) => handleChange('presionArterial', e.target.value)}
           leftSection={<IconHeart size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -58,10 +60,12 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.frecuenciaCardiaca || ''}
           onChange={(value) => handleChange('frecuenciaCardiaca', value)}
           leftSection={<IconActivity size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={0}
           max={250}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -72,10 +76,12 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.frecuenciaRespiratoria || ''}
           onChange={(value) => handleChange('frecuenciaRespiratoria', value)}
           leftSection={<IconLungs size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={0}
           max={60}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -86,11 +92,13 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.temperatura || ''}
           onChange={(value) => handleChange('temperatura', value)}
           leftSection={<IconTemperature size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={30}
           max={45}
           decimalScale={1}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -101,11 +109,13 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.peso || ''}
           onChange={(value) => handleChange('peso', value)}
           leftSection={<IconScale size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={0}
           max={300}
           decimalScale={1}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -116,10 +126,12 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.talla || ''}
           onChange={(value) => handleChange('talla', value)}
           leftSection={<IconRuler size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={0}
           max={250}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
 
@@ -129,10 +141,12 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={calcularIMC()}
           readOnly
           leftSection={<IconScale size={16} />}
+          leftSectionWidth={45}
           styles={{
             input: {
               backgroundColor: 'var(--mantine-color-gray-0)',
-              fontWeight: 600
+              fontWeight: 600,
+              paddingLeft: '50px'
             }
           }}
           size="sm"
@@ -146,10 +160,12 @@ const SignosVitalesForm = ({ values, onChange, readonly = false }) => {
           value={values.spo2 || ''}
           onChange={(value) => handleChange('spo2', value)}
           leftSection={<IconLungs size={16} />}
+          leftSectionWidth={45}
           readOnly={readonly}
           min={0}
           max={100}
           size="sm"
+          styles={{ input: { paddingLeft: '50px' } }}
         />
       </Grid.Col>
     </Grid>

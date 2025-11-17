@@ -1,0 +1,61 @@
+/* Fix para el problema de checkbox duplicado en Mantine */
+
+/* Asegurar que solo haya un icono de check */
+.mantine-Checkbox-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+/* Eliminar cualquier pseudo-elemento que pueda duplicar el check */
+.mantine-Checkbox-icon::before,
+.mantine-Checkbox-icon::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Asegurar que el input checked no tenga contenido duplicado */
+.mantine-Checkbox-input:checked::before,
+.mantine-Checkbox-input:checked::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Limpiar cualquier SVG duplicado */
+.mantine-Checkbox-icon > svg {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Asegurar que no haya múltiples SVGs */
+.mantine-Checkbox-icon svg + svg {
+  display: none !important;
+}
+
+/* Prevenir cualquier background-image que pueda mostrar un check */
+.mantine-Checkbox-input:checked {
+  background-image: none !important;
+}
+
+/* Forzar que solo el SVG de IconCheck sea visible */
+.mantine-Checkbox-inner {
+  position: relative !important;
+}
+
+.mantine-Checkbox-inner::before,
+.mantine-Checkbox-inner::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* El color se aplicará dinámicamente desde Mantine theme */
+.mantine-Checkbox-input:checked {
+  border-color: var(--mantine-primary-color-filled) !important;
+  background-color: var(--mantine-primary-color-filled) !important;
+}
+
+.mantine-Checkbox-input:checked:hover {
+  background-color: var(--mantine-primary-color-filled-hover) !important;
+  border-color: var(--mantine-primary-color-filled-hover) !important;
+}

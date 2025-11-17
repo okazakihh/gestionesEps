@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Textarea, Paper, Stack, Group, Text, Checkbox, TextInput } from '@mantine/core';
-import { IconStethoscope, IconPill, IconFileText, IconCalendar } from '@tabler/icons-react';
+import { IconStethoscope, IconPill, IconFileText, IconCalendar, IconCheck } from '@tabler/icons-react';
 import DiagnosticosTable from '../components/DiagnosticosTable.jsx';
 import MedicamentosTable from '../components/MedicamentosTable.jsx';
 
@@ -92,6 +92,7 @@ const DiagnosticoPlanTab = ({ formData, setFormData }) => {
           <Checkbox
             label="Requiere seguimiento"
             checked={formData.diagnosticoPlan.seguimiento.requiere}
+            icon={IconCheck}
             onChange={(e) => setFormData({
               ...formData,
               diagnosticoPlan: {

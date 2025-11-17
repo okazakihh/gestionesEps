@@ -36,19 +36,19 @@ export const printHistoriaClinica = async (consultas, historiaClinica, patient, 
     numero: 1,
     tipo: 'Consulta Inicial',
     fecha: historiaClinica.fechaApertura,
-    medico: (historiaData && historiaData.informacionMedico?.medicoResponsable) || 'N/A',
-    especialidad: (historiaData && historiaData.informacionMedico?.especialidad) || 'N/A',
-    motivo: (historiaData && historiaData.informacionConsulta?.motivoConsulta) || 'Apertura de historia clínica',
-    enfermedadActual: (historiaData && historiaData.informacionConsulta?.enfermedadActual) || 'N/A',
-    diagnosticos: (historiaData && historiaData.diagnosticoTratamiento?.diagnosticos) || 'N/A',
-    planTratamiento: (historiaData && historiaData.diagnosticoTratamiento?.planTratamiento) || 'N/A',
-    examenFisico: (historiaData && historiaData.examenClinico?.examenFisico) || 'N/A',
-    signosVitales: (historiaData && historiaData.examenClinico?.signosVitales) || 'N/A',
-    formulaMedica: 'N/A',
+    medico: (historiaData && historiaData.procedimiento?.medicoResponsable) || (historiaData && historiaData.informacionMedico?.medicoResponsable) || 'N/A',
+    especialidad: (historiaData && historiaData.procedimiento?.especialidad) || (historiaData && historiaData.informacionMedico?.especialidad) || 'N/A',
+    motivo: (historiaData && historiaData.consultaInicial?.motivoConsulta) || (historiaData && historiaData.informacionConsulta?.motivoConsulta) || 'Apertura de historia clínica',
+    enfermedadActual: (historiaData && historiaData.consultaInicial?.enfermedadActual) || (historiaData && historiaData.informacionConsulta?.enfermedadActual) || 'N/A',
+    diagnosticos: (historiaData && historiaData.diagnostico?.diagnosticos) || (historiaData && historiaData.diagnosticoTratamiento?.diagnosticos) || 'N/A',
+    planTratamiento: (historiaData && historiaData.diagnostico?.plan?.conducta) || (historiaData && historiaData.diagnosticoTratamiento?.planTratamiento) || 'N/A',
+    examenFisico: (historiaData && historiaData.examenFisico?.estadoGeneral) || (historiaData && historiaData.examenClinico?.examenFisico) || 'N/A',
+    signosVitales: (historiaData && historiaData.examenFisico?.signosVitales) || (historiaData && historiaData.examenClinico?.signosVitales) || 'N/A',
+    formulaMedica: (historiaData && historiaData.diagnostico?.medicamentos) || 'N/A',
     incapacidad: null,
-    indicaciones: 'N/A',
+    indicaciones: (historiaData && historiaData.diagnostico?.plan?.recomendaciones) || 'N/A',
     proximaCita: 'N/A',
-    observaciones: (historiaData && historiaData.informacionConsulta?.observaciones) || 'N/A'
+    observaciones: (historiaData && historiaData.consultaInicial?.observaciones) || (historiaData && historiaData.informacionConsulta?.observaciones) || 'N/A'
   });
 
   // Agregar consultas posteriores
@@ -67,9 +67,9 @@ export const printHistoriaClinica = async (consultas, historiaClinica, patient, 
           enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
           diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
           planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
-          examenFisico: consultaData.examenClinico?.examenFisico || 'N/A',
-          signosVitales: consultaData.examenClinico?.signosVitales || 'N/A',
-          formulaMedica: consultaData.formulaMedica?.medicamentos || 'N/A',
+          examenFisico: consultaData.examenFisico?.estadoGeneral || consultaData.examenFisico?.hallazgos || consultaData.examenClinico?.examenFisico || 'N/A',
+          signosVitales: consultaData.examenFisico?.signosVitales || consultaData.examenClinico?.signosVitales || 'N/A',
+          formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica?.medicamentos || 'N/A',
           incapacidad: consultaData.incapacidad || null,
           indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
           proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
@@ -120,9 +120,9 @@ export const printConsulta = async (consulta, historiaClinica, patient, patientD
       enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
       diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
       planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
-      examenFisico: consultaData.examenClinico?.examenFisico || 'N/A',
-      signosVitales: consultaData.examenClinico?.signosVitales || 'N/A',
-      formulaMedica: consultaData.formulaMedica?.medicamentos || 'N/A',
+      examenFisico: consultaData.examenFisico?.estadoGeneral || consultaData.examenFisico?.hallazgos || consultaData.examenClinico?.examenFisico || 'N/A',
+      signosVitales: consultaData.examenFisico?.signosVitales || consultaData.examenClinico?.signosVitales || 'N/A',
+      formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica?.medicamentos || 'N/A',
       incapacidad: consultaData.incapacidad || null,
       indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
       proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
@@ -175,6 +175,18 @@ export const printDocument = (content) => {
   if (ventana) {
     ventana.document.write(content);
     ventana.document.close();
+    
+    // Esperar a que se cargue el contenido antes de imprimir
+    ventana.onload = function() {
+      ventana.focus();
+      ventana.print();
+    };
+    
+    // Fallback si onload no se dispara
+    setTimeout(() => {
+      ventana.focus();
+      ventana.print();
+    }, 250);
   } else {
     alert('Por favor, permita las ventanas emergentes para imprimir el documento.');
   }
