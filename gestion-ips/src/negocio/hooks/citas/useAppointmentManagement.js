@@ -128,7 +128,18 @@ export const useAppointmentManagement = (user = null) => {
 
   // Función para manejar atención de cita
   const handleAtendidoClick = async (appointment) => {
-    setCurrentAppointment(appointment);
+    // Cargar datos del paciente antes de abrir el modal
+    let appointmentWithPatientData = { ...appointment };
+    
+    try {
+      const { pacientesApiService } = await import('../../../data/services/pacientesApiService.js');
+      const patientData = await pacientesApiService.getPacienteById(appointment.pacienteId);
+      appointmentWithPatientData.patientData = patientData;
+    } catch (error) {
+      console.error('Error loading patient data:', error);
+    }
+    
+    setCurrentAppointment(appointmentWithPatientData);
 
     // Verificar el estado actual de la cita
     const currentStatus = appointment.datosJson ? JSON.parse(appointment.datosJson).estado : 'PROGRAMADO';
@@ -165,13 +176,8 @@ export const useAppointmentManagement = (user = null) => {
       const historia = await historiasClinicasApiService.getHistoriaClinicaByPaciente(pacienteId);
       return historia ? historia.id : null;
     } catch (error) {
-      // 404 significa que no tiene historia clínica, lo cual es normal
-      if (error.response && error.response.status === 404) {
-        console.log('Paciente no tiene historia clínica:', pacienteId);
-        return null;
-      }
-      // Para otros errores, los propagamos
-      throw error;
+      // Si hay error (diferente de 404), asumimos que no tiene historia clínica
+      return null;
     }
   };
 

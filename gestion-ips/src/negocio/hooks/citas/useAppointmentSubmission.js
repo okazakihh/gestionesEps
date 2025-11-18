@@ -37,10 +37,6 @@ export const useAppointmentSubmission = (patientId, patientName, onAppointmentCr
       }
     }
 
-    if (!formData.motivo.trim()) {
-      newErrors.motivo = 'El motivo de la consulta es obligatorio';
-    }
-
     if (!formData.medicoAsignado.trim()) {
       newErrors.medicoAsignado = 'El médico asignado es obligatorio';
     }
@@ -67,11 +63,28 @@ export const useAppointmentSubmission = (patientId, patientName, onAppointmentCr
 
     try {
       // Format the appointment data as JSON
+      // El motivo se obtiene automáticamente del código CUPS seleccionado
+      let motivo = 'Consulta médica';
+      if (selectedCupData) {
+        // Construir motivo descriptivo desde CUPS
+        const tipo = selectedCupData.tipo || selectedCupData.categoria || '';
+        const especialidad = selectedCupData.especialidad || '';
+        
+        if (tipo && especialidad) {
+          motivo = `${tipo} - ${especialidad}`;
+        } else if (tipo) {
+          motivo = tipo;
+        } else if (especialidad) {
+          motivo = especialidad;
+        }
+      }
+      
       const appointmentData = {
         fechaHoraCita: formData.fechaHoraCita,
-        motivo: formData.motivo.trim(),
+        motivo: motivo,
         medicoAsignado: formData.medicoAsignado.trim(),
         medicoId: formData.medicoId,
+        licenciaMedica: formData.licenciaMedica || '',
         estado: formData.estado,
         notas: formData.notas.trim(),
         codigoCups: formData.codigoCups,

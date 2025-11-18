@@ -12,15 +12,12 @@ export const parseCitaInfo = (cita) => {
   try {
     if (cita.datosJson) {
       const citaData = typeof cita.datosJson === 'string' ? JSON.parse(cita.datosJson) : cita.datosJson;
-      console.log('Parsed citaData for cita', cita.id, ':', citaData);
 
       // Extraer información del CUPS si existe
       const informacionCups = citaData.informacionCups || null;
-      console.log('Información CUPS para cita', cita.id, ':', informacionCups);
 
       // Handle different possible estado formats
       let estado = citaData.estado || 'PROGRAMADO';
-      console.log('Raw estado for cita', cita.id, ':', estado);
 
       // Normalize estado to uppercase for consistency
       if (typeof estado === 'string') {
@@ -41,12 +38,13 @@ export const parseCitaInfo = (cita) => {
       };
 
       estado = estadoMapping[estado] || estado;
-      console.log('Normalized estado for cita', cita.id, ':', estado);
 
       return {
         fechaHoraCita: citaData.fechaHoraCita || null,
         motivo: citaData.motivo || 'N/A',
         medicoAsignado: citaData.medicoAsignado || 'N/A',
+        medicoId: citaData.medicoId || null,
+        licenciaMedica: citaData.licenciaMedica || '',
         estado: estado,
         notas: citaData.notas || 'Sin notas',
         // Priorizar especialidad del CUPS sobre la del formulario
@@ -60,7 +58,6 @@ export const parseCitaInfo = (cita) => {
     console.error('Error parsing cita data for cita', cita.id, ':', error);
   }
 
-  console.log('Using default estado for cita', cita.id, ': PROGRAMADO');
   return {
     fechaHoraCita: null,
     motivo: 'N/A',

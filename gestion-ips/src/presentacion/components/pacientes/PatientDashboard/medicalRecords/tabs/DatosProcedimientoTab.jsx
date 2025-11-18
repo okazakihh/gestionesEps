@@ -4,7 +4,8 @@ import { IconUser, IconCalendar, IconBuilding } from '@tabler/icons-react';
 import { useTheme } from '../../../../../../negocio/contexts/ThemeContext.jsx';
 
 /**
- * Tab 1: Datos del Paciente y Procedimiento
+ * Tab de Datos del Procedimiento Inicial
+ * Captura información básica del procedimiento y médico responsable
  */
 const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
   const { tema } = useTheme();
@@ -67,7 +68,8 @@ const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
           </Grid.Col>
           <Grid.Col span={6}>
             <TextInput
-              label="Registro Médico"
+              label="Licencia Médica"
+              key={`registro-${formData.procedimiento.registroMedico}`}
               value={formData.procedimiento.registroMedico}
               onChange={(e) => setFormData({
                 ...formData,
@@ -75,6 +77,7 @@ const DatosProcedimientoTab = ({ formData, setFormData, patientData }) => {
               })}
               required
               size="sm"
+              placeholder="Número de licencia profesional"
             />
           </Grid.Col>
           <Grid.Col span={6}>

@@ -62,6 +62,64 @@ const calcularEdad = (fechaNacimiento) => {
 };
 
 /**
+ * Verifica si un valor tiene datos válidos
+ * @param {*} value - Valor a verificar
+ * @returns {boolean} True si tiene datos válidos
+ */
+const hasValue = (value) => {
+  if (value === null || value === undefined || value === '') return false;
+  if (value === 'No registrado' || value === 'N/A' || value === 'Sin notas') return false;
+  if (value === 'Ninguno' || value === 'ninguno') return false;
+  if (typeof value === 'string' && value.trim() === '') return false;
+  
+  // Detectar arrays vacíos
+  if (Array.isArray(value) && value.length === 0) return false;
+  
+  // Detectar objetos vacíos o con solo valores vacíos
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const keys = Object.keys(value);
+    if (keys.length === 0) return false;
+    // Verificar si todas las propiedades están vacías
+    const hasAnyValue = keys.some(key => hasValue(value[key]));
+    return hasAnyValue;
+  }
+  
+  return true;
+};
+
+/**
+ * Formatea signos vitales (puede ser string u objeto)
+ * @param {string|Object} signosVitales - Signos vitales
+ * @returns {string} String formateado o null si no hay datos
+ */
+const formatSignosVitales = (signosVitales) => {
+  if (!hasValue(signosVitales)) return null;
+  
+  // Si es string, retornarlo directamente
+  if (typeof signosVitales === 'string') {
+    return signosVitales;
+  }
+  
+  // Si es objeto, formatear las propiedades que tengan valor
+  if (typeof signosVitales === 'object') {
+    const campos = [];
+    
+    if (hasValue(signosVitales.presionArterial)) campos.push(`PA: ${signosVitales.presionArterial}`);
+    if (hasValue(signosVitales.frecuenciaCardiaca)) campos.push(`FC: ${signosVitales.frecuenciaCardiaca}`);
+    if (hasValue(signosVitales.frecuenciaRespiratoria)) campos.push(`FR: ${signosVitales.frecuenciaRespiratoria}`);
+    if (hasValue(signosVitales.temperatura)) campos.push(`T: ${signosVitales.temperatura}`);
+    if (hasValue(signosVitales.saturacionO2)) campos.push(`SpO2: ${signosVitales.saturacionO2}`);
+    if (hasValue(signosVitales.peso)) campos.push(`Peso: ${signosVitales.peso}`);
+    if (hasValue(signosVitales.talla)) campos.push(`Talla: ${signosVitales.talla}`);
+    if (hasValue(signosVitales.imc)) campos.push(`IMC: ${signosVitales.imc}`);
+    
+    return campos.length > 0 ? campos.join(', ') : null;
+  }
+  
+  return null;
+};
+
+/**
  * Genera el encabezado HTML para historias clínicas en formato tabla
  * @param {string} numeroHistoria - Número de la historia clínica
  * @param {Object} config - Configuración de la IPS
@@ -188,42 +246,108 @@ const generarInfoPacienteHTML = (patient, patientData) => {
  * @returns {string} HTML con antecedentes
  */
 const generarAntecedentesHTML = (historiaData) => {
-  if (!historiaData || (!historiaData.antecedentesClinico && !historiaData.informacionMedica)) {
-    return `
-      <div class="medical-antecedents">
-        <h3 style="margin-top: 0; color: #92400e; font-size: 14px; border-bottom: 2px solid #f59e0b; padding-bottom: 5px;">
-          ANTECEDENTES MÉDICOS
-        </h3>
-        <p>No se encontraron antecedentes médicos registrados.</p>
-      </div>
+  if (!historiaData?.antecedentes) {
+    return '';
+  }
+
+  const antecedentes = historiaData.antecedentes;
+  let html = `
+    <div class="section-title" style="margin-top: 10px;">📋 ANTECEDENTES</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; border: 1px solid #ddd;">
+  `;
+
+  // Antecedentes Patológicos
+  if (antecedentes.patologicos?.selected?.length > 0 && !antecedentes.patologicos.selected.includes('ninguno')) {
+    const valor = antecedentes.patologicos.selected.join(', ') + 
+                  (antecedentes.patologicos.detalles ? ` - ${antecedentes.patologicos.detalles}` : '');
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Antecedentes Patológicos:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${valor}</td>
+      </tr>
     `;
   }
 
-  return `
-    <div class="medical-antecedents">
-      <h3 style="margin-top: 0; color: #92400e; font-size: 14px; border-bottom: 2px solid #f59e0b; padding-bottom: 5px;">
-        ANTECEDENTES MÉDICOS
-      </h3>
-      <div class="grid-2">
-        <div>
-          <strong>Antecedentes Personales:</strong><br>
-          ${(historiaData.antecedentesClinico?.antecedentesPersonales || historiaData.informacionMedica?.antecedentesPersonales) || 'No registrados'}
-        </div>
-        <div>
-          <strong>Antecedentes Familiares:</strong><br>
-          ${(historiaData.antecedentesClinico?.antecedentesFamiliares || historiaData.informacionMedica?.antecedentesFamiliares) || 'No registrados'}
-        </div>
-        <div>
-          <strong>Antecedentes Quirúrgicos:</strong><br>
-          ${(historiaData.antecedentesClinico?.antecedentesQuirurgicos || historiaData.informacionMedica?.antecedentesQuirurgicos) || 'No registrados'}
-        </div>
-        <div>
-          <strong>Antecedentes Alérgicos:</strong><br>
-          ${(historiaData.antecedentesClinico?.antecedentesAlergicos || historiaData.informacionMedica?.antecedentesAlergicos) || 'No registrados'}
-        </div>
-      </div>
-    </div>
-  `;
+  // Antecedentes Familiares
+  if (antecedentes.familiares?.selected?.length > 0 && !antecedentes.familiares.selected.includes('ninguno')) {
+    const valor = antecedentes.familiares.selected.join(', ') + 
+                  (antecedentes.familiares.detalles ? ` - ${antecedentes.familiares.detalles}` : '');
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Antecedentes Familiares:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${valor}</td>
+      </tr>
+    `;
+  }
+
+  // Antecedentes Quirúrgicos
+  if (hasValue(antecedentes.quirurgicos)) {
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Antecedentes Quirúrgicos:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.quirurgicos}</td>
+      </tr>
+    `;
+  }
+
+  // Antecedentes Alérgicos
+  if (antecedentes.alergicos && !antecedentes.alergicos.ninguno) {
+    if (hasValue(antecedentes.alergicos.medicamentos)) {
+      html += `
+        <tr>
+          <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Alergias - Medicamentos:</td>
+          <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.alergicos.medicamentos}</td>
+        </tr>
+      `;
+    }
+    if (hasValue(antecedentes.alergicos.alimentos)) {
+      html += `
+        <tr>
+          <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Alergias - Alimentos:</td>
+          <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.alergicos.alimentos}</td>
+        </tr>
+      `;
+    }
+    if (hasValue(antecedentes.alergicos.otros)) {
+      html += `
+        <tr>
+          <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Alergias - Otros:</td>
+          <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.alergicos.otros}</td>
+        </tr>
+      `;
+    }
+  }
+
+  // Hábitos
+  if (hasValue(antecedentes.habitos?.alcohol) && antecedentes.habitos.alcohol !== 'no') {
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Alcohol:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.habitos.alcohol}</td>
+      </tr>
+    `;
+  }
+  if (hasValue(antecedentes.habitos?.tabaco) && antecedentes.habitos.tabaco !== 'no') {
+    const valor = antecedentes.habitos.tabaco + 
+                  (antecedentes.habitos.tabacoCantidad ? ` - ${antecedentes.habitos.tabacoCantidad}` : '');
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Tabaco:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${valor}</td>
+      </tr>
+    `;
+  }
+  if (hasValue(antecedentes.habitos?.actividadFisica)) {
+    html += `
+      <tr>
+        <td class="label-cell" style="width: 30%; padding: 4px; border: 1px solid #ddd;">Actividad Física:</td>
+        <td class="value-cell" style="width: 70%; padding: 4px; border: 1px solid #ddd;">${antecedentes.habitos.actividadFisica}</td>
+      </tr>
+    `;
+  }
+
+  html += `</table></div>`;
+  return html;
 };
 
 /**
@@ -258,11 +382,8 @@ const generarConsentimientoHTML = () => {
 const generarConsultaHTML = (consulta, numeroHistoria, config) => {
   const fechaConsulta = formatDate(consulta.fecha);
 
-  return `
-    <div class="section-header">
-      ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
-    </div>
-    
+  // Información del médico
+  const medicoHTML = `
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; page-break-inside: avoid;">
       <tr>
         <td class="label-cell" style="width: 18%;">Médico:</td>
@@ -270,55 +391,149 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
         <td class="label-cell" style="width: 18%;">Especialidad:</td>
         <td class="value-cell" style="width: 32%;">${consulta.especialidad || 'N/A'}</td>
       </tr>
-      ${consulta.motivo && consulta.motivo !== 'N/A' ? `
+    </table>
+  `;
+
+  // Motivo de consulta y anamnesis
+  const motivoAnamnesisHTML = (consulta.motivo || consulta.enfermedadActual) ? `
+    <div class="section-title">MOTIVO DE CONSULTA Y ANAMNESIS</div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
+      ${hasValue(consulta.motivo) ? `
       <tr>
-        <td class="label-cell">Motivo:</td>
-        <td class="value-cell" colspan="3">${consulta.motivo}</td>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Motivo de Consulta:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.motivo}</td>
       </tr>
       ` : ''}
-      ${consulta.enfermedadActual && consulta.enfermedadActual !== 'N/A' ? `
+      ${hasValue(consulta.enfermedadActual) ? `
       <tr>
-        <td class="label-cell">Enfermedad Actual:</td>
-        <td class="value-cell" colspan="3">${consulta.enfermedadActual}</td>
-      </tr>
-      ` : ''}
-      ${consulta.examenFisico && consulta.examenFisico !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Examen Físico:</td>
-        <td class="value-cell" colspan="3">${consulta.examenFisico}</td>
-      </tr>
-      ` : ''}
-      ${consulta.signosVitales && consulta.signosVitales !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Signos Vitales:</td>
-        <td class="value-cell" colspan="3">${consulta.signosVitales}</td>
-      </tr>
-      ` : ''}
-      ${consulta.diagnosticos && consulta.diagnosticos !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Diagnóstico:</td>
-        <td class="value-cell" colspan="3"><strong>${consulta.diagnosticos}</strong></td>
-      </tr>
-      ` : ''}
-      ${consulta.planTratamiento && consulta.planTratamiento !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Plan:</td>
-        <td class="value-cell" colspan="3">${consulta.planTratamiento}</td>
-      </tr>
-      ` : ''}
-      ${consulta.formulaMedica && consulta.formulaMedica !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Fórmula Médica:</td>
-        <td class="value-cell" colspan="3">${consulta.formulaMedica}</td>
-      </tr>
-      ` : ''}
-      ${consulta.indicaciones && consulta.indicaciones !== 'N/A' ? `
-      <tr>
-        <td class="label-cell">Indicaciones:</td>
-        <td class="value-cell" colspan="3">${consulta.indicaciones}</td>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Revisión de Sistemas:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.enfermedadActual}</td>
       </tr>
       ` : ''}
     </table>
+  ` : '';
+
+  // Examen físico (incluyendo signos vitales y examen físico general)
+  const signosVitalesFormatted = formatSignosVitales(consulta.signosVitales);
+  const tieneExamenFisico = signosVitalesFormatted || hasValue(consulta.examenFisico) || 
+                            hasValue(consulta.dependenciaMedica) || 
+                            (consulta.sistemas && Object.keys(consulta.sistemas).some(key => hasValue(consulta.sistemas[key]))) ||
+                            (consulta.camposEspecificos && Object.keys(consulta.camposEspecificos).some(key => hasValue(consulta.camposEspecificos[key])));
+  
+  const examenFisicoHTML = tieneExamenFisico ? `
+    <div class="section-title">EXAMEN FÍSICO</div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
+      ${hasValue(consulta.dependenciaMedica) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Dependencia Médica:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.dependenciaMedica}</td>
+      </tr>
+      ` : ''}
+      ${hasValue(consulta.examenFisico) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Estado General:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.examenFisico}</td>
+      </tr>
+      ` : ''}
+      ${signosVitalesFormatted ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Signos Vitales:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${signosVitalesFormatted}</td>
+      </tr>
+      ` : ''}
+      ${consulta.sistemas && hasValue(consulta.sistemas.cardiovascular) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Cardiovascular:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.sistemas.cardiovascular}</td>
+      </tr>
+      ` : ''}
+      ${consulta.sistemas && hasValue(consulta.sistemas.respiratorio) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Respiratorio:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.sistemas.respiratorio}</td>
+      </tr>
+      ` : ''}
+      ${consulta.sistemas && hasValue(consulta.sistemas.gastrointestinal) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Gastrointestinal:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.sistemas.gastrointestinal}</td>
+      </tr>
+      ` : ''}
+      ${consulta.sistemas && hasValue(consulta.sistemas.neurologico) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Neurológico:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.sistemas.neurologico}</td>
+      </tr>
+      ` : ''}
+      ${consulta.sistemas && hasValue(consulta.sistemas.musculoesqueletico) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Musculoesquelético:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.sistemas.musculoesqueletico}</td>
+      </tr>
+      ` : ''}
+      ${consulta.camposEspecificos ? Object.entries(consulta.camposEspecificos).map(([key, value]) => {
+        if (!hasValue(value)) return '';
+        const label = key
+          .replace(/([A-Z])/g, ' $1')
+          .trim()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        return `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">${label}:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${value}</td>
+      </tr>
+        `;
+      }).join('') : ''}
+    </table>
+  ` : '';
+
+  // Diagnóstico
+  const diagnosticoHTML = hasValue(consulta.diagnosticos) ? `
+    <div class="section-title">DIAGNÓSTICO</div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
+      <tr>
+        <td class="value-cell" style="width: 100%; padding: 4px; border: 1px solid #ddd;"><strong>${consulta.diagnosticos}</strong></td>
+      </tr>
+    </table>
+  ` : '';
+
+  // Plan de tratamiento, fórmula e indicaciones
+  const planHTML = (consulta.planTratamiento || consulta.formulaMedica || consulta.indicaciones) ? `
+    <div class="section-title">PLAN DE TRATAMIENTO</div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
+      ${hasValue(consulta.planTratamiento) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Plan:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.planTratamiento}</td>
+      </tr>
+      ` : ''}
+      ${hasValue(consulta.formulaMedica) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Fórmula Médica:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.formulaMedica}</td>
+      </tr>
+      ` : ''}
+      ${hasValue(consulta.indicaciones) ? `
+      <tr>
+        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Indicaciones:</td>
+        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.indicaciones}</td>
+      </tr>
+      ` : ''}
+    </table>
+  ` : '';
+
+  return `
+    <div class="section-header">
+      ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
+    </div>
+    
+    ${medicoHTML}
+    ${motivoAnamnesisHTML}
+    ${examenFisicoHTML}
+    ${diagnosticoHTML}
+    ${planHTML}
     
     <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
       <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>
@@ -417,11 +632,14 @@ export const generarHistoriaClinicaHTML = (
           margin-bottom: 6px; 
         }
         .section-title { 
-          font-weight: 600; 
-          color: #374151; 
-          border-bottom: 1px solid #e5e7eb; 
-          padding-bottom: 2px; 
-          font-size: 11px; 
+          font-weight: bold; 
+          color: #000; 
+          background-color: #f0f0f0;
+          border: 1px solid #ccc;
+          padding: 4px 6px; 
+          font-size: 10px; 
+          margin-top: 8px;
+          margin-bottom: 5px;
         }
         .field { 
           margin-bottom: 4px; 
@@ -484,6 +702,9 @@ export const generarHistoriaClinicaHTML = (
     <body>
       ${generarEncabezadoHTML(numeroHistoria, config)}
       ${generarInfoPacienteHTML(patient, patientData)}
+
+      <!-- Antecedentes -->
+      ${generarAntecedentesHTML(historiaData)}
 
       <!-- Consultas -->
       ${consultas.map(consulta => generarConsultaHTML(consulta, numeroHistoria, config)).join('\n')}

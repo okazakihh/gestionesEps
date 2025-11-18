@@ -202,11 +202,20 @@ export const historiasClinicasApiService = {
 
   // Get medical history by patient ID
   getHistoriaClinicaByPaciente: async (pacienteId) => {
-    const response = await apiClient.get(`${HISTORIAS_BASE_URL}/paciente/${pacienteId}`);
-    if (!response.success) {
-      throw new Error(response.error || 'Error al obtener historia clínica del paciente');
+    try {
+      const response = await apiClient.get(`${HISTORIAS_BASE_URL}/paciente/${pacienteId}`);
+      if (!response.success) {
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      // Si es 404, el paciente no tiene historia clínica (es normal)
+      if (error.response?.status === 404) {
+        return null;
+      }
+      // Para otros errores, lanzar excepción
+      throw error;
     }
-    return response.data;
   },
 
   // Get medical history by number

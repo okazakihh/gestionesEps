@@ -679,6 +679,7 @@ const PatientDashboard = () => {
             ...appointmentService.getAppointmentInfo(appointmentManagement.currentAppointment),
             ...appointmentService.getAppointmentPatientInfo(appointmentManagement.currentAppointment)
           }}
+          patientData={appointmentManagement.currentAppointment.patientData}
         />
       )}
 

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Stack, Grid } from '@mantine/core';
+import { Stack, Grid, TextInput } from '@mantine/core';
 import DateTimeField from './DateTimeField.jsx';
 import DoctorSelect from './DoctorSelect.jsx';
 import CupsSelect from './CupsSelect.jsx';
-import ReasonTextarea from './ReasonTextarea.jsx';
 import StatusAndDurationFields from './StatusAndDurationFields.jsx';
 import CupsInfoDisplay from './CupsInfoDisplay.jsx';
 import NotesTextarea from './NotesTextarea.jsx';
@@ -30,9 +29,9 @@ const ScheduleAppointmentForm = ({
   return (
     <form onSubmit={onSubmit}>
       <Stack gap="lg">
-        {/* Primera fila: Fecha/Hora, Médico, Código CUPS */}
+        {/* Primera fila: Fecha/Hora, Médico, Licencia, Código CUPS */}
         <Grid gutter="md">
-          <Grid.Col span={{ base: 12, lg: 4 }}>
+          <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
             <DateTimeField
               value={formData.fechaHoraCita}
               onChange={onInputChange}
@@ -41,7 +40,7 @@ const ScheduleAppointmentForm = ({
             />
           </Grid.Col>
 
-          <Grid.Col span={{ base: 12, lg: 4 }}>
+          <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
             <DoctorSelect
               value={formData.medicoAsignado}
               onChange={onInputChange}
@@ -51,7 +50,24 @@ const ScheduleAppointmentForm = ({
             />
           </Grid.Col>
 
-          <Grid.Col span={{ base: 12, lg: 4 }}>
+          <Grid.Col span={{ base: 12, md: 6, lg: 2 }}>
+            <TextInput
+              label="Licencia Médica"
+              value={formData.licenciaMedica || 'N/A'}
+              readOnly
+              disabled
+              size="sm"
+              styles={{
+                input: {
+                  backgroundColor: '#f8f9fa',
+                  cursor: 'not-allowed',
+                  color: '#495057'
+                }
+              }}
+            />
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
             <CupsSelect
               codigosCups={codigosCups}
               value={formData.codigoCups}
@@ -65,14 +81,7 @@ const ScheduleAppointmentForm = ({
         {/* Información del Código CUPS seleccionado */}
         <CupsInfoDisplay selectedCupData={selectedCupData} />
 
-        {/* Segunda fila: Motivo */}
-        <ReasonTextarea
-          value={formData.motivo}
-          onChange={onInputChange}
-          errors={errors}
-        />
-
-        {/* Tercera fila: Estado y Duración */}
+        {/* Segunda fila: Estado, Duración y Notas */}
         <Grid gutter="md">
           <Grid.Col span={{ base: 12, lg: 6 }}>
             <StatusAndDurationFields

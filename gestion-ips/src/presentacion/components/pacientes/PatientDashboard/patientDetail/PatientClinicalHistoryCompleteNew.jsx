@@ -116,9 +116,9 @@ const PatientClinicalHistoryCompleteNew = ({
   // Componente para mostrar información
   const InfoField = ({ label, value, span = 6 }) => (
     <Grid.Col span={span}>
-      <Group gap={4} wrap="nowrap" align="flex-start">
-        <Text size="xs" fw={700} style={{ minWidth: 'fit-content' }}>{label}:</Text>
-        <Text size="xs" style={{ flex: 1 }}>{value || 'No registrado'}</Text>
+      <Group gap={8} wrap="nowrap" align="flex-start" style={{ textAlign: 'left', marginBottom: '8px' }}>
+        <Text size="xs" fw={700} style={{ minWidth: 'fit-content', textAlign: 'left' }}>{label}:</Text>
+        <Text size="xs" style={{ flex: 1, textAlign: 'left' }}>{value || 'No registrado'}</Text>
       </Group>
     </Grid.Col>
   );
@@ -138,6 +138,34 @@ const PatientClinicalHistoryCompleteNew = ({
       </Group>
     </div>
   );
+
+  // Función para verificar si un valor tiene datos registrados
+  const hasValue = (value) => {
+    if (value === null || value === undefined || value === '') return false;
+    if (value === 'No registrado' || value === 'N/A' || value === 'Sin notas') return false;
+    if (value === 'Ninguno' || value === 'ninguno') return false;
+    if (typeof value === 'string' && value.trim() === '') return false;
+    return true;
+  };
+
+  // Función para verificar si un objeto de signos vitales tiene datos
+  const hasSignosVitales = (signos) => {
+    if (!signos) return false;
+    return hasValue(signos.presionArterial) || 
+           hasValue(signos.frecuenciaCardiaca) || 
+           hasValue(signos.frecuenciaRespiratoria) || 
+           hasValue(signos.temperatura) || 
+           hasValue(signos.saturacionO2) || 
+           hasValue(signos.peso) || 
+           hasValue(signos.talla) || 
+           hasValue(signos.imc);
+  };
+
+  // Función para verificar si un objeto de sistemas tiene datos
+  const hasSistemasData = (sistemas) => {
+    if (!sistemas) return false;
+    return Object.values(sistemas).some(value => hasValue(value));
+  };
 
   return (
     <Stack gap={0}>
@@ -307,16 +335,26 @@ const PatientClinicalHistoryCompleteNew = ({
             </Box>
           )}
 
-          {/* Sección 2: Consulta Inicial */}
+          {/* Sección 2: Consulta Inicial - Solo mostrar si hay datos */}
           {parsedData?.consultaInicial && (
             <Box>
               <SectionTitle icon={IconFileText} title="Motivo y Anamnesis" />
               <Grid gutter="xs">
-                <InfoField label="Motivo de Consulta" value={parsedData.consultaInicial.motivoConsulta} span={12} />
-                <InfoField label="Enfermedad Actual" value={parsedData.consultaInicial.enfermedadActual} span={12} />
-                <InfoField label="Tiempo de Evolución" value={parsedData.consultaInicial.tiempoEvolucion} span={6} />
-                <InfoField label="Revisión de Sistemas" value={parsedData.consultaInicial.revisionSistemas} span={12} />
-                <InfoField label="Medicamentos Actuales" value={parsedData.consultaInicial.medicamentosActuales} span={12} />
+                {hasValue(parsedData.consultaInicial.motivoConsulta) && (
+                  <InfoField label="Motivo de Consulta" value={parsedData.consultaInicial.motivoConsulta} span={12} />
+                )}
+                {hasValue(parsedData.consultaInicial.enfermedadActual) && (
+                  <InfoField label="Enfermedad Actual" value={parsedData.consultaInicial.enfermedadActual} span={12} />
+                )}
+                {hasValue(parsedData.consultaInicial.tiempoEvolucion) && (
+                  <InfoField label="Tiempo de Evolución" value={parsedData.consultaInicial.tiempoEvolucion} span={6} />
+                )}
+                {hasValue(parsedData.consultaInicial.revisionSistemas) && (
+                  <InfoField label="Revisión de Sistemas" value={parsedData.consultaInicial.revisionSistemas} span={12} />
+                )}
+                {hasValue(parsedData.consultaInicial.medicamentosActuales) && (
+                  <InfoField label="Medicamentos Actuales" value={parsedData.consultaInicial.medicamentosActuales} span={12} />
+                )}
               </Grid>
             </Box>
           )}
@@ -325,115 +363,135 @@ const PatientClinicalHistoryCompleteNew = ({
           {parsedData?.antecedentes && (
             <Box>
               <SectionTitle icon={IconHeart} title="Antecedentes" />
+              <Grid gutter="xs">
+                {/* Antecedentes Patológicos */}
+                {parsedData.antecedentes.patologicos?.selected?.length > 0 && 
+                 !parsedData.antecedentes.patologicos.selected.includes('ninguno') && (
+                  <InfoField 
+                    label="Antecedentes Patológicos" 
+                    value={`${parsedData.antecedentes.patologicos.selected.join(', ')}${parsedData.antecedentes.patologicos.detalles ? ' - ' + parsedData.antecedentes.patologicos.detalles : ''}`}
+                    span={12} 
+                  />
+                )}
 
-              {/* Antecedentes Patológicos */}
-              {parsedData.antecedentes.patologicos && (
-                <Box mb="xs">
-                  <Text size="xs" fw={700} mb={4} style={{ color: tema.primaryColor }}>Antecedentes Patológicos:</Text>
-                  {parsedData.antecedentes.patologicos.selected?.length > 0 ? (
-                    <Stack gap={2}>
-                      <Text size="xs">{parsedData.antecedentes.patologicos.selected.join(', ')}</Text>
-                      {parsedData.antecedentes.patologicos.detalles && (
-                        <Text size="xs" c="dimmed">{parsedData.antecedentes.patologicos.detalles}</Text>
-                      )}
-                    </Stack>
-                  ) : (
-                    <Text size="xs" c="dimmed">No refiere</Text>
-                  )}
-                </Box>
-              )}
+                {/* Antecedentes Familiares */}
+                {parsedData.antecedentes.familiares?.selected?.length > 0 && 
+                 !parsedData.antecedentes.familiares.selected.includes('ninguno') && (
+                  <InfoField 
+                    label="Antecedentes Familiares" 
+                    value={`${parsedData.antecedentes.familiares.selected.join(', ')}${parsedData.antecedentes.familiares.detalles ? ' - ' + parsedData.antecedentes.familiares.detalles : ''}`}
+                    span={12} 
+                  />
+                )}
 
-              {/* Antecedentes Familiares */}
-              {parsedData.antecedentes.familiares && (
-                <Box mb="xs">
-                  <Text size="xs" fw={700} mb={4} style={{ color: tema.primaryColor }}>Antecedentes Familiares:</Text>
-                  {parsedData.antecedentes.familiares.selected?.length > 0 ? (
-                    <Stack gap={2}>
-                      <Text size="xs">{parsedData.antecedentes.familiares.selected.join(', ')}</Text>
-                      {parsedData.antecedentes.familiares.detalles && (
-                        <Text size="xs" c="dimmed">{parsedData.antecedentes.familiares.detalles}</Text>
-                      )}
-                    </Stack>
-                  ) : (
-                    <Text size="xs" c="dimmed">No refiere</Text>
-                  )}
-                </Box>
-              )}
+                {/* Antecedentes Quirúrgicos */}
+                {hasValue(parsedData.antecedentes.quirurgicos) && (
+                  <InfoField label="Antecedentes Quirúrgicos" value={parsedData.antecedentes.quirurgicos} span={12} />
+                )}
 
-              {/* Otros Antecedentes */}
-              {parsedData.antecedentes.otros && (
-                <Grid gutter="xs" mt="xs">
-                  <InfoField label="Alergias" value={parsedData.antecedentes.otros.alergias} span={6} />
-                  <InfoField label="Cirugías Previas" value={parsedData.antecedentes.otros.cirugias} span={6} />
-                  <InfoField label="Hospitalizaciones" value={parsedData.antecedentes.otros.hospitalizaciones} span={6} />
-                  <InfoField label="Transfusiones" value={parsedData.antecedentes.otros.transfusiones} span={6} />
-                  <InfoField label="Hábitos" value={parsedData.antecedentes.otros.habitos} span={12} />
-                </Grid>
-              )}
+                {/* Antecedentes Alérgicos */}
+                {parsedData.antecedentes.alergicos && !parsedData.antecedentes.alergicos.ninguno && (
+                  <>
+                    {hasValue(parsedData.antecedentes.alergicos.medicamentos) && (
+                      <InfoField label="Alergias - Medicamentos" value={parsedData.antecedentes.alergicos.medicamentos} span={12} />
+                    )}
+                    {hasValue(parsedData.antecedentes.alergicos.alimentos) && (
+                      <InfoField label="Alergias - Alimentos" value={parsedData.antecedentes.alergicos.alimentos} span={12} />
+                    )}
+                    {hasValue(parsedData.antecedentes.alergicos.otros) && (
+                      <InfoField label="Alergias - Otros" value={parsedData.antecedentes.alergicos.otros} span={12} />
+                    )}
+                  </>
+                )}
+
+                {/* Hábitos */}
+                {hasValue(parsedData.antecedentes.habitos?.alcohol) && parsedData.antecedentes.habitos.alcohol !== 'no' && (
+                  <InfoField label="Alcohol" value={parsedData.antecedentes.habitos.alcohol} span={6} />
+                )}
+                {hasValue(parsedData.antecedentes.habitos?.tabaco) && parsedData.antecedentes.habitos.tabaco !== 'no' && (
+                  <InfoField 
+                    label="Tabaco" 
+                    value={`${parsedData.antecedentes.habitos.tabaco}${parsedData.antecedentes.habitos.tabacoCantidad ? ' - ' + parsedData.antecedentes.habitos.tabacoCantidad : ''}`} 
+                    span={6} 
+                  />
+                )}
+                {hasValue(parsedData.antecedentes.habitos?.actividadFisica) && (
+                  <InfoField label="Actividad Física" value={parsedData.antecedentes.habitos.actividadFisica} span={6} />
+                )}
+              </Grid>
             </Box>
           )}
 
           {/* Sección 4: Examen Físico */}
           {parsedData?.examenFisico && (
-            <Stack gap="md">
-              <Title order={5} size="h6" style={{ color: tema.primaryColor }}>
-                <Group gap="xs">
-                  <IconStethoscope size={18} />
-                  Examen Físico
-                </Group>
-              </Title>
+            <Box>
+              <SectionTitle icon={IconStethoscope} title="Examen Físico" />
+              <Grid gutter="xs">
+                {/* Datos Generales */}
+                {hasValue(parsedData.examenFisico.dependenciaMedica) && (
+                  <InfoField label="Dependencia Médica" value={parsedData.examenFisico.dependenciaMedica} span={6} />
+                )}
+                {hasValue(parsedData.examenFisico.estadoGeneral) && (
+                  <InfoField label="Estado General" value={parsedData.examenFisico.estadoGeneral} span={12} />
+                )}
 
-              {/* Signos Vitales */}
-              {parsedData.examenFisico.signosVitales && (
-                <Paper p="md" withBorder>
-                  <SectionTitle icon={IconActivity} title="Signos Vitales" />
-                  <Grid>
-                    <InfoField label="Presión Arterial" value={parsedData.examenFisico.signosVitales.presionArterial} span={3} />
-                    <InfoField label="Frecuencia Cardíaca" value={parsedData.examenFisico.signosVitales.frecuenciaCardiaca} span={3} />
-                    <InfoField label="Frecuencia Respiratoria" value={parsedData.examenFisico.signosVitales.frecuenciaRespiratoria} span={3} />
-                    <InfoField label="Temperatura" value={parsedData.examenFisico.signosVitales.temperatura} span={3} />
-                    <InfoField label="Saturación O2" value={parsedData.examenFisico.signosVitales.saturacionO2} span={3} />
-                    <InfoField label="Peso" value={parsedData.examenFisico.signosVitales.peso} span={3} />
-                    <InfoField label="Talla" value={parsedData.examenFisico.signosVitales.talla} span={3} />
-                    <InfoField label="IMC" value={parsedData.examenFisico.signosVitales.imc} span={3} />
-                  </Grid>
-                </Paper>
-              )}
+                {/* Signos Vitales */}
+                {hasValue(parsedData.examenFisico.signosVitales?.presionArterial) && (
+                  <InfoField label="Presión Arterial" value={parsedData.examenFisico.signosVitales.presionArterial} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.frecuenciaCardiaca) && (
+                  <InfoField label="Frecuencia Cardíaca" value={parsedData.examenFisico.signosVitales.frecuenciaCardiaca} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.frecuenciaRespiratoria) && (
+                  <InfoField label="Frecuencia Respiratoria" value={parsedData.examenFisico.signosVitales.frecuenciaRespiratoria} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.temperatura) && (
+                  <InfoField label="Temperatura" value={parsedData.examenFisico.signosVitales.temperatura} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.saturacionO2) && (
+                  <InfoField label="Saturación O2" value={parsedData.examenFisico.signosVitales.saturacionO2} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.peso) && (
+                  <InfoField label="Peso" value={parsedData.examenFisico.signosVitales.peso} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.talla) && (
+                  <InfoField label="Talla" value={parsedData.examenFisico.signosVitales.talla} span={3} />
+                )}
+                {hasValue(parsedData.examenFisico.signosVitales?.imc) && (
+                  <InfoField label="IMC" value={parsedData.examenFisico.signosVitales.imc} span={3} />
+                )}
 
-              {/* Estado General */}
-              {parsedData.examenFisico.estadoGeneral && (
-                <Paper p="md" withBorder>
-                  <Text size="sm" fw={600} mb="sm">Estado General</Text>
-                  <Grid>
-                    <InfoField label="Descripción" value={parsedData.examenFisico.estadoGeneral.descripcion} span={12} />
-                  </Grid>
-                </Paper>
-              )}
+                {/* Examen por Sistemas */}
+                {hasValue(parsedData.examenFisico.sistemas?.cardiovascular) && (
+                  <InfoField label="Cardiovascular" value={parsedData.examenFisico.sistemas.cardiovascular} span={12} />
+                )}
+                {hasValue(parsedData.examenFisico.sistemas?.respiratorio) && (
+                  <InfoField label="Respiratorio" value={parsedData.examenFisico.sistemas.respiratorio} span={12} />
+                )}
+                {hasValue(parsedData.examenFisico.sistemas?.gastrointestinal) && (
+                  <InfoField label="Gastrointestinal" value={parsedData.examenFisico.sistemas.gastrointestinal} span={12} />
+                )}
+                {hasValue(parsedData.examenFisico.sistemas?.neurologico) && (
+                  <InfoField label="Neurológico" value={parsedData.examenFisico.sistemas.neurologico} span={12} />
+                )}
+                {hasValue(parsedData.examenFisico.sistemas?.musculoesqueletico) && (
+                  <InfoField label="Musculoesquelético" value={parsedData.examenFisico.sistemas.musculoesqueletico} span={12} />
+                )}
 
-              {/* Examen por Sistemas */}
-              {parsedData.examenFisico.sistemas && (
-                <Paper p="md" withBorder>
-                  <Text size="sm" fw={600} mb="sm">Examen por Sistemas</Text>
-                  <Grid>
-                    {parsedData.examenFisico.sistemas.cardiovascular && (
-                      <InfoField label="Cardiovascular" value={parsedData.examenFisico.sistemas.cardiovascular} span={12} />
-                    )}
-                    {parsedData.examenFisico.sistemas.respiratorio && (
-                      <InfoField label="Respiratorio" value={parsedData.examenFisico.sistemas.respiratorio} span={12} />
-                    )}
-                    {parsedData.examenFisico.sistemas.gastrointestinal && (
-                      <InfoField label="Gastrointestinal" value={parsedData.examenFisico.sistemas.gastrointestinal} span={12} />
-                    )}
-                    {parsedData.examenFisico.sistemas.neurologico && (
-                      <InfoField label="Neurológico" value={parsedData.examenFisico.sistemas.neurologico} span={12} />
-                    )}
-                    {parsedData.examenFisico.sistemas.musculoesqueletico && (
-                      <InfoField label="Musculoesquelético" value={parsedData.examenFisico.sistemas.musculoesqueletico} span={12} />
-                    )}
-                  </Grid>
-                </Paper>
-              )}
-            </Stack>
+                {/* Examen Específico */}
+                {parsedData.examenFisico.camposEspecificos && Object.entries(parsedData.examenFisico.camposEspecificos).map(([key, value]) => {
+                  // Formatear el nombre del campo: camelCase -> Título
+                  const label = key
+                    .replace(/([A-Z])/g, ' $1')
+                    .trim()
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+                  
+                  return hasValue(value) && <InfoField key={key} label={label} value={value} span={6} />
+                })}
+              </Grid>
+            </Box>
           )}
 
           {/* Sección 5: Diagnóstico y Plan */}
@@ -571,10 +629,16 @@ const PatientClinicalHistoryCompleteNew = ({
                           <Paper p="sm" withBorder>
                             <SectionTitle icon={IconUser} title="Detalle de la Consulta" />
                             <Grid>
-                              <InfoField label="Médico Tratante" value={parsedConsulta.detalleConsulta.medicoTratante} span={6} />
-                              <InfoField label="Especialidad" value={parsedConsulta.detalleConsulta.especialidad} span={6} />
-                              <InfoField label="Tipo de Consulta" value={parsedConsulta.detalleConsulta.tipoConsulta} span={6} />
-                              {parsedConsulta.detalleConsulta.proximaCita && (
+                              {hasValue(parsedConsulta.detalleConsulta.medicoTratante) && (
+                                <InfoField label="Médico Tratante" value={parsedConsulta.detalleConsulta.medicoTratante} span={6} />
+                              )}
+                              {hasValue(parsedConsulta.detalleConsulta.especialidad) && (
+                                <InfoField label="Especialidad" value={parsedConsulta.detalleConsulta.especialidad} span={6} />
+                              )}
+                              {hasValue(parsedConsulta.detalleConsulta.tipoConsulta) && (
+                                <InfoField label="Tipo de Consulta" value={parsedConsulta.detalleConsulta.tipoConsulta} span={6} />
+                              )}
+                              {hasValue(parsedConsulta.detalleConsulta.proximaCita) && (
                                 <InfoField label="Próxima Cita" value={parsedConsulta.detalleConsulta.proximaCita} span={6} />
                               )}
                             </Grid>
@@ -586,9 +650,13 @@ const PatientClinicalHistoryCompleteNew = ({
                           <Paper p="sm" withBorder>
                             <SectionTitle icon={IconFileText} title="Información de Consulta" />
                             <Grid>
-                              <InfoField label="Motivo de Consulta" value={parsedConsulta.informacionConsulta.motivoConsulta} span={12} />
-                              <InfoField label="Enfermedad Actual" value={parsedConsulta.informacionConsulta.enfermedadActual} span={12} />
-                              {parsedConsulta.informacionConsulta.observaciones && (
+                              {hasValue(parsedConsulta.informacionConsulta.motivoConsulta) && (
+                                <InfoField label="Motivo de Consulta" value={parsedConsulta.informacionConsulta.motivoConsulta} span={12} />
+                              )}
+                              {hasValue(parsedConsulta.informacionConsulta.enfermedadActual) && (
+                                <InfoField label="Enfermedad Actual" value={parsedConsulta.informacionConsulta.enfermedadActual} span={12} />
+                              )}
+                              {hasValue(parsedConsulta.informacionConsulta.observaciones) && (
                                 <InfoField label="Observaciones" value={parsedConsulta.informacionConsulta.observaciones} span={12} />
                               )}
                             </Grid>
@@ -600,33 +668,33 @@ const PatientClinicalHistoryCompleteNew = ({
                           <Paper p="sm" withBorder>
                             <SectionTitle icon={IconStethoscope} title="Examen Físico" />
                             
-                            {/* Signos Vitales */}
-                            {parsedConsulta.examenFisico.signosVitales && (
+                            {/* Signos Vitales - Solo mostrar si hay datos registrados */}
+                            {parsedConsulta.examenFisico.signosVitales && hasSignosVitales(parsedConsulta.examenFisico.signosVitales) && (
                               <>
                                 <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Signos Vitales</Text>
                                 <Grid mb="sm">
-                                  {parsedConsulta.examenFisico.signosVitales.presionArterial && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.presionArterial) && (
                                     <InfoField label="Presión Arterial" value={parsedConsulta.examenFisico.signosVitales.presionArterial} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.frecuenciaCardiaca && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.frecuenciaCardiaca) && (
                                     <InfoField label="FC" value={parsedConsulta.examenFisico.signosVitales.frecuenciaCardiaca} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.frecuenciaRespiratoria && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.frecuenciaRespiratoria) && (
                                     <InfoField label="FR" value={parsedConsulta.examenFisico.signosVitales.frecuenciaRespiratoria} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.temperatura && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.temperatura) && (
                                     <InfoField label="Temperatura" value={parsedConsulta.examenFisico.signosVitales.temperatura} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.peso && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.peso) && (
                                     <InfoField label="Peso" value={parsedConsulta.examenFisico.signosVitales.peso} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.talla && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.talla) && (
                                     <InfoField label="Talla" value={parsedConsulta.examenFisico.signosVitales.talla} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.imc && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.imc) && (
                                     <InfoField label="IMC" value={parsedConsulta.examenFisico.signosVitales.imc} span={3} />
                                   )}
-                                  {parsedConsulta.examenFisico.signosVitales.spo2 && (
+                                  {hasValue(parsedConsulta.examenFisico.signosVitales.spo2) && (
                                     <InfoField label="SpO2" value={parsedConsulta.examenFisico.signosVitales.spo2} span={3} />
                                   )}
                                 </Grid>
@@ -634,13 +702,13 @@ const PatientClinicalHistoryCompleteNew = ({
                             )}
 
                             <Grid>
-                              {parsedConsulta.examenFisico.dependenciaMedica && (
+                              {hasValue(parsedConsulta.examenFisico.dependenciaMedica) && (
                                 <InfoField label="Dependencia Médica" value={parsedConsulta.examenFisico.dependenciaMedica} span={6} />
                               )}
-                              {parsedConsulta.examenFisico.estadoGeneral && (
+                              {hasValue(parsedConsulta.examenFisico.estadoGeneral) && (
                                 <InfoField label="Estado General" value={parsedConsulta.examenFisico.estadoGeneral} span={12} />
                               )}
-                              {parsedConsulta.examenFisico.hallazgos && (
+                              {hasValue(parsedConsulta.examenFisico.hallazgos) && (
                                 <InfoField label="Hallazgos" value={parsedConsulta.examenFisico.hallazgos} span={12} />
                               )}
                             </Grid>
@@ -649,10 +717,18 @@ const PatientClinicalHistoryCompleteNew = ({
                             {parsedConsulta.examenFisico.camposEspecificos && Object.keys(parsedConsulta.examenFisico.camposEspecificos).length > 0 && (
                               <>
                                 <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Examen Específico</Text>
-                                <Grid>
-                                  {Object.entries(parsedConsulta.examenFisico.camposEspecificos).map(([key, value]) => (
-                                    value && <InfoField key={key} label={key.replace(/([A-Z])/g, ' $1').trim()} value={value} span={6} />
-                                  ))}
+                                <Grid gutter="xs">
+                                  {Object.entries(parsedConsulta.examenFisico.camposEspecificos).map(([key, value]) => {
+                                    // Formatear el nombre del campo: camelCase -> Título
+                                    const label = key
+                                      .replace(/([A-Z])/g, ' $1')
+                                      .trim()
+                                      .split(' ')
+                                      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                      .join(' ');
+                                    
+                                    return hasValue(value) && <InfoField key={key} label={label} value={value} span={6} />
+                                  })}
                                 </Grid>
                               </>
                             )}
@@ -680,10 +756,10 @@ const PatientClinicalHistoryCompleteNew = ({
                             )}
 
                             <Grid>
-                              {parsedConsulta.diagnosticoTratamiento.planTratamiento && (
+                              {hasValue(parsedConsulta.diagnosticoTratamiento.planTratamiento) && (
                                 <InfoField label="Plan de Tratamiento" value={parsedConsulta.diagnosticoTratamiento.planTratamiento} span={12} />
                               )}
-                              {parsedConsulta.diagnosticoTratamiento.procedimientos && (
+                              {hasValue(parsedConsulta.diagnosticoTratamiento.procedimientos) && (
                                 <InfoField label="Procedimientos" value={parsedConsulta.diagnosticoTratamiento.procedimientos} span={12} />
                               )}
                             </Grid>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { TextInput } from '@mantine/core';
-import { IconCalendar } from '@tabler/icons-react';
 
 const DateTimeField = ({ value, onChange, min, errors }) => {
   return (
@@ -10,7 +9,6 @@ const DateTimeField = ({ value, onChange, min, errors }) => {
       value={value}
       onChange={(e) => onChange('fechaHoraCita', e.target.value)}
       min={min}
-      leftSection={<IconCalendar size={16} />}
       error={errors.fechaHoraCita}
       required
       withAsterisk

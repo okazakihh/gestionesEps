@@ -42,10 +42,19 @@ export const parsePatientData = (patient) => {
  * @returns {string} Edad en años o 'N/A'
  */
 export const calculateAge = (birthDate) => {
-  if (!birthDate) return 'N/A';
+  if (!birthDate) {
+    return 'N/A';
+  }
+  
   try {
     const today = new Date();
     const birth = new Date(birthDate);
+    
+    // Validar que la fecha de nacimiento sea válida
+    if (isNaN(birth.getTime())) {
+      return 'N/A';
+    }
+    
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
 
@@ -55,6 +64,7 @@ export const calculateAge = (birthDate) => {
 
     return `${age} años`;
   } catch (error) {
+    console.error('❌ Error calculando edad:', error);
     return 'N/A';
   }
 };

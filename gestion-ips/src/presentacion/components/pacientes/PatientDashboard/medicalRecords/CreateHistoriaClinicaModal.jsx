@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Tabs, Paper, Text, Box, Group, Stack, ScrollArea, Grid } from '@mantine/core';
 import { IconUser, IconFileText, IconHeart, IconStethoscope, IconClipboard, IconSignature, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService, pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
+import { useAuth } from '../../../../../data/context/AuthContext.jsx';
+import { useIpsConfig } from '../../../../../negocio/hooks/configuracion/useIpsConfig.js';
+import { calculateAge } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 
 // Importar tabs
 import DatosProcedimientoTab from './tabs/DatosProcedimientoTab.jsx';
@@ -15,6 +18,8 @@ import FirmaDigitalTab from './tabs/FirmaDigitalTab.jsx';
 
 const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacienteId, citaId, citaData, patientData }) => {
   const { tema } = useTheme();
+  const { user } = useAuth();
+  const { ipsConfig } = useIpsConfig();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('datos');
@@ -29,19 +34,46 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     }
     
     // Si tiene datosJson como string, parsearlo
-    if (patientData.datosJson && typeof patientData.datosJson === 'string') {
+    if (patientData.datosJson) {
       try {
-        const datosJson = JSON.parse(patientData.datosJson);
-        const informacionPersonal = datosJson.informacionPersonalJson 
-          ? JSON.parse(datosJson.informacionPersonalJson) 
-          : null;
+        const firstLevel = typeof patientData.datosJson === 'string' 
+          ? JSON.parse(patientData.datosJson) 
+          : patientData.datosJson;
         
-        return {
-          ...patientData,
-          informacionPersonal
-        };
+        // Try nested format first (existing patients)
+        if (firstLevel.datosJson) {
+          const secondLevel = typeof firstLevel.datosJson === 'string' 
+            ? JSON.parse(firstLevel.datosJson) 
+            : firstLevel.datosJson;
+          
+          return {
+            ...patientData,
+            informacionPersonal: secondLevel.informacionPersonal || {},
+            informacionContacto: secondLevel.informacionContacto || {},
+            numeroDocumento: patientData.numeroDocumento,
+            tipoDocumento: patientData.tipoDocumento
+          };
+        }
+        
+        // Try flat format (newly created patients)
+        if (firstLevel.informacionPersonalJson || firstLevel.informacionContactoJson) {
+          const informacionPersonal = firstLevel.informacionPersonalJson 
+            ? JSON.parse(firstLevel.informacionPersonalJson) 
+            : {};
+          const informacionContacto = firstLevel.informacionContactoJson 
+            ? JSON.parse(firstLevel.informacionContactoJson) 
+            : {};
+          
+          return {
+            ...patientData,
+            informacionPersonal,
+            informacionContacto,
+            numeroDocumento: patientData.numeroDocumento,
+            tipoDocumento: patientData.tipoDocumento
+          };
+        }
       } catch (e) {
-        console.error('Error parsing patient data:', e);
+        console.error('❌ Error parsing patient data:', e);
         return patientData;
       }
     }
@@ -59,7 +91,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       medicoResponsable: citaData?.medicoAsignado || '',
       registroMedico: '',
       especialidad: citaData?.especialidad || '',
-      entidadPrestadora: 'INTEGRA SALUD SAS',
+      entidadPrestadora: ipsConfig?.nombre || 'IPS',
       ambito: 'ambulatorio',
       finalidad: 'diagnostico'
     },
@@ -139,7 +171,44 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     activa: true
   });
 
-  const handleSubmit = async (e) => {
+  // Actualizar entidad prestadora cuando se cargue la configuración
+  useEffect(() => {
+    if (ipsConfig?.nombre) {
+      setFormData(prev => ({
+        ...prev,
+        procedimiento: {
+          ...prev.procedimiento,
+          entidadPrestadora: ipsConfig.nombre
+        }
+      }));
+    }
+  }, [ipsConfig]);
+
+  // Cargar datos del médico desde citaData (ya incluye licencia)
+  useEffect(() => {
+    if (isOpen && citaData) {
+      const medicoAsignado = citaData.medicoAsignado || '';
+      const nombreMedico = medicoAsignado.split(' - ')[0] || '';
+      const licenciaMedica = citaData.licenciaMedica || '';
+      const especialidad = citaData.especialidad || '';
+      
+      // Actualizar formData con la información del médico de la cita
+      setFormData(prev => ({
+        ...prev,
+        procedimiento: {
+          ...prev.procedimiento,
+          medicoResponsable: nombreMedico,
+          registroMedico: licenciaMedica,
+          especialidad: especialidad
+        },
+        firmaDigital: {
+          ...prev.firmaDigital,
+          nombreMedico: nombreMedico,
+          especialidad: especialidad
+        }
+      }));
+    }
+  }, [isOpen, citaData]);  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validaciones básicas
@@ -158,7 +227,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       Swal.fire({
         icon: 'warning',
         title: 'Campos Requeridos',
-        text: 'Complete los datos del médico responsable',
+        text: 'Complete el médico responsable y la licencia médica',
         confirmButtonColor: '#EF4444'
       });
       setActiveTab('datos');
@@ -263,16 +332,22 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
               <Grid.Col span={6}>
                 <Text size="xs" c="dimmed" fw={500}>Paciente</Text>
                 <Text size="sm" fw={600}>
-                  {parsedPatientData?.informacionPersonal?.primerNombre || citaData?.nombre || 'N/A'} {parsedPatientData?.informacionPersonal?.primerApellido || ''}
+                  {parsedPatientData?.informacionPersonal 
+                    ? `${parsedPatientData.informacionPersonal.primerNombre || ''} ${parsedPatientData.informacionPersonal.segundoNombre || ''} ${parsedPatientData.informacionPersonal.primerApellido || ''} ${parsedPatientData.informacionPersonal.segundoApellido || ''}`.trim()
+                    : citaData?.nombre || 'N/A'}
                 </Text>
               </Grid.Col>
               <Grid.Col span={3}>
                 <Text size="xs" c="dimmed" fw={500}>Documento</Text>
-                <Text size="sm" fw={600}>{parsedPatientData?.numeroDocumento || citaData?.documento || 'N/A'}</Text>
+                <Text size="sm" fw={600}>
+                  {parsedPatientData?.tipoDocumento && parsedPatientData?.numeroDocumento
+                    ? `${parsedPatientData.tipoDocumento} ${parsedPatientData.numeroDocumento}`
+                    : citaData?.documento || 'N/A'}
+                </Text>
               </Grid.Col>
               <Grid.Col span={3}>
                 <Text size="xs" c="dimmed" fw={500}>Edad</Text>
-                <Text size="sm" fw={600}>{parsedPatientData?.informacionPersonal?.edad || 'N/A'} años</Text>
+                <Text size="sm" fw={600}>{calculateAge(parsedPatientData?.informacionPersonal?.fechaNacimiento)}</Text>
               </Grid.Col>
             </Grid>
           </Paper>

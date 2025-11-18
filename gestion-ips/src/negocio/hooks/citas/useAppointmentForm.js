@@ -7,9 +7,9 @@ import { useState, useEffect } from 'react';
 export const useAppointmentForm = (selectedSlot, selectedDoctor, medicos, getNombreCompletoMedico) => {
   const [formData, setFormData] = useState({
     fechaHoraCita: '',
-    motivo: '',
     medicoAsignado: '',
     medicoId: '',
+    licenciaMedica: '',
     estado: 'PROGRAMADA',
     notas: '',
     codigoCups: '',
@@ -58,10 +58,24 @@ export const useAppointmentForm = (selectedSlot, selectedDoctor, medicos, getNom
 
     const selectedMedico = medicos.find(medico => getNombreCompletoMedico(medico) === doctorName);
     if (selectedMedico) {
+      // Extraer licencia médica del médico seleccionado
+      let licenciaMedica = '';
+      try {
+        const datosCompletos = JSON.parse(selectedMedico.jsonData || '{}');
+        if (datosCompletos.jsonData) {
+          const datosInternos = JSON.parse(datosCompletos.jsonData);
+          const informacionLaboral = datosInternos.informacionLaboral || {};
+          licenciaMedica = informacionLaboral.numeroLicencia || informacionLaboral.licenciaProfesional || '';
+        }
+      } catch (error) {
+        console.error('Error extrayendo licencia médica:', error);
+      }
+
       setFormData(prev => ({
         ...prev,
         medicoAsignado: doctorName,
-        medicoId: selectedMedico.id
+        medicoId: selectedMedico.id,
+        licenciaMedica: licenciaMedica
       }));
       return; // Exit early to avoid the default setFormData
     }
@@ -97,10 +111,24 @@ export const useAppointmentForm = (selectedSlot, selectedDoctor, medicos, getNom
       // Find the doctor to get the ID
       const doctor = medicos.find(m => getNombreCompletoMedico(m) === selectedDoctor);
       if (doctor) {
+        // Extraer licencia médica del médico seleccionado
+        let licenciaMedica = '';
+        try {
+          const datosCompletos = JSON.parse(doctor.jsonData || '{}');
+          if (datosCompletos.jsonData) {
+            const datosInternos = JSON.parse(datosCompletos.jsonData);
+            const informacionLaboral = datosInternos.informacionLaboral || {};
+            licenciaMedica = informacionLaboral.numeroLicencia || informacionLaboral.licenciaProfesional || '';
+          }
+        } catch (error) {
+          console.error('Error extrayendo licencia médica:', error);
+        }
+
         setFormData(prev => ({
           ...prev,
           medicoAsignado: selectedDoctor,
-          medicoId: doctor.id
+          medicoId: doctor.id,
+          licenciaMedica: licenciaMedica
         }));
       }
     }
@@ -110,9 +138,9 @@ export const useAppointmentForm = (selectedSlot, selectedDoctor, medicos, getNom
   const resetForm = () => {
     setFormData({
       fechaHoraCita: '',
-      motivo: '',
       medicoAsignado: '',
       medicoId: '',
+      licenciaMedica: '',
       estado: 'PROGRAMADA',
       notas: '',
       codigoCups: '',

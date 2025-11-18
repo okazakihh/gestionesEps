@@ -585,6 +585,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
             ...parseCitaInfo(currentCita),
             ...parsePacienteInfo(currentCita, patientData, loadingPatients)
           }}
+          patientData={patientData[currentCita.pacienteId]}
         />
       )}
 
