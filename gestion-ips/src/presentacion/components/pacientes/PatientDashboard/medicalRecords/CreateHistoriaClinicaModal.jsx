@@ -157,6 +157,16 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
         tipo: '',
         fechaProxima: ''
       }
+      ,
+      // Incapacidad
+      incapacidad: {
+        aplica: false,
+        tipo: '',
+        fechaInicio: '',
+        fechaFin: '',
+        dias: '',
+        motivo: ''
+      }
     },
     
     // Firma digital
@@ -319,9 +329,13 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       }
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
       styles={{
         content: { maxHeight: '90vh' },
-        body: { padding: 0 }
+        body: { padding: 0 },
+        header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
+        title: { color: 'white !important' },
+        close: { color: 'white !important' }
       }}
     >
       <form onSubmit={handleSubmit}>

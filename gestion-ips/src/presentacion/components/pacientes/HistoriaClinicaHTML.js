@@ -125,14 +125,14 @@ const formatSignosVitales = (signosVitales) => {
  * @param {Object} config - Configuración de la IPS
  * @returns {string} HTML del encabezado
  */
-const generarEncabezadoHTML = (numeroHistoria, config) => {
+const generarEncabezadoHTML = (numeroHistoria, config, titulo = 'HISTORIA CLÍNICA') => {
   const fechaHoraActual = `${new Date().toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' })} ${new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
   
   return `
     <table class="header-table" style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
       <tr>
         <td style="width: 20%; text-align: center; padding: 8px; border: 1px solid #000;">
-          ${config.logo ? `<img src="${config.logo}" alt="Logo" style="max-width: 80px; max-height: 60px;">` : '<div style="font-size: 10px; color: #666;">LOGO IPS</div>'}
+          ${config.logo ? `<img src="${config.logo}" alt="Logo" style="max-width: 80px; max-height: 60px;">` : `<div style="font-size: 11px; color: #111; font-weight:700;">${config.nombre || 'IPS'}</div>`}
         </td>
         <td style="width: 60%; text-align: center; padding: 8px; border: 1px solid #000; border-left: none;">
           <strong style="font-size: 11px; display: block;">${config.nombre || 'IPS'}</strong>
@@ -140,7 +140,7 @@ const generarEncabezadoHTML = (numeroHistoria, config) => {
           <div style="font-size: 9px;">${config.direccion || 'N/A'}</div>
         </td>
         <td style="width: 20%; padding: 4px; border: 1px solid #000; border-left: none; font-size: 8px;">
-          <strong>Tipo Doc:</strong> HC<br>
+          <strong>Documento:</strong> HC<br>
           <strong># Doc:</strong> ${numeroHistoria}<br>
           <strong>Fecha:</strong> ${fechaHoraActual}
         </td>
@@ -148,7 +148,7 @@ const generarEncabezadoHTML = (numeroHistoria, config) => {
     </table>
     
     <div style="text-align: center; background-color: #000; color: white; padding: 4px; font-size: 12px; font-weight: bold; margin-bottom: 5px;">
-      HISTORIA CLÍNICA
+      ${titulo}
     </div>
   `;
 };
@@ -160,18 +160,164 @@ const generarEncabezadoHTML = (numeroHistoria, config) => {
  */
 const generarPieHTML = (config) => {
   const fechaHoraActual = new Date().toLocaleString('es-CO');
-  
+  const direccion = config?.direccion || '';
+  const ciudad = config?.ciudad ? `, ${config.ciudad}` : '';
+  const telefono = config?.telefono || '';
+  const email = config?.email || '';
+  const sitioWeb = config?.sitioWeb || '';
+  const horario = config?.horarioAtencion || '';
+  const habilitacion = config?.codigoHabilitacion || '';
+
   return `
-    <div class="footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000; text-align: center;">
-      <p style="margin: 0; font-size: 8px; color: #666;">
-        Fecha Impresión: ${fechaHoraActual}
-      </p>
-      <p style="margin: 5px 0 0 0; font-size: 8px; color: #666;">
-        Página 1 de 1
-      </p>
+    <div class="footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #000; font-size: 9px; color: #6b7280;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div style="flex:1; text-align:left;">
+          <strong>${config?.nombre || ''}</strong><br/>
+          ${direccion}${ciudad}<br/>
+          ${habilitacion ? `<span>Habilitación: ${habilitacion}</span><br/>` : ''}
+        </div>
+        <div style="flex:1; text-align:center;">
+          <div>Fecha Impresión: ${fechaHoraActual}</div>
+          <div style="margin-top:4px;">Página 1 de 1</div>
+        </div>
+        <div style="flex:1; text-align:right;">
+          ${telefono ? `<div>Tel: ${telefono}</div>` : ''}
+          ${email ? `<div>Email: ${email}</div>` : ''}
+          ${sitioWeb ? `<div>${sitioWeb}</div>` : ''}
+          ${horario ? `<div style="margin-top:4px;">Horario: ${horario}</div>` : ''}
+        </div>
+      </div>
     </div>
   `;
 };
+
+// Estilos CSS compartidos para impresión
+const styles = `
+    <style>
+      @media print {
+        body { 
+          font-family: Arial, sans-serif; 
+          margin: 0; 
+          padding: 8px; 
+          font-size: 9px; 
+          line-height: 1.3; 
+          color: #111827;
+        }
+        .header { 
+          border-bottom: 2px solid #2563eb; 
+          padding-bottom: 8px; 
+          margin-bottom: 12px; 
+          text-align: center; 
+        }
+        .institution-info { 
+          background: #f0f9ff; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 10px; 
+        }
+        .patient-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 10px;
+        }
+        .patient-table td {
+          border: 1px solid #000;
+          padding: 3px 5px;
+          font-size: 9px;
+        }
+        .label-cell {
+          background-color: #f0f0f0;
+          font-weight: bold;
+          width: 15%;
+          text-align: left;
+        }
+        .value-cell {
+          background-color: white;
+          text-align: left;
+          width: 18%;
+        }
+        .section-header {
+          background-color: #e0e0e0;
+          padding: 4px 6px;
+          font-weight: bold;
+          font-size: 10px;
+          border: 1px solid #000;
+          margin-top: 10px;
+          margin-bottom: 5px;
+        }
+        .consulta { 
+          border: 1px solid #000; 
+          padding: 6px; 
+          margin-bottom: 10px; 
+          page-break-inside: avoid; 
+        }
+        .consulta-header { 
+          background: #f3f4f6; 
+          padding: 6px; 
+          margin: -8px -8px 8px -8px; 
+          border-radius: 4px 4px 0 0; 
+          border-bottom: 1px solid #d1d5db; 
+        }
+        .section { 
+          margin-bottom: 6px; 
+        }
+        .section-title { 
+          font-weight: bold; 
+          color: #000; 
+          background-color: #f0f0f0;
+          border: 1px solid #ccc;
+          padding: 4px 6px; 
+          font-size: 10px; 
+          margin-top: 8px;
+          margin-bottom: 5px;
+        }
+        .field { 
+          margin-bottom: 4px; 
+        }
+        .field-label { 
+          font-weight: 600; 
+          display: inline-block; 
+          min-width: 100px; 
+          color: #6b7280; 
+        }
+        .footer { 
+          margin-top: 20px; 
+          padding-top: 10px; 
+          border-top: 1px solid #e5e7eb; 
+          font-size: 9px; 
+          color: #6b7280; 
+        }
+        .consent-section { 
+          background: #ecfdf5; 
+          padding: 8px; 
+          border-radius: 4px; 
+          margin-bottom: 10px; 
+          border: 1px solid #d1fae5; 
+        }
+        .grid-2 { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 6px; 
+        }
+        .grid-3 { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr 1fr; 
+          gap: 6px; 
+        }
+        .important-note { 
+          background: #fee2e2; 
+          border: 1px solid #fecaca; 
+          padding: 6px; 
+          border-radius: 3px; 
+          margin: 4px 0; 
+        }
+        @page { 
+          margin: 1cm; 
+          size: A4; 
+        }
+      }
+    </style>
+  `;
 
 /**
  * Genera información del paciente
@@ -521,6 +667,33 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
   `;
   }
 
+    // Incapacidad
+    const incapacidadHTML = hasValue(consulta.incapacidad) ? `
+      <div class="section-title">INCAPACIDAD</div>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
+        <tr>
+          <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Tipo:</td>
+          <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.incapacidad.tipo || ''}</td>
+        </tr>
+        <tr>
+          <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Fecha Inicio:</td>
+          <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.incapacidad.fechaInicio || ''}</td>
+        </tr>
+        <tr>
+          <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Fecha Fin:</td>
+          <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.incapacidad.fechaFin || ''}</td>
+        </tr>
+        <tr>
+          <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Días:</td>
+          <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.incapacidad.dias || ''}</td>
+        </tr>
+        <tr>
+          <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Motivo:</td>
+          <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.incapacidad.motivo || ''}</td>
+        </tr>
+      </table>
+    ` : '';
+
   return `
     <div class="section-header">
       ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
@@ -530,11 +703,135 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
     ${motivoAnamnesisHTML}
     ${examenFisicoHTML}
     ${diagnosticoHTML}
+    ${incapacidadHTML}
     
     <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
       <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>
     </div>
   `;
+};
+
+/**
+ * Genera HTML específico para una incapacidad (documento independiente)
+ * @param {Object} consulta - Objeto procesado de consulta (con campo incapacidad)
+ * @param {Object} historiaClinica - Historia clínica asociada (opcional)
+ * @param {Object} patient - Datos del paciente
+ * @param {Object} patientData - Datos parseados del paciente
+ * @param {Object} config - Configuración IPS
+ * @returns {string} HTML completo listo para imprimir
+ */
+export const generarIncapacidadHTML = (consulta = {}, historiaClinica = {}, patient = {}, patientData = {}, config = ipsConfig) => {
+  const numeroHistoria = historiaClinica.numeroHistoria || 'N/A';
+  const incap = consulta.incapacidad || {};
+
+  const incapacidadSection = (incap && (incap.aplica || incap.tipo || incap.fechaInicio)) ? `
+    <div class="section-title">INCAPACIDAD</div>
+    <table style="width:100%; border-collapse: collapse; margin-bottom:10px; font-size:9px; border:1px solid #ddd;">
+      <tr>
+        <td class="label-cell" style="width:25%; padding:4px; border:1px solid #ddd;">Tipo:</td>
+        <td class="value-cell" style="width:75%; padding:4px; border:1px solid #ddd;">${incap.tipo || ''}</td>
+      </tr>
+      <tr>
+        <td class="label-cell" style="width:25%; padding:4px; border:1px solid #ddd;">Fecha Inicio:</td>
+        <td class="value-cell" style="width:75%; padding:4px; border:1px solid #ddd;">${incap.fechaInicio || ''}</td>
+      </tr>
+      <tr>
+        <td class="label-cell" style="width:25%; padding:4px; border:1px solid #ddd;">Fecha Fin:</td>
+        <td class="value-cell" style="width:75%; padding:4px; border:1px solid #ddd;">${incap.fechaFin || ''}</td>
+      </tr>
+      <tr>
+        <td class="label-cell" style="width:25%; padding:4px; border:1px solid #ddd;">Días:</td>
+        <td class="value-cell" style="width:75%; padding:4px; border:1px solid #ddd;">${incap.dias || ''}</td>
+      </tr>
+      <tr>
+        <td class="label-cell" style="width:25%; padding:4px; border:1px solid #ddd;">Motivo:</td>
+        <td class="value-cell" style="width:75%; padding:4px; border:1px solid #ddd;">${incap.motivo || ''}</td>
+      </tr>
+    </table>
+  ` : '';
+
+  const html = `
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Incapacidad - ${numeroHistoria}</title>
+      ${styles}
+    </head>
+    <body>
+      ${generarEncabezadoHTML(numeroHistoria, config, 'INCAPACIDAD')}
+      ${generarInfoPacienteHTML(patient, patientData)}
+      ${incapacidadSection}
+      ${generarPieHTML(config)}
+      <script>window.onload = function(){ window.print(); };</script>
+    </body>
+    </html>
+  `;
+
+  return html;
+};
+
+/**
+ * Genera HTML específico para el Plan de Tratamiento (documento independiente)
+ * @param {Object} consulta - Objeto procesado de consulta (con campos diagnosticos, planTratamiento, medicamentos)
+ * @param {Object} historiaClinica - Historia clínica asociada (opcional)
+ * @param {Object} patient - Datos del paciente
+ * @param {Object} patientData - Datos parseados del paciente
+ * @param {Object} config - Configuración IPS
+ * @returns {string} HTML completo listo para imprimir
+ */
+export const generarTratamientoHTML = (consulta = {}, historiaClinica = {}, patient = {}, patientData = {}, config = ipsConfig) => {
+  const numeroHistoria = historiaClinica.numeroHistoria || 'N/A';
+
+  // Diagnósticos
+  let diagnosticosHTML = '';
+  const diagnosticos = consulta.diagnosticos;
+  if (Array.isArray(diagnosticos)) {
+    diagnosticosHTML = diagnosticos.map(dx => `<tr><td class="value-cell" style="padding:4px;border:1px solid #ddd;"><strong>${dx.codigo || ''}</strong> ${dx.descripcion || dx.nombre || ''}</td></tr>`).join('');
+  } else if (typeof diagnosticos === 'string') {
+    diagnosticosHTML = `<tr><td class="value-cell" style="padding:4px;border:1px solid #ddd;">${diagnosticos}</td></tr>`;
+  }
+
+  const planHTML = hasValue(consulta.planTratamiento) ? `
+    <div class="section-title">PLAN DE TRATAMIENTO</div>
+    <table style="width:100%; border-collapse: collapse; margin-bottom:10px; font-size:9px; border:1px solid #ddd;">
+      <tr>
+        <td class="value-cell" style="padding:4px; border:1px solid #ddd;">${consulta.planTratamiento}</td>
+      </tr>
+    </table>
+  ` : '';
+
+  const medicamentos = consulta.formulaMedica || consulta.medicamentos || [];
+  let medicamentosHTML = '';
+  if (Array.isArray(medicamentos) && medicamentos.length > 0) {
+    medicamentosHTML = medicamentos.map(m => `<tr><td class="value-cell" style="padding:4px;border:1px solid #ddd;">${m.medicamento || m.nombre || ''} ${m.dosis ? '- ' + m.dosis : ''} ${m.duracion ? '(' + m.duracion + ')' : ''}</td></tr>`).join('');
+  }
+
+  const html = `
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Plan de Tratamiento - ${numeroHistoria}</title>
+      ${styles}
+    </head>
+    <body>
+      ${generarEncabezadoHTML(numeroHistoria, config, 'PLAN DE TRATAMIENTO')}
+      ${generarInfoPacienteHTML(patient, patientData)}
+
+      ${diagnosticosHTML ? `<div class="section-title">DIAGNÓSTICOS</div><table style="width:100%; border-collapse: collapse;">${diagnosticosHTML}</table>` : ''}
+      ${planHTML}
+      ${medicamentosHTML ? `<div class="section-title">MEDICAMENTOS</div><table style="width:100%; border-collapse: collapse;">${medicamentosHTML}</table>` : ''}
+
+      ${generarPieHTML(config)}
+      <script>window.onload = function(){ window.print(); };</script>
+    </body>
+    </html>
+  `;
+
+  return html;
 };
 
 /**
@@ -557,133 +854,7 @@ export const generarHistoriaClinicaHTML = (
 ) => {
   const numeroHistoria = historiaClinica.numeroHistoria || 'N/A';
 
-  // Estilos CSS para impresión en formato tabla
-  const styles = `
-    <style>
-      @media print {
-        body { 
-          font-family: Arial, sans-serif; 
-          margin: 0; 
-          padding: 8px; 
-          font-size: 9px; 
-          line-height: 1.3; 
-          color: #111827;
-        }
-        .header { 
-          border-bottom: 2px solid #2563eb; 
-          padding-bottom: 8px; 
-          margin-bottom: 12px; 
-          text-align: center; 
-        }
-        .institution-info { 
-          background: #f0f9ff; 
-          padding: 8px; 
-          border-radius: 4px; 
-          margin-bottom: 10px; 
-        }
-        .patient-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 10px;
-        }
-        .patient-table td {
-          border: 1px solid #000;
-          padding: 3px 5px;
-          font-size: 9px;
-        }
-        .label-cell {
-          background-color: #f0f0f0;
-          font-weight: bold;
-          width: 15%;
-          text-align: left;
-        }
-        .value-cell {
-          background-color: white;
-          text-align: left;
-          width: 18%;
-        }
-        .section-header {
-          background-color: #e0e0e0;
-          padding: 4px 6px;
-          font-weight: bold;
-          font-size: 10px;
-          border: 1px solid #000;
-          margin-top: 10px;
-          margin-bottom: 5px;
-        }
-        .consulta { 
-          border: 1px solid #000; 
-          padding: 6px; 
-          margin-bottom: 10px; 
-          page-break-inside: avoid; 
-        }
-        .consulta-header { 
-          background: #f3f4f6; 
-          padding: 6px; 
-          margin: -8px -8px 8px -8px; 
-          border-radius: 4px 4px 0 0; 
-          border-bottom: 1px solid #d1d5db; 
-        }
-        .section { 
-          margin-bottom: 6px; 
-        }
-        .section-title { 
-          font-weight: bold; 
-          color: #000; 
-          background-color: #f0f0f0;
-          border: 1px solid #ccc;
-          padding: 4px 6px; 
-          font-size: 10px; 
-          margin-top: 8px;
-          margin-bottom: 5px;
-        }
-        .field { 
-          margin-bottom: 4px; 
-        }
-        .field-label { 
-          font-weight: 600; 
-          display: inline-block; 
-          min-width: 100px; 
-          color: #6b7280; 
-        }
-        .footer { 
-          margin-top: 20px; 
-          padding-top: 10px; 
-          border-top: 1px solid #e5e7eb; 
-          font-size: 9px; 
-          color: #6b7280; 
-        }
-        .consent-section { 
-          background: #ecfdf5; 
-          padding: 8px; 
-          border-radius: 4px; 
-          margin-bottom: 10px; 
-          border: 1px solid #d1fae5; 
-        }
-        .grid-2 { 
-          display: grid; 
-          grid-template-columns: 1fr 1fr; 
-          gap: 6px; 
-        }
-        .grid-3 { 
-          display: grid; 
-          grid-template-columns: 1fr 1fr 1fr; 
-          gap: 6px; 
-        }
-        .important-note { 
-          background: #fee2e2; 
-          border: 1px solid #fecaca; 
-          padding: 6px; 
-          border-radius: 3px; 
-          margin: 4px 0; 
-        }
-        @page { 
-          margin: 1cm; 
-          size: A4; 
-        }
-      }
-    </style>
-  `;
+
 
   // Construir HTML completo
   const html = `

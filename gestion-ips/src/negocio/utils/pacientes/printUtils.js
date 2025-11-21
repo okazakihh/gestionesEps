@@ -1,7 +1,7 @@
 // Utilidades para impresión de historias clínicas y consultas
 
 // Importar módulo de generación HTML
-import { generarHistoriaClinicaHTML } from '../../../presentacion/components/pacientes/HistoriaClinicaHTML.js';
+import { generarHistoriaClinicaHTML, generarIncapacidadHTML, generarTratamientoHTML } from '../../../presentacion/components/pacientes/HistoriaClinicaHTML.js';
 
 // Importar servicio de configuración
 import { getIpsConfig } from '../../../data/services/configuracionApiService.js';
@@ -47,8 +47,8 @@ export const printHistoriaClinica = async (consultas, historiaClinica, patient, 
     dependenciaMedica: (historiaData && historiaData.examenFisico?.dependenciaMedica) || null,
     sistemas: (historiaData && historiaData.examenFisico?.sistemas) || null,
     camposEspecificos: (historiaData && historiaData.examenFisico?.camposEspecificos) || null,
-    formulaMedica: (historiaData && historiaData.diagnostico?.medicamentos) || 'N/A',
-    incapacidad: null,
+    formulaMedica: (historiaData && historiaData.diagnostico?.medicamentos) || (historiaData && historiaData.diagnosticoPlan?.medicamentos) || 'N/A',
+    incapacidad: (historiaData && historiaData.diagnosticoPlan?.incapacidad) || null,
     indicaciones: (historiaData && historiaData.diagnostico?.plan?.recomendaciones) || 'N/A',
     proximaCita: 'N/A',
     observaciones: (historiaData && historiaData.consultaInicial?.observaciones) || (historiaData && historiaData.informacionConsulta?.observaciones) || 'N/A'
@@ -169,6 +169,61 @@ export const printConsulta = async (consulta, historiaClinica, patient, patientD
 
   // Imprimir documento
   printDocument(htmlContent);
+};
+
+/**
+ * Imprime incapacidad específica de una consulta o historia
+ */
+export const printIncapacidad = async (consulta, historiaClinica, patient, patientData) => {
+  const ipsData = await getIpsConfig();
+  try {
+    // Si es una consulta existente con datosJson
+    let consultaData = {};
+    if (consulta.datosJson) {
+      consultaData = typeof consulta.datosJson === 'string' ? JSON.parse(consulta.datosJson) : consulta.datosJson;
+    } else if (consulta.incapacidad || consulta.diagnosticos) {
+      consultaData = consulta;
+    }
+
+    const processed = {
+      ...consulta,
+      // asegurarse que campos estén en raíz
+      incapacidad: consultaData.incapacidad || consulta.incapacidad || null
+    };
+
+    const html = generarIncapacidadHTML(processed, historiaClinica, patient, patientData, ipsData);
+    printDocument(html);
+  } catch (e) {
+    console.error('Error printing incapacidad:', e);
+  }
+};
+
+/**
+ * Imprime plan de tratamiento independiente
+ */
+export const printTratamiento = async (consulta, historiaClinica, patient, patientData) => {
+  const ipsData = await getIpsConfig();
+  try {
+    let consultaData = {};
+    if (consulta.datosJson) {
+      consultaData = typeof consulta.datosJson === 'string' ? JSON.parse(consulta.datosJson) : consulta.datosJson;
+    } else {
+      consultaData = consulta;
+    }
+
+    const processed = {
+      ...consulta,
+      diagnosticos: consultaData.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticos || consulta.diagnosticos || null,
+      planTratamiento: consultaData.planTratamiento || consultaData.diagnosticoTratamiento?.planTratamiento || consulta.planTratamiento || null,
+      formulaMedica: consultaData.formulaMedica || consultaData.diagnosticoTratamiento?.medicamentos || consulta.formulaMedica || null,
+      medicamentos: consultaData.medicamentos || consultaData.diagnosticoTratamiento?.medicamentos || null
+    };
+
+    const html = generarTratamientoHTML(processed, historiaClinica, patient, patientData, ipsData);
+    printDocument(html);
+  } catch (e) {
+    console.error('Error printing tratamiento:', e);
+  }
 };
 
 /**

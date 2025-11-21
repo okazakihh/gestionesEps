@@ -1,4 +1,5 @@
 import { Modal, TextInput, NumberInput, Textarea, Button, Group, Text, Paper, Grid, Divider, Select, Stack } from '@mantine/core';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 import { IconDeviceFloppy, IconX, IconCalculator, IconUser } from '@tabler/icons-react';
 import { useNominaForm } from '../../../negocio/hooks/nomina/useNominaForm';
 import { useEmpleadosSelect } from '../../../negocio/hooks/nomina/useEmpleadosSelect';
@@ -52,6 +53,8 @@ export const NominaForm = ({
     };
     loadConfig();
   }, []);
+
+  const { tema } = useTheme();
 
   // Cargar datos cuando cambia la nómina a editar
   useEffect(() => {
@@ -125,6 +128,8 @@ export const NominaForm = ({
       }
       size="xl"
       closeOnClickOutside={!isDirty}
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">

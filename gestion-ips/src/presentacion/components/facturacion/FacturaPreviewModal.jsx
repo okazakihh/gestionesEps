@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Paper, Stack, Table, Alert, Divider } from '@mantine/core';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 import { IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 
@@ -26,6 +27,7 @@ const FacturaPreviewModal = ({
   onSave,
   loading = false
 }) => {
+  const { tema } = useTheme();
   if (!facturaPreview) return null;
 
   return (
@@ -39,6 +41,8 @@ const FacturaPreviewModal = ({
       }
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <Stack gap="md">
         {/* Información general de la factura */}

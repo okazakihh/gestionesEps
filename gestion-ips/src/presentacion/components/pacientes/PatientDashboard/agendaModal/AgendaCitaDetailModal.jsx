@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Paper, Text, Grid, Badge, Group, Button, Stack, Divider } from '@mantine/core';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { UserIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/react/24/outline';
 import AgendaStatusBadge from './AgendaStatusBadge.jsx';
 import Swal from 'sweetalert2';
@@ -28,6 +29,7 @@ const AgendaCitaDetailModal = ({
   onStatusChange,
   updatingStatus
 }) => {
+  const { tema } = useTheme();
   return (
     <Modal
       opened={true}
@@ -35,8 +37,11 @@ const AgendaCitaDetailModal = ({
       title={`Detalle de la Cita #${cita.id}`}
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
       styles={{
-        title: { fontSize: '1.25rem', fontWeight: 600 }
+        title: { fontSize: '1.25rem', fontWeight: 600, color: 'white !important' },
+        header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
+        close: { color: 'white !important' }
       }}
     >
       <Stack gap="md">

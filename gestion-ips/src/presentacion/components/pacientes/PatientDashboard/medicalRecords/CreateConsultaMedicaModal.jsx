@@ -90,6 +90,15 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       medicamentos: [],
       procedimientos: ''
     },
+    // Incapacidad
+    incapacidad: {
+      aplica: false,
+      tipo: '',
+      fechaInicio: '',
+      fechaFin: '',
+      dias: '',
+      motivo: ''
+    },
     
     // Seguimiento
     seguimientoConsulta: {
@@ -131,6 +140,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         informacionConsulta: formData.informacionConsulta,
         examenFisico: formData.examenFisico,
         diagnosticoTratamiento: formData.diagnosticoTratamiento,
+        incapacidad: formData.incapacidad,
         seguimientoConsulta: formData.seguimientoConsulta,
         firmaDigital: formData.firmaDigital
       });
@@ -180,10 +190,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       }
       size="xl"
       centered
-      styles={{
-        content: { maxHeight: '90vh' },
-        body: { padding: 0 }
-      }}
+          overlayColor={tema.primaryColor}
+          styles={{
+            content: { maxHeight: '90vh' },
+            body: { padding: 0 },
+            header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
+            title: { color: 'white !important' },
+            close: { color: 'white !important' }
+          }}
     >
       <form onSubmit={handleSubmit}>
         <Stack gap={0}>
@@ -453,6 +467,76 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                             size="sm"
                           />
                         </Grid.Col>
+                      </Grid>
+                    </Paper>
+
+                    {/* Incapacidad */}
+                    <Paper p="md" withBorder mt="md">
+                      <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Incapacidad</Text>
+                      <Grid>
+                        <Grid.Col span={12}>
+                          <Group>
+                            <Text size="xs">Emitir incapacidad</Text>
+                            <input
+                              type="checkbox"
+                              checked={formData.incapacidad.aplica}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                incapacidad: { ...prev.incapacidad, aplica: e.currentTarget.checked }
+                              }))}
+                            />
+                          </Group>
+                        </Grid.Col>
+
+                        {formData.incapacidad.aplica && (
+                          <>
+                            <Grid.Col span={6}>
+                              <TextInput
+                                label="Tipo de Incapacidad"
+                                placeholder="Ej: Laboral"
+                                value={formData.incapacidad.tipo}
+                                onChange={(e) => setFormData(prev => ({ ...prev, incapacidad: { ...prev.incapacidad, tipo: e.target.value } }))}
+                                size="sm"
+                              />
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                              <TextInput
+                                label="Fecha Inicio"
+                                type="date"
+                                value={formData.incapacidad.fechaInicio}
+                                onChange={(e) => setFormData(prev => ({ ...prev, incapacidad: { ...prev.incapacidad, fechaInicio: e.target.value } }))}
+                                size="sm"
+                              />
+                            </Grid.Col>
+                            <Grid.Col span={3}>
+                              <TextInput
+                                label="Fecha Fin"
+                                type="date"
+                                value={formData.incapacidad.fechaFin}
+                                onChange={(e) => setFormData(prev => ({ ...prev, incapacidad: { ...prev.incapacidad, fechaFin: e.target.value } }))}
+                                size="sm"
+                              />
+                            </Grid.Col>
+                            <Grid.Col span={4}>
+                              <TextInput
+                                label="Días"
+                                type="number"
+                                value={formData.incapacidad.dias}
+                                onChange={(e) => setFormData(prev => ({ ...prev, incapacidad: { ...prev.incapacidad, dias: e.target.value } }))}
+                                size="sm"
+                              />
+                            </Grid.Col>
+                            <Grid.Col span={8}>
+                              <TextInput
+                                label="Motivo"
+                                placeholder="Motivo de la incapacidad"
+                                value={formData.incapacidad.motivo}
+                                onChange={(e) => setFormData(prev => ({ ...prev, incapacidad: { ...prev.incapacidad, motivo: e.target.value } }))}
+                                size="sm"
+                              />
+                            </Grid.Col>
+                          </>
+                        )}
                       </Grid>
                     </Paper>
                   </Tabs.Panel>

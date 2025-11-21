@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, NumberInput, Text, Button, Group, Paper, Stack, Alert } from '@mantine/core';
 import { IconCurrencyDollar, IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
 import { formatCurrency } from '../../../negocio/services/facturacionService';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 
 /**
  * ValorCupsModal.jsx
@@ -41,6 +42,8 @@ const ValorCupsModal = ({
     }
   }, [codigoCups, opened]);
 
+  const { tema } = useTheme();
+
   // Limpiar input al cerrar
   const handleClose = () => {
     setValorInput('');
@@ -72,6 +75,8 @@ const ValorCupsModal = ({
       }
       size="md"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <Stack gap="md">
         {/* Información del código CUPS */}

@@ -27,6 +27,7 @@ import {
 import { IconDeviceFloppy, IconAlertCircle, IconBuilding } from '@tabler/icons-react';
 import { useConfiguracionManagement } from '../../../negocio/hooks/configuracion/useConfiguracionManagement.js';
 import Swal from 'sweetalert2';
+import IpsLogoField from './IpsLogoField.jsx';
 
 export const ConfiguracionIPSTab = () => {
   const { getConfiguracionByClave, updateConfiguracionByClave } = useConfiguracionManagement();
@@ -271,6 +272,16 @@ export const ConfiguracionIPSTab = () => {
             />
           </Grid.Col>
         </Grid>
+      </Paper>
+
+      {/* Logo de la entidad */}
+      <Paper shadow="xs" p="lg" withBorder>
+        <Title order={4} mb="md">Logo de la Entidad</Title>
+        <IpsLogoField config={configOriginal} onSaved={(updated) => {
+          // Refrescar configuración después de guardar logo
+          setConfigOriginal(updated);
+          cargarConfiguracion();
+        }} />
       </Paper>
 
       {/* Ubicación */}

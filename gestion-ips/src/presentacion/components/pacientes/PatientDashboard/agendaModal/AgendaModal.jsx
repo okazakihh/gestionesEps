@@ -7,6 +7,7 @@ import CreateConsultaMedicaModal from '../medicalRecords/CreateConsultaMedicaMod
 import PatientDetailModal from '../patientDetail/PatientDetailModal.jsx';
 import Swal from 'sweetalert2';
 import { Modal, ActionIcon, Group, Button, Loader, Alert, Stack, Paper, Table, Text } from '@mantine/core';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { useAuth } from '../../../../../data/context/AuthContext.jsx';
 import { hasPermission, PERMISSIONS } from '../../../../../negocio/utils/auth/permissions.js';
 
@@ -30,6 +31,7 @@ import {
 
 const AgendaModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { tema } = useTheme();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -359,9 +361,12 @@ const AgendaModal = ({ isOpen, onClose }) => {
           </Group>
         }
         size="90%"
+        overlayColor={tema.primaryColor}
         styles={{
           body: { height: '70vh', overflowY: 'auto' },
-          title: { width: '100%' }
+          title: { width: '100%', color: 'white !important' },
+          header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
+          close: { color: 'white !important' }
         }}
       >
         {currentView === 'agenda' && (

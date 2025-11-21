@@ -394,6 +394,8 @@ const UsuariosPage = () => {
           title=""
           size="xl"
           centered
+          overlayColor={tema.primaryColor}
+          styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
         >
           <CreateUserForm
             onSubmit={handleCreateUser}
@@ -410,6 +412,8 @@ const UsuariosPage = () => {
           title="Confirmar eliminación de usuario"
           size="md"
           centered
+          overlayColor={tema.primaryColor}
+          styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
         >
           <Stack gap="md">
             <Text size="sm" c="dimmed">

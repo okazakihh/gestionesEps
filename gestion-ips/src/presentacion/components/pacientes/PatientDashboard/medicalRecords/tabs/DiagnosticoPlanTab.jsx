@@ -82,6 +82,79 @@ const DiagnosticoPlanTab = ({ formData, setFormData }) => {
         />
       </Paper>
 
+      {/* Incapacidad */}
+      <Paper p="md" withBorder>
+        <Group gap="xs" mb="md">
+          <IconFileText size={18} color="var(--mantine-color-red-6)" />
+          <Text size="sm" fw={600}>Incapacidad</Text>
+        </Group>
+        <Grid>
+          <Grid.Col span={12}>
+            <Group>
+              <Text size="xs">Emitir incapacidad</Text>
+              <input
+                type="checkbox"
+                checked={formData.diagnosticoPlan.incapacidad?.aplica}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, aplica: e.currentTarget.checked } }
+                })}
+              />
+            </Group>
+          </Grid.Col>
+
+          {formData.diagnosticoPlan.incapacidad?.aplica && (
+            <>
+              <Grid.Col span={6}>
+                <TextInput
+                  label="Tipo de Incapacidad"
+                  placeholder="Ej: Laboral"
+                  value={formData.diagnosticoPlan.incapacidad.tipo}
+                  onChange={(e) => setFormData({ ...formData, diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, tipo: e.target.value } } })}
+                  size="sm"
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <TextInput
+                  label="Fecha Inicio"
+                  type="date"
+                  value={formData.diagnosticoPlan.incapacidad.fechaInicio}
+                  onChange={(e) => setFormData({ ...formData, diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, fechaInicio: e.target.value } } })}
+                  size="sm"
+                />
+              </Grid.Col>
+              <Grid.Col span={3}>
+                <TextInput
+                  label="Fecha Fin"
+                  type="date"
+                  value={formData.diagnosticoPlan.incapacidad.fechaFin}
+                  onChange={(e) => setFormData({ ...formData, diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, fechaFin: e.target.value } } })}
+                  size="sm"
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <TextInput
+                  label="Días"
+                  type="number"
+                  value={formData.diagnosticoPlan.incapacidad.dias}
+                  onChange={(e) => setFormData({ ...formData, diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, dias: e.target.value } } })}
+                  size="sm"
+                />
+              </Grid.Col>
+              <Grid.Col span={8}>
+                <TextInput
+                  label="Motivo"
+                  placeholder="Motivo de la incapacidad"
+                  value={formData.diagnosticoPlan.incapacidad.motivo}
+                  onChange={(e) => setFormData({ ...formData, diagnosticoPlan: { ...formData.diagnosticoPlan, incapacidad: { ...formData.diagnosticoPlan.incapacidad, motivo: e.target.value } } })}
+                  size="sm"
+                />
+              </Grid.Col>
+            </>
+          )}
+        </Grid>
+      </Paper>
+
       {/* Seguimiento */}
       <Paper p="md" withBorder>
         <Group gap="xs" mb="md">

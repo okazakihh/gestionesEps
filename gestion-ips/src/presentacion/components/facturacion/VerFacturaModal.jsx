@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Paper, Stack, Table, Badge, Divider } from '@mantine/core';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 import { IconX, IconCheck, IconInfoCircle, IconPrinter } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 import { generarFacturaHTML } from './FacturaHTML.js';
@@ -26,6 +27,7 @@ const VerFacturaModal = ({
   onProcesar,
   loading = false
 }) => {
+  const { tema } = useTheme();
   if (!factura) return null;
 
   // Parsear datos de la factura
@@ -85,6 +87,8 @@ const VerFacturaModal = ({
       }
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <Stack gap="md">
         {/* Información general de la factura */}

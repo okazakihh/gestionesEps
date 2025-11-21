@@ -1,11 +1,13 @@
 import React from 'react';
 import { Modal, Paper, Text, Badge, Divider, Grid } from '@mantine/core';
+import { useTheme } from '../../../../negocio/contexts/ThemeContext.jsx';
 
 const ViewEmpleadoModal = ({ 
   opened, 
   onClose, 
   formData 
 }) => {
+  const { tema } = useTheme();
   const InfoItem = ({ label, value }) => (
     <div className="mb-3">
       <Text size="xs" weight={500} color="dimmed" className="mb-1">
@@ -24,6 +26,8 @@ const ViewEmpleadoModal = ({
       title="Información del Empleado"
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <div className="space-y-4">
         {/* Información Personal */}

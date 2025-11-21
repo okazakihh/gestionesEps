@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Badge, Group, Text, Stack, Paper, Grid, Loader, Button, Divider, Code } from '@mantine/core';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { IconUser, IconCalendar, IconClock, IconFileText } from '@tabler/icons-react';
 
 const AppointmentDetailModal = ({
@@ -16,6 +17,7 @@ const AppointmentDetailModal = ({
   user,
   onAtendidoClick
 }) => {
+  const { tema } = useTheme();
   if (!isOpen || !selectedAppointment) return null;
 
   const appointmentInfo = getAppointmentInfo(selectedAppointment);
@@ -49,6 +51,8 @@ const AppointmentDetailModal = ({
       title={`Detalle de la Cita #${selectedAppointment.id}`}
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <Stack gap="lg">
         {/* Estado y Fecha */}

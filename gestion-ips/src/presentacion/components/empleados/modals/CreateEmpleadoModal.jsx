@@ -1,10 +1,11 @@
 import React from 'react';
 import { Modal, Button, Group, Tabs } from '@mantine/core';
+import { useTheme } from '../../../../negocio/contexts/ThemeContext.jsx';
 import EmpleadoPersonalInfoSection from '../forms/EmpleadoPersonalInfoSection';
 import EmpleadoContactInfoSection from '../forms/EmpleadoContactInfoSection';
 import EmpleadoLaboralInfoSection from '../forms/EmpleadoLaboralInfoSection';
 
-const CreateEmpleadoModal = ({ 
+const CreateEmpleadoModal = ({
   opened, 
   onClose, 
   formData, 
@@ -13,6 +14,7 @@ const CreateEmpleadoModal = ({
   loading,
   isFormValid = false
 }) => {
+  const { tema } = useTheme();
   return (
     <Modal
       opened={opened}
@@ -20,6 +22,8 @@ const CreateEmpleadoModal = ({
       title="Crear Nuevo Empleado"
       size="xl"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <Tabs defaultValue="personal">
         <Tabs.List>

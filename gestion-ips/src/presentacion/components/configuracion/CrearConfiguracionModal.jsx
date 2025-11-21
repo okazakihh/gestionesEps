@@ -19,6 +19,7 @@ import {
   Group,
   Alert
 } from '@mantine/core';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import { useConfiguracionManagement } from '../../../negocio/hooks/configuracion/useConfiguracionManagement.js';
 
@@ -44,6 +45,8 @@ export const CrearConfiguracionModal = ({ opened, onClose }) => {
   
   const [jsonError, setJsonError] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const { tema } = useTheme();
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -111,6 +114,8 @@ export const CrearConfiguracionModal = ({ opened, onClose }) => {
       title="Crear Nueva Configuración"
       size="lg"
       centered
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <Stack gap="md">
         <Select

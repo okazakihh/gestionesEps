@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Paper, Stack, Group, Title, Button, Text, Grid, Badge, ScrollArea, Divider, Timeline, Box } from '@mantine/core';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Paper, Stack, Group, Title, Button, Text, Grid, Badge, ScrollArea, Divider, Timeline, Box, Modal, Image } from '@mantine/core';
 import {
   IconFileText,
   IconUser,
@@ -7,14 +7,15 @@ import {
   IconStethoscope,
   IconClipboard,
   IconArrowLeft,
-  IconPrinter,
   IconCalendar,
   IconPill,
   IconActivity
 } from '@tabler/icons-react';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
-import { printHistoriaClinica, printConsulta } from '../../../../../negocio/utils/pacientes/printUtils.js';
+import { getIpsConfig } from '../../../../../data/services/configuracionApiService.js';
+import { generarHistoriaClinicaHTML, generarIncapacidadHTML, generarTratamientoHTML } from '../../HistoriaClinicaHTML.js';
+import { IconEye } from '@tabler/icons-react';
 
 /**
  * Componente rediseñado para mostrar la historia clínica completa
@@ -28,6 +29,16 @@ const PatientClinicalHistoryCompleteNew = ({
   patientData
 }) => {
   const { tema } = useTheme();
+
+  const [ipsData, setIpsData] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    getIpsConfig()
+      .then(data => { if (mounted) setIpsData(data); })
+      .catch(err => { console.error('Error loading IPS config:', err); });
+    return () => { mounted = false; };
+  }, []);
 
   // Parse de datos del paciente
   const parsedPatientData = useMemo(() => {
@@ -113,6 +124,194 @@ const PatientClinicalHistoryCompleteNew = ({
     }
   }, [historiaClinica]);
 
+  // Preview modal state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHTML, setPreviewHTML] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('Vista previa');
+
+  const openPreviewForHistoria = async () => {
+    // Build consultas array for print (similar to printUtils)
+    const historiaData = parsedData || null;
+    const allConsultas = [];
+
+    // Consulta inicial
+    allConsultas.push({
+      id: `initial-${historiaClinica.id}`,
+      numero: 1,
+      tipo: 'Consulta Inicial',
+      fecha: historiaClinica.fechaApertura,
+      medico: (historiaData && (historiaData.procedimiento?.medicoResponsable || historiaData.informacionMedico?.medicoResponsable)) || 'N/A',
+      especialidad: (historiaData && (historiaData.procedimiento?.especialidad || historiaData.informacionMedico?.especialidad)) || 'N/A',
+      motivo: (historiaData && (historiaData.consultaInicial?.motivoConsulta || historiaData.informacionConsulta?.motivoConsulta)) || 'Apertura de historia clínica',
+      enfermedadActual: (historiaData && (historiaData.consultaInicial?.enfermedadActual || historiaData.informacionConsulta?.enfermedadActual)) || 'N/A',
+      diagnosticos: (historiaData && (historiaData.diagnostico?.diagnosticos || historiaData.diagnosticoTratamiento?.diagnosticos || historiaData.diagnosticoPlan?.diagnosticos)) || 'N/A',
+      planTratamiento: (historiaData && (historiaData.diagnostico?.plan?.conducta || historiaData.diagnosticoTratamiento?.planTratamiento || historiaData.diagnosticoPlan?.planTratamiento)) || 'N/A',
+      examenFisico: (historiaData && (historiaData.examenFisico?.estadoGeneral || historiaData.examenClinico?.examenFisico)) || 'N/A',
+      signosVitales: (historiaData && (historiaData.examenFisico?.signosVitales || historiaData.examenClinico?.signosVitales)) || 'N/A',
+      dependenciaMedica: (historiaData && historiaData.examenFisico?.dependenciaMedica) || null,
+      sistemas: (historiaData && historiaData.examenFisico?.sistemas) || null,
+      camposEspecificos: (historiaData && historiaData.examenFisico?.camposEspecificos) || null,
+      formulaMedica: (historiaData && (historiaData.diagnostico?.medicamentos || historiaData.diagnosticoPlan?.medicamentos)) || 'N/A',
+      incapacidad: null,
+      indicaciones: (historiaData && (historiaData.diagnostico?.plan?.recomendaciones || historiaData.diagnosticoPlan?.recomendaciones)) || 'N/A',
+      proximaCita: 'N/A',
+      observaciones: (historiaData && (historiaData.consultaInicial?.observaciones || historiaData.informacionConsulta?.observaciones)) || 'N/A'
+    });
+
+    // Agregar consultas posteriores
+    if (consultas && Array.isArray(consultas)) {
+      consultas.forEach((consulta, index) => {
+        try {
+          const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
+          allConsultas.push({
+            id: consulta.id,
+            numero: index + 2,
+            tipo: 'Consulta Médica',
+            fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
+            medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+            especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+            motivo: consultaData.informacionConsulta?.motivoConsulta || consultaData.detalleConsulta?.motivoConsulta || 'N/A',
+            enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
+            diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
+            planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
+            examenFisico: consultaData.examenFisico?.estadoGeneral || consultaData.examenFisico?.hallazgos || consultaData.examenClinico?.examenFisico || 'N/A',
+            signosVitales: consultaData.examenFisico?.signosVitales || consultaData.examenClinico?.signosVitales || 'N/A',
+            dependenciaMedica: consultaData.examenFisico?.dependenciaMedica || null,
+            sistemas: consultaData.examenFisico?.sistemas || null,
+            camposEspecificos: consultaData.examenFisico?.camposEspecificos || null,
+            formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica?.medicamentos || 'N/A',
+            incapacidad: consultaData.incapacidad || null,
+            indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
+            proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
+            observaciones: consultaData.informacionConsulta?.observaciones || consultaData.seguimientoConsulta?.recomendaciones || 'N/A'
+          });
+        } catch (e) {
+          console.error('Error parsing consulta for preview:', e);
+        }
+      });
+    }
+
+    const ipsData = await getIpsConfig();
+    const html = generarHistoriaClinicaHTML(allConsultas, historiaClinica, patient, patientData, historiaData, ipsData);
+    setPreviewTitle(`Historia Clínica - ${historiaClinica?.numeroHistoria || ''}`);
+    setPreviewHTML(html);
+    setPreviewOpen(true);
+  };
+
+  const openPreviewForConsulta = async (consulta) => {
+    try {
+      const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
+      const processed = {
+        id: consulta.id,
+        numero: 1,
+        tipo: 'Consulta Médica Individual',
+        fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
+        medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+        especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+        motivo: consultaData.informacionConsulta?.motivoConsulta || consultaData.detalleConsulta?.motivoConsulta || 'N/A',
+        enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
+        diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
+        planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
+        examenFisico: consultaData.examenFisico?.estadoGeneral || consultaData.examenFisico?.hallazgos || consultaData.examenClinico?.examenFisico || 'N/A',
+        signosVitales: consultaData.examenFisico?.signosVitales || consultaData.examenClinico?.signosVitales || 'N/A',
+        formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica?.medicamentos || 'N/A',
+        incapacidad: consultaData.incapacidad || null,
+        indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
+        proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
+        observaciones: consultaData.informacionConsulta?.observaciones || consultaData.seguimientoConsulta?.recomendaciones || 'N/A'
+      };
+
+      const ipsData = await getIpsConfig();
+      const html = generarHistoriaClinicaHTML([processed], historiaClinica, patient, patientData, null, ipsData);
+      setPreviewTitle(`Consulta #${consulta.id}`);
+      setPreviewHTML(html);
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error('Error generating consulta preview:', e);
+    }
+  };
+
+  const openPreviewIncapacidadForHistoria = async () => {
+    const historiaData = parsedData || null;
+    // build initial consulta like in openPreviewForHistoria
+    const initial = {
+      incapacidad: historiaData?.diagnosticoPlan?.incapacidad || null,
+    };
+    const ipsData = await getIpsConfig();
+    const html = generarIncapacidadHTML(initial, historiaClinica, patient, patientData, ipsData);
+    setPreviewTitle(`Incapacidad - Historia ${historiaClinica?.numeroHistoria || ''}`);
+    setPreviewHTML(html);
+    setPreviewOpen(true);
+  };
+
+  const openPreviewTratamientoForHistoria = async () => {
+    const historiaData = parsedData || null;
+    const initial = {
+      diagnosticos: historiaData?.diagnosticoPlan?.diagnosticos || null,
+      planTratamiento: historiaData?.diagnosticoPlan?.planTratamiento || null,
+      formulaMedica: historiaData?.diagnosticoPlan?.medicamentos || null,
+      medicamentos: historiaData?.diagnosticoPlan?.medicamentos || null
+    };
+    const ipsData = await getIpsConfig();
+    const html = generarTratamientoHTML(initial, historiaClinica, patient, patientData, ipsData);
+    setPreviewTitle(`Tratamiento - Historia ${historiaClinica?.numeroHistoria || ''}`);
+    setPreviewHTML(html);
+    setPreviewOpen(true);
+  };
+
+  const openPreviewIncapacidadForConsulta = async (consulta) => {
+    try {
+      const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
+      const processed = { ...consulta, incapacidad: consultaData.incapacidad || consulta.incapacidad || null };
+      const ipsData = await getIpsConfig();
+      const html = generarIncapacidadHTML(processed, historiaClinica, patient, patientData, ipsData);
+      setPreviewTitle(`Incapacidad - Consulta #${consulta.id}`);
+      setPreviewHTML(html);
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error('Error generating incapacidad preview:', e);
+    }
+  };
+
+  const openPreviewTratamientoForConsulta = async (consulta) => {
+    try {
+      const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
+      const processed = {
+        ...consulta,
+        diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticos || null,
+        planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.planTratamiento || null,
+        formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica || null,
+        medicamentos: consultaData.diagnosticoTratamiento?.medicamentos || null
+      };
+      const ipsData = await getIpsConfig();
+      const html = generarTratamientoHTML(processed, historiaClinica, patient, patientData, ipsData);
+      setPreviewTitle(`Tratamiento - Consulta #${consulta.id}`);
+      setPreviewHTML(html);
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error('Error generating tratamiento preview:', e);
+    }
+  };
+
+  const handlePrintPreview = () => {
+    if (!previewHTML) return;
+    const ventana = window.open('', '_blank', 'width=800,height=1000');
+    if (ventana) {
+      ventana.document.write(previewHTML);
+      ventana.document.close();
+      ventana.onload = function() {
+        ventana.focus();
+        ventana.print();
+      };
+      setTimeout(() => {
+        ventana.focus();
+        ventana.print();
+      }, 300);
+    } else {
+      alert('Por favor permita ventanas emergentes para imprimir.');
+    }
+  };
+
   // Componente para mostrar información
   const InfoField = ({ label, value, span = 6 }) => (
     <Grid.Col span={span}>
@@ -175,15 +374,47 @@ const PatientClinicalHistoryCompleteNew = ({
         borderBottom: `3px solid ${tema.primaryColor}`,
         borderRadius: '8px 8px 0 0'
       }}>
-        <Stack gap="xs">
-          <Title order={3} style={{ color: tema.primaryColor, textAlign: 'center', margin: 0 }}>
-            HISTORIA CLÍNICA
-          </Title>
-          <Text size="xs" c="dimmed" ta="center">
-            HC # {historiaClinica?.numeroHistoria || 'N/A'}
-          </Text>
-        </Stack>
+        <Group position="apart" align="center">
+          <Group align="center" spacing="sm">
+            {ipsData?.logo ? (
+              <div style={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 4, border: '1px solid #e9ecef' }}>
+                <Image src={ipsData.logo} alt="Logo IPS" width={80} height={80} fit="contain" />
+              </div>
+            ) : null}
+            <Stack gap={0}>
+              <Title order={3} style={{ color: tema.primaryColor, textAlign: 'left', margin: 0 }}>
+                HISTORIA CLÍNICA
+              </Title>
+              <Text size="xs" c="dimmed" ta="left">
+                HC # {historiaClinica?.numeroHistoria || 'N/A'}
+              </Text>
+            </Stack>
+          </Group>
+        </Group>
       </Paper>
+
+      {/* Modal de vista previa para impresión */}
+      <Modal
+        opened={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={previewTitle}
+        size="90%"
+        overlayOpacity={0.55}
+        overlayColor={tema.primaryColor}
+        styles={{
+          header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
+          title: { color: 'white !important', fontWeight: 700 },
+          close: { color: 'white !important' }
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
+          <Button size="xs" variant="light" color={tema.mantineColor} onClick={handlePrintPreview}>
+            Imprimir vista previa
+          </Button>
+          <Button size="xs" variant="default" onClick={() => setPreviewOpen(false)}>Cerrar</Button>
+        </div>
+        <div style={{ width: '100%', height: '75vh', overflow: 'auto', border: '1px solid #ddd' }} dangerouslySetInnerHTML={{ __html: previewHTML }} />
+      </Modal>
 
       {/* Información del Paciente - Estilo tabla 3 columnas */}
       <Paper p="sm" style={{ 
@@ -290,14 +521,33 @@ const PatientClinicalHistoryCompleteNew = ({
         borderRadius: 0
       }}>
         <Group justify="flex-end" gap="xs">
+          {/* Botones de impresión eliminados: usar 'Vista' para abrir preview con opción de imprimir */}
           <Button
-            leftSection={<IconPrinter size={14} />}
-            onClick={() => printHistoriaClinica(consultas, historiaClinica, patient, patientData)}
-            variant="light"
+            leftSection={<IconEye size={14} />}
+            onClick={openPreviewForHistoria}
+            variant="outline"
             color={tema.mantineColor}
             size="xs"
           >
-            Imprimir HC Completa
+            Vista HC Completa
+          </Button>
+          <Button
+            leftSection={<IconEye size={14} />}
+            onClick={openPreviewTratamientoForHistoria}
+            variant="outline"
+            color={tema.mantineColor}
+            size="xs"
+          >
+            Vista Tratamiento
+          </Button>
+          <Button
+            leftSection={<IconEye size={14} />}
+            onClick={openPreviewIncapacidadForHistoria}
+            variant="outline"
+            color={tema.mantineColor}
+            size="xs"
+          >
+            Vista Incapacidad
           </Button>
           <Button
             leftSection={<IconArrowLeft size={14} />}
@@ -642,6 +892,22 @@ const PatientClinicalHistoryCompleteNew = ({
             </Box>
           )}
 
+              {/* Incapacidad - Historia Clínica Inicial */}
+              {hasValue(parsedData?.diagnosticoPlan?.incapacidad) && (
+                <Box>
+                  <SectionTitle icon={IconActivity} title="Incapacidad" />
+                  <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                    <Grid>
+                      <InfoField label="Tipo" value={parsedData.diagnosticoPlan.incapacidad.tipo} span={6} />
+                      <InfoField label="Fecha Inicio" value={parsedData.diagnosticoPlan.incapacidad.fechaInicio} span={3} />
+                      <InfoField label="Fecha Fin" value={parsedData.diagnosticoPlan.incapacidad.fechaFin} span={3} />
+                      <InfoField label="Días" value={parsedData.diagnosticoPlan.incapacidad.dias} span={3} />
+                      <InfoField label="Motivo" value={parsedData.diagnosticoPlan.incapacidad.motivo} span={9} />
+                    </Grid>
+                  </Paper>
+                </Box>
+              )}
+
           {/* Sección 6: Consultas Médicas Detalladas */}
           <Stack gap="md">
             <Title order={5} size="h6" style={{ color: tema.primaryColor }}>
@@ -681,14 +947,33 @@ const PatientClinicalHistoryCompleteNew = ({
                         </Stack>
                       </Group>
                       <Group gap="sm">
+                        {/* Botones de impresión eliminados: usar vistas (preview) para imprimir desde el modal */}
                         <Button
-                          leftSection={<IconPrinter size={16} />}
-                          onClick={() => printConsulta(consulta, historiaClinica, patient, patientData)}
-                          variant="light"
+                          leftSection={<IconEye size={16} />}
+                          onClick={() => openPreviewIncapacidadForConsulta(consulta)}
+                          variant="outline"
                           color={tema.mantineColor}
                           size="sm"
                         >
-                          Imprimir
+                          Vista Incapacidad
+                        </Button>
+                        <Button
+                          leftSection={<IconEye size={16} />}
+                          onClick={() => openPreviewTratamientoForConsulta(consulta)}
+                          variant="outline"
+                          color={tema.mantineColor}
+                          size="sm"
+                        >
+                          Vista Tratamiento
+                        </Button>
+                        <Button
+                          leftSection={<IconEye size={16} />}
+                          onClick={() => openPreviewForConsulta(consulta)}
+                          variant="outline"
+                          color={tema.mantineColor}
+                          size="sm"
+                        >
+                          Vista previa
                         </Button>
                         <Stack gap={2} align="flex-end">
                           <Text size="xs" c="dimmed">Creado</Text>
@@ -940,6 +1225,18 @@ const PatientClinicalHistoryCompleteNew = ({
                               <InfoField label="Cédula" value={parsedConsulta.firmaDigital.numeroCedula} span={6} />
                               <InfoField label="Especialidad" value={parsedConsulta.firmaDigital.especialidad} span={6} />
                               <InfoField label="Fecha Firma" value={parsedConsulta.firmaDigital.fechaFirma} span={6} />
+                            </Grid>
+                          </Paper>
+                        )}
+                        {/* Incapacidad - Consulta */}
+                        {hasValue(parsedConsulta?.incapacidad) && (
+                          <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                            <Grid>
+                              <InfoField label="Tipo" value={parsedConsulta.incapacidad.tipo} span={6} />
+                              <InfoField label="Fecha Inicio" value={parsedConsulta.incapacidad.fechaInicio} span={3} />
+                              <InfoField label="Fecha Fin" value={parsedConsulta.incapacidad.fechaFin} span={3} />
+                              <InfoField label="Días" value={parsedConsulta.incapacidad.dias} span={3} />
+                              <InfoField label="Motivo" value={parsedConsulta.incapacidad.motivo} span={9} />
                             </Grid>
                           </Paper>
                         )}

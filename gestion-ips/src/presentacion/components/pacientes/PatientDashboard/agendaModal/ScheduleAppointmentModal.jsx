@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from '@mantine/core';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 
  // Import extracted components
  import ScheduleAppointmentHeader from './ScheduleAppointmentHeader.jsx';
@@ -73,6 +74,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
 
   if (!isOpen) return null;
 
+  const { tema } = useTheme();
+
   return (
     <Modal
       opened={isOpen}
@@ -82,6 +85,8 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
       closeOnClickOutside={!loading}
       closeOnEscape={!loading}
       withCloseButton={!loading}
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <ScheduleAppointmentForm
         formData={formData}

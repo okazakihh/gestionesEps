@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Paper, Stack, Group, Text, Title, TextInput, Button, Badge, ScrollArea, Loader, Alert, Avatar, ThemeIcon } from '@mantine/core';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { IconX, IconSearch, IconUser, IconCalendar, IconCheck, IconUserPlus } from '@tabler/icons-react';
 import { pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
 
@@ -12,6 +13,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [error, setError] = useState(null);
   const [showCreatePatient, setShowCreatePatient] = useState(false);
+  const { tema } = useTheme();
 
   // Load all patients when modal opens
   const loadAllPatients = async () => {
@@ -168,6 +170,8 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
       }
       padding="lg"
       closeButtonProps={{ icon: <IconX size={20} /> }}
+      overlayColor={tema.primaryColor}
+      styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <Stack gap="lg">
         {/* Search Section */}
