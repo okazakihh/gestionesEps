@@ -490,39 +490,36 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
   ` : '';
 
   // Diagnóstico
-  const diagnosticoHTML = hasValue(consulta.diagnosticos) ? `
+  let diagnosticoHTML = '';
+  if (hasValue(consulta.diagnosticos)) {
+    let diagnosticosFormatted = '';
+    
+    if (Array.isArray(consulta.diagnosticos)) {
+      // Si es un array de objetos de diagnóstico
+      diagnosticosFormatted = consulta.diagnosticos.map(dx => {
+        const tipo = dx.tipo || 'Principal';
+        const codigo = dx.codigo || '';
+        const descripcion = dx.descripcion || dx.nombre || '';
+        return `<tr>
+          <td class="value-cell" style="padding: 4px; border: 1px solid #ddd;">
+            <strong>[${tipo.toUpperCase()}]</strong> ${codigo} - ${descripcion}
+          </td>
+        </tr>`;
+      }).join('');
+    } else if (typeof consulta.diagnosticos === 'string') {
+      // Si es un string simple
+      diagnosticosFormatted = `<tr>
+        <td class="value-cell" style="padding: 4px; border: 1px solid #ddd;"><strong>${consulta.diagnosticos}</strong></td>
+      </tr>`;
+    }
+    
+    diagnosticoHTML = `
     <div class="section-title">DIAGNÓSTICO</div>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
-      <tr>
-        <td class="value-cell" style="width: 100%; padding: 4px; border: 1px solid #ddd;"><strong>${consulta.diagnosticos}</strong></td>
-      </tr>
+      ${diagnosticosFormatted}
     </table>
-  ` : '';
-
-  // Plan de tratamiento, fórmula e indicaciones
-  const planHTML = (consulta.planTratamiento || consulta.formulaMedica || consulta.indicaciones) ? `
-    <div class="section-title">PLAN DE TRATAMIENTO</div>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
-      ${hasValue(consulta.planTratamiento) ? `
-      <tr>
-        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Plan:</td>
-        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.planTratamiento}</td>
-      </tr>
-      ` : ''}
-      ${hasValue(consulta.formulaMedica) ? `
-      <tr>
-        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Fórmula Médica:</td>
-        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.formulaMedica}</td>
-      </tr>
-      ` : ''}
-      ${hasValue(consulta.indicaciones) ? `
-      <tr>
-        <td class="label-cell" style="width: 25%; padding: 4px; border: 1px solid #ddd;">Indicaciones:</td>
-        <td class="value-cell" style="width: 75%; padding: 4px; border: 1px solid #ddd;">${consulta.indicaciones}</td>
-      </tr>
-      ` : ''}
-    </table>
-  ` : '';
+  `;
+  }
 
   return `
     <div class="section-header">
@@ -533,7 +530,6 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
     ${motivoAnamnesisHTML}
     ${examenFisicoHTML}
     ${diagnosticoHTML}
-    ${planHTML}
     
     <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
       <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>

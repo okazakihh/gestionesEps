@@ -690,7 +690,7 @@ const PatientDashboard = () => {
           onClose={appointmentManagement.handleCloseConsultaModal}
           onConsultaCreated={appointmentManagement.handleConsultaMedicaCreated}
           historiaClinicaId={appointmentManagement.historiaClinicaId}
-          patientData={patient}
+          patientData={appointmentManagement.currentAppointment.patientData}
           citaData={{
             ...appointmentService.getAppointmentInfo(appointmentManagement.currentAppointment),
             ...appointmentService.getAppointmentPatientInfo(appointmentManagement.currentAppointment)

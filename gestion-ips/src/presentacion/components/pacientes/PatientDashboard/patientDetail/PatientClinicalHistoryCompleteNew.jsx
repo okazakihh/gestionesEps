@@ -320,6 +320,15 @@ const PatientClinicalHistoryCompleteNew = ({
       }}>
         <Stack gap="md" p="md">
           
+          {/* Log para debugging */}
+          {(() => {
+            console.log('=== PARSED DATA HISTORIA CLINICA ===');
+            console.log('parsedData:', parsedData);
+            console.log('parsedData.diagnostico:', parsedData?.diagnostico);
+            console.log('parsedData.diagnosticoTratamiento:', parsedData?.diagnosticoTratamiento);
+            return null;
+          })()}
+          
           {/* Sección 1: Datos del Procedimiento */}
           {parsedData?.procedimiento && (
             <Box>
@@ -494,76 +503,143 @@ const PatientClinicalHistoryCompleteNew = ({
             </Box>
           )}
 
-          {/* Sección 5: Diagnóstico y Plan */}
-          {parsedData?.diagnostico && (
-            <Stack gap="md">
-              <Title order={5} size="h6" style={{ color: tema.primaryColor }}>
-                <Group gap="xs">
-                  <IconClipboard size={18} />
-                  Diagnóstico y Plan
-                </Group>
-              </Title>
-
-              {/* Diagnósticos */}
-              {parsedData.diagnostico.diagnosticos && Array.isArray(parsedData.diagnostico.diagnosticos) && parsedData.diagnostico.diagnosticos.length > 0 && (
-                <Paper p="md" withBorder>
-                  <Text size="sm" fw={600} mb="sm">Diagnósticos</Text>
-                  <Stack gap="xs">
-                    {parsedData.diagnostico.diagnosticos.map((dx, index) => (
-                      <Group key={index}>
-                        <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
-                        <Text size="sm">{dx.codigo} - {dx.nombre}</Text>
-                      </Group>
-                    ))}
-                  </Stack>
-                </Paper>
-              )}
-
-              {/* Plan de Tratamiento */}
-              {parsedData.diagnostico.plan && (
-                <Paper p="md" withBorder>
-                  <Text size="sm" fw={600} mb="sm">Plan de Tratamiento</Text>
-                  <Grid>
-                    <InfoField label="Conducta" value={parsedData.diagnostico.plan.conducta} span={12} />
-                    <InfoField label="Recomendaciones" value={parsedData.diagnostico.plan.recomendaciones} span={12} />
-                    <InfoField label="Seguimiento" value={parsedData.diagnostico.plan.seguimiento} span={12} />
-                  </Grid>
-                </Paper>
-              )}
-
-              {/* Medicamentos */}
-              {parsedData.diagnostico.medicamentos && Array.isArray(parsedData.diagnostico.medicamentos) && parsedData.diagnostico.medicamentos.length > 0 && (
-                <Paper p="md" withBorder>
-                  <SectionTitle icon={IconPill} title="Medicamentos Formulados" />
-                  <Stack gap="sm">
-                    {parsedData.diagnostico.medicamentos.map((med, index) => (
-                      <Paper key={index} p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                        <Grid>
-                          <Grid.Col span={6}>
-                            <Text size="sm" fw={600}>{med.nombre}</Text>
-                            <Text size="xs" c="dimmed">{med.presentacion}</Text>
-                          </Grid.Col>
-                          <Grid.Col span={3}>
-                            <Text size="xs" c="dimmed">Dosis</Text>
-                            <Text size="sm">{med.dosis}</Text>
-                          </Grid.Col>
-                          <Grid.Col span={3}>
-                            <Text size="xs" c="dimmed">Duración</Text>
-                            <Text size="sm">{med.duracion}</Text>
-                          </Grid.Col>
-                          {med.indicaciones && (
-                            <Grid.Col span={12}>
-                              <Text size="xs" c="dimmed">Indicaciones</Text>
-                              <Text size="sm">{med.indicaciones}</Text>
-                            </Grid.Col>
-                          )}
-                        </Grid>
+          {/* Sección 5: Diagnóstico y Tratamiento */}
+          {(parsedData?.diagnostico || parsedData?.diagnosticoTratamiento || parsedData?.diagnosticoPlan) && (
+            <Box>
+              <SectionTitle icon={IconClipboard} title="Diagnóstico y Tratamiento" />
+              
+              {/* Diagnósticos - Soporta ambas estructuras */}
+              {(() => {
+                const diagnosticos = parsedData.diagnostico?.diagnosticos || parsedData.diagnosticoTratamiento?.diagnosticos || parsedData.diagnosticoPlan?.diagnosticos;
+                if (!diagnosticos) return null;
+                
+                return (
+                  <>
+                    <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Diagnósticos</Text>
+                    {Array.isArray(diagnosticos) ? (
+                      <Stack gap="xs" mb="sm">
+                        {diagnosticos.map((dx, dxIndex) => (
+                          <Paper key={dxIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                            <Group gap="xs">
+                              <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
+                              <Text size="xs">{dx.codigo} - {dx.descripcion || dx.nombre}</Text>
+                            </Group>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Paper p="xs" mb="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                        <Group gap="xs">
+                          <Badge color={tema.mantineColor} size="sm">PRINCIPAL</Badge>
+                          <Text size="xs">{diagnosticos}</Text>
+                        </Group>
                       </Paper>
-                    ))}
-                  </Stack>
-                </Paper>
-              )}
-            </Stack>
+                    )}
+                  </>
+                );
+              })()}
+
+              {/* Plan de Tratamiento y otros campos - Soporta ambas estructuras */}
+              <Grid gutter="xs">
+                {hasValue(parsedData.diagnostico?.plan?.conducta || parsedData.diagnosticoTratamiento?.planTratamiento || parsedData.diagnosticoPlan?.planTratamiento) && (
+                  <InfoField 
+                    label="Plan de Tratamiento" 
+                    value={parsedData.diagnostico?.plan?.conducta || parsedData.diagnosticoTratamiento?.planTratamiento || parsedData.diagnosticoPlan?.planTratamiento} 
+                    span={12} 
+                  />
+                )}
+                {hasValue(parsedData.diagnostico?.plan?.recomendaciones || parsedData.diagnosticoPlan?.recomendaciones) && (
+                  <InfoField label="Recomendaciones" value={parsedData.diagnostico?.plan?.recomendaciones || parsedData.diagnosticoPlan?.recomendaciones} span={12} />
+                )}
+                {(() => {
+                  const seguimiento = parsedData.diagnostico?.plan?.seguimiento || parsedData.diagnosticoPlan?.seguimiento;
+                  if (!hasValue(seguimiento)) return null;
+                  const seguimientoText = typeof seguimiento === 'object' 
+                    ? `${seguimiento.requiere ? 'Requiere' : 'No requiere'} seguimiento${seguimiento.tipo ? ` - ${seguimiento.tipo}` : ''}${seguimiento.fechaProxima ? ` - Fecha: ${seguimiento.fechaProxima}` : ''}`
+                    : seguimiento;
+                  return <InfoField label="Seguimiento" value={seguimientoText} span={12} />;
+                })()}
+                {hasValue(parsedData.diagnosticoTratamiento?.procedimientos) && (
+                  <InfoField label="Procedimientos" value={parsedData.diagnosticoTratamiento.procedimientos} span={12} />
+                )}
+                {hasValue(parsedData.diagnosticoPlan?.ayudasDiagnosticas) && (
+                  <InfoField label="Ayudas Diagnósticas" value={parsedData.diagnosticoPlan.ayudasDiagnosticas} span={12} />
+                )}
+              </Grid>
+
+              {/* Medicamentos - Soporta ambas estructuras */}
+              {(parsedData.diagnostico?.medicamentos || parsedData.diagnosticoTratamiento?.medicamentos || parsedData.diagnosticoPlan?.medicamentos) && (() => {
+                const medicamentos = parsedData.diagnostico?.medicamentos || parsedData.diagnosticoTratamiento?.medicamentos || parsedData.diagnosticoPlan?.medicamentos;
+                return (
+                <>
+                  <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Medicamentos Formulados</Text>
+                  {Array.isArray(medicamentos) ? (
+                    <Stack gap="xs">
+                      {medicamentos.map((med, medIndex) => {
+                        const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
+                        const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
+                        const dosis = med.dosis || med.dosificacion;
+                        const duracion = med.duracion || med.tiempo;
+                        const frecuencia = med.frecuencia;
+                        
+                        return (
+                          <Paper key={medIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                            <Text size="xs">
+                              <strong>{nombre}</strong>
+                              {info && ` - ${info}`}
+                              {dosis && ` | Dosis: ${dosis}`}
+                              {duracion && ` | Duración: ${duracion}`}
+                              {frecuencia && ` | Frecuencia: ${frecuencia}`}
+                            </Text>
+                          </Paper>
+                        );
+                      })}
+                    </Stack>
+                  ) : typeof medicamentos === 'object' ? (
+                    (() => {
+                      const med = medicamentos;
+                      const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
+                      const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
+                      const dosis = med.dosis || med.dosificacion;
+                      const duracion = med.duracion || med.tiempo;
+                      const frecuencia = med.frecuencia;
+                      
+                      return (
+                        <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                          <Text size="xs">
+                            <strong>{nombre}</strong>
+                            {info && ` - ${info}`}
+                            {dosis && ` | Dosis: ${dosis}`}
+                            {duracion && ` | Duración: ${duracion}`}
+                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
+                          </Text>
+                        </Paper>
+                      );
+                    })()
+                  ) : (
+                    <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                      <Text size="xs">{medicamentos}</Text>
+                    </Paper>
+                  )}
+                </>
+                );
+              })()}
+            </Box>
+          )}
+
+          {/* Firma Digital - Historia Clínica Inicial */}
+          {parsedData?.firmaDigital && (
+            <Box>
+              <SectionTitle icon={IconClipboard} title="Firma Digital" />
+              <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                <Grid>
+                  <InfoField label="Nombre Médico" value={parsedData.firmaDigital.nombreMedico} span={6} />
+                  <InfoField label="Cédula" value={parsedData.firmaDigital.numeroCedula} span={6} />
+                  <InfoField label="Especialidad" value={parsedData.firmaDigital.especialidad} span={6} />
+                  <InfoField label="Fecha Firma" value={parsedData.firmaDigital.fechaFirma} span={6} />
+                </Grid>
+              </Paper>
+            </Box>
           )}
 
           {/* Sección 6: Consultas Médicas Detalladas */}
@@ -741,21 +817,30 @@ const PatientClinicalHistoryCompleteNew = ({
                             <SectionTitle icon={IconClipboard} title="Diagnóstico y Tratamiento" />
                             
                             {/* Diagnósticos */}
-                            {parsedConsulta.diagnosticoTratamiento.diagnosticos && Array.isArray(parsedConsulta.diagnosticoTratamiento.diagnosticos) && parsedConsulta.diagnosticoTratamiento.diagnosticos.length > 0 && (
+                            {parsedConsulta.diagnosticoTratamiento.diagnosticos && (
                               <>
                                 <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Diagnósticos</Text>
-                                <Stack gap="xs" mb="sm">
-                                  {parsedConsulta.diagnosticoTratamiento.diagnosticos.map((dx, dxIndex) => (
-                                    <Group key={dxIndex} gap="xs">
-                                      <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
-                                      <Text size="xs">{dx.codigo} - {dx.nombre}</Text>
+                                {Array.isArray(parsedConsulta.diagnosticoTratamiento.diagnosticos) ? (
+                                  <Stack gap="xs" mb="sm">
+                                    {parsedConsulta.diagnosticoTratamiento.diagnosticos.map((dx, dxIndex) => (
+                                      <Group key={dxIndex} gap="xs">
+                                        <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
+                                        <Text size="xs">{dx.codigo} - {dx.descripcion || dx.nombre}</Text>
+                                      </Group>
+                                    ))}
+                                  </Stack>
+                                ) : (
+                                  <Paper p="xs" mb="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                                    <Group gap="xs">
+                                      <Badge color={tema.mantineColor} size="sm">PRINCIPAL</Badge>
+                                      <Text size="xs">{parsedConsulta.diagnosticoTratamiento.diagnosticos}</Text>
                                     </Group>
-                                  ))}
-                                </Stack>
+                                  </Paper>
+                                )}
                               </>
                             )}
 
-                            <Grid>
+                            <Grid gutter="xs">
                               {hasValue(parsedConsulta.diagnosticoTratamiento.planTratamiento) && (
                                 <InfoField label="Plan de Tratamiento" value={parsedConsulta.diagnosticoTratamiento.planTratamiento} span={12} />
                               )}
@@ -765,34 +850,65 @@ const PatientClinicalHistoryCompleteNew = ({
                             </Grid>
 
                             {/* Medicamentos */}
-                            {parsedConsulta.diagnosticoTratamiento.medicamentos && Array.isArray(parsedConsulta.diagnosticoTratamiento.medicamentos) && parsedConsulta.diagnosticoTratamiento.medicamentos.length > 0 && (
+                            {parsedConsulta.diagnosticoTratamiento.medicamentos && (() => {
+                              console.log('Medicamentos data:', parsedConsulta.diagnosticoTratamiento.medicamentos);
+                              return true;
+                            })() && (
                               <>
                                 <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Medicamentos Formulados</Text>
-                                <Stack gap="xs">
-                                  {parsedConsulta.diagnosticoTratamiento.medicamentos.map((med, medIndex) => (
-                                    <Paper key={medIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                                      <Grid>
-                                        <Grid.Col span={6}>
-                                          <Text size="xs" fw={600}>{med.nombre}</Text>
-                                          <Text size="xs" c="dimmed">{med.presentacion}</Text>
-                                        </Grid.Col>
-                                        <Grid.Col span={3}>
-                                          <Text size="xs" c="dimmed">Dosis</Text>
-                                          <Text size="xs">{med.dosis}</Text>
-                                        </Grid.Col>
-                                        <Grid.Col span={3}>
-                                          <Text size="xs" c="dimmed">Duración</Text>
-                                          <Text size="xs">{med.duracion}</Text>
-                                        </Grid.Col>
-                                        {med.indicaciones && (
-                                          <Grid.Col span={12}>
-                                            <Text size="xs" c="dimmed">Indicaciones: {med.indicaciones}</Text>
-                                          </Grid.Col>
-                                        )}
-                                      </Grid>
-                                    </Paper>
-                                  ))}
-                                </Stack>
+                                {Array.isArray(parsedConsulta.diagnosticoTratamiento.medicamentos) ? (
+                                  <Stack gap="xs">
+                                    {parsedConsulta.diagnosticoTratamiento.medicamentos.map((med, medIndex) => {
+                                      console.log(`Medicamento ${medIndex}:`, med);
+                                      const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
+                                      const info = [
+                                        med.presentacion,
+                                        med.via,
+                                        med.concentracion
+                                      ].filter(Boolean).join(' - ');
+                                      const dosis = med.dosis || med.dosificacion;
+                                      const duracion = med.duracion || med.tiempo;
+                                      const frecuencia = med.frecuencia;
+                                      
+                                      return (
+                                        <Paper key={medIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                                          <Text size="xs">
+                                            <strong>{nombre}</strong>
+                                            {info && ` - ${info}`}
+                                            {dosis && ` | Dosis: ${dosis}`}
+                                            {duracion && ` | Duración: ${duracion}`}
+                                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
+                                          </Text>
+                                        </Paper>
+                                      );
+                                    })}
+                                  </Stack>
+                                ) : (
+                                  <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
+                                    {typeof parsedConsulta.diagnosticoTratamiento.medicamentos === 'object' ? (
+                                      (() => {
+                                        const med = parsedConsulta.diagnosticoTratamiento.medicamentos;
+                                        const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
+                                        const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
+                                        const dosis = med.dosis || med.dosificacion;
+                                        const duracion = med.duracion || med.tiempo;
+                                        const frecuencia = med.frecuencia;
+                                        
+                                        return (
+                                          <Text size="xs">
+                                            <strong>{nombre}</strong>
+                                            {info && ` - ${info}`}
+                                            {dosis && ` | Dosis: ${dosis}`}
+                                            {duracion && ` | Duración: ${duracion}`}
+                                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
+                                          </Text>
+                                        );
+                                      })()
+                                    ) : (
+                                      <Text size="xs">{parsedConsulta.diagnosticoTratamiento.medicamentos}</Text>
+                                    )}
+                                  </Paper>
+                                )}
                               </>
                             )}
                           </Paper>

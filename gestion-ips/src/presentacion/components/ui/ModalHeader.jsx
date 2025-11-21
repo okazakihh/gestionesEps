@@ -1,5 +1,6 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
 
 /**
  * Componente de header reutilizable para modales
@@ -13,15 +14,20 @@ const ModalHeader = ({
   icon: Icon,
   variant = 'default' // default, success, warning, error
 }) => {
-  const variantClasses = {
-    default: 'bg-blue-600',
-    success: 'bg-green-600',
-    warning: 'bg-yellow-600',
-    error: 'bg-red-600'
+  const { tema } = useTheme();
+
+  const variantStyles = {
+    default: { backgroundColor: tema.primaryColor },
+    success: { backgroundColor: '#16a34a' },
+    warning: { backgroundColor: '#ca8a04' },
+    error: { backgroundColor: '#dc2626' }
   };
 
   return (
-    <div className={`${variantClasses[variant]} px-6 py-4 flex items-center justify-between`}>
+    <div 
+      className="px-6 py-4 flex items-center justify-between"
+      style={variantStyles[variant]}
+    >
       <div className="flex items-center space-x-3">
         {Icon && <Icon className="h-6 w-6 text-white" />}
         <div>
