@@ -1,15 +1,15 @@
 import React from 'react';
 import { Paper, Stack, Group, Text, Title, Grid, Badge } from '@mantine/core';
-import { 
-  IconUser, 
-  IconCalendar, 
-  IconGenderBigender, 
-  IconDroplet, 
-  IconRuler, 
+import {
+  IconUser,
+  IconCalendar,
+  IconGenderBigender,
+  IconDroplet,
+  IconRuler,
   IconScale,
-  IconPhone, 
-  IconMail, 
-  IconMapPin, 
+  IconPhone,
+  IconMail,
+  IconMapPin,
   IconId,
   IconFileText,
   IconAlertCircle,
@@ -43,82 +43,82 @@ const PatientGeneralInfo = ({ patientData, patient }) => {
             <IconUser size={22} color="var(--mantine-color-blue-6)" />
             <Title order={4} c="blue.9">Datos Personales</Title>
           </Group>
-          
+
           <Grid gutter="xl">
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Nombre Completo"
                   value={`${patientData.informacionPersonal?.primerNombre || ''} ${patientData.informacionPersonal?.segundoNombre || ''} ${patientData.informacionPersonal?.primerApellido || ''} ${patientData.informacionPersonal?.segundoApellido || ''}`}
                   icon={IconUser}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Tipo Documento"
                   value={patient?.tipoDocumento}
                   icon={IconId}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Número Documento"
                   value={patient?.numeroDocumento}
                   icon={IconFileText}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Fecha Nacimiento"
                   value={patientData.informacionPersonal?.fechaNacimiento}
                   icon={IconCalendar}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Edad"
                   value={calculateAge(patientData.informacionPersonal?.fechaNacimiento)}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Género"
                   value={patientData.informacionPersonal?.genero}
                   icon={IconGenderBigender}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Estado Civil"
                   value={patientData.informacionPersonal?.estadoCivil}
                 />
               </Stack>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Tipo de Sangre"
                   value={patientData.informacionPersonal?.tipoSangre}
                   icon={IconDroplet}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Estatura"
                   value={patientData.informacionPersonal?.estatura ? `${patientData.informacionPersonal.estatura} cm` : null}
                   icon={IconRuler}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Peso"
                   value={patientData.informacionPersonal?.peso ? `${patientData.informacionPersonal.peso} kg` : null}
                   icon={IconScale}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Ocupación"
                   value={patientData.informacionPersonal?.ocupacion}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Nivel Educativo"
                   value={patientData.informacionPersonal?.nivelEducativo}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Estrato Socioeconómico"
                   value={patientData.informacionPersonal?.estratoSocioeconomico}
                   icon={IconStairs}
                 />
-                <InfoRow 
+                <InfoRow
                   label="EPS/Aseguradora"
                   value={patientData.informacionMedica?.eps}
                   icon={IconMedicalCross}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Régimen Afiliación"
                   value={patientData.informacionMedica?.regimenAfiliacion}
                   icon={IconBuildingCommunity}
@@ -136,35 +136,35 @@ const PatientGeneralInfo = ({ patientData, patient }) => {
             <IconPhone size={22} color="var(--mantine-color-green-6)" />
             <Title order={4} c="green.9">Información de Contacto</Title>
           </Group>
-          
+
           <Grid gutter="xl">
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Teléfono"
                   value={patientData.informacionContacto?.telefono}
                   icon={IconPhone}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Correo Electrónico"
                   value={patientData.informacionContacto?.email}
                   icon={IconMail}
                 />
               </Stack>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Dirección"
                   value={patientData.informacionContacto?.direccion}
                   icon={IconMapPin}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Ciudad"
                   value={patientData.informacionContacto?.ciudad}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Departamento"
                   value={patientData.informacionContacto?.departamento}
                 />
@@ -181,30 +181,30 @@ const PatientGeneralInfo = ({ patientData, patient }) => {
             <IconAlertCircle size={22} color="var(--mantine-color-red-7)" />
             <Title order={4} c="red.9">Contacto de Emergencia</Title>
           </Group>
-          
+
           <Grid gutter="xl">
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Nombre Completo"
                   value={patientData.contactoEmergencia?.nombreContacto}
                   icon={IconUser}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Relación"
                   value={patientData.contactoEmergencia?.relacion}
                 />
               </Stack>
             </Grid.Col>
-            
+
             <Grid.Col span={6}>
               <Stack gap="md">
-                <InfoRow 
+                <InfoRow
                   label="Teléfono Principal"
                   value={patientData.contactoEmergencia?.telefonoContacto}
                   icon={IconPhone}
                 />
-                <InfoRow 
+                <InfoRow
                   label="Teléfono Secundario"
                   value={patientData.contactoEmergencia?.telefonoContactoSecundario}
                   icon={IconPhone}

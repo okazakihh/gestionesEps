@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { usePatientForm } from "../../../../../negocio/hooks/pacientes/usePatientForm.js";
 import BasicInfoSection from './BasicInfoSection.jsx';
 import PersonalInfoSection from './PersonalInfoSection.jsx';
@@ -25,6 +26,7 @@ const CreatePatientModal = ({
     handleNestedInputChange,
     submitForm
   } = usePatientForm(editingPatient, prefillDocumentNumber);
+  const { tema } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,13 +47,14 @@ const CreatePatientModal = ({
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-4xl">
           {/* Header */}
-          <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-white">
+          <div style={{ backgroundColor: tema.primaryColor, padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ color: 'white', fontSize: '1.125rem', fontWeight: 600 }}>
               {editingPatient ? 'Editar Paciente' : 'Nuevo Paciente'}
             </h3>
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-200 transition-colors"
+              style={{ color: 'white' }}
+              className="hover:text-gray-200 transition-colors"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
@@ -103,7 +106,8 @@ const CreatePatientModal = ({
                  <button
                    type="submit"
                    disabled={saving}
-                   className="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                   style={{ backgroundColor: tema.primaryColor }}
+                   className="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                  >
                    {saving ? (
                      <div className="flex items-center">

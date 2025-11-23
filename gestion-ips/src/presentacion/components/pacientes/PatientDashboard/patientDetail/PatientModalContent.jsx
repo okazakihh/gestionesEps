@@ -6,7 +6,6 @@ import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalU
 
 // Importar componentes extraídos para clean code
 import PatientGeneralInfo from './PatientGeneralInfo.jsx';
-import PatientClinicalHistory from './PatientClinicalHistory.jsx';
 import PatientClinicalHistoryCompleteNew from './PatientClinicalHistoryCompleteNew.jsx';
 
 /**
@@ -48,13 +47,14 @@ const PatientModalContent = ({
         />
       )}
 
-      {/* Historia Clínica */}
+      {/* Historia Clínica (usar componente unificado) */}
       {activeTab === 'clinica' && (
-        <PatientClinicalHistory
+        <PatientClinicalHistoryCompleteNew
           historiaClinica={historiaClinica}
           consultas={consultas}
           setActiveTab={setActiveTab}
-          formatDate={formatDate}
+          patient={patient}
+          patientData={patientData}
         />
       )}
 

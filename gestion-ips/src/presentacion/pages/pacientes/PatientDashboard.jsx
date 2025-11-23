@@ -32,6 +32,7 @@ import CreatePatientModal from '../../components/pacientes/PatientDashboard/crea
 import PatientSearchModal from '../../components/pacientes/PatientDashboard/patientDetail/PatientSearchModal.jsx';
 import AgendaModal from '../../components/pacientes/PatientDashboard/agendaModal/AgendaModal.jsx';
 import ScheduleAppointmentModal from '../../components/pacientes/PatientDashboard/agendaModal/ScheduleAppointmentModal.jsx';
+import DisponibilidadMedicoModal from '../../components/pacientes/PatientDashboard/availability/DisponibilidadMedicoModal.jsx';
 import CalendarWidget from '../../components/pacientes/PatientDashboard/calendar/CalendarWidget.jsx';
 import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateHistoriaClinicaModal.jsx';
 import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateConsultaMedicaModal.jsx';
@@ -132,6 +133,11 @@ const PatientDashboard = () => {
 
   const handleCloseAgendaModal = patientManagement.handleCloseAgendaModal;
 
+  // Disponibilidad médico modal state
+  const [isDisponibilidadOpen, setIsDisponibilidadOpen] = useState(false);
+  const handleOpenDisponibilidad = () => setIsDisponibilidadOpen(true);
+  const handleCloseDisponibilidad = () => setIsDisponibilidadOpen(false);
+
   // Función delegada al hook de calendario
   const calculateAvailableSlots = calendarManagement.calculateAvailableSlots;
 
@@ -153,6 +159,7 @@ const PatientDashboard = () => {
               onDaySelect={calendarManagement.handleDaySelect}
               onNewPatient={handleOpenCreatePatientModal}
               onOpenAgenda={handleOpenAgendaModal}
+              onOpenDisponibilidad={handleOpenDisponibilidad}
             />
           </div>
 
@@ -653,17 +660,20 @@ const PatientDashboard = () => {
           isOpen={patientManagement.isAgendaModalOpen}
           onClose={handleCloseAgendaModal}
         />
+        <DisponibilidadMedicoModal opened={isDisponibilidadOpen} onClose={handleCloseDisponibilidad} />
 
-        {/* Schedule Appointment Modal */}
-        <ScheduleAppointmentModal
-          patientId={appointmentManagement.selectedPatientForAppointment?.id}
-          patientName={appointmentManagement.selectedPatientForAppointment?.name}
-          selectedSlot={appointmentManagement.selectedPatientForAppointment?.slot}
-          selectedDoctor={appointmentManagement.selectedPatientForAppointment?.slot?.doctorId ? getNombreCompletoMedico(calendarManagement.medicos.find(m => m.id == appointmentManagement.selectedPatientForAppointment.slot.doctorId)) : null}
-          isOpen={appointmentManagement.isAppointmentModalOpen}
-          onClose={handleCloseAppointmentModal}
-          onAppointmentCreated={handleAppointmentCreated}
-        />
+        {/* Schedule Appointment Modal (render only when opening to avoid prop-type warnings) */}
+        {appointmentManagement.isAppointmentModalOpen && appointmentManagement.selectedPatientForAppointment && (
+          <ScheduleAppointmentModal
+            patientId={appointmentManagement.selectedPatientForAppointment.id}
+            patientName={appointmentManagement.selectedPatientForAppointment.name}
+            selectedSlot={appointmentManagement.selectedPatientForAppointment.slot}
+            selectedDoctor={appointmentManagement.selectedPatientForAppointment.slot?.doctorId ? getNombreCompletoMedico(calendarManagement.medicos.find(m => m.id == appointmentManagement.selectedPatientForAppointment.slot.doctorId)) : null}
+            isOpen={appointmentManagement.isAppointmentModalOpen}
+            onClose={handleCloseAppointmentModal}
+            onAppointmentCreated={handleAppointmentCreated}
+          />
+        )}
 
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/react/24/outline';
 
-const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
+const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponibilidad }) => {
   // Quick actions for common tasks
   const quickActions = [
     {
@@ -17,6 +17,13 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda }) => {
       icon: CalendarDaysIcon,
       color: 'bg-green-500',
       action: onOpenAgenda || (() => console.log('Ver agenda'))
+    }
+    ,{
+      title: 'Disponibilidad Médico',
+      description: 'Gestionar horarios de médicos',
+      icon: ClockIcon,
+      color: 'bg-indigo-500',
+      action: onOpenDisponibilidad || (() => console.log('Disponibilidad médico'))
     }
   ];
   const [currentDate, setCurrentDate] = useState(new Date());

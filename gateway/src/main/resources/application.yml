@@ -108,6 +108,12 @@ spring:
             - Path=/api/configuracion/**
           filters:
             - StripPrefix=0
+        - id: disponibilidad_medico_route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/disponibilidad-medico/**
+          filters:
+            - StripPrefix=0
         # Ruta general para administrative (debe ir al final)
         - id: administrative_route
           uri: http://localhost:8084

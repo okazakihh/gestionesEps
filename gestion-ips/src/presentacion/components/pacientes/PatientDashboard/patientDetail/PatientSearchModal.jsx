@@ -4,6 +4,29 @@ import { Modal, Paper, Stack, Group, Text, Title, TextInput, Button, Badge, Scro
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { IconX, IconSearch, IconUser, IconCalendar, IconCheck, IconUserPlus } from '@tabler/icons-react';
 import { pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
+import { usePatientParser } from '../../../../../negocio/hooks/pacientes/usePatientParser.js';
+
+// Función de utilidad movida fuera del componente para reutilización y rendimiento.
+const parsePatientDataForDisplay = (patient) => {
+  if (!patient?.datosJson) {
+    return { nombreCompleto: patient?.nombreCompleto || 'N/A', telefono: 'N/A', email: 'N/A' };
+  }
+  try {
+    const datosJson = typeof patient.datosJson === 'string' ? JSON.parse(patient.datosJson) : patient.datosJson;
+    
+    const getJsonField = (field) => {
+      if (!datosJson[field]) return {};
+      return typeof datosJson[field] === 'string' ? JSON.parse(datosJson[field]) : datosJson[field];
+    };
+
+    const infoPersonal = getJsonField('informacionPersonalJson');
+    const infoContacto = getJsonField('informacionContactoJson');
+    const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
+    return { nombreCompleto: nombreCompleto || 'N/A', telefono: infoContacto.telefono || 'N/A', email: infoContacto.email || 'N/A' };
+  } catch (error) {
+    return { nombreCompleto: 'Error en datos', telefono: 'N/A', email: 'N/A' };
+  }
+};
 
 const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, selectedDoctor, onCreatePatient }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,55 +56,6 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
     }
   };
 
-  // Función para extraer información del JSON del paciente
-  const parsePatientData = (patient) => {
-    try {
-      if (patient.datosJson) {
-        // Parsear el primer nivel del JSON
-        const firstLevel = typeof patient.datosJson === 'string' ? JSON.parse(patient.datosJson) : patient.datosJson;
-
-        // El campo datosJson contiene otro JSON string anidado
-        if (firstLevel.datosJson) {
-          const secondLevel = typeof firstLevel.datosJson === 'string' ? JSON.parse(firstLevel.datosJson) : firstLevel.datosJson;
-
-          // Extraer información personal
-          const infoPersonal = secondLevel.informacionPersonal || {};
-          const infoContacto = secondLevel.informacionContacto || {};
-
-          const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
-
-          return {
-            nombreCompleto: nombreCompleto || 'N/A',
-            telefono: infoContacto.telefono || 'N/A',
-            email: infoContacto.email || 'N/A'
-          };
-        }
-
-        // Si no hay datosJson anidado, intentar parsear directamente (formato de API de creación)
-        if (firstLevel.informacionPersonalJson || firstLevel.informacionContactoJson) {
-          const infoPersonal = firstLevel.informacionPersonalJson ? JSON.parse(firstLevel.informacionPersonalJson) : {};
-          const infoContacto = firstLevel.informacionContactoJson ? JSON.parse(firstLevel.informacionContactoJson) : {};
-
-          const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
-
-          return {
-            nombreCompleto: nombreCompleto || 'N/A',
-            telefono: infoContacto.telefono || 'N/A',
-            email: infoContacto.email || 'N/A'
-          };
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing patient data:', error, patient);
-    }
-
-    return {
-      nombreCompleto: patient.nombreCompleto || 'N/A',
-      telefono: 'N/A',
-      email: 'N/A'
-    };
-  };
-
   // Filter patients based on search term
   const handleSearch = () => {
     if (!searchTerm.trim()) {
@@ -91,7 +65,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
     }
 
     const filtered = allPatients.filter(patient => {
-      const patientData = parsePatientData(patient);
+      const patientData = parsePatientDataForDisplay(patient);
       const documentNumber = `${patient.tipoDocumento || ''} ${patient.numeroDocumento || ''}`.toLowerCase();
       const searchLower = searchTerm.toLowerCase();
 
@@ -130,7 +104,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
 
   const handleCreateAppointment = () => {
     if (selectedPatient && onPatientSelected) {
-      const patientData = parsePatientData(selectedPatient);
+      const patientData = parsePatientDataForDisplay(selectedPatient);
       const patientName = patientData.nombreCompleto !== 'N/A' ? patientData.nombreCompleto : `Paciente ${selectedPatient.id}`;
 
       onPatientSelected(selectedPatient, patientName);
@@ -230,7 +204,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
             ) : filteredPatients.length > 0 ? (
               <Stack gap={0}>
                 {filteredPatients.map((patient) => {
-                  const patientData = parsePatientData(patient);
+                  const patientData = parsePatientDataForDisplay(patient);
                   const isSelected = selectedPatient?.id === patient.id;
                   
                   return (
@@ -309,7 +283,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
                   </Avatar>
                   <Stack gap={4}>
                     <Text fw={500}>
-                      {parsePatientData(selectedPatient).nombreCompleto !== 'N/A' ? parsePatientData(selectedPatient).nombreCompleto : `Paciente ${selectedPatient.id}`}
+                      {parsePatientDataForDisplay(selectedPatient).nombreCompleto !== 'N/A' ? parsePatientDataForDisplay(selectedPatient).nombreCompleto : `Paciente ${selectedPatient.id}`}
                     </Text>
                     <Text size="sm" c="dimmed">
                       {selectedPatient.tipoDocumento} {selectedPatient.numeroDocumento}
@@ -345,7 +319,7 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
                 </Text>
                 {selectedDoctor && (
                   <Text size="sm" c="blue.9">
-                    <Text component="span" fw={500}>Médico:</Text> {selectedDoctor}
+                    <Text component="span" fw={500}>Médico:</Text> {selectedDoctor.nombreCompleto || ''}
                   </Text>
                 )}
               </Stack>
@@ -369,7 +343,7 @@ PatientSearchModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onPatientSelected: PropTypes.func,
   selectedSlot: PropTypes.object,
-  selectedDoctor: PropTypes.string,
+  selectedDoctor: PropTypes.object,
   onCreatePatient: PropTypes.func
 };
 

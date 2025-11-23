@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Paper, Stack, Group, Title, Button, Text, Grid, Badge, ScrollArea, Divider, Timeline, Box, Modal, Image } from '@mantine/core';
+import { Paper, Stack, Group, Title, Button, ScrollArea, Box, Modal, Image, Text } from '@mantine/core';
 import {
   IconFileText,
   IconUser,
@@ -7,195 +7,60 @@ import {
   IconStethoscope,
   IconClipboard,
   IconArrowLeft,
-  IconCalendar,
-  IconPill,
-  IconActivity
+  IconEye,
+  IconCalendar
 } from '@tabler/icons-react';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
-import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils.js';
 import { getIpsConfig } from '../../../../../data/services/configuracionApiService.js';
 import { generarHistoriaClinicaHTML, generarIncapacidadHTML, generarTratamientoHTML } from '../../HistoriaClinicaHTML.js';
-import { IconEye } from '@tabler/icons-react';
+import PatientInfoPreserved from './PatientInfoPreserved.jsx';
+
+// Importar hooks personalizados para limpiar el componente
+import { usePatientParser } from '../../../../../negocio/hooks/pacientes/usePatientParser.js';
+import { useClinicalHistoryParser } from '../../../../../negocio/hooks/pacientes/useClinicalHistoryParser.js';
+import { usePreviewModal } from '../../../../../negocio/hooks/pacientes/usePreviewModal.js';
+
+// Importar componentes de sección refactorizados
+import SectionTitle from '../../../ui/SectionTitle.jsx';
+import { ProcedureDataSection, AnamnesisSection, AntecedentesSection, PhysicalExamSection, DiagnosisAndTreatmentSection, DigitalSignatureSection, IncapacitySection } from './ClinicalHistorySections.jsx';
+import ConsultationList from './ConsultationList.jsx';
 
 /**
  * Componente rediseñado para mostrar la historia clínica completa
  * con toda la información visible en formato scroll con Timeline de consultas
  */
 const PatientClinicalHistoryCompleteNew = ({
-  historiaClinica,
-  consultas,
-  setActiveTab,
-  patient,
-  patientData
-}) => {
-  const { tema } = useTheme();
+    historiaClinica,
+    consultas,
+    setActiveTab,
+    patient,
+    patientData
+  }) => {
+    const { tema } = useTheme();
 
-  const [ipsData, setIpsData] = useState(null);
+    const [ipsData, setIpsData] = useState(null);
 
-  useEffect(() => {
-    let mounted = true;
-    getIpsConfig()
-      .then(data => { if (mounted) setIpsData(data); })
-      .catch(err => { console.error('Error loading IPS config:', err); });
-    return () => { mounted = false; };
-  }, []);
+    useEffect(() => {
+      let mounted = true;
+      getIpsConfig()
+        .then(data => { if (mounted) setIpsData(data); })
+        .catch(err => { console.error('Error loading IPS config:', err); });
+      return () => { mounted = false; };
+    }, []);
 
-  // Parse de datos del paciente
-  const parsedPatientData = useMemo(() => {
-    // Si patientData ya tiene informacionPersonal parseado, úsalo directamente
-    if (patientData?.informacionPersonal && typeof patientData.informacionPersonal === 'object') {
-      return {
-        ...patientData,
-        tipoDocumento: patient?.tipoDocumento || patientData.tipoDocumento,
-        numeroDocumento: patient?.numeroDocumento || patientData.numeroDocumento
-      };
-    }
-    
-    // Si no, intentar parsear desde patient.datosJson
-    if (patient?.datosJson) {
-      try {
-        // Primer nivel de parseo
-        const datosJson = typeof patient.datosJson === 'string' 
-          ? JSON.parse(patient.datosJson) 
-          : patient.datosJson;
-        
-        // Segundo nivel: parsear informacionPersonalJson
-        let informacionPersonal = null;
-        if (datosJson.informacionPersonalJson) {
-          informacionPersonal = typeof datosJson.informacionPersonalJson === 'string'
-            ? JSON.parse(datosJson.informacionPersonalJson)
-            : datosJson.informacionPersonalJson;
-        }
-        
-        // Parsear informacionContactoJson
-        let informacionContacto = null;
-        if (datosJson.informacionContactoJson) {
-          informacionContacto = typeof datosJson.informacionContactoJson === 'string'
-            ? JSON.parse(datosJson.informacionContactoJson)
-            : datosJson.informacionContactoJson;
-        }
-        
-        // Parsear informacionMedicaJson
-        let informacionMedica = null;
-        if (datosJson.informacionMedicaJson) {
-          informacionMedica = typeof datosJson.informacionMedicaJson === 'string'
-            ? JSON.parse(datosJson.informacionMedicaJson)
-            : datosJson.informacionMedicaJson;
-        }
-        
-        // Combinar toda la información
-        const combinedInfo = {
-          ...informacionPersonal,
-          ...informacionContacto,
-          // Agregar datos médicos relevantes
-          eps: informacionMedica?.eps,
-          tipoSeguro: informacionMedica?.tipoSeguro,
-          regimenAfiliacion: informacionMedica?.regimenAfiliacion
-        };
-        
-        return {
-          tipoDocumento: patient.tipoDocumento,
-          numeroDocumento: patient.numeroDocumento,
-          informacionPersonal: combinedInfo
-        };
-      } catch (e) {
-        console.error('Error parsing patient datosJson:', e);
-      }
-    }
-    
-    // Fallback
-    return {
-      tipoDocumento: patient?.tipoDocumento || 'N/A',
-      numeroDocumento: patient?.numeroDocumento || 'N/A',
-      informacionPersonal: patientData?.informacionPersonal || {}
-    };
-  }, [patientData, patient]);
-
-  // Parse de datos JSON de Historia Clínica
-  const parsedData = useMemo(() => {
-    if (!historiaClinica?.datosJson) return null;
-    
-    try {
-      const parsed = JSON.parse(historiaClinica.datosJson);
-      return parsed.datosJson ? JSON.parse(parsed.datosJson) : parsed;
-    } catch (e) {
-      console.error('Error parsing historia clínica:', e);
-      return null;
-    }
-  }, [historiaClinica]);
-
-  // Preview modal state
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewHTML, setPreviewHTML] = useState('');
-  const [previewTitle, setPreviewTitle] = useState('Vista previa');
+    // Usar hooks para limpiar la lógica de parseo
+    const parsedPatientData = usePatientParser(patient, patientData);
+    const { parsedData, allConsultas } = useClinicalHistoryParser(historiaClinica, consultas);
+    const { previewOpen, previewHTML, previewTitle, openPreview, closePreview, handlePrint: handlePrintPreview } = usePreviewModal();
 
   const openPreviewForHistoria = async () => {
-    // Build consultas array for print (similar to printUtils)
-    const historiaData = parsedData || null;
-    const allConsultas = [];
-
-    // Consulta inicial
-    allConsultas.push({
-      id: `initial-${historiaClinica.id}`,
-      numero: 1,
-      tipo: 'Consulta Inicial',
-      fecha: historiaClinica.fechaApertura,
-      medico: (historiaData && (historiaData.procedimiento?.medicoResponsable || historiaData.informacionMedico?.medicoResponsable)) || 'N/A',
-      especialidad: (historiaData && (historiaData.procedimiento?.especialidad || historiaData.informacionMedico?.especialidad)) || 'N/A',
-      motivo: (historiaData && (historiaData.consultaInicial?.motivoConsulta || historiaData.informacionConsulta?.motivoConsulta)) || 'Apertura de historia clínica',
-      enfermedadActual: (historiaData && (historiaData.consultaInicial?.enfermedadActual || historiaData.informacionConsulta?.enfermedadActual)) || 'N/A',
-      diagnosticos: (historiaData && (historiaData.diagnostico?.diagnosticos || historiaData.diagnosticoTratamiento?.diagnosticos || historiaData.diagnosticoPlan?.diagnosticos)) || 'N/A',
-      planTratamiento: (historiaData && (historiaData.diagnostico?.plan?.conducta || historiaData.diagnosticoTratamiento?.planTratamiento || historiaData.diagnosticoPlan?.planTratamiento)) || 'N/A',
-      examenFisico: (historiaData && (historiaData.examenFisico?.estadoGeneral || historiaData.examenClinico?.examenFisico)) || 'N/A',
-      signosVitales: (historiaData && (historiaData.examenFisico?.signosVitales || historiaData.examenClinico?.signosVitales)) || 'N/A',
-      dependenciaMedica: (historiaData && historiaData.examenFisico?.dependenciaMedica) || null,
-      sistemas: (historiaData && historiaData.examenFisico?.sistemas) || null,
-      camposEspecificos: (historiaData && historiaData.examenFisico?.camposEspecificos) || null,
-      formulaMedica: (historiaData && (historiaData.diagnostico?.medicamentos || historiaData.diagnosticoPlan?.medicamentos)) || 'N/A',
-      incapacidad: null,
-      indicaciones: (historiaData && (historiaData.diagnostico?.plan?.recomendaciones || historiaData.diagnosticoPlan?.recomendaciones)) || 'N/A',
-      proximaCita: 'N/A',
-      observaciones: (historiaData && (historiaData.consultaInicial?.observaciones || historiaData.informacionConsulta?.observaciones)) || 'N/A'
-    });
-
-    // Agregar consultas posteriores
-    if (consultas && Array.isArray(consultas)) {
-      consultas.forEach((consulta, index) => {
-        try {
-          const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
-          allConsultas.push({
-            id: consulta.id,
-            numero: index + 2,
-            tipo: 'Consulta Médica',
-            fecha: consultaData.detalleConsulta?.fechaConsulta || consulta.fechaCreacion,
-            medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
-            especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
-            motivo: consultaData.informacionConsulta?.motivoConsulta || consultaData.detalleConsulta?.motivoConsulta || 'N/A',
-            enfermedadActual: consultaData.informacionConsulta?.enfermedadActual || consultaData.detalleConsulta?.enfermedadActual || 'N/A',
-            diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticoTratamiento?.diagnosticoPrincipal || 'N/A',
-            planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.diagnosticoTratamiento?.planManejo || 'N/A',
-            examenFisico: consultaData.examenFisico?.estadoGeneral || consultaData.examenFisico?.hallazgos || consultaData.examenClinico?.examenFisico || 'N/A',
-            signosVitales: consultaData.examenFisico?.signosVitales || consultaData.examenClinico?.signosVitales || 'N/A',
-            dependenciaMedica: consultaData.examenFisico?.dependenciaMedica || null,
-            sistemas: consultaData.examenFisico?.sistemas || null,
-            camposEspecificos: consultaData.examenFisico?.camposEspecificos || null,
-            formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica?.medicamentos || 'N/A',
-            incapacidad: consultaData.incapacidad || null,
-            indicaciones: consultaData.seguimientoConsulta?.recomendaciones || consultaData.seguimientoConsulta?.indicaciones || 'N/A',
-            proximaCita: consultaData.detalleConsulta?.proximaCita || consultaData.seguimientoConsulta?.proximaCita || 'N/A',
-            observaciones: consultaData.informacionConsulta?.observaciones || consultaData.seguimientoConsulta?.recomendaciones || 'N/A'
-          });
-        } catch (e) {
-          console.error('Error parsing consulta for preview:', e);
-        }
-      });
+    try {
+      const ipsData = await getIpsConfig();
+      const html = generarHistoriaClinicaHTML(allConsultas, historiaClinica, patient, parsedPatientData, parsedData, ipsData);
+      openPreview(`Historia Clínica - ${historiaClinica?.numeroHistoria || ''}`, html);
+    } catch (e) {
+      console.error('Error generating historia preview:', e);
     }
-
-    const ipsData = await getIpsConfig();
-    const html = generarHistoriaClinicaHTML(allConsultas, historiaClinica, patient, patientData, historiaData, ipsData);
-    setPreviewTitle(`Historia Clínica - ${historiaClinica?.numeroHistoria || ''}`);
-    setPreviewHTML(html);
-    setPreviewOpen(true);
   };
 
   const openPreviewForConsulta = async (consulta) => {
@@ -222,26 +87,25 @@ const PatientClinicalHistoryCompleteNew = ({
       };
 
       const ipsData = await getIpsConfig();
-      const html = generarHistoriaClinicaHTML([processed], historiaClinica, patient, patientData, null, ipsData);
-      setPreviewTitle(`Consulta #${consulta.id}`);
-      setPreviewHTML(html);
-      setPreviewOpen(true);
+      const html = generarHistoriaClinicaHTML([processed], historiaClinica, patient, parsedPatientData, null, ipsData);
+      openPreview(`Consulta #${consulta.id}`, html);
     } catch (e) {
       console.error('Error generating consulta preview:', e);
     }
   };
 
   const openPreviewIncapacidadForHistoria = async () => {
-    const historiaData = parsedData || null;
-    // build initial consulta like in openPreviewForHistoria
-    const initial = {
-      incapacidad: historiaData?.diagnosticoPlan?.incapacidad || null,
-    };
-    const ipsData = await getIpsConfig();
-    const html = generarIncapacidadHTML(initial, historiaClinica, patient, patientData, ipsData);
-    setPreviewTitle(`Incapacidad - Historia ${historiaClinica?.numeroHistoria || ''}`);
-    setPreviewHTML(html);
-    setPreviewOpen(true);
+    try {
+      const historiaData = parsedData || null;
+      const initial = {
+        incapacidad: historiaData?.diagnosticoPlan?.incapacidad || null,
+      };
+      const ipsData = await getIpsConfig();
+      const html = generarIncapacidadHTML(initial, historiaClinica, patient, parsedPatientData, ipsData);
+      openPreview(`Incapacidad - Historia ${historiaClinica?.numeroHistoria || ''}`, html);
+    } catch (e) {
+      console.error('Error generating incapacidad for historia preview:', e);
+    }
   };
 
   const openPreviewTratamientoForHistoria = async () => {
@@ -253,10 +117,8 @@ const PatientClinicalHistoryCompleteNew = ({
       medicamentos: historiaData?.diagnosticoPlan?.medicamentos || null
     };
     const ipsData = await getIpsConfig();
-    const html = generarTratamientoHTML(initial, historiaClinica, patient, patientData, ipsData);
-    setPreviewTitle(`Tratamiento - Historia ${historiaClinica?.numeroHistoria || ''}`);
-    setPreviewHTML(html);
-    setPreviewOpen(true);
+    const html = generarTratamientoHTML(initial, historiaClinica, patient, parsedPatientData, ipsData);
+    openPreview(`Tratamiento - Historia ${historiaClinica?.numeroHistoria || ''}`, html);
   };
 
   const openPreviewIncapacidadForConsulta = async (consulta) => {
@@ -264,10 +126,8 @@ const PatientClinicalHistoryCompleteNew = ({
       const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
       const processed = { ...consulta, incapacidad: consultaData.incapacidad || consulta.incapacidad || null };
       const ipsData = await getIpsConfig();
-      const html = generarIncapacidadHTML(processed, historiaClinica, patient, patientData, ipsData);
-      setPreviewTitle(`Incapacidad - Consulta #${consulta.id}`);
-      setPreviewHTML(html);
-      setPreviewOpen(true);
+      const html = generarIncapacidadHTML(processed, historiaClinica, patient, parsedPatientData, ipsData);
+      openPreview(`Incapacidad - Consulta #${consulta.id}`, html);
     } catch (e) {
       console.error('Error generating incapacidad preview:', e);
     }
@@ -284,86 +144,11 @@ const PatientClinicalHistoryCompleteNew = ({
         medicamentos: consultaData.diagnosticoTratamiento?.medicamentos || null
       };
       const ipsData = await getIpsConfig();
-      const html = generarTratamientoHTML(processed, historiaClinica, patient, patientData, ipsData);
-      setPreviewTitle(`Tratamiento - Consulta #${consulta.id}`);
-      setPreviewHTML(html);
-      setPreviewOpen(true);
+      const html = generarTratamientoHTML(processed, historiaClinica, patient, parsedPatientData, ipsData);
+      openPreview(`Tratamiento - Consulta #${consulta.id}`, html);
     } catch (e) {
       console.error('Error generating tratamiento preview:', e);
     }
-  };
-
-  const handlePrintPreview = () => {
-    if (!previewHTML) return;
-    const ventana = window.open('', '_blank', 'width=800,height=1000');
-    if (ventana) {
-      ventana.document.write(previewHTML);
-      ventana.document.close();
-      ventana.onload = function() {
-        ventana.focus();
-        ventana.print();
-      };
-      setTimeout(() => {
-        ventana.focus();
-        ventana.print();
-      }, 300);
-    } else {
-      alert('Por favor permita ventanas emergentes para imprimir.');
-    }
-  };
-
-  // Componente para mostrar información
-  const InfoField = ({ label, value, span = 6 }) => (
-    <Grid.Col span={span}>
-      <Group gap={8} wrap="nowrap" align="flex-start" style={{ textAlign: 'left', marginBottom: '8px' }}>
-        <Text size="xs" fw={700} style={{ minWidth: 'fit-content', textAlign: 'left' }}>{label}:</Text>
-        <Text size="xs" style={{ flex: 1, textAlign: 'left' }}>{value || 'No registrado'}</Text>
-      </Group>
-    </Grid.Col>
-  );
-
-  const SectionTitle = ({ icon: Icon, title, color }) => (
-    <div style={{ 
-      backgroundColor: color || tema.primaryColor, 
-      padding: '4px 8px', 
-      marginBottom: '8px',
-      borderRadius: '2px'
-    }}>
-      <Group gap="xs">
-        <Icon size={14} style={{ color: 'white' }} />
-        <Text size="xs" fw={700} style={{ color: 'white', textTransform: 'uppercase' }}>
-          {title}
-        </Text>
-      </Group>
-    </div>
-  );
-
-  // Función para verificar si un valor tiene datos registrados
-  const hasValue = (value) => {
-    if (value === null || value === undefined || value === '') return false;
-    if (value === 'No registrado' || value === 'N/A' || value === 'Sin notas') return false;
-    if (value === 'Ninguno' || value === 'ninguno') return false;
-    if (typeof value === 'string' && value.trim() === '') return false;
-    return true;
-  };
-
-  // Función para verificar si un objeto de signos vitales tiene datos
-  const hasSignosVitales = (signos) => {
-    if (!signos) return false;
-    return hasValue(signos.presionArterial) || 
-           hasValue(signos.frecuenciaCardiaca) || 
-           hasValue(signos.frecuenciaRespiratoria) || 
-           hasValue(signos.temperatura) || 
-           hasValue(signos.saturacionO2) || 
-           hasValue(signos.peso) || 
-           hasValue(signos.talla) || 
-           hasValue(signos.imc);
-  };
-
-  // Función para verificar si un objeto de sistemas tiene datos
-  const hasSistemasData = (sistemas) => {
-    if (!sistemas) return false;
-    return Object.values(sistemas).some(value => hasValue(value));
   };
 
   return (
@@ -396,7 +181,7 @@ const PatientClinicalHistoryCompleteNew = ({
       {/* Modal de vista previa para impresión */}
       <Modal
         opened={previewOpen}
-        onClose={() => setPreviewOpen(false)}
+        onClose={closePreview}
         title={previewTitle}
         size="90%"
         overlayOpacity={0.55}
@@ -408,110 +193,20 @@ const PatientClinicalHistoryCompleteNew = ({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
-          <Button size="xs" variant="light" color={tema.mantineColor} onClick={handlePrintPreview}>
+          <Button size="xs" variant="light" color={tema.mantineColor} onClick={handlePrintPreview} >
             Imprimir vista previa
           </Button>
-          <Button size="xs" variant="default" onClick={() => setPreviewOpen(false)}>Cerrar</Button>
+          <Button size="xs" variant="default" onClick={closePreview}>Cerrar</Button>
         </div>
         <div style={{ width: '100%', height: '75vh', overflow: 'auto', border: '1px solid #ddd' }} dangerouslySetInnerHTML={{ __html: previewHTML }} />
       </Modal>
 
-      {/* Información del Paciente - Estilo tabla 3 columnas */}
-      <Paper p="sm" style={{ 
-        backgroundColor: '#f8f9fa',
-        borderLeft: `3px solid ${tema.primaryColor}`,
-        borderRight: `3px solid ${tema.primaryColor}`,
-        borderRadius: 0
-      }}>
-        <Grid gutter={8}>
-          {/* Columna 1 */}
-          <Grid.Col span={4}>
-            <Stack gap={4}>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Nombres:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.primerNombre || ''} {parsedPatientData?.informacionPersonal?.segundoNombre || ''}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Tipo Doc:</Text>
-                <Text size="xs">{parsedPatientData?.tipoDocumento || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>FN:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.fechaNacimiento || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Sexo:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.genero || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Dirección:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.direccion || 'N/A'}</Text>
-              </Group>
-            </Stack>
-          </Grid.Col>
-
-          {/* Columna 2 */}
-          <Grid.Col span={4}>
-            <Stack gap={4}>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Apellidos:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.primerApellido || ''} {parsedPatientData?.informacionPersonal?.segundoApellido || ''}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}># Doc:</Text>
-                <Text size="xs">{parsedPatientData?.numeroDocumento || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Edad:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.fechaNacimiento ? (() => {
-                  const hoy = new Date();
-                  const nacimiento = new Date(parsedPatientData.informacionPersonal.fechaNacimiento);
-                  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-                  const mes = hoy.getMonth() - nacimiento.getMonth();
-                  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
-                  return edad + ' años';
-                })() : 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>E.Civil:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.estadoCivil || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Ocupación:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.ocupacion || 'N/A'}</Text>
-              </Group>
-            </Stack>
-          </Grid.Col>
-
-          {/* Columna 3 */}
-          <Grid.Col span={4}>
-            <Stack gap={4}>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Ciudad:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.ciudad || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>RH:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.tipoSangre || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Teléfono:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.telefono || parsedPatientData?.informacionPersonal?.telefonoMovil || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Entidad:</Text>
-                <Text size="xs">{parsedPatientData?.informacionPersonal?.eps || parsedData?.procedimiento?.entidadPrestadora || 'N/A'}</Text>
-              </Group>
-              <Group gap={4} wrap="nowrap">
-                <Text size="xs" fw={700} style={{ minWidth: '70px' }}>Estado:</Text>
-                <Badge color={historiaClinica?.activa ? 'green' : 'gray'} variant="light" size="xs">
-                  {historiaClinica?.activa ? 'ACTIVA' : 'INACTIVA'}
-                </Badge>
-              </Group>
-            </Stack>
-          </Grid.Col>
-        </Grid>
-      </Paper>
+      <PatientInfoPreserved 
+        parsedPatientData={parsedPatientData || {}}
+        parsedData={parsedData || {}}
+        historiaClinica={historiaClinica}
+        tema={tema}
+      />
 
       {/* Botones de acción */}
       <Paper p="sm" style={{ 
@@ -570,689 +265,34 @@ const PatientClinicalHistoryCompleteNew = ({
       }}>
         <Stack gap="md" p="md">
           
-          {/* Log para debugging */}
-          {(() => {
-            console.log('=== PARSED DATA HISTORIA CLINICA ===');
-            console.log('parsedData:', parsedData);
-            console.log('parsedData.diagnostico:', parsedData?.diagnostico);
-            console.log('parsedData.diagnosticoTratamiento:', parsedData?.diagnosticoTratamiento);
-            return null;
-          })()}
-          
           {/* Sección 1: Datos del Procedimiento */}
-          {parsedData?.procedimiento && (
-            <Box>
-              <SectionTitle icon={IconUser} title="Datos del Procedimiento" />
-              <Grid gutter="xs">
-                <InfoField label="Médico Responsable" value={parsedData.procedimiento.medicoResponsable} span={6} />
-                <InfoField label="Registro Médico" value={parsedData.procedimiento.registroMedico} span={6} />
-                <InfoField label="Especialidad" value={parsedData.procedimiento.especialidad} span={6} />
-                <InfoField label="Entidad Prestadora" value={parsedData.procedimiento.entidadPrestadora} span={6} />
-                <InfoField label="Ámbito" value={parsedData.procedimiento.ambito} span={6} />
-                <InfoField label="Finalidad" value={parsedData.procedimiento.finalidad} span={6} />
-              </Grid>
-            </Box>
-          )}
+          <ProcedureDataSection data={parsedData?.procedimiento} />
 
           {/* Sección 2: Consulta Inicial - Solo mostrar si hay datos */}
-          {parsedData?.consultaInicial && (
-            <Box>
-              <SectionTitle icon={IconFileText} title="Motivo y Anamnesis" />
-              <Grid gutter="xs">
-                {hasValue(parsedData.consultaInicial.motivoConsulta) && (
-                  <InfoField label="Motivo de Consulta" value={parsedData.consultaInicial.motivoConsulta} span={12} />
-                )}
-                {hasValue(parsedData.consultaInicial.enfermedadActual) && (
-                  <InfoField label="Enfermedad Actual" value={parsedData.consultaInicial.enfermedadActual} span={12} />
-                )}
-                {hasValue(parsedData.consultaInicial.tiempoEvolucion) && (
-                  <InfoField label="Tiempo de Evolución" value={parsedData.consultaInicial.tiempoEvolucion} span={6} />
-                )}
-                {hasValue(parsedData.consultaInicial.revisionSistemas) && (
-                  <InfoField label="Revisión de Sistemas" value={parsedData.consultaInicial.revisionSistemas} span={12} />
-                )}
-                {hasValue(parsedData.consultaInicial.medicamentosActuales) && (
-                  <InfoField label="Medicamentos Actuales" value={parsedData.consultaInicial.medicamentosActuales} span={12} />
-                )}
-              </Grid>
-            </Box>
-          )}
+          <AnamnesisSection data={parsedData?.consultaInicial} />
 
           {/* Sección 3: Antecedentes */}
-          {parsedData?.antecedentes && (
-            <Box>
-              <SectionTitle icon={IconHeart} title="Antecedentes" />
-              <Grid gutter="xs">
-                {/* Antecedentes Patológicos */}
-                {parsedData.antecedentes.patologicos?.selected?.length > 0 && 
-                 !parsedData.antecedentes.patologicos.selected.includes('ninguno') && (
-                  <InfoField 
-                    label="Antecedentes Patológicos" 
-                    value={`${parsedData.antecedentes.patologicos.selected.join(', ')}${parsedData.antecedentes.patologicos.detalles ? ' - ' + parsedData.antecedentes.patologicos.detalles : ''}`}
-                    span={12} 
-                  />
-                )}
-
-                {/* Antecedentes Familiares */}
-                {parsedData.antecedentes.familiares?.selected?.length > 0 && 
-                 !parsedData.antecedentes.familiares.selected.includes('ninguno') && (
-                  <InfoField 
-                    label="Antecedentes Familiares" 
-                    value={`${parsedData.antecedentes.familiares.selected.join(', ')}${parsedData.antecedentes.familiares.detalles ? ' - ' + parsedData.antecedentes.familiares.detalles : ''}`}
-                    span={12} 
-                  />
-                )}
-
-                {/* Antecedentes Quirúrgicos */}
-                {hasValue(parsedData.antecedentes.quirurgicos) && (
-                  <InfoField label="Antecedentes Quirúrgicos" value={parsedData.antecedentes.quirurgicos} span={12} />
-                )}
-
-                {/* Antecedentes Alérgicos */}
-                {parsedData.antecedentes.alergicos && !parsedData.antecedentes.alergicos.ninguno && (
-                  <>
-                    {hasValue(parsedData.antecedentes.alergicos.medicamentos) && (
-                      <InfoField label="Alergias - Medicamentos" value={parsedData.antecedentes.alergicos.medicamentos} span={12} />
-                    )}
-                    {hasValue(parsedData.antecedentes.alergicos.alimentos) && (
-                      <InfoField label="Alergias - Alimentos" value={parsedData.antecedentes.alergicos.alimentos} span={12} />
-                    )}
-                    {hasValue(parsedData.antecedentes.alergicos.otros) && (
-                      <InfoField label="Alergias - Otros" value={parsedData.antecedentes.alergicos.otros} span={12} />
-                    )}
-                  </>
-                )}
-
-                {/* Hábitos */}
-                {hasValue(parsedData.antecedentes.habitos?.alcohol) && parsedData.antecedentes.habitos.alcohol !== 'no' && (
-                  <InfoField label="Alcohol" value={parsedData.antecedentes.habitos.alcohol} span={6} />
-                )}
-                {hasValue(parsedData.antecedentes.habitos?.tabaco) && parsedData.antecedentes.habitos.tabaco !== 'no' && (
-                  <InfoField 
-                    label="Tabaco" 
-                    value={`${parsedData.antecedentes.habitos.tabaco}${parsedData.antecedentes.habitos.tabacoCantidad ? ' - ' + parsedData.antecedentes.habitos.tabacoCantidad : ''}`} 
-                    span={6} 
-                  />
-                )}
-                {hasValue(parsedData.antecedentes.habitos?.actividadFisica) && (
-                  <InfoField label="Actividad Física" value={parsedData.antecedentes.habitos.actividadFisica} span={6} />
-                )}
-              </Grid>
-            </Box>
-          )}
+          <AntecedentesSection data={parsedData?.antecedentes} />
 
           {/* Sección 4: Examen Físico */}
-          {parsedData?.examenFisico && (
-            <Box>
-              <SectionTitle icon={IconStethoscope} title="Examen Físico" />
-              <Grid gutter="xs">
-                {/* Datos Generales */}
-                {hasValue(parsedData.examenFisico.dependenciaMedica) && (
-                  <InfoField label="Dependencia Médica" value={parsedData.examenFisico.dependenciaMedica} span={6} />
-                )}
-                {hasValue(parsedData.examenFisico.estadoGeneral) && (
-                  <InfoField label="Estado General" value={parsedData.examenFisico.estadoGeneral} span={12} />
-                )}
-
-                {/* Signos Vitales */}
-                {hasValue(parsedData.examenFisico.signosVitales?.presionArterial) && (
-                  <InfoField label="Presión Arterial" value={parsedData.examenFisico.signosVitales.presionArterial} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.frecuenciaCardiaca) && (
-                  <InfoField label="Frecuencia Cardíaca" value={parsedData.examenFisico.signosVitales.frecuenciaCardiaca} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.frecuenciaRespiratoria) && (
-                  <InfoField label="Frecuencia Respiratoria" value={parsedData.examenFisico.signosVitales.frecuenciaRespiratoria} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.temperatura) && (
-                  <InfoField label="Temperatura" value={parsedData.examenFisico.signosVitales.temperatura} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.saturacionO2) && (
-                  <InfoField label="Saturación O2" value={parsedData.examenFisico.signosVitales.saturacionO2} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.peso) && (
-                  <InfoField label="Peso" value={parsedData.examenFisico.signosVitales.peso} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.talla) && (
-                  <InfoField label="Talla" value={parsedData.examenFisico.signosVitales.talla} span={3} />
-                )}
-                {hasValue(parsedData.examenFisico.signosVitales?.imc) && (
-                  <InfoField label="IMC" value={parsedData.examenFisico.signosVitales.imc} span={3} />
-                )}
-
-                {/* Examen por Sistemas */}
-                {hasValue(parsedData.examenFisico.sistemas?.cardiovascular) && (
-                  <InfoField label="Cardiovascular" value={parsedData.examenFisico.sistemas.cardiovascular} span={12} />
-                )}
-                {hasValue(parsedData.examenFisico.sistemas?.respiratorio) && (
-                  <InfoField label="Respiratorio" value={parsedData.examenFisico.sistemas.respiratorio} span={12} />
-                )}
-                {hasValue(parsedData.examenFisico.sistemas?.gastrointestinal) && (
-                  <InfoField label="Gastrointestinal" value={parsedData.examenFisico.sistemas.gastrointestinal} span={12} />
-                )}
-                {hasValue(parsedData.examenFisico.sistemas?.neurologico) && (
-                  <InfoField label="Neurológico" value={parsedData.examenFisico.sistemas.neurologico} span={12} />
-                )}
-                {hasValue(parsedData.examenFisico.sistemas?.musculoesqueletico) && (
-                  <InfoField label="Musculoesquelético" value={parsedData.examenFisico.sistemas.musculoesqueletico} span={12} />
-                )}
-
-                {/* Examen Específico */}
-                {parsedData.examenFisico.camposEspecificos && Object.entries(parsedData.examenFisico.camposEspecificos).map(([key, value]) => {
-                  // Formatear el nombre del campo: camelCase -> Título
-                  const label = key
-                    .replace(/([A-Z])/g, ' $1')
-                    .trim()
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-                  
-                  return hasValue(value) && <InfoField key={key} label={label} value={value} span={6} />
-                })}
-              </Grid>
-            </Box>
-          )}
+          <PhysicalExamSection data={parsedData?.examenFisico} />
 
           {/* Sección 5: Diagnóstico y Tratamiento */}
-          {(parsedData?.diagnostico || parsedData?.diagnosticoTratamiento || parsedData?.diagnosticoPlan) && (
-            <Box>
-              <SectionTitle icon={IconClipboard} title="Diagnóstico y Tratamiento" />
-              
-              {/* Diagnósticos - Soporta ambas estructuras */}
-              {(() => {
-                const diagnosticos = parsedData.diagnostico?.diagnosticos || parsedData.diagnosticoTratamiento?.diagnosticos || parsedData.diagnosticoPlan?.diagnosticos;
-                if (!diagnosticos) return null;
-                
-                return (
-                  <>
-                    <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Diagnósticos</Text>
-                    {Array.isArray(diagnosticos) ? (
-                      <Stack gap="xs" mb="sm">
-                        {diagnosticos.map((dx, dxIndex) => (
-                          <Paper key={dxIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                            <Group gap="xs">
-                              <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
-                              <Text size="xs">{dx.codigo} - {dx.descripcion || dx.nombre}</Text>
-                            </Group>
-                          </Paper>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Paper p="xs" mb="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                        <Group gap="xs">
-                          <Badge color={tema.mantineColor} size="sm">PRINCIPAL</Badge>
-                          <Text size="xs">{diagnosticos}</Text>
-                        </Group>
-                      </Paper>
-                    )}
-                  </>
-                );
-              })()}
-
-              {/* Plan de Tratamiento y otros campos - Soporta ambas estructuras */}
-              <Grid gutter="xs">
-                {hasValue(parsedData.diagnostico?.plan?.conducta || parsedData.diagnosticoTratamiento?.planTratamiento || parsedData.diagnosticoPlan?.planTratamiento) && (
-                  <InfoField 
-                    label="Plan de Tratamiento" 
-                    value={parsedData.diagnostico?.plan?.conducta || parsedData.diagnosticoTratamiento?.planTratamiento || parsedData.diagnosticoPlan?.planTratamiento} 
-                    span={12} 
-                  />
-                )}
-                {hasValue(parsedData.diagnostico?.plan?.recomendaciones || parsedData.diagnosticoPlan?.recomendaciones) && (
-                  <InfoField label="Recomendaciones" value={parsedData.diagnostico?.plan?.recomendaciones || parsedData.diagnosticoPlan?.recomendaciones} span={12} />
-                )}
-                {(() => {
-                  const seguimiento = parsedData.diagnostico?.plan?.seguimiento || parsedData.diagnosticoPlan?.seguimiento;
-                  if (!hasValue(seguimiento)) return null;
-                  const seguimientoText = typeof seguimiento === 'object' 
-                    ? `${seguimiento.requiere ? 'Requiere' : 'No requiere'} seguimiento${seguimiento.tipo ? ` - ${seguimiento.tipo}` : ''}${seguimiento.fechaProxima ? ` - Fecha: ${seguimiento.fechaProxima}` : ''}`
-                    : seguimiento;
-                  return <InfoField label="Seguimiento" value={seguimientoText} span={12} />;
-                })()}
-                {hasValue(parsedData.diagnosticoTratamiento?.procedimientos) && (
-                  <InfoField label="Procedimientos" value={parsedData.diagnosticoTratamiento.procedimientos} span={12} />
-                )}
-                {hasValue(parsedData.diagnosticoPlan?.ayudasDiagnosticas) && (
-                  <InfoField label="Ayudas Diagnósticas" value={parsedData.diagnosticoPlan.ayudasDiagnosticas} span={12} />
-                )}
-              </Grid>
-
-              {/* Medicamentos - Soporta ambas estructuras */}
-              {(parsedData.diagnostico?.medicamentos || parsedData.diagnosticoTratamiento?.medicamentos || parsedData.diagnosticoPlan?.medicamentos) && (() => {
-                const medicamentos = parsedData.diagnostico?.medicamentos || parsedData.diagnosticoTratamiento?.medicamentos || parsedData.diagnosticoPlan?.medicamentos;
-                return (
-                <>
-                  <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Medicamentos Formulados</Text>
-                  {Array.isArray(medicamentos) ? (
-                    <Stack gap="xs">
-                      {medicamentos.map((med, medIndex) => {
-                        const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
-                        const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
-                        const dosis = med.dosis || med.dosificacion;
-                        const duracion = med.duracion || med.tiempo;
-                        const frecuencia = med.frecuencia;
-                        
-                        return (
-                          <Paper key={medIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                            <Text size="xs">
-                              <strong>{nombre}</strong>
-                              {info && ` - ${info}`}
-                              {dosis && ` | Dosis: ${dosis}`}
-                              {duracion && ` | Duración: ${duracion}`}
-                              {frecuencia && ` | Frecuencia: ${frecuencia}`}
-                            </Text>
-                          </Paper>
-                        );
-                      })}
-                    </Stack>
-                  ) : typeof medicamentos === 'object' ? (
-                    (() => {
-                      const med = medicamentos;
-                      const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
-                      const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
-                      const dosis = med.dosis || med.dosificacion;
-                      const duracion = med.duracion || med.tiempo;
-                      const frecuencia = med.frecuencia;
-                      
-                      return (
-                        <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                          <Text size="xs">
-                            <strong>{nombre}</strong>
-                            {info && ` - ${info}`}
-                            {dosis && ` | Dosis: ${dosis}`}
-                            {duracion && ` | Duración: ${duracion}`}
-                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
-                          </Text>
-                        </Paper>
-                      );
-                    })()
-                  ) : (
-                    <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                      <Text size="xs">{medicamentos}</Text>
-                    </Paper>
-                  )}
-                </>
-                );
-              })()}
-            </Box>
-          )}
+          <DiagnosisAndTreatmentSection data={parsedData} />
 
           {/* Firma Digital - Historia Clínica Inicial */}
-          {parsedData?.firmaDigital && (
-            <Box>
-              <SectionTitle icon={IconClipboard} title="Firma Digital" />
-              <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                <Grid>
-                  <InfoField label="Nombre Médico" value={parsedData.firmaDigital.nombreMedico} span={6} />
-                  <InfoField label="Cédula" value={parsedData.firmaDigital.numeroCedula} span={6} />
-                  <InfoField label="Especialidad" value={parsedData.firmaDigital.especialidad} span={6} />
-                  <InfoField label="Fecha Firma" value={parsedData.firmaDigital.fechaFirma} span={6} />
-                </Grid>
-              </Paper>
-            </Box>
-          )}
+          <DigitalSignatureSection data={parsedData?.firmaDigital} />
 
-              {/* Incapacidad - Historia Clínica Inicial */}
-              {hasValue(parsedData?.diagnosticoPlan?.incapacidad) && (
-                <Box>
-                  <SectionTitle icon={IconActivity} title="Incapacidad" />
-                  <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                    <Grid>
-                      <InfoField label="Tipo" value={parsedData.diagnosticoPlan.incapacidad.tipo} span={6} />
-                      <InfoField label="Fecha Inicio" value={parsedData.diagnosticoPlan.incapacidad.fechaInicio} span={3} />
-                      <InfoField label="Fecha Fin" value={parsedData.diagnosticoPlan.incapacidad.fechaFin} span={3} />
-                      <InfoField label="Días" value={parsedData.diagnosticoPlan.incapacidad.dias} span={3} />
-                      <InfoField label="Motivo" value={parsedData.diagnosticoPlan.incapacidad.motivo} span={9} />
-                    </Grid>
-                  </Paper>
-                </Box>
-              )}
+          {/* Incapacidad - Historia Clínica Inicial */}
+          <IncapacitySection data={parsedData?.diagnosticoPlan?.incapacidad} />
 
           {/* Sección 6: Consultas Médicas Detalladas */}
-          <Stack gap="md">
-            <Title order={5} size="h6" style={{ color: tema.primaryColor }}>
-              <Group gap="xs">
-                <IconCalendar size={18} />
-                Consultas Médicas ({consultas?.length || 0})
-              </Group>
-            </Title>
-
-            {consultas && consultas.length > 0 ? (
-              consultas.map((consulta, index) => {
-                let parsedConsulta = null;
-                try {
-                  parsedConsulta = consulta.datosJson ? JSON.parse(consulta.datosJson) : null;
-                } catch (e) {
-                  console.error('Error parsing consulta data:', e);
-                }
-
-                return (
-                  <Paper key={consulta.id} p="md" withBorder style={{ backgroundColor: `${tema.primaryColor}08` }}>
-                    {/* Header de Consulta */}
-                    <Group justify="space-between" mb="md" pb="sm" style={{ borderBottom: `2px solid ${tema.primaryColor}30` }}>
-                      <Group gap="md">
-                        <Badge size="xl" circle color={tema.mantineColor} variant="filled">
-                          {index + 1}
-                        </Badge>
-                        <Stack gap={2}>
-                          <Text size="sm" fw={700}>Consulta #{consulta.id}</Text>
-                          <Group gap="xs">
-                            <IconCalendar size={14} style={{ color: tema.primaryColor }} />
-                            <Text size="xs" c="dimmed">
-                              {parsedConsulta?.detalleConsulta?.fechaConsulta 
-                                ? formatDate(parsedConsulta.detalleConsulta.fechaConsulta)
-                                : formatDate(consulta.fechaCreacion)}
-                            </Text>
-                          </Group>
-                        </Stack>
-                      </Group>
-                      <Group gap="sm">
-                        {/* Botones de impresión eliminados: usar vistas (preview) para imprimir desde el modal */}
-                        <Button
-                          leftSection={<IconEye size={16} />}
-                          onClick={() => openPreviewIncapacidadForConsulta(consulta)}
-                          variant="outline"
-                          color={tema.mantineColor}
-                          size="sm"
-                        >
-                          Vista Incapacidad
-                        </Button>
-                        <Button
-                          leftSection={<IconEye size={16} />}
-                          onClick={() => openPreviewTratamientoForConsulta(consulta)}
-                          variant="outline"
-                          color={tema.mantineColor}
-                          size="sm"
-                        >
-                          Vista Tratamiento
-                        </Button>
-                        <Button
-                          leftSection={<IconEye size={16} />}
-                          onClick={() => openPreviewForConsulta(consulta)}
-                          variant="outline"
-                          color={tema.mantineColor}
-                          size="sm"
-                        >
-                          Vista previa
-                        </Button>
-                        <Stack gap={2} align="flex-end">
-                          <Text size="xs" c="dimmed">Creado</Text>
-                          <Text size="xs" fw={500}>{formatDate(consulta.fechaCreacion)}</Text>
-                        </Stack>
-                      </Group>
-                    </Group>
-
-                    {/* Contenido de la Consulta */}
-                    {parsedConsulta && (
-                      <Stack gap="md">
-                        {/* Detalle de Consulta */}
-                        {parsedConsulta.detalleConsulta && (
-                          <Paper p="sm" withBorder>
-                            <SectionTitle icon={IconUser} title="Detalle de la Consulta" />
-                            <Grid>
-                              {hasValue(parsedConsulta.detalleConsulta.medicoTratante) && (
-                                <InfoField label="Médico Tratante" value={parsedConsulta.detalleConsulta.medicoTratante} span={6} />
-                              )}
-                              {hasValue(parsedConsulta.detalleConsulta.especialidad) && (
-                                <InfoField label="Especialidad" value={parsedConsulta.detalleConsulta.especialidad} span={6} />
-                              )}
-                              {hasValue(parsedConsulta.detalleConsulta.tipoConsulta) && (
-                                <InfoField label="Tipo de Consulta" value={parsedConsulta.detalleConsulta.tipoConsulta} span={6} />
-                              )}
-                              {hasValue(parsedConsulta.detalleConsulta.proximaCita) && (
-                                <InfoField label="Próxima Cita" value={parsedConsulta.detalleConsulta.proximaCita} span={6} />
-                              )}
-                            </Grid>
-                          </Paper>
-                        )}
-
-                        {/* Información de Consulta */}
-                        {parsedConsulta.informacionConsulta && (
-                          <Paper p="sm" withBorder>
-                            <SectionTitle icon={IconFileText} title="Información de Consulta" />
-                            <Grid>
-                              {hasValue(parsedConsulta.informacionConsulta.motivoConsulta) && (
-                                <InfoField label="Motivo de Consulta" value={parsedConsulta.informacionConsulta.motivoConsulta} span={12} />
-                              )}
-                              {hasValue(parsedConsulta.informacionConsulta.enfermedadActual) && (
-                                <InfoField label="Enfermedad Actual" value={parsedConsulta.informacionConsulta.enfermedadActual} span={12} />
-                              )}
-                              {hasValue(parsedConsulta.informacionConsulta.observaciones) && (
-                                <InfoField label="Observaciones" value={parsedConsulta.informacionConsulta.observaciones} span={12} />
-                              )}
-                            </Grid>
-                          </Paper>
-                        )}
-
-                        {/* Examen Físico */}
-                        {parsedConsulta.examenFisico && (
-                          <Paper p="sm" withBorder>
-                            <SectionTitle icon={IconStethoscope} title="Examen Físico" />
-                            
-                            {/* Signos Vitales - Solo mostrar si hay datos registrados */}
-                            {parsedConsulta.examenFisico.signosVitales && hasSignosVitales(parsedConsulta.examenFisico.signosVitales) && (
-                              <>
-                                <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Signos Vitales</Text>
-                                <Grid mb="sm">
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.presionArterial) && (
-                                    <InfoField label="Presión Arterial" value={parsedConsulta.examenFisico.signosVitales.presionArterial} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.frecuenciaCardiaca) && (
-                                    <InfoField label="FC" value={parsedConsulta.examenFisico.signosVitales.frecuenciaCardiaca} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.frecuenciaRespiratoria) && (
-                                    <InfoField label="FR" value={parsedConsulta.examenFisico.signosVitales.frecuenciaRespiratoria} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.temperatura) && (
-                                    <InfoField label="Temperatura" value={parsedConsulta.examenFisico.signosVitales.temperatura} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.peso) && (
-                                    <InfoField label="Peso" value={parsedConsulta.examenFisico.signosVitales.peso} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.talla) && (
-                                    <InfoField label="Talla" value={parsedConsulta.examenFisico.signosVitales.talla} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.imc) && (
-                                    <InfoField label="IMC" value={parsedConsulta.examenFisico.signosVitales.imc} span={3} />
-                                  )}
-                                  {hasValue(parsedConsulta.examenFisico.signosVitales.spo2) && (
-                                    <InfoField label="SpO2" value={parsedConsulta.examenFisico.signosVitales.spo2} span={3} />
-                                  )}
-                                </Grid>
-                              </>
-                            )}
-
-                            <Grid>
-                              {hasValue(parsedConsulta.examenFisico.dependenciaMedica) && (
-                                <InfoField label="Dependencia Médica" value={parsedConsulta.examenFisico.dependenciaMedica} span={6} />
-                              )}
-                              {hasValue(parsedConsulta.examenFisico.estadoGeneral) && (
-                                <InfoField label="Estado General" value={parsedConsulta.examenFisico.estadoGeneral} span={12} />
-                              )}
-                              {hasValue(parsedConsulta.examenFisico.hallazgos) && (
-                                <InfoField label="Hallazgos" value={parsedConsulta.examenFisico.hallazgos} span={12} />
-                              )}
-                            </Grid>
-
-                            {/* Campos Específicos por Dependencia */}
-                            {parsedConsulta.examenFisico.camposEspecificos && Object.keys(parsedConsulta.examenFisico.camposEspecificos).length > 0 && (
-                              <>
-                                <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Examen Específico</Text>
-                                <Grid gutter="xs">
-                                  {Object.entries(parsedConsulta.examenFisico.camposEspecificos).map(([key, value]) => {
-                                    // Formatear el nombre del campo: camelCase -> Título
-                                    const label = key
-                                      .replace(/([A-Z])/g, ' $1')
-                                      .trim()
-                                      .split(' ')
-                                      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                                      .join(' ');
-                                    
-                                    return hasValue(value) && <InfoField key={key} label={label} value={value} span={6} />
-                                  })}
-                                </Grid>
-                              </>
-                            )}
-                          </Paper>
-                        )}
-
-                        {/* Diagnóstico y Tratamiento */}
-                        {parsedConsulta.diagnosticoTratamiento && (
-                          <Paper p="sm" withBorder>
-                            <SectionTitle icon={IconClipboard} title="Diagnóstico y Tratamiento" />
-                            
-                            {/* Diagnósticos */}
-                            {parsedConsulta.diagnosticoTratamiento.diagnosticos && (
-                              <>
-                                <Text size="xs" fw={600} mb="xs" style={{ color: tema.primaryColor }}>Diagnósticos</Text>
-                                {Array.isArray(parsedConsulta.diagnosticoTratamiento.diagnosticos) ? (
-                                  <Stack gap="xs" mb="sm">
-                                    {parsedConsulta.diagnosticoTratamiento.diagnosticos.map((dx, dxIndex) => (
-                                      <Group key={dxIndex} gap="xs">
-                                        <Badge color={tema.mantineColor} size="sm">{dx.tipo || 'Principal'}</Badge>
-                                        <Text size="xs">{dx.codigo} - {dx.descripcion || dx.nombre}</Text>
-                                      </Group>
-                                    ))}
-                                  </Stack>
-                                ) : (
-                                  <Paper p="xs" mb="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                                    <Group gap="xs">
-                                      <Badge color={tema.mantineColor} size="sm">PRINCIPAL</Badge>
-                                      <Text size="xs">{parsedConsulta.diagnosticoTratamiento.diagnosticos}</Text>
-                                    </Group>
-                                  </Paper>
-                                )}
-                              </>
-                            )}
-
-                            <Grid gutter="xs">
-                              {hasValue(parsedConsulta.diagnosticoTratamiento.planTratamiento) && (
-                                <InfoField label="Plan de Tratamiento" value={parsedConsulta.diagnosticoTratamiento.planTratamiento} span={12} />
-                              )}
-                              {hasValue(parsedConsulta.diagnosticoTratamiento.procedimientos) && (
-                                <InfoField label="Procedimientos" value={parsedConsulta.diagnosticoTratamiento.procedimientos} span={12} />
-                              )}
-                            </Grid>
-
-                            {/* Medicamentos */}
-                            {parsedConsulta.diagnosticoTratamiento.medicamentos && (() => {
-                              console.log('Medicamentos data:', parsedConsulta.diagnosticoTratamiento.medicamentos);
-                              return true;
-                            })() && (
-                              <>
-                                <Text size="xs" fw={600} mt="sm" mb="xs" style={{ color: tema.primaryColor }}>Medicamentos Formulados</Text>
-                                {Array.isArray(parsedConsulta.diagnosticoTratamiento.medicamentos) ? (
-                                  <Stack gap="xs">
-                                    {parsedConsulta.diagnosticoTratamiento.medicamentos.map((med, medIndex) => {
-                                      console.log(`Medicamento ${medIndex}:`, med);
-                                      const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
-                                      const info = [
-                                        med.presentacion,
-                                        med.via,
-                                        med.concentracion
-                                      ].filter(Boolean).join(' - ');
-                                      const dosis = med.dosis || med.dosificacion;
-                                      const duracion = med.duracion || med.tiempo;
-                                      const frecuencia = med.frecuencia;
-                                      
-                                      return (
-                                        <Paper key={medIndex} p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                                          <Text size="xs">
-                                            <strong>{nombre}</strong>
-                                            {info && ` - ${info}`}
-                                            {dosis && ` | Dosis: ${dosis}`}
-                                            {duracion && ` | Duración: ${duracion}`}
-                                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
-                                          </Text>
-                                        </Paper>
-                                      );
-                                    })}
-                                  </Stack>
-                                ) : (
-                                  <Paper p="xs" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                                    {typeof parsedConsulta.diagnosticoTratamiento.medicamentos === 'object' ? (
-                                      (() => {
-                                        const med = parsedConsulta.diagnosticoTratamiento.medicamentos;
-                                        const nombre = med.nombre || med.medicamento || med.nombreMedicamento || 'Sin nombre especificado';
-                                        const info = [med.presentacion, med.via, med.concentracion].filter(Boolean).join(' - ');
-                                        const dosis = med.dosis || med.dosificacion;
-                                        const duracion = med.duracion || med.tiempo;
-                                        const frecuencia = med.frecuencia;
-                                        
-                                        return (
-                                          <Text size="xs">
-                                            <strong>{nombre}</strong>
-                                            {info && ` - ${info}`}
-                                            {dosis && ` | Dosis: ${dosis}`}
-                                            {duracion && ` | Duración: ${duracion}`}
-                                            {frecuencia && ` | Frecuencia: ${frecuencia}`}
-                                          </Text>
-                                        );
-                                      })()
-                                    ) : (
-                                      <Text size="xs">{parsedConsulta.diagnosticoTratamiento.medicamentos}</Text>
-                                    )}
-                                  </Paper>
-                                )}
-                              </>
-                            )}
-                          </Paper>
-                        )}
-
-                        {/* Seguimiento */}
-                        {parsedConsulta.seguimientoConsulta && (
-                          <Paper p="sm" withBorder>
-                            <SectionTitle icon={IconCalendar} title="Seguimiento" />
-                            <Grid>
-                              {parsedConsulta.seguimientoConsulta.evolucion && (
-                                <InfoField label="Evolución" value={parsedConsulta.seguimientoConsulta.evolucion} span={12} />
-                              )}
-                              {parsedConsulta.seguimientoConsulta.complicaciones && (
-                                <InfoField label="Complicaciones" value={parsedConsulta.seguimientoConsulta.complicaciones} span={6} />
-                              )}
-                              {parsedConsulta.seguimientoConsulta.recomendaciones && (
-                                <InfoField label="Recomendaciones" value={parsedConsulta.seguimientoConsulta.recomendaciones} span={12} />
-                              )}
-                            </Grid>
-                          </Paper>
-                        )}
-
-                        {/* Firma Digital */}
-                        {parsedConsulta.firmaDigital && (
-                          <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                            <Grid>
-                              <InfoField label="Nombre Médico" value={parsedConsulta.firmaDigital.nombreMedico} span={6} />
-                              <InfoField label="Cédula" value={parsedConsulta.firmaDigital.numeroCedula} span={6} />
-                              <InfoField label="Especialidad" value={parsedConsulta.firmaDigital.especialidad} span={6} />
-                              <InfoField label="Fecha Firma" value={parsedConsulta.firmaDigital.fechaFirma} span={6} />
-                            </Grid>
-                          </Paper>
-                        )}
-                        {/* Incapacidad - Consulta */}
-                        {hasValue(parsedConsulta?.incapacidad) && (
-                          <Paper p="sm" withBorder style={{ backgroundColor: `${tema.primaryColor}05` }}>
-                            <Grid>
-                              <InfoField label="Tipo" value={parsedConsulta.incapacidad.tipo} span={6} />
-                              <InfoField label="Fecha Inicio" value={parsedConsulta.incapacidad.fechaInicio} span={3} />
-                              <InfoField label="Fecha Fin" value={parsedConsulta.incapacidad.fechaFin} span={3} />
-                              <InfoField label="Días" value={parsedConsulta.incapacidad.dias} span={3} />
-                              <InfoField label="Motivo" value={parsedConsulta.incapacidad.motivo} span={9} />
-                            </Grid>
-                          </Paper>
-                        )}
-                      </Stack>
-                    )}
-                  </Paper>
-                );
-              })
-            ) : (
-              <Paper p="xl" withBorder>
-                <Text size="sm" c="dimmed" ta="center">
-                  No hay consultas registradas
-                </Text>
-              </Paper>
-            )}
-          </Stack>
+          <ConsultationList
+            consultas={consultas}
+            onPreviewConsulta={openPreviewForConsulta}
+            onPreviewIncapacidad={openPreviewIncapacidadForConsulta}
+            onPreviewTratamiento={openPreviewTratamientoForConsulta}
+          />
 
         </Stack>
       </ScrollArea>
