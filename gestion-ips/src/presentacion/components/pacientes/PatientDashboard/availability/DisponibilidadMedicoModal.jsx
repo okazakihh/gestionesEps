@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { Modal, Button, Stack, Select, TextInput, Group, Checkbox } from '@mantine/core';
+import { Modal, Button, Stack, Select, TextInput, Group, Checkbox, Table } from '@mantine/core';
 import Swal from 'sweetalert2';
 import { useDisponibilidad } from '../../../../../negocio/hooks/availability/useDisponibilidad';
 
-const DisponibilidadMedicoModal = ({ opened, onClose }) => {
+const DisponibilidadMedicoModal = ({ opened, onClose, disponibilidades = [], loadingDisponibilidades }) => {
   const { empleadosMedicosFormatted, loadingEmpleados, createDisponibilidad } = useDisponibilidad();
 
   const [formState, setFormState] = React.useState({ doctorId: '', fecha: '', horaInicio: '', horaFin: '', activo: true });
@@ -68,6 +68,38 @@ const DisponibilidadMedicoModal = ({ opened, onClose }) => {
           <Button variant="default" onClick={onClose}>Cerrar</Button>
           <Button onClick={handleSubmit}>Guardar</Button>
         </Group>
+
+        <Table>
+          <thead>
+            <tr>
+              <th>Doctor</th>
+              <th>Fecha</th>
+              <th>Hora Inicio</th>
+              <th>Hora Fin</th>
+              <th>Activo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingDisponibilidades ? (
+              <tr>
+                <td colSpan="5">Cargando disponibilidades...</td>
+              </tr>
+            ) : (
+              disponibilidades.map((disp, index) => {
+                const datos = JSON.parse(disp.datosJson);
+                return (
+                  <tr key={index}>
+                    <td>{datos.nombreDoctor}</td>
+                    <td>{datos.fecha}</td>
+                    <td>{datos.horaInicio}</td>
+                    <td>{datos.horaFin}</td>
+                    <td>{disp.activo ? 'Sí' : 'No'}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </Table>
       </Stack>
     </Modal>
   );

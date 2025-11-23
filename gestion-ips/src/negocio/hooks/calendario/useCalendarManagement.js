@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
 import { useAppointmentManagement } from '../citas/useAppointmentManagement.js';
+import { useDisponibilidadContext } from '../../../presentacion/pages/pacientes/DisponibilidadContext.jsx';
 
 export const useCalendarManagement = () => {
   const { user } = useAuth();
+  const { disponibilidades } = useDisponibilidadContext(); // Consumir el contexto
   const {
     selectedDate,
     setSelectedDate,
@@ -20,8 +22,12 @@ export const useCalendarManagement = () => {
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
   // Función para calcular horas disponibles considerando duración
-  const calculateAvailableSlots = (appointments, selectedDate) => {
-    const slots = [];
+  const calculateAvailableSlots = (disponibilidades, appointments, selectedDate) => {
+    // Si no hay fecha seleccionada, no hay slots disponibles.
+    if (!selectedDate || !(selectedDate instanceof Date)) {
+      return [];
+    }
+     const slots = [];
     const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -31,39 +37,41 @@ export const useCalendarManagement = () => {
 
     const isToday = selectedDateOnly.getTime() === today.getTime();
 
-    // Generar slots cada 20 minutos de 6:00 AM a 8:00 PM
-    const startHour = 6; // 6:00 AM
-    const endHour = 20; // 8:00 PM
+    // Si no hay disponibilidades, no hay slots.
+    if (!disponibilidades || disponibilidades.length === 0) {
+      return [];
+    }
+
     const intervalMinutes = 20;
 
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += intervalMinutes) {
-        // Para la última hora (8:00 PM), solo incluir si es exactamente 8:00
-        if (hour === endHour && minute > 0) break;
+    disponibilidades.forEach(disponibilidad => {
+      const disponibilidadData = JSON.parse(disponibilidad.datosJson || '{}');
+      const [startHour, startMinute] = disponibilidadData.horaInicio.split(':').map(Number);
+      const [endHour, endMinute] = disponibilidadData.horaFin.split(':').map(Number);
 
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const ampm = hour < 12 ? 'AM' : 'PM';
-        const label = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+      for (let hour = startHour; hour <= endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += intervalMinutes) {
+          if (hour === startHour && minute < startMinute) continue;
+          if (hour === endHour && minute >= endMinute) break;
 
-        // Si es hoy, verificar que la hora sea futura
-        if (isToday) {
-          const slotDateTime = new Date(selectedDate);
-          slotDateTime.setHours(hour, minute, 0, 0);
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          const ampm = hour < 12 ? 'AM' : 'PM';
+          const label = `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
 
-          // Solo incluir slots que estén al menos 1 hora en el futuro
-          const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-          if (slotDateTime <= oneHourFromNow) {
-            continue; // Skip this slot as it's too soon
+          if (isToday) {
+            const slotDateTime = new Date(selectedDate);
+            slotDateTime.setHours(hour, minute, 0, 0);
+            const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+            if (slotDateTime <= oneHourFromNow) {
+              continue;
+            }
           }
-        }
 
-        slots.push({
-          time: timeString,
-          label: label
-        });
+          slots.push({ time: timeString, label: label });
+        }
       }
-    }
+    });
 
     return slots.map(slot => {
       const slotStartTime = new Date(`${selectedDate.toDateString()} ${slot.time}`);
@@ -98,7 +106,7 @@ export const useCalendarManagement = () => {
   const handleDaySelect = async (date) => {
     setSelectedDate(date);
     // Reload all doctors data for the selected date
-    await loadAllDoctorsData(date);
+    await loadAllDoctorsData(date, disponibilidades); // Usar las disponibilidades del contexto
   };
 
   // Función para manejar click en slot

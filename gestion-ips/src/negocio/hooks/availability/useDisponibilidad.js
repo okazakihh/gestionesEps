@@ -1,10 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useEmpleadosSelect } from '../nomina/useEmpleadosSelect';
 import { disponibilidadApiService } from '../../../data/services/disponibilidadApiService';
 
 // Hook de capa de negocio para disponibilidades médicas
 export const useDisponibilidad = () => {
   const { empleadosFormatted, empleados, loading: loadingEmpleados, loadEmpleados } = useEmpleadosSelect();
+
+  const [disponibilidades, setDisponibilidades] = useState([]);
+  const [loadingDisponibilidades, setLoadingDisponibilidades] = useState(false);
 
   const isMedico = (empleado) => {
     if (!empleado) return false;
@@ -14,12 +17,10 @@ export const useDisponibilidad = () => {
 
     const keywords = ['medic', 'médic', 'doctor', 'dr.', 'dr ', 'especialista', 'cardio', 'gineco', 'pediatr', 'odont', 'salud'];
 
-    // Check cargo and tipoContrato
     for (const kw of keywords) {
       if (cargo.includes(kw) || tipoContrato.includes(kw) || nombre.includes(kw)) return true;
     }
 
-    // If cargo is empty but info suggests clinical role, include conservatively
     if (!cargo && (tipoContrato === 'contrato medico' || tipoContrato === 'medico')) return true;
 
     return false;
@@ -27,17 +28,23 @@ export const useDisponibilidad = () => {
 
   const empleadosMedicosFormatted = empleadosFormatted.filter(e => isMedico(e.empleado));
 
-  // Log counts to help debugging why only a few medics appear
-  try {
-    const total = (empleadosFormatted || []).length;
-    const medics = empleadosMedicosFormatted.length;
-    console.debug(`[useDisponibilidad] empleados total=${total}, detectados_medicos=${medics}`);
-  } catch (e) {
-    // ignore
-  }
+  const loadDisponibilidades = useCallback(async () => {
+    setLoadingDisponibilidades(true);
+    try {
+      console.log('[useDisponibilidad] Iniciando carga de disponibilidades médicas');
+      const response = await disponibilidadApiService.getAllDisponibilidades();
+      console.log('[useDisponibilidad] Disponibilidades cargadas desde el backend:', response);
+      // ¡CORRECCIÓN! Guardar solo los datos (el array), no el objeto de respuesta completo.
+      // Esto evita que la referencia del objeto cambie en cada render si los datos son los mismos.
+      setDisponibilidades(response.data || []);
+    } catch (error) {
+      console.error('[useDisponibilidad] Error cargando disponibilidades médicas:', error);
+    } finally {
+      setLoadingDisponibilidades(false);
+    }
+  }, []);
 
   const createDisponibilidad = useCallback(async ({ doctorId, fecha, horaInicio, horaFin, activo = true }) => {
-    // Validaciones de negocio básicas
     if (!doctorId) throw new Error('Doctor requerido');
     if (!fecha) throw new Error('Fecha requerida');
     if (!horaInicio || !horaFin) throw new Error('Horas requeridas');
@@ -51,6 +58,7 @@ export const useDisponibilidad = () => {
       activo
     };
 
+    console.log('[useDisponibilidad] Creando disponibilidad con payload:', payload);
     return disponibilidadApiService.createDisponibilidad(payload);
   }, [empleados]);
 
@@ -58,6 +66,10 @@ export const useDisponibilidad = () => {
     empleadosMedicosFormatted,
     loadingEmpleados,
     loadEmpleados,
-    createDisponibilidad
+    createDisponibilidad,
+    disponibilidades,
+    loadingDisponibilidades,
+    loadDisponibilidades,
+    getAllDisponibilidades: disponibilidadApiService.getAllDisponibilidades
   };
 };

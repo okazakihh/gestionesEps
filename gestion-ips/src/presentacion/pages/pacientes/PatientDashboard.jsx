@@ -1,4 +1,4 @@
-import React, { useState  } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import {
@@ -21,6 +21,7 @@ import { ESTADO_PACIENTE_OPTIONS, EPS_OPTIONS, TIPO_SANGRE_OPTIONS } from '../..
 import { useAppointmentManagement } from '../../../negocio/hooks/citas/useAppointmentManagement.js';
 import { usePatientManagement } from '../../../negocio/hooks/pacientes/usePatientManagement.js';
 import { useCalendarManagement } from '../../../negocio/hooks/calendario/useCalendarManagement.js';
+import { DisponibilidadProvider, useDisponibilidadContext } from './DisponibilidadContext.jsx';
 
 // Importar servicios de negocio
 import { appointmentService } from '../../../negocio/services/appointmentService.js';
@@ -37,9 +38,10 @@ import CalendarWidget from '../../components/pacientes/PatientDashboard/calendar
 import CreateHistoriaClinicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateHistoriaClinicaModal.jsx';
 import CreateConsultaMedicaModal from '../../components/pacientes/PatientDashboard/medicalRecords/CreateConsultaMedicaModal.jsx';
 
-const PatientDashboard = () => {
+const PatientDashboardContent = () => {
    const navigate = useNavigate();
    const { user } = useAuth();
+   const { disponibilidades, loadingDisponibilidades } = useDisponibilidadContext();
 
    // Usar custom hooks para manejar estado
    const appointmentManagement = useAppointmentManagement(user);
@@ -145,6 +147,9 @@ const PatientDashboard = () => {
   const getDoctorInitials = calendarManagement.getDoctorInitials;
   const getNombreCompletoMedico = appointmentManagement.getNombreCompletoMedico;
 
+  const handleCloseDisponibilidadModal = () => {
+    setIsDisponibilidadOpen(false);
+  };
 
   return (
     <MainLayout title="Dashboard de Pacientes" subtitle="Gestión integral del flujo médico de pacientes">
@@ -167,7 +172,7 @@ const PatientDashboard = () => {
           <div className="lg:col-span-3 space-y-6">
             {/* Appointment Availability Card */}
             {calendarManagement.selectedDate && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <ClockIcon className="h-5 w-5 mr-2" />
                   Agenda Médica - {calendarManagement.selectedDate.toLocaleDateString('es-ES')}
@@ -205,8 +210,8 @@ const PatientDashboard = () => {
                       <div className="overflow-x-auto overflow-y-auto max-h-96">
                         <div className="grid grid-cols-5 gap-4 pb-4" style={{ minWidth: 'max-content' }}>
                           {Object.entries(calendarManagement.allDoctorAppointments).map(([doctorId, doctorData]) => {
-                            const { doctor, doctorName, appointments: doctorAppointments } = doctorData;
-                            const availableSlots = calendarManagement.calculateAvailableSlots(doctorAppointments, calendarManagement.selectedDate);
+                            const { doctor, doctorName, appointments: doctorAppointments, disponibilidades } = doctorData;
+                            const availableSlots = calendarManagement.calculateAvailableSlots(disponibilidades || [], doctorAppointments, calendarManagement.selectedDate);
 
                             return (
                               <div key={doctorId} className="border border-gray-200 rounded-lg p-3 min-w-72 flex-shrink-0">
@@ -660,7 +665,7 @@ const PatientDashboard = () => {
           isOpen={patientManagement.isAgendaModalOpen}
           onClose={handleCloseAgendaModal}
         />
-        <DisponibilidadMedicoModal opened={isDisponibilidadOpen} onClose={handleCloseDisponibilidad} />
+        <DisponibilidadMedicoModal opened={isDisponibilidadOpen} onClose={handleCloseDisponibilidad} disponibilidades={disponibilidades} loadingDisponibilidades={loadingDisponibilidades} />
 
         {/* Schedule Appointment Modal (render only when opening to avoid prop-type warnings) */}
         {appointmentManagement.isAppointmentModalOpen && appointmentManagement.selectedPatientForAppointment && (
@@ -1000,6 +1005,14 @@ const PatientDashboard = () => {
         );
       })()}
     </MainLayout>
+  );
+};
+
+const PatientDashboard = () => {
+  return (
+    <DisponibilidadProvider>
+      <PatientDashboardContent />
+    </DisponibilidadProvider>
   );
 };
 

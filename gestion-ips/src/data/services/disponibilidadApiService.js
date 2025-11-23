@@ -31,5 +31,24 @@ export const disponibilidadApiService = {
    */
   deleteDisponibilidad: (id) => {
     return apiClient.delete(`${API_URL}/${id}`);
+  },
+
+  /**
+   * Obtiene las disponibilidades de un médico para una fecha específica.
+   * @param {number} doctorId - ID del doctor.
+   * @param {string} fecha - Fecha en formato YYYY-MM-DD.
+   * @returns {Promise<Array>}
+   */
+  getDisponibilidadPorDoctor: (doctorId, fecha) => {
+    return apiClient.get(`${API_URL}/doctor/${doctorId}/fecha/${fecha}`);
+  },
+
+  /**
+   * Obtiene todas las disponibilidades para una fecha específica.
+   * @returns {Promise<Array>}
+   */
+  getAllDisponibilidades: () => {
+    // Llama al endpoint raíz para obtener todos los registros
+    return apiClient.get(API_URL);
   }
 };

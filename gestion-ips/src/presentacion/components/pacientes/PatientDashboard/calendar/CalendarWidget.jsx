@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/react/24/outline';
 
-const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponibilidad }) => {
+const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponibilidad, disponibilidades = [] }) => {
   // Quick actions for common tasks
   const quickActions = [
     {
@@ -28,6 +28,15 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponi
   ];
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+
+  // Calcula los slots disponibles directamente, sin useEffect ni estado local.
+  const availableSlots = useMemo(() => {
+    if (!selectedDate || !Array.isArray(disponibilidades)) return [];
+    return disponibilidades.filter(disp => {
+      const datos = JSON.parse(disp.datosJson || '{}');
+      return datos.fecha === selectedDate.toISOString().split('T')[0];
+    });
+  }, [selectedDate, disponibilidades]);
 
   const today = new Date();
   const currentYear = currentDate.getFullYear();
@@ -221,6 +230,28 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponi
             <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1"></div>
             <span>Día pasado</span>
           </div>
+        </div>
+      </div>
+
+      {/* Horarios Disponibles */}
+      <div className="border-t pt-3">
+        <h4 className="text-xs font-medium text-gray-900 mb-2">Horarios Disponibles</h4>
+        <div className="space-y-1">
+          {availableSlots.length > 0 ? (
+            <ul className="text-xs text-gray-700">
+              {availableSlots.map((slot, index) => {
+                const datos = JSON.parse(slot.datosJson);
+                return (
+                  <li key={index} className="flex items-center">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                    <span>{`${datos.horaInicio} - ${datos.horaFin} (${datos.nombreDoctor})`}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-xs text-gray-500">No hay horarios disponibles para esta fecha.</p>
+          )}
         </div>
       </div>
     </div>

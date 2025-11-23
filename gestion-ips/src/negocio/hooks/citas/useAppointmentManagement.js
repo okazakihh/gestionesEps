@@ -217,12 +217,37 @@ export const useAppointmentManagement = (user = null) => {
   };
 
   // Función para cargar todas las citas de médicos
-  const loadAllDoctorsData = async (date) => {
+  const loadAllDoctorsData = async (date, disponibilidadesGenerales) => {
     if (!date) return;
 
     try {
+      // Asegurarse de que los médicos estén cargados ANTES de continuar.
+      await loadMedicos();
+
       setLoadingAppointments(true);
 
+      // 1. Cargar disponibilidades para la fecha seleccionada
+      const fechaFormato = date.toISOString().split('T')[0];
+      let medicosDisponiblesIds = new Set();
+      let disponibilidadesParaFecha = [];
+      try {
+        // Se filtran en el frontend por la fecha seleccionada
+        disponibilidadesParaFecha = (disponibilidadesGenerales || []).filter(disp => {
+          const datos = JSON.parse(disp.datosJson || '{}');
+          return datos.fecha === fechaFormato;
+        });
+        console.log(`[Paso 3] Disponibilidades filtradas para ${fechaFormato}:`, disponibilidadesParaFecha);
+
+        disponibilidadesParaFecha.forEach(disp => {
+          const datos = JSON.parse(disp.datosJson || '{}');
+          if (datos.doctorId) {
+            medicosDisponiblesIds.add(datos.doctorId.toString());
+          }
+        });
+
+      } catch (error) {
+        console.warn('No se encontraron disponibilidades para la fecha o hubo un error:', error);
+      }
       // Load all appointments
       const appointmentsResponse = await pacientesApiService.getCitas({ size: 1000 });
       const allAppointments = appointmentsResponse.content || [];
@@ -294,12 +319,18 @@ export const useAppointmentManagement = (user = null) => {
         }
       });
 
-      // Filtrar médicos según el rol del usuario
-      let filteredMedicos = medicos;
+      // 1. Identificar médicos con disponibilidad para la fecha
+      const medicosConDisponibilidad = medicos.filter(medico =>
+        medicosDisponiblesIds.has(medico.id.toString())
+      );
+
+      // 2. Filtrar esa lista según el rol del usuario
+      let medicosAMostrar = medicosConDisponibilidad;
       if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
+        console.log('[Paso 6] Usuario es DOCTOR/AUXILIAR. Filtrando la lista de médicos a mostrar.');
         // Si es doctor o auxiliar médico, solo mostrar sus propias citas
         const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
-        filteredMedicos = medicos.filter(medico => {
+        medicosAMostrar = medicosConDisponibilidad.filter(medico => {
           const doctorName = getNombreCompletoMedico(medico);
           return doctorName && (
             doctorName.toLowerCase().includes(currentUserName.toLowerCase()) ||
@@ -309,14 +340,15 @@ export const useAppointmentManagement = (user = null) => {
         });
       }
 
-      // Initialize grouped appointments for filtered doctors only
+      // 3. Inicializar `groupedAppointments` solo para médicos con disponibilidad
       const groupedAppointments = {};
-      filteredMedicos.forEach(medico => {
+      medicosAMostrar.forEach(medico => {
         const doctorName = getNombreCompletoMedico(medico);
         groupedAppointments[medico.id] = {
           doctor: medico,
           doctorName: doctorName,
-          appointments: []
+          appointments: [],
+          disponibilidades: [] // Se llenará más adelante
         };
       });
 
@@ -386,6 +418,19 @@ export const useAppointmentManagement = (user = null) => {
         }
       });
 
+      // Volver a cargar disponibilidades y agruparlas por doctor
+      try {
+        // Usamos las disponibilidades ya filtradas por fecha
+        disponibilidadesParaFecha.forEach(disp => {
+          const datos = JSON.parse(disp.datosJson || '{}');
+          if (datos.doctorId && groupedAppointments[datos.doctorId]) {
+            if (!groupedAppointments[datos.doctorId].disponibilidades) {
+              groupedAppointments[datos.doctorId].disponibilidades = [];
+            }
+            groupedAppointments[datos.doctorId].disponibilidades.push(disp);
+          }
+        });
+      } catch (error) { /* ya manejado */ }
       setAllDoctorAppointments(groupedAppointments);
 
     } catch (error) {
@@ -448,7 +493,7 @@ export const useAppointmentManagement = (user = null) => {
           'ATENDIDA': 'ATENDIDO',
           'NO_SE_PRESENTO': 'NO_SE_PRESENTO',
           'NO SE PRESENTO': 'NO_SE_PRESENTO',
-          'NO SE PRESENTÓ': 'NO_SE_PRESENTO'
+          'NO SE PRESENTÓ': 'NO_SE_PRESENTE'
         };
 
         estado = estadoMapping[estado] || estado;
