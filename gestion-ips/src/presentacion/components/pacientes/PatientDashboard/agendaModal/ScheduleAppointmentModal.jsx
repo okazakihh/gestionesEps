@@ -85,7 +85,7 @@ const ScheduleAppointmentModal = ({ patientId, patientName, selectedSlot, select
       closeOnClickOutside={!loading}
       closeOnEscape={!loading}
       withCloseButton={!loading}
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <ScheduleAppointmentForm

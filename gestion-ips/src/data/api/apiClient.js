@@ -32,11 +32,6 @@ class ApiClient {
           config.headers.Authorization = `Bearer ${token}`;
         }
         
-        // Log de requests en desarrollo
-        if (import.meta.env.DEV) {
-          console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
-        }
-        
         return config;
       },
       (error) => Promise.reject(error instanceof Error ? error : new Error('Request error'))
@@ -44,12 +39,7 @@ class ApiClient {
 
     // Response interceptor
     this.client.interceptors.response.use(
-      (response) => {
-        if (import.meta.env.DEV) {
-          console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url}`, response.status);
-        }
-        return response;
-      },
+      (response) => response,
       async (error) => this.handleResponseError(error)
     );
   }
@@ -212,7 +202,6 @@ class ApiClient {
 
   // Método para upload de archivos
   async upload(url, formData, config) {
-    console.log('Uploading file to:', url, formData, config);
     try {
       const response = await this.client.post(url, formData, {
         ...config,

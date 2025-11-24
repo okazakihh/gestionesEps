@@ -1,25 +1,11 @@
 // hooks/useCalendarManagement.js
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '../../../data/context/AuthContext.jsx';
-import { useAppointmentManagement } from '../citas/useAppointmentManagement.js';
-import { useDisponibilidadContext } from '../../../presentacion/pages/pacientes/DisponibilidadContext.jsx';
 
 export const useCalendarManagement = () => {
   const { user } = useAuth();
-  const { disponibilidades } = useDisponibilidadContext(); // Consumir el contexto
-  const {
-    selectedDate,
-    setSelectedDate,
-    medicos,
-    allDoctorAppointments,
-    loadingMedicos,
-    loadingAppointments,
-    loadMedicos,
-    loadAllDoctorsData
-  } = useAppointmentManagement(user);
 
   // Estados específicos del calendario
-  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
   // Función para calcular horas disponibles considerando duración
   const calculateAvailableSlots = (disponibilidades, appointments, selectedDate) => {
@@ -102,20 +88,13 @@ export const useCalendarManagement = () => {
     });
   };
 
-  // Función para manejar selección de fecha
-  const handleDaySelect = async (date) => {
-    setSelectedDate(date);
-    // Reload all doctors data for the selected date
-    await loadAllDoctorsData(date, disponibilidades); // Usar las disponibilidades del contexto
-  };
-
   // Función para manejar click en slot
-  const handleSlotClick = (slot, doctorId = null) => {
+  const handleSlotClick = (slot, doctorId = null, currentDate) => {
     if (!slot.available) return;
 
     return {
       ...slot,
-      date: selectedDate,
+      date: currentDate,
       doctorId: doctorId
     };
   };
@@ -129,68 +108,14 @@ export const useCalendarManagement = () => {
     return `${firstInitial}${lastInitial}`;
   };
 
-  // Función para filtrar médicos según el rol del usuario
-  const getFilteredMedicos = () => {
-    if (!user) return medicos;
-
-    // If user is a doctor, filter to show only their own information
-    if (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO') {
-      console.log('User is a doctor, filtering to show only their info');
-      console.log('User documento:', user.documento, 'User ID:', user.id);
-
-      // Find the doctor that matches the current user
-      const currentDoctor = medicos.find(medico => {
-        try {
-          const datosCompletos = JSON.parse(medico.jsonData || '{}');
-          const matchByDocumento = datosCompletos.numeroDocumento === user.documento;
-          const matchById = medico.id === user.id;
-          console.log('Checking doctor:', medico.id, 'documento:', datosCompletos.numeroDocumento, 'matchByDocumento:', matchByDocumento, 'matchById:', matchById);
-          return matchByDocumento || matchById;
-        } catch (error) {
-          console.error('Error checking doctor match:', error);
-          return false;
-        }
-      });
-
-      console.log('Current doctor found:', currentDoctor);
-
-      return currentDoctor ? [currentDoctor] : [];
-    }
-
-    return medicos;
-  };
-
   // Función para verificar si el usuario es doctor
   const isUserDoctor = () => {
     return user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO');
   };
 
-  // Inicializar datos del calendario
-  useEffect(() => {
-    const initializeCalendar = async () => {
-      setIsCalendarLoading(true);
-      try {
-        await loadMedicos();
-      } finally {
-        setIsCalendarLoading(false);
-      }
-    };
-
-    initializeCalendar();
-  }, [user]);
-
   return {
-    // Estados
-    selectedDate,
-    medicos: getFilteredMedicos(),
-    allDoctorAppointments,
-    loadingMedicos,
-    loadingAppointments,
-    isCalendarLoading,
-
     // Funciones
     calculateAvailableSlots,
-    handleDaySelect,
     handleSlotClick,
     getDoctorInitials,
     isUserDoctor

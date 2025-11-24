@@ -78,7 +78,6 @@ export const usePatientManagement = () => {
   const handlePatientCreated = async (patientData, selectedSlotForAppointment) => {
     // Refresh patient list
     setRefreshTrigger(prev => prev + 1);
-    console.log('Paciente procesado exitosamente - lista actualizada', patientData);
 
     // Only show appointment creation confirmation for new patients (not when editing)
     if (!editingPatient && selectedSlotForAppointment) {

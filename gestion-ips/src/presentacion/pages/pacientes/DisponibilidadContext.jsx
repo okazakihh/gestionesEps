@@ -22,11 +22,8 @@ export const DisponibilidadProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await disponibilidadApiService.getAllDisponibilidades();
-      // Log para inspeccionar el objeto de respuesta completo
-      console.log('[DisponibilidadContext] 🔍 Objeto de respuesta completo recibido de la API:', response);
       
       setDisponibilidades(response || []); // Usamos la respuesta directa
-      console.log('[DisponibilidadContext] ✅ Disponibilidades cargadas y almacenadas en el contexto:', response);
     } catch (error) {
       console.error('[DisponibilidadContext] ❌ Error cargando disponibilidades:', error);
       setDisponibilidades([]);

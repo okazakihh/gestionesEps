@@ -106,33 +106,22 @@ export const useAppointmentForm = (selectedSlot, selectedDoctor, medicos, getNom
   }, [selectedSlot]);
 
   // Pre-fill doctor when doctors are loaded and doctor is selected
+  // Este es el efecto que llena los datos del médico en el formulario.
   useEffect(() => {
-    if (selectedDoctor && medicos.length > 0 && getNombreCompletoMedico) {
-      // Find the doctor to get the ID
-      const doctor = medicos.find(m => getNombreCompletoMedico(m) === selectedDoctor);
-      if (doctor) {
-        // Extraer licencia médica del médico seleccionado
-        let licenciaMedica = '';
-        try {
-          const datosCompletos = JSON.parse(doctor.jsonData || '{}');
-          if (datosCompletos.jsonData) {
-            const datosInternos = JSON.parse(datosCompletos.jsonData);
-            const informacionLaboral = datosInternos.informacionLaboral || {};
-            licenciaMedica = informacionLaboral.numeroLicencia || informacionLaboral.licenciaProfesional || '';
-          }
-        } catch (error) {
-          console.error('Error extrayendo licencia médica:', error);
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          medicoAsignado: selectedDoctor,
-          medicoId: doctor.id,
-          licenciaMedica: licenciaMedica
-        }));
+    if (selectedDoctor) {
+      const doctorName = getNombreCompletoMedico(selectedDoctor);
+      let licenciaMedica = 'N/A';
+      try {
+        // La estructura está doblemente anidada en JSON.
+        const datosNivel1 = JSON.parse(selectedDoctor.jsonData || '{}');
+        const datosNivel2 = JSON.parse(datosNivel1.jsonData || '{}');
+        licenciaMedica = datosNivel2.informacionLaboral?.numeroLicencia || 'N/A';
+      } catch (e) {
+        console.error("Error parsing doctor's license", e);
       }
+      setFormData(prev => ({ ...prev, medicoAsignado: doctorName, medicoId: selectedDoctor.id, licenciaMedica }));
     }
-  }, [selectedDoctor, medicos, getNombreCompletoMedico]);
+  }, [selectedDoctor, getNombreCompletoMedico]);
 
   // Reset form
   const resetForm = () => {

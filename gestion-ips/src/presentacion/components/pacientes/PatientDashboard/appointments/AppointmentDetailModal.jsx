@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Badge, Group, Text, Stack, Paper, Grid, Loader, Button, Divider, Code } from '@mantine/core';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { IconUser, IconCalendar, IconClock, IconFileText } from '@tabler/icons-react';
+import { appointmentService } from '../../../../../negocio/services/appointmentService.js';
 
 const AppointmentDetailModal = ({
   isOpen,
@@ -9,7 +10,6 @@ const AppointmentDetailModal = ({
   selectedAppointment,
   appointmentDetailPatientInfo,
   loadingAppointmentDetailPatient,
-  formatDate,
   getAppointmentInfo,
   getAppointmentPatientInfo,
   getAvailableStatusTransitions,
@@ -20,6 +20,7 @@ const AppointmentDetailModal = ({
   const { tema } = useTheme();
   if (!isOpen || !selectedAppointment) return null;
 
+  const { formatDate } = appointmentService;
   const appointmentInfo = getAppointmentInfo(selectedAppointment);
 
   const getStatusColor = (status) => {
@@ -51,7 +52,7 @@ const AppointmentDetailModal = ({
       title={`Detalle de la Cita #${selectedAppointment.id}`}
       size="xl"
       centered
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <Stack gap="lg">

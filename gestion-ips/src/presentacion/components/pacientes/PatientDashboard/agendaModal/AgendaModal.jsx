@@ -174,17 +174,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
   const updateAppointmentStatus = async (citaId, newStatus) => {
     try {
       setUpdatingStatus(prev => ({ ...prev, [citaId]: true }));
-
-      console.log('🎯 Attempting to update cita', citaId, 'to status:', newStatus);
-
-      // Debug: Log current cita data
-      const currentCita = citas.find(c => c.id === citaId);
-      console.log('Current cita data:', currentCita);
-      console.log('Current cita datosJson:', currentCita?.datosJson);
-
-      console.log('🔄 About to call pacientesApiService.actualizarEstadoCita...');
       const response = await pacientesApiService.actualizarEstadoCita(citaId, newStatus);
-      console.log('✅ API response received:', response);
 
       // The response should be the data object directly (not wrapped in success/data structure)
       // Update the cita in the local state
@@ -211,8 +201,6 @@ const AgendaModal = ({ isOpen, onClose }) => {
         timerProgressBar: true,
         showConfirmButton: false
       });
-
-      console.log(`Estado de cita ${citaId} actualizado a ${newStatus}`);
 
       // Si se canceló la cita, recargar la lista para actualizar las horas disponibles
       if (newStatus === 'CANCELADO') {
@@ -256,7 +244,6 @@ const AgendaModal = ({ isOpen, onClose }) => {
       const historia = await historiasClinicasApiService.getHistoriaClinicaByPaciente(pacienteId);
       return historia ? historia.id : null;
     } catch (error) {
-      console.log('Paciente no tiene historia clínica:', pacienteId);
       return null;
     }
   };
@@ -284,8 +271,6 @@ const AgendaModal = ({ isOpen, onClose }) => {
 
   // Función para manejar el éxito de crear historia clínica
   const handleHistoriaClinicaCreated = async (historiaClinica) => {
-    console.log('Historia clínica creada:', historiaClinica);
-
     // Ahora que se creó la historia clínica, cambiar a vista de crear consulta
     setHistoriaClinicaId(historiaClinica.id);
     setCurrentView('create_consulta');
@@ -293,8 +278,6 @@ const AgendaModal = ({ isOpen, onClose }) => {
 
   // Función para manejar el éxito de crear consulta médica
   const handleConsultaMedicaCreated = async (consulta) => {
-    console.log('Consulta médica creada:', consulta);
-
     // Ahora cambiar el estado de la cita a ATENDIDO
     if (currentCita) {
       await updateAppointmentStatus(currentCita.id, 'ATENDIDO');
@@ -361,7 +344,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
           </Group>
         }
         size="90%"
-        overlayColor={tema.primaryColor}
+        overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
         styles={{
           body: { height: '70vh', overflowY: 'auto' },
           title: { width: '100%', color: 'white !important' },

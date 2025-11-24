@@ -24,8 +24,6 @@ export const useEmpleadosSelect = () => {
         activo: true
       });
 
-      console.log('📋 Empleados cargados:', response);
-
       // Procesar empleados con doble parsing del JSON anidado
       const empleadosRaw = response.content || [];
       
@@ -92,7 +90,6 @@ export const useEmpleadosSelect = () => {
         }
       });
 
-      console.log('✅ Empleados procesados:', empleadosProcessed);
       setEmpleados(empleadosProcessed);
     } catch (err) {
       console.error('❌ Error cargando empleados:', err);

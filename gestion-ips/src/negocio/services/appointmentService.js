@@ -270,7 +270,6 @@ export const appointmentService = {
     } catch (error) {
       // 404 significa que no tiene historia clínica, lo cual es normal
       if (error.response && error.response.status === 404) {
-        console.log('Paciente no tiene historia clínica:', pacienteId);
         return null;
       }
       // Para otros errores, los propagamos

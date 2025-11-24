@@ -185,11 +185,9 @@ export const useAppointmentManagement = (user = null) => {
   const loadMedicos = async () => {
     try {
       setLoadingMedicos(true);
-      console.log('Loading doctors');
       const { empleadosApiService } = await import('../../../data/services/empleadosApiService.js');
       const response = await empleadosApiService.getEmpleados({ size: 1000 });
       const empleados = response.content || [];
-      console.log('All employees loaded:', empleados.length);
 
       // Filter employees that are medical doctors
       let medicosFiltrados = empleados.filter(empleado => {
@@ -206,7 +204,6 @@ export const useAppointmentManagement = (user = null) => {
           return false;
         }
       });
-      console.log('Filtered doctors:', medicosFiltrados.length);
 
       setMedicos(medicosFiltrados);
     } catch (error) {
@@ -215,6 +212,11 @@ export const useAppointmentManagement = (user = null) => {
       setLoadingMedicos(false);
     }
   };
+
+  // Cargar médicos al inicializar el hook
+  useEffect(() => {
+    loadMedicos();
+  }, []);
 
   // Función para cargar todas las citas de médicos
   const loadAllDoctorsData = async (date, disponibilidadesGenerales) => {
@@ -236,7 +238,6 @@ export const useAppointmentManagement = (user = null) => {
           const datos = JSON.parse(disp.datosJson || '{}');
           return datos.fecha === fechaFormato;
         });
-        console.log(`[Paso 3] Disponibilidades filtradas para ${fechaFormato}:`, disponibilidadesParaFecha);
 
         disponibilidadesParaFecha.forEach(disp => {
           const datos = JSON.parse(disp.datosJson || '{}');
@@ -327,7 +328,6 @@ export const useAppointmentManagement = (user = null) => {
       // 2. Filtrar esa lista según el rol del usuario
       let medicosAMostrar = medicosConDisponibilidad;
       if (user && (user.rol === 'DOCTOR' || user.rol === 'AUXILIAR_MEDICO')) {
-        console.log('[Paso 6] Usuario es DOCTOR/AUXILIAR. Filtrando la lista de médicos a mostrar.');
         // Si es doctor o auxiliar médico, solo mostrar sus propias citas
         const currentUserName = `${user.nombres} ${user.apellidos}`.trim();
         medicosAMostrar = medicosConDisponibilidad.filter(medico => {
@@ -605,7 +605,6 @@ export const useAppointmentManagement = (user = null) => {
     if (selectedDate) {
       await loadAllDoctorsData(selectedDate);
     }
-    console.log('Cita creada exitosamente - datos actualizados');
   };
 
   const handleViewAppointmentDetail = async (appointment) => {

@@ -145,8 +145,6 @@ export const AuthProvider = ({ children }) => {
         console.warn('No se pudo parsear exp del JWT', e);
       }
 
-      console.log('Usuario autenticado:', mappedUser);
-
       // Actualizar estado
       setToken(tokenFromBackend);
       setUser(mappedUser);
@@ -232,7 +230,6 @@ export const AuthProvider = ({ children }) => {
     const checkInactivity = setInterval(() => {
       const inactiveTime = Date.now() - lastActivity;
       if (inactiveTime >= sessionTimeout) {
-        console.log('Sesión expirada por inactividad');
         logout();
       }
     }, 60000); // Verificar cada minuto

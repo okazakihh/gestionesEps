@@ -31,9 +31,7 @@ export const useDisponibilidad = () => {
   const loadDisponibilidades = useCallback(async () => {
     setLoadingDisponibilidades(true);
     try {
-      console.log('[useDisponibilidad] Iniciando carga de disponibilidades médicas');
       const response = await disponibilidadApiService.getAllDisponibilidades();
-      console.log('[useDisponibilidad] Disponibilidades cargadas desde el backend:', response);
       // ¡CORRECCIÓN! Guardar solo los datos (el array), no el objeto de respuesta completo.
       // Esto evita que la referencia del objeto cambie en cada render si los datos son los mismos.
       setDisponibilidades(response.data || []);
@@ -58,7 +56,6 @@ export const useDisponibilidad = () => {
       activo
     };
 
-    console.log('[useDisponibilidad] Creando disponibilidad con payload:', payload);
     return disponibilidadApiService.createDisponibilidad(payload);
   }, [empleados]);
 
