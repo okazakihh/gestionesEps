@@ -184,8 +184,7 @@ const PatientClinicalHistoryCompleteNew = ({
         onClose={closePreview}
         title={previewTitle}
         size="90%"
-        overlayOpacity={0.55}
-        overlayColor={tema.primaryColor}
+        overlayProps={{ color: tema.overlayColor, backgroundOpacity: 0.55, blur: 3 }}
         styles={{
           header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },
           title: { color: 'white !important', fontWeight: 700 },

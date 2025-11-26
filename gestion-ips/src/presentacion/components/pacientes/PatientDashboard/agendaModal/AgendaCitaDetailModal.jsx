@@ -37,7 +37,7 @@ const AgendaCitaDetailModal = ({
       title={`Detalle de la Cita #${cita.id}`}
       size="xl"
       centered
-      overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
+      overlayProps={{ color: tema.overlayColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{
         title: { fontSize: '1.25rem', fontWeight: 600, color: 'white !important' },
         header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' },

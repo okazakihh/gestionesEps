@@ -128,6 +128,7 @@ export const ESPECIALIDAD_MEDICA_OPTIONS = [
   { value: 'DERMATOLOGIA', label: 'Dermatología' },
   { value: 'OFTALMOLOGIA', label: 'Oftalmología' },
   { value: 'ODONTOLOGIA', label: 'Odontología' },
+  { value: 'OTORRINOLARINGOLOGIA', label: 'Otorrinolaringología' },
   { value: 'PSICOLOGIA', label: 'Psicología' },
   { value: 'NUTRICION', label: 'Nutrición' },
   { value: 'FISIOTERAPIA', label: 'Fisioterapia' },
@@ -175,7 +176,10 @@ export const DEPENDENCIA_MEDICA_OPTIONS = [
   { value: 'PEDIATRIA', label: 'Pediatría' },
   { value: 'TRAUMATOLOGIA', label: 'Traumatología' },
   { value: 'PSICOLOGIA', label: 'Psicología' },
-  { value: 'FISIOTERAPIA', label: 'Fisioterapia' }
+  { value: 'FISIOTERAPIA', label: 'Fisioterapia' },
+   { value: 'OTORRINOLARINGOLOGIA', label: 'Otorrinolaringología' },
+   { value: 'NEUROLOGIA', label: 'Neurología' },
+
 ];
 
 // Configuración de qué dependencias requieren signos vitales completos

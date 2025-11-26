@@ -217,8 +217,60 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
           especialidad: especialidad
         }
       }));
+
+      // Intentar cargar la firma del empleado desde el servicio de empleados (solo frontend)
+      (async () => {
+        try {
+          const resp = await empleadosApiService.getEmpleados({ size: 1000 });
+          const list = Array.isArray(resp?.content) ? resp.content : resp || [];
+          let matched = null;
+          for (const emp of list) {
+            try {
+              const parsed = typeof emp.datosJson === 'string' ? JSON.parse(emp.datosJson) : (emp.datosJson || {});
+              const numeroLic = parsed?.informacionLaboral?.numeroLicencia || parsed?.numeroLicencia || parsed?.informacionLaboral?.licencia || '';
+              if (licenciaMedica && numeroLic && String(numeroLic).trim() === String(licenciaMedica).trim()) {
+                matched = parsed;
+                break;
+              }
+              const nombreEmpleado = `${parsed?.informacionPersonal?.primerNombre || ''} ${parsed?.informacionPersonal?.primerApellido || ''}`.trim();
+              if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
+                matched = parsed;
+                break;
+              }
+            } catch (e) {
+              // ignorar errores de parseo
+            }
+          }
+
+          if (matched) {
+            let signature = null;
+            if (typeof matched.firmaDigital === 'string') signature = matched.firmaDigital;
+            else if (matched.firmaDigital && (matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma)) {
+              signature = matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma;
+            } else if (matched.informacionPersonal && (matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma)) {
+              const f = matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma;
+              if (typeof f === 'string') signature = f;
+              else if (f.imagen || f.image || f.firma) signature = f.imagen || f.image || f.firma;
+            }
+
+            if (signature) {
+              setFormData(prev => ({
+                ...prev,
+                firmaDigital: {
+                  ...prev.firmaDigital,
+                  imagen: signature
+                }
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Error loading empleado signature:', err);
+        }
+      })();
     }
-  }, [isOpen, citaData]);  const handleSubmit = async (e) => {
+  }, [isOpen, citaData]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validaciones básicas

@@ -52,7 +52,7 @@ const AppointmentDetailModal = ({
       title={`Detalle de la Cita #${selectedAppointment.id}`}
       size="xl"
       centered
-      overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
+      overlayProps={{ color: tema.overlayColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <Stack gap="lg">

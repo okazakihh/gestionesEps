@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Grid, Paper, Stack, Text, Badge, Group } from '@mantine/core';
+import { Box, Grid, Paper, Stack, Text, Badge, Group, Image, Button } from '@mantine/core';
 import { IconUser, IconFileText, IconHeart, IconStethoscope, IconClipboard, IconActivity } from '@tabler/icons-react';
 import SectionTitle from '../../../ui/SectionTitle';
 import InfoField from '../../../ui/InfoField';
@@ -186,6 +186,23 @@ export const DigitalSignatureSection = ({ data }) => {
           <InfoField label="Especialidad" value={data.especialidad} span={6} />
           <InfoField label="Fecha Firma" value={data.fechaFirma} span={6} />
         </Grid>
+        {(
+          (typeof data === 'string') || data?.imagen || data?.image || data?.firma
+        ) && (
+          <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+            <Image
+              src={typeof data === 'string' ? data : (data.imagen || data.image || data.firma)}
+              alt="Firma del médico"
+              width={240}
+              height={80}
+              fit="contain"
+              style={{ border: '1px solid #e5e7eb', borderRadius: 4, background: '#fff' }}
+            />
+            <div>
+              <Text size="xs" c="dimmed">Firma digital del médico</Text>
+            </div>
+          </div>
+        )}
       </Paper>
     </Box>
   );

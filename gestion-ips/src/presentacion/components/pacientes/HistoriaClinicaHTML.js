@@ -693,22 +693,39 @@ const generarConsultaHTML = (consulta, numeroHistoria, config) => {
         </tr>
       </table>
     ` : '';
+    // Detectar posible firma digital en distintos campos
+    const firma = consulta.firmaDigital || consulta.imagen || consulta.image || consulta.firma || consulta.signature || null;
+    let firmaSrc = null;
+    if (firma) {
+      if (typeof firma === 'string') firmaSrc = firma;
+      else if (firma.imagen) firmaSrc = firma.imagen;
+      else if (firma.image) firmaSrc = firma.image;
+      else if (firma.firma) firmaSrc = firma.firma;
+      else if (firma.signature) firmaSrc = firma.signature;
+    }
 
-  return `
-    <div class="section-header">
-      ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
-    </div>
+    return `
+      <div class="section-header">
+        ${consulta.tipo} #${consulta.numero} - ${fechaConsulta}
+      </div>
     
-    ${medicoHTML}
-    ${motivoAnamnesisHTML}
-    ${examenFisicoHTML}
-    ${diagnosticoHTML}
-    ${incapacidadHTML}
+      ${medicoHTML}
+      ${motivoAnamnesisHTML}
+      ${examenFisicoHTML}
+      ${diagnosticoHTML}
+      ${incapacidadHTML}
     
-    <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
-      <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>
-    </div>
-  `;
+      ${firmaSrc ? `
+        <div style="text-align:center;margin: 15px 0;">
+          <div style="margin-bottom:6px;"><img src="${firmaSrc}" alt="Firma" style="max-width:240px; max-height:120px; border:1px solid #000;"/></div>
+          <div><strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong></div>
+        </div>
+      ` : `
+        <div style="text-align: center; margin: 15px 0; padding: 8px; border: 1px solid #000; font-size: 9px;">
+          <strong>Firmado Electrónicamente: ${consulta.medico || 'N/A'}</strong>
+        </div>
+      `}
+    `;
 };
 
 /**
@@ -856,6 +873,19 @@ export const generarHistoriaClinicaHTML = (
 
 
 
+  // inject firmaDigital from historiaData into initial consulta if present
+  const consultasConFirma = (consultas || []).map(c => {
+    try {
+      const idStr = String(c.id || '');
+      if (idStr.startsWith('initial-') && historiaData && historiaData.firmaDigital) {
+        return { ...c, firmaDigital: historiaData.firmaDigital };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return c;
+  });
+  
   // Construir HTML completo
   const html = `
     <!DOCTYPE html>
@@ -874,7 +904,7 @@ export const generarHistoriaClinicaHTML = (
       ${generarAntecedentesHTML(historiaData)}
 
       <!-- Consultas -->
-      ${consultas.map(consulta => generarConsultaHTML(consulta, numeroHistoria, config)).join('\n')}
+      ${consultasConFirma.map(consulta => generarConsultaHTML(consulta, numeroHistoria, config)).join('\n')}
 
       ${generarPieHTML(config)}
 

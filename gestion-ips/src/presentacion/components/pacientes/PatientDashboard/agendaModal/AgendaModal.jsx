@@ -244,6 +244,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
       const historia = await historiasClinicasApiService.getHistoriaClinicaByPaciente(pacienteId);
       return historia ? historia.id : null;
     } catch (error) {
+      // 404 significa que no tiene historia clínica, lo cual es un caso de uso normal y no un error.
       return null;
     }
   };
@@ -344,7 +345,7 @@ const AgendaModal = ({ isOpen, onClose }) => {
           </Group>
         }
         size="90%"
-        overlayProps={{ color: tema.primaryColor, opacity: 0.55, blur: 3 }}
+        overlayProps={{ color: tema.overlayColor, backgroundOpacity: 0.55, blur: 3 }}
         styles={{
           body: { height: '70vh', overflowY: 'auto' },
           title: { width: '100%', color: 'white !important' },

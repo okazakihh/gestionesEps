@@ -102,8 +102,6 @@ export const useAppointmentManagement = (user = null) => {
         showConfirmButton: false
       });
 
-      console.log(`Estado de cita ${appointmentId} actualizado a ${newStatus}`);
-
       // Si se cambió el estado de la cita, recargar los datos del calendario para actualizar los slots disponibles
       if (selectedDate) {
         await loadAllDoctorsData(selectedDate);
@@ -369,7 +367,8 @@ export const useAppointmentManagement = (user = null) => {
             }
           }
 
-          if (medicoAsignado && doctor) {
+          // ¡CORRECCIÓN! Asegurarse de que el doctor exista y esté en la lista de médicos a mostrar.
+          if (medicoAsignado && doctor && groupedAppointments[doctor.id]) {
             const doctorId = doctor.id;
 
             // Get patient name
