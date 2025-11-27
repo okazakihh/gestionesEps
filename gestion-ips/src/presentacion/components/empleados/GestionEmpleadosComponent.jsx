@@ -49,13 +49,13 @@ const GestionEmpleadosComponent = () => {
   const handleOpenCreateModal = () => { resetForm(); setIsCreateModalOpen(true); };
   const handleCloseCreateModal = () => { setIsCreateModalOpen(false); resetForm(); };
 
-  const handleCreateEmpleado = async () => {
-    const validationError = validateEmpleadoForm(formData);
+  const handleCreateEmpleado = async (dataToSubmit) => {
+    const validationError = validateEmpleadoForm(dataToSubmit);
     if (validationError) {
       Swal.fire({ title: 'Error de Validación', text: validationError, icon: 'error' });
       return;
     }
-    const result = await createEmpleado(formData);
+    const result = await createEmpleado(dataToSubmit);
     if (result.success) {
       handleCloseCreateModal();
     }
@@ -88,13 +88,13 @@ const GestionEmpleadosComponent = () => {
 
   const handleCloseEditModal = () => { setIsEditModalOpen(false); setSelectedEmpleadoId(null); resetForm(); };
 
-  const handleUpdateEmpleado = async () => {
-    const validationError = validateEmpleadoForm(formData);
+  const handleUpdateEmpleado = async (dataToSubmit) => {
+    const validationError = validateEmpleadoForm(dataToSubmit);
     if (validationError) {
       Swal.fire({ title: 'Error de Validación', text: validationError, icon: 'error' });
       return;
     }
-    const result = await updateEmpleado(selectedEmpleadoId, formData);
+    const result = await updateEmpleado(selectedEmpleadoId, dataToSubmit);
     if (result.success) {
       handleCloseEditModal();
     }

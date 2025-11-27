@@ -1,11 +1,99 @@
-import React from 'react';
-import { Grid, TextInput, Paper, Stack, Group, Text, Checkbox } from '@mantine/core';
-import { IconSignature, IconShieldCheck, IconCalendar, IconCheck } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { Grid, TextInput, Paper, Stack, Group, Text, Checkbox, Image, Button, FileInput } from '@mantine/core';
+import { IconSignature, IconShieldCheck, IconCalendar, IconCheck, IconTrash, IconRefresh } from '@tabler/icons-react';
+import { empleadosApiService } from '../../../../../../data/services/empleadosApiService.js';
 
 /**
  * Tab 6: Firma Digital y Validación
  */
 const FirmaDigitalTab = ({ formData, setFormData }) => {
+  const [uploading, setUploading] = useState(false);
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const removeSignature = () => {
+    setFormData({ ...formData, firmaDigital: { ...formData.firmaDigital, imagen: null } });
+  };
+
+  const updateSignatureFromProfile = async () => {
+      try {
+      setUploading(true);
+      const licencia = formData.firmaDigital?.numeroCedula || formData.detalleConsulta?.registroMedico || '';
+      const nombreMedico = formData.firmaDigital?.nombreMedico || formData.detalleConsulta?.medicoTratante || '';
+      const resp = await empleadosApiService.getEmpleados({ size: 1000 });
+      const list = Array.isArray(resp?.content) ? resp.content : resp || [];
+      let matched = null;
+      for (const emp of list) {
+        try {
+          const safeParse = (s) => { try { return typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; } };
+          const parsed = safeParse(emp.datosJson) || safeParse(emp.jsonData) || emp.datosJson || emp.jsonData || emp;
+
+          // if parsed contains nested jsonData as a string, parse it too
+          const firstLevel = safeParse(emp.jsonData) || safeParse(emp.datosJson) || null;
+          const nested = firstLevel ? (safeParse(firstLevel.jsonData) || safeParse(firstLevel.datosJson) || null) : null;
+
+          const numeroLic = parsed?.informacionLaboral?.numeroLicencia
+            || parsed?.numeroLicencia
+            || parsed?.informacionLaboral?.licencia
+            || (firstLevel && (firstLevel.informacionLaboral?.numeroLicencia || firstLevel.numeroLicencia))
+            || (nested && (nested.informacionLaboral?.numeroLicencia || nested.numeroLicencia))
+            || '';
+          if (licencia && numeroLic && String(numeroLic).trim() === String(licencia).trim()) {
+            matched = parsed;
+            break;
+          }
+          const nombreEmpleado = `${parsed?.informacionPersonal?.primerNombre || ''} ${parsed?.informacionPersonal?.primerApellido || ''}`.trim();
+          if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
+            matched = parsed;
+            break;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      if (matched) {
+        let signature = null;
+        if (typeof matched.firmaDigital === 'string') signature = matched.firmaDigital;
+        else if (matched.firmaDigital && (matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma)) {
+          signature = matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma;
+        } else if (matched.informacionPersonal && (matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma)) {
+          const f = matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma;
+          if (typeof f === 'string') signature = f;
+          else if (f.imagen || f.image || f.firma) signature = f.imagen || f.image || f.firma;
+        }
+
+        // set also the license / registro medico if we detected it
+        const foundNumeroLic = numeroLic || (matched?.informacionLaboral?.numeroLicencia) || (matched?.numeroLicencia) || '';
+
+        if (signature) {
+          setFormData({ ...formData, firmaDigital: { ...formData.firmaDigital, imagen: signature, numeroCedula: formData.firmaDigital?.numeroCedula || foundNumeroLic || '' } });
+        }
+      }
+    } catch (err) {
+      console.error('Error updating signature from profile', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleManualUpload = async (file) => {
+    if (!file) return;
+    try {
+      setUploading(true);
+      const dataUrl = await fileToBase64(file);
+      setFormData({ ...formData, firmaDigital: { ...formData.firmaDigital, imagen: dataUrl } });
+    } catch (err) {
+      console.error('Error converting file to base64', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Stack gap="md">
       <Paper p="md" withBorder style={{ backgroundColor: 'var(--mantine-color-blue-0)' }}>
@@ -16,46 +104,50 @@ const FirmaDigitalTab = ({ formData, setFormData }) => {
         
         <Grid gutter="md">
           <Grid.Col span={12}>
-            <TextInput
-              label="Nombre Completo del Médico"
-              placeholder="Nombre completo"
-              value={formData.firmaDigital.nombreMedico}
-              onChange={(e) => setFormData({
-                ...formData,
-                firmaDigital: { ...formData.firmaDigital, nombreMedico: e.target.value }
-              })}
-              required
-              size="sm"
-            />
+            <Text size="sm">Nombre Completo del Médico:</Text>
+            <Text fw={700}>{formData.firmaDigital.nombreMedico || 'N/A'}</Text>
           </Grid.Col>
           
           <Grid.Col span={6}>
-            <TextInput
-              label="Número de Cédula / Registro Médico"
-              placeholder="CC o RM"
-              value={formData.firmaDigital.numeroCedula}
-              onChange={(e) => setFormData({
-                ...formData,
-                firmaDigital: { ...formData.firmaDigital, numeroCedula: e.target.value }
-              })}
-              required
-              size="sm"
-            />
+            <Text size="sm">Número de Registro Médico:</Text>
+            <Text fw={700}>{formData.firmaDigital?.numeroCedula || formData.detalleConsulta?.registroMedico || 'N/A'}</Text>
           </Grid.Col>
           
           <Grid.Col span={6}>
-            <TextInput
-              label="Especialidad"
-              placeholder="Especialidad médica"
-              value={formData.firmaDigital.especialidad}
-              onChange={(e) => setFormData({
-                ...formData,
-                firmaDigital: { ...formData.firmaDigital, especialidad: e.target.value }
-              })}
-              required
-              size="sm"
-            />
+            <Text size="sm">Especialidad:</Text>
+            <Text fw={700}>{formData.firmaDigital.especialidad || 'N/A'}</Text>
           </Grid.Col>
+
+          {formData.firmaDigital.imagen ? (
+            <Grid.Col span={12}>
+              <Text size="sm" mb="xs">Firma del Médico (desde perfil)</Text>
+              <Paper withBorder p="xs" style={{ maxWidth: 200, margin: 'auto', textAlign: 'center' }}>
+                <Image
+                  src={formData.firmaDigital.imagen}
+                  alt="Firma del médico"
+                  style={{ width: 160, height: 'auto', objectFit: 'contain' }}
+                />
+                <Group position="center" mt="sm">
+                  <Button leftIcon={<IconTrash size={14} />} color="red" variant="outline" size="xs" onClick={removeSignature}>Quitar</Button>
+                  <Button leftIcon={<IconRefresh size={14} />} variant="light" size="xs" onClick={updateSignatureFromProfile} loading={uploading}>Actualizar</Button>
+                </Group>
+              </Paper>
+            </Grid.Col>
+          ) : (
+            <Grid.Col span={12}>
+              <Text size="sm" mb="xs">Firma no encontrada en el perfil del médico.</Text>
+              <Group position="center">
+                <FileInput
+                  label="Cargar firma (imagen)"
+                  placeholder="Seleccione una imagen..."
+                  accept="image/*"
+                  onChange={handleManualUpload}
+                  size="sm"
+                />
+                <Button onClick={updateSignatureFromProfile} loading={uploading} size="sm">Usar firma del perfil</Button>
+              </Group>
+            </Grid.Col>
+          )}
           
           <Grid.Col span={12}>
             <TextInput

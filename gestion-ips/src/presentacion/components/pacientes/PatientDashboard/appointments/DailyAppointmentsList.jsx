@@ -142,7 +142,7 @@ const DailyAppointmentsList = ({
                         </Stack>
 
                         {/* Estado change buttons */}
-                        <Group gap="xs" style={{ minWidth: '140px' }}>
+                          <Group gap="xs" style={{ minWidth: '140px' }}>
                           <ActionIcon
                             variant="light"
                             color="gray"

@@ -18,6 +18,7 @@ const CreateEmpleadoModal = ({
   const { tema } = useTheme();
   const [firmaFile, setFirmaFile] = React.useState(null);
   const [firmaPreview, setFirmaPreview] = React.useState(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -31,16 +32,33 @@ const CreateEmpleadoModal = ({
     if (firmaFile) {
       fileToBase64(firmaFile)
         .then((dataUrl) => {
-          if (!mounted) return;
-          setFirmaPreview(dataUrl);
-          if (typeof onFieldChange === 'function') onFieldChange('firmaDigital', dataUrl);
+          if (mounted) setFirmaPreview(dataUrl);
         })
         .catch((err) => console.error('Error creating preview:', err));
     } else {
-      setFirmaPreview(formData.firmaDigital || null);
+      setFirmaPreview(null);
     }
     return () => { mounted = false; };
   }, [firmaFile]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      let firmaFinal = null;
+      if (firmaFile) {
+        firmaFinal = await fileToBase64(firmaFile);
+      }
+      const dataToSubmit = { ...formData, firmaDigital: firmaFinal };
+      await onSubmit(dataToSubmit);
+      onClose(); // Close modal on success
+    } catch (error) {
+      console.error('Error al crear empleado:', error);
+      // El error ya se maneja en el hook padre con Swal
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Modal
       opened={opened}
@@ -78,7 +96,7 @@ const CreateEmpleadoModal = ({
               <div className="mt-3 flex items-start gap-3">
                 <Image src={firmaPreview} alt="Preview firma" maw={240} style={{ border: '1px solid #ccc', borderRadius: '4px' }} />
                 <div>
-                  <Button variant="subtle" color="red" onClick={() => { setFirmaFile(null); setFirmaPreview(null); if (typeof onFieldChange === 'function') onFieldChange('firmaDigital', null); }}>
+                  <Button variant="subtle" color="red" onClick={() => { setFirmaFile(null); setFirmaPreview(null); }}>
                     <IconTrash size={16} />&nbsp;Quitar
                   </Button>
                 </div>
@@ -103,13 +121,13 @@ const CreateEmpleadoModal = ({
       </Tabs>
 
       <Group position="right" mt="xl">
-        <Button variant="default" onClick={onClose} disabled={loading}>
+        <Button variant="default" onClick={onClose} disabled={loading || isSubmitting}>
           Cancelar
         </Button>
         <Button 
-          onClick={onSubmit} 
-          loading={loading}
-          disabled={!isFormValid || loading}
+          onClick={handleSubmit} 
+          loading={loading || isSubmitting}
+          disabled={!isFormValid || loading || isSubmitting}
         >
           Crear Empleado
         </Button>

@@ -3,12 +3,14 @@ import { Modal, TextInput, Textarea, Button, Grid, Tabs, Paper, Text, Box, Group
 import { IconFileText, IconStethoscope, IconClipboard, IconCalendar, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService } from '../../../../../data/services/pacientesApiService.js';
+import { empleadosApiService } from '../../../../../data/services/empleadosApiService.js';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import SignosVitalesForm from './components/SignosVitalesForm.jsx';
 import DiagnosticosTable from './components/DiagnosticosTable.jsx';
 import MedicamentosTable from './components/MedicamentosTable.jsx';
 import ExamenFisicoPorDependencia from './components/ExamenFisicoPorDependencia.jsx';
 import { DEPENDENCIA_MEDICA_OPTIONS, REQUIERE_SIGNOS_VITALES } from '../../../../../negocio/utils/listHelps.js';
+import FirmaDigitalTab from './tabs/FirmaDigitalTab.jsx';
 
 const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, historiaClinicaId, citaData, patientData }) => {
   const { tema } = useTheme();
@@ -116,6 +118,250 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
     }
   });
 
+  // Cargar datos del médico desde citaData (ya incluye licencia)
+  React.useEffect(() => {
+    if (isOpen && citaData) {
+      // citaData received
+      const medicoAsignado = citaData.medicoAsignado || '';
+      const nombreMedico = medicoAsignado.split(' - ')[0] || '';
+      const licenciaMedica = citaData.licenciaMedica || '';
+      const especialidad = citaData.especialidad || '';
+      // extracted medico info
+      
+      // Actualizar formData con la información del médico de la cita
+      setFormData(prev => ({
+        ...prev,
+        detalleConsulta: {
+          ...prev.detalleConsulta,
+          medicoTratante: nombreMedico,
+          especialidad: especialidad
+        },
+        firmaDigital: {
+          ...prev.firmaDigital,
+          nombreMedico: nombreMedico,
+          especialidad: especialidad,
+          numeroCedula: licenciaMedica
+        }
+      }));
+
+      // Intentar cargar la firma del empleado desde el servicio de empleados (solo frontend)
+      (async () => {
+        if (!isOpen) return;
+        try {
+          const resp = await empleadosApiService.getEmpleados({ size: 1000 });
+          const list = Array.isArray(resp?.content) ? resp.content : resp || [];
+          // empleados list obtained
+
+          let matched = null;
+          const parseEmployeeRecord = (emp) => {
+            // Try multiple known properties and nested json fields
+            let parsed = null;
+            const tryParse = (str) => {
+              if (!str || typeof str !== 'string') return null;
+              try {
+                return JSON.parse(str);
+              } catch (e) {
+                return null;
+              }
+            };
+
+            // Common raw payload fields in this project: jsonData, datosJson
+            const raw = emp?.jsonData || emp?.datosJson || emp?.json || null;
+            if (raw) {
+              const first = tryParse(raw) || raw;
+              // if it contains nested json in property 'jsonData' or 'datosJson', parse again
+              if (first && typeof first === 'object' && (first.jsonData || first.datosJson)) {
+                const nestedRaw = first.jsonData || first.datosJson;
+                const second = tryParse(nestedRaw) || nestedRaw;
+                parsed = (second && typeof second === 'object') ? second : first;
+              } else {
+                parsed = (first && typeof first === 'object') ? first : first;
+              }
+            }
+
+            // If still null, maybe emp itself already contains the structure
+            if (!parsed) {
+              parsed = emp;
+            }
+
+            return parsed;
+          };
+
+              for (const emp of list) {
+            try {
+              const parsed = parseEmployeeRecord(emp) || {};
+
+              // Try to extract license and name from several possible locations (including raw jsonData)
+              const safeParse = (s) => { try { return typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; } };
+              const firstLevelRaw = safeParse(emp?.jsonData) || safeParse(emp?.datosJson) || null;
+              const nestedRaw = firstLevelRaw ? (safeParse(firstLevelRaw.jsonData) || safeParse(firstLevelRaw.datosJson) || null) : null;
+
+              const numeroLic = parsed?.informacionLaboral?.numeroLicencia
+                || parsed?.numeroLicencia
+                || parsed?.informacionLaboral?.licencia
+                || parsed?.registroMedico
+                || emp?.registroMedico
+                || emp?.numeroLicencia
+                || (firstLevelRaw && (firstLevelRaw.informacionLaboral?.numeroLicencia || firstLevelRaw.numeroLicencia))
+                || (nestedRaw && (nestedRaw.informacionLaboral?.numeroLicencia || nestedRaw.numeroLicencia))
+                || '';
+              const nombreEmpleadoCandidates = [];
+              if (parsed?.informacionPersonal) {
+                const ip = parsed.informacionPersonal;
+                nombreEmpleadoCandidates.push(`${ip.primerNombre || ''} ${ip.segundoNombre || ''} ${ip.primerApellido || ''} ${ip.segundoApellido || ''}`.trim());
+                nombreEmpleadoCandidates.push(`${ip.primerNombre || ''} ${ip.primerApellido || ''}`.trim());
+              }
+              // also check top-level names
+              if (parsed?.nombre) nombreEmpleadoCandidates.push(parsed.nombre);
+              if (emp?.nombre) nombreEmpleadoCandidates.push(emp.nombre);
+              if (emp?.jsonData && typeof emp.jsonData === 'string') {
+                const j = (() => { try { return JSON.parse(emp.jsonData); } catch { return null; } })();
+                if (j && j.informacionPersonal) {
+                  const ip2 = j.informacionPersonal;
+                  nombreEmpleadoCandidates.push(`${ip2.primerNombre || ''} ${ip2.primerApellido || ''}`.trim());
+                }
+                // also check numeroLicencia in raw jsonData
+                if (!numeroLic) {
+                  const maybeNum = j?.informacionLaboral?.numeroLicencia || j?.numeroLicencia || null;
+                  if (maybeNum) {
+                    // prefer this for matching
+                  }
+                }
+              }
+
+              const nombreEmpleado = (nombreEmpleadoCandidates.find(Boolean) || '').trim();
+
+              // comparing employee candidates
+
+              if (licenciaMedica && numeroLic && String(numeroLic).trim() === String(licenciaMedica).trim()) {
+                matched = { parsed, raw: emp };
+                // matched by license
+                break;
+              }
+
+              if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
+                matched = { parsed, raw: emp };
+                // matched by name
+                break;
+              }
+            } catch (e) {
+              console.error('❌ Error parsing employee data during matching:', e);
+            }
+          }
+
+          if (matched) {
+            // matched is an object: { parsed, raw }
+            const parsedMatched = matched.parsed || matched;
+            const rawMatched = matched.raw || parsedMatched;
+
+            // Try multiple places where a signature might be stored
+            let signature = null;
+
+            // Helper to safely parse JSON strings
+            const safeParse = (s) => {
+              if (!s || typeof s !== 'string') return null;
+              try { return JSON.parse(s); } catch (e) { return null; }
+            };
+            try {
+              const firstLevel = safeParse(rawMatched?.jsonData) || safeParse(rawMatched?.datosJson) || null;
+              if (firstLevel) {
+                // parsed first-level raw employee payload
+                if (firstLevel.firmaDigital) {
+                  if (typeof firstLevel.firmaDigital === 'string') signature = firstLevel.firmaDigital;
+                  else if (firstLevel.firmaDigital.imagen) signature = firstLevel.firmaDigital.imagen;
+                }
+
+                // If firstLevel contains nested jsonData as string, parse and prefer inner signature
+                const nested = safeParse(firstLevel.jsonData) || safeParse(firstLevel.datosJson) || null;
+                if (nested) {
+                  if (!signature && nested.firmaDigital) {
+                    if (typeof nested.firmaDigital === 'string') signature = nested.firmaDigital;
+                    else if (nested.firmaDigital.imagen) signature = nested.firmaDigital.imagen;
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('❌ Error parsing rawMatched jsonData for signature:', e);
+            }
+
+            // If the parsed matched object itself is a string
+            if (typeof parsedMatched === 'string') {
+              signature = parsedMatched;
+            }
+
+            // Common structured field on parsed object
+            if (!signature && parsedMatched.firmaDigital) {
+              if (typeof parsedMatched.firmaDigital === 'string' && parsedMatched.firmaDigital) signature = parsedMatched.firmaDigital;
+              else if (parsedMatched.firmaDigital.imagen) signature = parsedMatched.firmaDigital.imagen;
+              else if (parsedMatched.firmaDigital.image) signature = parsedMatched.firmaDigital.image;
+              else if (parsedMatched.firmaDigital.firma) signature = parsedMatched.firmaDigital.firma;
+            }
+
+            // Check common top-level props on the raw employee record (original API shape)
+            if (!signature && rawMatched && (rawMatched.firmaDigital || rawMatched.imagen || rawMatched.image || rawMatched.firma)) {
+              signature = rawMatched.firmaDigital || rawMatched.imagen || rawMatched.image || rawMatched.firma;
+            }
+
+            // Check nested parsed structures (informacionPersonal)
+            if (!signature && parsedMatched.informacionPersonal) {
+              const ip = parsedMatched.informacionPersonal;
+              if (typeof ip === 'string') {
+                signature = ip;
+              } else if (ip) {
+                if (ip.firmaDigital && typeof ip.firmaDigital === 'string') signature = ip.firmaDigital;
+                else if (ip.firma && typeof ip.firma === 'string') signature = ip.firma;
+                else if (ip.firmaDigital && ip.firmaDigital.imagen) signature = ip.firmaDigital.imagen;
+              }
+            }
+
+            // Last resort: check any nested object values for common keys
+            if (!signature) {
+              const searchObj = (obj) => {
+                if (!obj || typeof obj !== 'object') return null;
+                const keys = ['imagen', 'image', 'firma', 'firmaDigital', 'signature'];
+                for (const k of keys) {
+                  if (obj[k]) return obj[k];
+                }
+                for (const v of Object.values(obj)) {
+                  if (typeof v === 'object') {
+                    const found = searchObj(v);
+                    if (found) return found;
+                  }
+                }
+                return null;
+              };
+              const found = searchObj(parsedMatched) || (rawMatched && searchObj(rawMatched));
+              if (found) signature = found;
+            }
+
+            // extracted signature candidate
+
+            if (signature) {
+              // also try to set the license/registro if available
+              const foundNumeroLic = parsedMatched?.informacionLaboral?.numeroLicencia
+                || parsedMatched?.numeroLicencia
+                || rawMatched?.numeroLicencia
+                || rawMatched?.informacionLaboral?.numeroLicencia
+                || '';
+
+              setFormData(prev => ({
+                ...prev,
+                firmaDigital: {
+                  ...prev.firmaDigital,
+                  imagen: signature,
+                  numeroCedula: prev.firmaDigital?.numeroCedula || foundNumeroLic || prev.firmaDigital?.numeroCedula || ''
+                }
+              }));
+              // formData.firmaDigital.imagen updated
+            } 
+          } 
+        } catch (err) {
+          console.error('❌ Error loading empleado signature:', err);
+        }
+      })();
+    }
+  }, [isOpen, citaData]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -145,7 +391,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         firmaDigital: formData.firmaDigital
       });
 
-      console.log('🩺 Enviando Consulta Médica:', JSON.stringify({ historiaClinicaId: formData.historiaClinicaId, datosJson }, null, 2));
+      // sending consulta medica
 
       const result = await historiasClinicasApiService.crearConsulta(formData.historiaClinicaId, datosJson);
 
@@ -242,6 +488,9 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                 </Tabs.Tab>
                 <Tabs.Tab value="seguimiento" leftSection={<IconCalendar size={14} />}>
                   Seguimiento
+                </Tabs.Tab>
+                <Tabs.Tab value="firma" leftSection={<IconStethoscope size={14} />}>
+                  Firma
                 </Tabs.Tab>
               </Tabs.List>
 
@@ -600,6 +849,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                       </Grid>
                     </Paper>
                   </Tabs.Panel>
+
+                  {/* TAB 5: Firma */}
+                  <Tabs.Panel value="firma">
+                    <FirmaDigitalTab
+                      formData={formData}
+                      setFormData={setFormData}
+                    />
+                  </Tabs.Panel>
                 </Box>
               </ScrollArea>
             </Tabs>
@@ -621,7 +878,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento'];
+                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento', 'firma'];
                     const currentIndex = tabs.indexOf(activeTab);
                     if (currentIndex > 0) {
                       setActiveTab(tabs[currentIndex - 1]);
@@ -632,10 +889,10 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                   Anterior
                 </Button>
               )}
-              {activeTab !== 'seguimiento' ? (
+              {activeTab !== 'firma' ? (
                 <Button
                   onClick={() => {
-                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento'];
+                    const tabs = ['consulta', 'examen', 'diagnostico', 'seguimiento', 'firma'];
                     const currentIndex = tabs.indexOf(activeTab);
                     if (currentIndex < tabs.length - 1) {
                       setActiveTab(tabs[currentIndex + 1]);

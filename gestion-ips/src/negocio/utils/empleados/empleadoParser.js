@@ -15,6 +15,7 @@ export const parseEmpleadoData = (empleado) => {
     informacionPersonal: {},
     informacionContacto: {},
     informacionLaboral: {},
+    firmaDigital: null,
     activo: empleado?.activo ?? true,
     fechaCreacion: empleado?.fechaCreacion || null
   };
@@ -27,6 +28,7 @@ export const parseEmpleadoData = (empleado) => {
     const datosCompletos = JSON.parse(empleado.jsonData || '{}');
     result.numeroDocumento = datosCompletos.numeroDocumento || '';
     result.tipoDocumento = datosCompletos.tipoDocumento || '';
+    result.firmaDigital = datosCompletos.firmaDigital || null;
 
     if (datosCompletos.jsonData) {
       const datosInternos = JSON.parse(datosCompletos.jsonData);
@@ -148,7 +150,8 @@ export const buildEmpleadoJSON = (formData, activo = true) => {
     numeroDocumento: formData.numeroDocumento,
     tipoDocumento: formData.tipoDocumento,
     jsonData: datosInternosJson,
-    activo: activo
+    activo: activo,
+    firmaDigital: formData.firmaDigital || null
   });
 
   return datosCompletosJson;

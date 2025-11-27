@@ -19,6 +19,7 @@ import PatientInfoPreserved from './PatientInfoPreserved.jsx';
 import { usePatientParser } from '../../../../../negocio/hooks/pacientes/usePatientParser.js';
 import { useClinicalHistoryParser } from '../../../../../negocio/hooks/pacientes/useClinicalHistoryParser.js';
 import { usePreviewModal } from '../../../../../negocio/hooks/pacientes/usePreviewModal.js';
+import { empleadosApiService } from '../../../../../data/services/empleadosApiService.js';
 
 // Importar componentes de sección refactorizados
 import SectionTitle from '../../../ui/SectionTitle.jsx';
@@ -39,12 +40,23 @@ const PatientClinicalHistoryCompleteNew = ({
     const { tema } = useTheme();
 
     const [ipsData, setIpsData] = useState(null);
+    const [empleados, setEmpleados] = useState([]);
 
     useEffect(() => {
       let mounted = true;
       getIpsConfig()
         .then(data => { if (mounted) setIpsData(data); })
         .catch(err => { console.error('Error loading IPS config:', err); });
+
+      // Cargar empleados para buscar la firma
+      empleadosApiService.getEmpleados({ page: 0, size: 500 }) // Asumimos un número grande para traer a todos los médicos
+        .then(data => {
+          if (mounted && data && data.content) {
+            setEmpleados(data.content);
+          }
+        })
+        .catch(err => { console.error('Error loading empleados:', err); });
+
       return () => { mounted = false; };
     }, []);
 
@@ -53,10 +65,42 @@ const PatientClinicalHistoryCompleteNew = ({
     const { parsedData, allConsultas } = useClinicalHistoryParser(historiaClinica, consultas);
     const { previewOpen, previewHTML, previewTitle, openPreview, closePreview, handlePrint: handlePrintPreview } = usePreviewModal();
 
+  const medicosConFirma = useMemo(() => {
+    if (!empleados || empleados.length === 0) {
+      return new Map();
+    }
+    const map = new Map();
+    empleados.forEach(emp => {
+      try {
+        const info = typeof emp.datosJson === 'string' ? JSON.parse(emp.datosJson).informacionPersonal : emp.datosJson.informacionPersonal;
+        const firma = typeof emp.datosJson === 'string' ? JSON.parse(emp.datosJson).firmaDigital : emp.datosJson.firmaDigital;
+
+        if (info && firma) {
+          const nombreCompleto = [info.primerNombre, info.segundoNombre, info.primerApellido, info.segundoApellido]
+            .filter(Boolean).join(' ').trim();
+          if (nombreCompleto) {
+            map.set(nombreCompleto, firma);
+          }
+        }
+      } catch (e) {
+        // Ignorar errores de parseo si 'datosJson' no es un JSON válido
+      }
+    });
+    return map;
+  }, [empleados]);
+
   const openPreviewForHistoria = async () => {
     try {
       const ipsData = await getIpsConfig();
-      const html = generarHistoriaClinicaHTML(allConsultas, historiaClinica, patient, parsedPatientData, parsedData, ipsData);
+      // Inyectar la firma del médico en cada consulta
+      const consultasConFirma = allConsultas.map(consulta => {
+        const firma = medicosConFirma.get(consulta.medico);
+        if (firma && !consulta.firmaDigital) { // Solo inyectar si no tiene ya una firma
+          return { ...consulta, firmaDigital: firma };
+        }
+        return consulta;
+      });
+      const html = generarHistoriaClinicaHTML(consultasConFirma, historiaClinica, patient, parsedPatientData, parsedData, ipsData);
       openPreview(`Historia Clínica - ${historiaClinica?.numeroHistoria || ''}`, html);
     } catch (e) {
       console.error('Error generating historia preview:', e);

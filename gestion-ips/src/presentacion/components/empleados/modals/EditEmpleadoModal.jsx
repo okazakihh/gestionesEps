@@ -24,13 +24,17 @@ const EditEmpleadoModal = ({
   const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
-    setFirmaExistente(formData.firmaDigital || null);
-  }, [formData]);
+    // Reset local state when the modal is closed to ensure clean state on reopen
+    if (!opened) {
+      setFirmaFile(null);
+      setFirmaExistente(null);
+      setFirmaPreview(null);
+    }
+  }, [opened]);
 
   React.useEffect(() => {
-    // initialize preview from existing firmaDigital
-    setFirmaPreview(formData.firmaDigital || null);
-  }, [formData.firmaDigital]);
+    setFirmaExistente(formData.firmaDigital || null);
+  }, [formData]);
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -44,18 +48,19 @@ const EditEmpleadoModal = ({
     if (firmaFile) {
       fileToBase64(firmaFile)
         .then((dataUrl) => {
-          if (!mounted) return;
-          setFirmaPreview(dataUrl);
+          if (mounted) {
+            setFirmaPreview(dataUrl);
+          }
         })
         .catch((err) => {
           console.error('Error generating preview:', err);
         });
     } else {
-      // if no new file, show existing firma (if any)
-      setFirmaPreview(firmaExistente || null);
+      // Cuando no hay un archivo nuevo, la previsualización debe estar vacía.
+      setFirmaPreview(null);
     }
     return () => { mounted = false; };
-  }, [firmaFile, firmaExistente]);
+  }, [firmaFile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.currentTarget || {};
@@ -73,17 +78,16 @@ const EditEmpleadoModal = ({
         firmaFinal = await fileToBase64(firmaFile);
       }
 
-      // Update the form data in the parent with the base64 signature (optional)
-      if (typeof onFieldChange === 'function') {
-        onFieldChange('firmaDigital', firmaFinal || null);
-      }
-
+      // Create a new object with the most up-to-date data
+      const dataToSubmit = {
+        ...formData,
+        firmaDigital: firmaFinal || null
+      };
+      
       // Delegate the actual update logic to the parent via onSubmit
       if (typeof onSubmit === 'function') {
-        await onSubmit();
+        await onSubmit(dataToSubmit);
       }
-
-      Swal.fire({ title: '¡Éxito!', text: 'Empleado actualizado correctamente.', icon: 'success' });
       onClose();
     } catch (error) {
       console.error('Error actualizando empleado:', error);
@@ -138,7 +142,7 @@ const EditEmpleadoModal = ({
                 <div className="mt-3 flex items-start gap-3">
                   <Image src={firmaPreview} alt="Preview firma" maw={240} style={{ border: '1px solid #ccc', borderRadius: '4px' }} />
                   <div>
-                    <Button variant="subtle" color="red" onClick={() => { setFirmaFile(null); setFirmaPreview(firmaExistente || null); }}>
+                    <Button variant="subtle" color="red" onClick={() => setFirmaFile(null)}>
                       <IconTrash size={16} />&nbsp;Quitar
                     </Button>
                   </div>

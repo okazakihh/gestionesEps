@@ -3,6 +3,7 @@ import { Modal, Button, Tabs, Paper, Text, Box, Group, Stack, ScrollArea, Grid }
 import { IconUser, IconFileText, IconHeart, IconStethoscope, IconClipboard, IconSignature, IconDeviceFloppy } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { historiasClinicasApiService, pacientesApiService } from '../../../../../data/services/pacientesApiService.js';
+import { empleadosApiService } from '../../../../../data/services/empleadosApiService.js';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { useAuth } from '../../../../../data/context/AuthContext.jsx';
 import { useIpsConfig } from '../../../../../negocio/hooks/configuracion/useIpsConfig.js';
@@ -211,60 +212,146 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
           registroMedico: licenciaMedica,
           especialidad: especialidad
         },
-        firmaDigital: {
-          ...prev.firmaDigital,
-          nombreMedico: nombreMedico,
-          especialidad: especialidad
-        }
-      }));
+                  firmaDigital: {
+                    ...prev.firmaDigital,
+                    nombreMedico: nombreMedico,
+                    especialidad: especialidad,
+                    numeroCedula: licenciaMedica // Add this line
+                  }      }));
 
       // Intentar cargar la firma del empleado desde el servicio de empleados (solo frontend)
       (async () => {
+        if (!isOpen) return;
         try {
           const resp = await empleadosApiService.getEmpleados({ size: 1000 });
           const list = Array.isArray(resp?.content) ? resp.content : resp || [];
+
           let matched = null;
+
+          const tryParse = (s) => {
+            if (!s || typeof s !== 'string') return null;
+            try { return JSON.parse(s); } catch { return null; }
+          };
+
+          const parseEmployeeRecord = (emp) => {
+            let parsed = null;
+            const raw = emp?.jsonData || emp?.datosJson || emp?.json || null;
+            if (raw) {
+              const first = tryParse(raw) || raw;
+              if (first && typeof first === 'object' && (first.jsonData || first.datosJson)) {
+                const nestedRaw = first.jsonData || first.datosJson;
+                const second = tryParse(nestedRaw) || nestedRaw;
+                parsed = (second && typeof second === 'object') ? second : first;
+              } else {
+                parsed = (first && typeof first === 'object') ? first : first;
+              }
+            }
+            if (!parsed) parsed = emp;
+            return parsed;
+          };
+
           for (const emp of list) {
             try {
-              const parsed = typeof emp.datosJson === 'string' ? JSON.parse(emp.datosJson) : (emp.datosJson || {});
-              const numeroLic = parsed?.informacionLaboral?.numeroLicencia || parsed?.numeroLicencia || parsed?.informacionLaboral?.licencia || '';
+              const parsed = parseEmployeeRecord(emp) || {};
+
+              const safeParse = (s) => { try { return typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; } };
+              const firstLevelRaw = safeParse(emp?.jsonData) || safeParse(emp?.datosJson) || null;
+              const nestedRaw = firstLevelRaw ? (safeParse(firstLevelRaw.jsonData) || safeParse(firstLevelRaw.datosJson) || null) : null;
+
+              const numeroLic = parsed?.informacionLaboral?.numeroLicencia
+                || parsed?.numeroLicencia
+                || parsed?.informacionLaboral?.licencia
+                || parsed?.registroMedico
+                || emp?.registroMedico
+                || emp?.numeroLicencia
+                || (firstLevelRaw && (firstLevelRaw.informacionLaboral?.numeroLicencia || firstLevelRaw.numeroLicencia))
+                || (nestedRaw && (nestedRaw.informacionLaboral?.numeroLicencia || nestedRaw.numeroLicencia))
+                || '';
+
+              const nombreEmpleadoCandidates = [];
+              if (parsed?.informacionPersonal) {
+                const ip = parsed.informacionPersonal;
+                nombreEmpleadoCandidates.push(`${ip.primerNombre || ''} ${ip.segundoNombre || ''} ${ip.primerApellido || ''} ${ip.segundoApellido || ''}`.trim());
+                nombreEmpleadoCandidates.push(`${ip.primerNombre || ''} ${ip.primerApellido || ''}`.trim());
+              }
+              if (parsed?.nombre) nombreEmpleadoCandidates.push(parsed.nombre);
+              if (emp?.nombre) nombreEmpleadoCandidates.push(emp.nombre);
+              if (emp?.jsonData && typeof emp.jsonData === 'string') {
+                const j = (() => { try { return JSON.parse(emp.jsonData); } catch { return null; } })();
+                if (j && j.informacionPersonal) {
+                  const ip2 = j.informacionPersonal;
+                  nombreEmpleadoCandidates.push(`${ip2.primerNombre || ''} ${ip2.primerApellido || ''}`.trim());
+                }
+              }
+
+              const nombreEmpleado = (nombreEmpleadoCandidates.find(Boolean) || '').trim();
+
               if (licenciaMedica && numeroLic && String(numeroLic).trim() === String(licenciaMedica).trim()) {
-                matched = parsed;
+                matched = { parsed, raw: emp };
                 break;
               }
-              const nombreEmpleado = `${parsed?.informacionPersonal?.primerNombre || ''} ${parsed?.informacionPersonal?.primerApellido || ''}`.trim();
+
               if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
-                matched = parsed;
+                matched = { parsed, raw: emp };
                 break;
               }
             } catch (e) {
-              // ignorar errores de parseo
+              // ignore parse errors
             }
           }
 
           if (matched) {
+            const parsedMatched = matched.parsed || matched;
+            const rawMatched = matched.raw || parsedMatched;
+
             let signature = null;
-            if (typeof matched.firmaDigital === 'string') signature = matched.firmaDigital;
-            else if (matched.firmaDigital && (matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma)) {
-              signature = matched.firmaDigital.imagen || matched.firmaDigital.image || matched.firmaDigital.firma;
-            } else if (matched.informacionPersonal && (matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma)) {
-              const f = matched.informacionPersonal.firmaDigital || matched.informacionPersonal.firma;
-              if (typeof f === 'string') signature = f;
-              else if (f.imagen || f.image || f.firma) signature = f.imagen || f.image || f.firma;
+
+            // prefer signature stored directly in parsedMatched or nested raw json
+            if (typeof parsedMatched === 'string') signature = parsedMatched;
+            if (!signature && parsedMatched.firmaDigital) {
+              if (typeof parsedMatched.firmaDigital === 'string') signature = parsedMatched.firmaDigital;
+              else if (parsedMatched.firmaDigital.imagen) signature = parsedMatched.firmaDigital.imagen;
+            }
+
+            // try raw object first-level jsonData
+            const safeParse = (s) => { try { return typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; } };
+            const firstLevel = safeParse(rawMatched?.jsonData) || safeParse(rawMatched?.datosJson) || null;
+            if (!signature && firstLevel && firstLevel.firmaDigital) {
+              if (typeof firstLevel.firmaDigital === 'string') signature = firstLevel.firmaDigital;
+              else if (firstLevel.firmaDigital.imagen) signature = firstLevel.firmaDigital.imagen;
+            }
+
+            // last resort: scan nested objects for common keys
+            if (!signature) {
+              const searchObj = (obj) => {
+                if (!obj || typeof obj !== 'object') return null;
+                const keys = ['imagen', 'image', 'firma', 'firmaDigital', 'signature'];
+                for (const k of keys) if (obj[k]) return obj[k];
+                for (const v of Object.values(obj)) {
+                  if (typeof v === 'object') {
+                    const found = searchObj(v);
+                    if (found) return found;
+                  }
+                }
+                return null;
+              };
+              signature = searchObj(parsedMatched) || searchObj(rawMatched);
             }
 
             if (signature) {
+              const foundNumeroLic = parsedMatched?.informacionLaboral?.numeroLicencia || parsedMatched?.numeroLicencia || rawMatched?.numeroLicencia || rawMatched?.informacionLaboral?.numeroLicencia || '';
               setFormData(prev => ({
                 ...prev,
                 firmaDigital: {
                   ...prev.firmaDigital,
-                  imagen: signature
+                  imagen: signature,
+                  numeroCedula: prev.firmaDigital?.numeroCedula || foundNumeroLic || ''
                 }
               }));
             }
           }
         } catch (err) {
-          console.error('Error loading empleado signature:', err);
+          console.error('❌ Error loading empleado signature:', err);
         }
       })();
     }

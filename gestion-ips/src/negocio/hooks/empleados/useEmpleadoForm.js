@@ -52,7 +52,8 @@ export const useEmpleadoForm = () => {
       salario: parsed.informacionLaboral.salario || '',
       fechaIngreso: parsed.informacionLaboral.fechaIngreso || '',
       fechaContratacion: parsed.informacionLaboral.fechaContratacion || '',
-      tipoContrato: parsed.informacionLaboral.tipoContrato || 'INDEFINIDO'
+      tipoContrato: parsed.informacionLaboral.tipoContrato || 'INDEFINIDO',
+      firmaDigital: parsed.firmaDigital || null
     });
   };
 

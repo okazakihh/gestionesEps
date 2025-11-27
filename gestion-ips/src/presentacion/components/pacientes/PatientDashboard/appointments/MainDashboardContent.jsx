@@ -2,7 +2,7 @@ import React from 'react';
 import { Paper, Stack, Text, Title, Group, Loader } from '@mantine/core';
 import { ClockIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import AppointmentAvailabilitySection from './AppointmentAvailabilitySection.jsx';
-import DailyAppointmentsList from './DailyAppointmentsList.jsx'; // Asumimos que este componente existirá
+import DashboardAppointmentsView from './DashboardAppointmentsView.jsx';
 
 /**
  * Componente contenedor para el contenido principal del dashboard.
@@ -74,10 +74,9 @@ const MainDashboardContent = ({
             <Text size="sm" c="dimmed">Cargando citas...</Text>
           </Stack>
         ) : (
-          <DailyAppointmentsList
+          <DashboardAppointmentsView
             allDoctorAppointments={allDoctorAppointments}
             selectedDate={selectedDate}
-            isPastDate={isPastDate}
             user={user}
             handleViewAppointmentDetail={onViewAppointmentDetail}
             updateAppointmentStatus={onStatusChange}
