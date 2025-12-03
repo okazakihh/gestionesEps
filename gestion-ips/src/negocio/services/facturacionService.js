@@ -3,6 +3,14 @@ import Swal from 'sweetalert2';
 import { ipsConfig, getEncabezadoDocumento, getPieDocumento } from '../utils/ipsConfig';
 import { generarFacturaHTML } from '../../presentacion/components/facturacion/FacturaHTML.js';
 import { configuracionApiService } from '../../data/services/configuracionApiService.js';
+import { 
+  enviarFacturaDian, 
+  validarFacturaPreEnvio, 
+  consultarEstadoFactura,
+  generarCodigoQR,
+  getDianEnvironmentInfo 
+} from './dianService.js';
+import { generarFacturaXML } from './dianXmlGenerator.js';
 
 // Cache de configuración IPS
 let cachedIpsConfig = null;
@@ -389,18 +397,53 @@ export const exportarExcel = (citasAtendidasFiltradas, filtros) => {
 export const generarFacturaPreview = (citasSeleccionadas) => {
   const numeroFactura = `FM-${Date.now()}`;
   const fechaEmision = new Date().toISOString();
-  const total = citasSeleccionadas.reduce((sum, cita) => sum + cita.valorCita, 0);
+  
+  // Calcular subtotal (suma de valores de citas)
+  const subtotal = citasSeleccionadas.reduce((sum, cita) => sum + (cita.valorCita || 0), 0);
+  
+  // Servicios de salud generalmente tienen IVA 0%
+  const ivaPercent = 0;
+  const iva = subtotal * (ivaPercent / 100);
+  const total = subtotal + iva;
+
+  // Obtener datos del primer paciente para pre-poblar el formulario
+  const primeraCita = citasSeleccionadas[0];
+  let datosPaciente = {};
+  
+  try {
+    if (primeraCita && primeraCita.datosJson) {
+      const datosJson = typeof primeraCita.datosJson === 'string' 
+        ? JSON.parse(primeraCita.datosJson) 
+        : primeraCita.datosJson;
+      
+      // Intentar obtener datos completos del paciente del datosJson
+      datosPaciente = datosJson.paciente || {};
+    }
+  } catch (error) {
+    console.error('Error parseando datos del paciente:', error);
+  }
 
   return {
     numeroFactura,
     fechaEmision,
     estado: 'PENDIENTE',
+    subtotal,
+    iva,
+    ivaPercent,
     total,
     citas: citasSeleccionadas.map(cita => ({
       id: cita.id,
       paciente: {
-        nombre: cita.nombrePaciente,
-        documento: cita.documentoPaciente
+        nombre: cita.nombrePaciente || primeraCita.nombrePaciente,
+        apellido: datosPaciente.apellido || '',
+        documento: cita.documentoPaciente,
+        numeroDocumento: cita.documentoPaciente,
+        tipoDocumento: datosPaciente.tipoDocumento || 'CC',
+        telefono: datosPaciente.telefono || '',
+        email: datosPaciente.email || '',
+        direccion: datosPaciente.direccion || '',
+        ciudad: datosPaciente.ciudad || '',
+        departamento: datosPaciente.departamento || ''
       },
       medico: {
         nombre: cita.nombreMedico
@@ -408,7 +451,338 @@ export const generarFacturaPreview = (citasSeleccionadas) => {
       procedimiento: cita.nombreProcedimiento,
       codigoCups: cita.codigoCups,
       fechaAtencion: cita.fechaAtencion,
-      valor: cita.valorCita
+      valor: cita.valorCita || 0
     }))
   };
+};
+
+// ============================================================================
+// INTEGRACIÓN FACTURACIÓN ELECTRÓNICA DIAN
+// ============================================================================
+
+/**
+ * Preparar datos de factura en formato DIAN
+ * @param {Object} facturaData - Datos de factura interna
+ * @param {Object} ipsData - Configuración de la IPS
+ * @returns {Object} Datos formateados para DIAN
+ */
+export const prepararDatosParaDian = async (facturaData, ipsData) => {
+  const config = await getFacturacionConfig();
+  
+  // Usar datos del cliente si fueron proporcionados por el modal, sino usar del paciente
+  let clienteInfo;
+  if (facturaData.cliente) {
+    // Datos capturados desde el modal FacturaDianModal
+    clienteInfo = {
+      nombreCompleto: facturaData.cliente.nombreCompleto,
+      tipoDocumento: facturaData.cliente.tipoDocumento,
+      numeroDocumento: facturaData.cliente.numeroDocumento,
+      direccion: facturaData.cliente.direccion,
+      ciudad: facturaData.cliente.ciudad,
+      departamento: facturaData.cliente.departamento,
+      telefono: facturaData.cliente.telefono,
+      email: facturaData.cliente.email,
+      // Campos adicionales (si es entidad)
+      razonSocial: facturaData.cliente.razonSocial,
+      digitoVerificacion: facturaData.cliente.digitoVerificacion,
+      tipoPersona: facturaData.cliente.tipoPersona,
+      nombreContacto: facturaData.cliente.nombreContacto,
+      cargoContacto: facturaData.cliente.cargoContacto
+    };
+  } else {
+    // Fallback: obtener del primer paciente de las citas
+    const primeraCita = facturaData.citas[0];
+    const cliente = primeraCita.paciente;
+    clienteInfo = {
+      nombreCompleto: `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim(),
+      tipoDocumento: cliente.tipoDocumento || 'CC',
+      numeroDocumento: cliente.numeroDocumento || cliente.documento,
+      direccion: cliente.direccion || 'N/A',
+      ciudad: cliente.ciudad || 'Bogotá',
+      departamento: cliente.departamento || 'Bogotá',
+      telefono: cliente.telefono || '',
+      email: cliente.email || ''
+    };
+  }
+  
+  // Calcular totales
+  const subtotal = facturaData.citas.reduce((sum, cita) => {
+    const valor = cita.codigoCups?.valor || cita.valor || 0;
+    return sum + valor;
+  }, 0);
+  const totales = await calculateInvoiceTotals(subtotal);
+  
+  // Calcular fecha de vencimiento
+  const fechaEmision = new Date(facturaData.fechaEmision);
+  const fechaVencimiento = new Date(fechaEmision);
+  fechaVencimiento.setDate(fechaVencimiento.getDate() + (config.diasVencimientoFactura || 30));
+  
+  // Mapear medio de pago a código DIAN
+  const mapMedioPagoDian = {
+    'EFECTIVO': '10',
+    'TARJETA_CREDITO': '48',
+    'TARJETA_DEBITO': '49',
+    'TRANSFERENCIA': '42',
+    'CHEQUE': '20'
+  };
+  
+  return {
+    numeroFactura: facturaData.numeroFactura,
+    fechaEmision: fechaEmision.toISOString(),
+    fechaVencimiento: fechaVencimiento.toISOString().split('T')[0],
+    
+    // Datos del emisor (IPS)
+    emisor: {
+      nit: ipsData.nit || '',
+      razonSocial: ipsData.nombre || ipsData.razonSocial || '',
+      direccion: ipsData.direccion || '',
+      ciudad: ipsData.ciudad || 'Bogotá',
+      departamento: ipsData.departamento || 'Bogotá',
+      codigoMunicipio: ipsData.codigoMunicipio || '11001',
+      codigoDepartamento: ipsData.codigoDepartamento || '11',
+      codigoPostal: ipsData.codigoPostal || '110111',
+      telefono: ipsData.telefono || '',
+      email: ipsData.email || ''
+    },
+    
+    // Datos del cliente (con información completa capturada)
+    cliente: {
+      nombreCompleto: clienteInfo.nombreCompleto,
+      // Campos adicionales para validación DIAN
+      nombres: clienteInfo.nombreCompleto, // Para persona natural
+      razonSocial: clienteInfo.razonSocial || clienteInfo.nombreCompleto, // Para persona jurídica
+      tipoDocumento: clienteInfo.tipoDocumento,
+      numeroDocumento: clienteInfo.numeroDocumento,
+      direccion: clienteInfo.direccion,
+      ciudad: clienteInfo.ciudad,
+      departamento: clienteInfo.departamento,
+      telefono: clienteInfo.telefono,
+      email: clienteInfo.email,
+      // Campos adicionales de entidad si existen
+      digitoVerificacion: clienteInfo.digitoVerificacion || '',
+      tipoPersona: clienteInfo.tipoPersona || 'NATURAL',
+      nombreContacto: clienteInfo.nombreContacto || '',
+      cargoContacto: clienteInfo.cargoContacto || ''
+    },
+    
+    // Items de la factura (servicios médicos)
+    items: facturaData.citas.map((cita, index) => {
+      const valor = cita.codigoCups?.valor || cita.valor || 0;
+      const codigoCups = cita.codigoCups?.codigo || cita.codigoCups || 'N/A';
+      const descripcion = cita.codigoCups?.descripcion || cita.procedimiento || 'Servicio Médico';
+      
+      return {
+        numero: index + 1,
+        descripcion: descripcion,
+        codigoCups: codigoCups,
+        cantidad: 1,
+        unidadMedida: 'EA', // Each (unidad)
+        valorUnitario: valor,
+        valorTotal: valor,
+        iva: 0, // Servicios de salud generalmente no tienen IVA
+        ivaPercent: 0
+      };
+    }),
+    
+    // Totales
+    subtotal: totales.subtotal,
+    iva: totales.iva,
+    ivaPercent: totales.ivaPercent,
+    retencion: totales.retencionFuente || 0,
+    retencionPercent: totales.retencionPercent || 0,
+    total: totales.total,
+    
+    // Información adicional
+    formaPago: facturaData.formaPago || 'CONTADO',
+    medioPago: mapMedioPagoDian[facturaData.medioPago] || '10', // Por defecto efectivo
+    tipoServicio: 'SALUD',
+    observaciones: facturaData.observaciones || config.notasLegales || 'Factura de servicios médicos'
+  };
+};
+
+/**
+ * Generar y enviar factura electrónica a la DIAN
+ * @param {Object} facturaData - Datos de la factura
+ * @param {boolean} enviarAutomaticamente - Si debe enviar a DIAN automáticamente
+ * @returns {Promise<Object>} Resultado del proceso
+ */
+export const generarFacturaElectronica = async (facturaData, enviarAutomaticamente = false) => {
+  try {
+    // Obtener configuración IPS
+    const ipsData = await getIpsConfig();
+    
+    // Preparar datos en formato DIAN
+    const datosDian = await prepararDatosParaDian(facturaData, ipsData);
+    
+    // Validar factura antes de generar XML
+    const validacion = validarFacturaPreEnvio(datosDian);
+    if (!validacion.valida) {
+      return {
+        success: false,
+        error: 'Validación fallida',
+        errores: validacion.errores,
+        advertencias: validacion.advertencias
+      };
+    }
+    
+    // Generar XML UBL 2.1
+    const xmlFactura = await generarFacturaXML(datosDian);
+    
+    // Si se debe enviar automáticamente
+    if (enviarAutomaticamente) {
+      const resultado = await enviarFacturaDian(datosDian, xmlFactura);
+      
+      if (resultado.success) {
+        // Generar código QR
+        const qrCode = await generarCodigoQR(resultado.cufe, datosDian);
+        
+        return {
+          success: true,
+          cufe: resultado.cufe,
+          qrCode: qrCode,
+          xmlFactura: xmlFactura,
+          estadoDian: resultado.statusDescription,
+          ambiente: resultado.environment,
+          advertencias: validacion.advertencias
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Error enviando a DIAN',
+          detalles: resultado.validationErrors,
+          xmlFactura: xmlFactura
+        };
+      }
+    }
+    
+    // Si no se envía, solo retornar el XML generado
+    return {
+      success: true,
+      xmlFactura: xmlFactura,
+      advertencias: validacion.advertencias,
+      message: 'XML generado correctamente. Enviar manualmente a DIAN.'
+    };
+    
+  } catch (error) {
+    console.error('Error generando factura electrónica:', error);
+    return {
+      success: false,
+      error: error.message || 'Error desconocido'
+    };
+  }
+};
+
+/**
+ * Enviar factura existente a la DIAN
+ * @param {Object} factura - Objeto de factura guardada
+ * @returns {Promise<Object>} Resultado del envío
+ */
+export const enviarFacturaExistenteADian = async (factura) => {
+  try {
+    const facturaData = JSON.parse(factura.jsonData || '{}');
+    
+    // Verificar si ya tiene CUFE (ya fue enviada)
+    if (facturaData.cufe) {
+      // Consultar estado actual en DIAN
+      const estado = await consultarEstadoFactura(facturaData.cufe);
+      return {
+        success: true,
+        yaEnviada: true,
+        cufe: facturaData.cufe,
+        estado: estado
+      };
+    }
+    
+    // Generar y enviar
+    const resultado = await generarFacturaElectronica(facturaData, true);
+    
+    if (resultado.success) {
+      // Mostrar mensaje de éxito
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Factura Enviada a DIAN!',
+        html: `
+          <p><strong>CUFE:</strong> ${resultado.cufe}</p>
+          <p><strong>Estado:</strong> ${resultado.estadoDian}</p>
+          <p><strong>Ambiente:</strong> ${resultado.ambiente}</p>
+        `,
+        confirmButtonColor: '#10B981'
+      });
+    } else {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al Enviar',
+        text: resultado.error,
+        confirmButtonColor: '#EF4444'
+      });
+    }
+    
+    return resultado;
+    
+  } catch (error) {
+    console.error('Error enviando factura a DIAN:', error);
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo enviar la factura a la DIAN',
+      confirmButtonColor: '#EF4444'
+    });
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Consultar estado de factura en la DIAN por CUFE
+ * @param {string} cufe - Código Único de Factura Electrónica
+ * @returns {Promise<Object>} Estado de la factura
+ */
+export const consultarEstadoFacturaDian = async (cufe) => {
+  try {
+    const resultado = await consultarEstadoFactura(cufe);
+    
+    if (resultado.success) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'Estado de Factura',
+        html: `
+          <p><strong>CUFE:</strong> ${cufe}</p>
+          <p><strong>Estado:</strong> ${resultado.estado}</p>
+        `,
+        confirmButtonColor: '#3B82F6'
+      });
+    } else {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'No se pudo consultar',
+        text: resultado.error,
+        confirmButtonColor: '#F59E0B'
+      });
+    }
+    
+    return resultado;
+    
+  } catch (error) {
+    console.error('Error consultando estado:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Obtener información del ambiente DIAN actual
+ * @returns {Promise<Object>} Información del ambiente
+ */
+export const obtenerInfoAmbienteDian = async () => {
+  try {
+    const info = await getDianEnvironmentInfo();
+    return info;
+  } catch (error) {
+    console.error('Error obteniendo info de ambiente DIAN:', error);
+    return null;
+  }
 };

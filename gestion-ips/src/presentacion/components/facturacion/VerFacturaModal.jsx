@@ -43,6 +43,13 @@ const VerFacturaModal = ({
   const total = facturaData.total || 0;
   const estado = facturaData.estado || 'PENDIENTE';
   const citas = facturaData.citas || [];
+  
+  // Información del destinatario (cliente)
+  const cliente = facturaData.cliente || {};
+  const tipoDestinatario = facturaData.tipoDestinatario || 'PACIENTE';
+  const formaPago = facturaData.formaPago || 'CONTADO';
+  const medioPago = facturaData.medioPago || 'EFECTIVO';
+  const observaciones = facturaData.observaciones || '';
 
   // Determinar el color del badge según el estado
   const getEstadoColor = (estado) => {
@@ -131,6 +138,134 @@ const VerFacturaModal = ({
             </div>
           </div>
         </Paper>
+
+        {/* Información del Destinatario */}
+        <Paper p="md" withBorder>
+          <Group justify="space-between" mb="md">
+            <Text size="sm" fw={600}>
+              Información del Destinatario
+            </Text>
+            <Badge 
+              variant="light" 
+              color={tipoDestinatario === 'ENTIDAD' ? 'blue' : 'cyan'}
+              size="lg"
+            >
+              {tipoDestinatario === 'ENTIDAD' ? '🏢 Entidad' : '👤 Paciente'}
+            </Badge>
+          </Group>
+
+          {tipoDestinatario === 'PACIENTE' ? (
+            // Información de Paciente (Persona Natural)
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Nombre Completo</Text>
+                <Text size="sm" fw={500}>{cliente.nombreCompleto || 'N/A'}</Text>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Tipo y Número de Documento</Text>
+                <Text size="sm" fw={500}>
+                  {cliente.tipoDocumento || 'CC'}: {cliente.numeroDocumento || 'N/A'}
+                </Text>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Dirección</Text>
+                <Text size="sm" fw={500}>{cliente.direccion || 'N/A'}</Text>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Ciudad / Departamento</Text>
+                <Text size="sm" fw={500}>
+                  {cliente.ciudad || 'N/A'} {cliente.departamento ? `/ ${cliente.departamento}` : ''}
+                </Text>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Teléfono</Text>
+                <Text size="sm" fw={500}>{cliente.telefono || 'N/A'}</Text>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Email</Text>
+                <Text size="sm" fw={500}>{cliente.email || 'N/A'}</Text>
+              </div>
+            </div>
+          ) : (
+            // Información de Entidad (Persona Jurídica)
+            <Stack gap="sm">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>Razón Social</Text>
+                  <Text size="sm" fw={600}>{cliente.razonSocial || cliente.nombreCompleto || 'N/A'}</Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>NIT</Text>
+                  <Text size="sm" fw={500}>
+                    {cliente.numeroDocumento || 'N/A'}
+                    {cliente.digitoVerificacion ? `-${cliente.digitoVerificacion}` : ''}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>Dirección</Text>
+                  <Text size="sm" fw={500}>{cliente.direccion || 'N/A'}</Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>Ciudad / Departamento</Text>
+                  <Text size="sm" fw={500}>
+                    {cliente.ciudad || 'N/A'} {cliente.departamento ? `/ ${cliente.departamento}` : ''}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>Teléfono</Text>
+                  <Text size="sm" fw={500}>{cliente.telefono || 'N/A'}</Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>Email</Text>
+                  <Text size="sm" fw={500}>{cliente.email || 'N/A'}</Text>
+                </div>
+              </div>
+              
+              {(cliente.nombreContacto || cliente.cargoContacto) && (
+                <>
+                  <Divider label="Información de Contacto" labelPosition="center" />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                    {cliente.nombreContacto && (
+                      <div>
+                        <Text size="xs" c="dimmed" mb={4}>Nombre del Contacto</Text>
+                        <Text size="sm" fw={500}>{cliente.nombreContacto}</Text>
+                      </div>
+                    )}
+                    {cliente.cargoContacto && (
+                      <div>
+                        <Text size="xs" c="dimmed" mb={4}>Cargo</Text>
+                        <Text size="sm" fw={500}>{cliente.cargoContacto}</Text>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </Stack>
+          )}
+        </Paper>
+
+        {/* Información de Pago */}
+        {(formaPago || medioPago) && (
+          <Paper p="md" withBorder style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
+            <Text size="sm" fw={600} mb="md">Información de Pago</Text>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Forma de Pago</Text>
+                <Badge variant="light" color="orange">{formaPago}</Badge>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed" mb={4}>Medio de Pago</Text>
+                <Badge variant="light" color="yellow">{medioPago}</Badge>
+              </div>
+              {observaciones && (
+                <div style={{ gridColumn: 'span 3' }}>
+                  <Text size="xs" c="dimmed" mb={4}>Observaciones</Text>
+                  <Text size="sm">{observaciones}</Text>
+                </div>
+              )}
+            </div>
+          </Paper>
+        )}
 
         {/* Tabla de servicios */}
         <div>

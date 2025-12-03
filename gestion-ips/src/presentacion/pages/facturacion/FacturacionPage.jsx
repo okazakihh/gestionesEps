@@ -22,8 +22,11 @@ import { useFacturaFilters } from '../../../negocio/hooks/facturacion/useFactura
 import { 
   exportarExcel, 
   generarFacturaPDFFactura,
-  generarFacturaPreview
+  generarFacturaPreview,
+  enviarFacturaExistenteADian,
+  consultarEstadoFacturaDian
 } from '../../../negocio/services/facturacionService';
+import { generarFacturaXML } from '../../../negocio/services/dianXmlGenerator';
 
 // Componentes
 import {
@@ -35,7 +38,10 @@ import {
   CodigosCupsSearch,
   ValorCupsModal,
   FacturaPreviewModal,
-  VerFacturaModal
+  FacturaDianModal,
+  VerFacturaModal,
+  XMLViewerModal,
+  DianPreviewModal
 } from '../../components/facturacion';
 
 // Service Worker
@@ -145,6 +151,10 @@ const FacturacionPage = () => {
   const [facturaPreview, setFacturaPreview] = useState(null);
   const [isVerFacturaModalOpen, setIsVerFacturaModalOpen] = useState(false);
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+  const [isXmlModalOpen, setIsXmlModalOpen] = useState(false);
+  const [xmlContent, setXmlContent] = useState('');
+  const [isDianPreviewModalOpen, setIsDianPreviewModalOpen] = useState(false);
+  const [facturaParaDian, setFacturaParaDian] = useState(null);
 
   // ============================================================================
   // DATOS FILTRADOS
@@ -189,17 +199,21 @@ const FacturacionPage = () => {
 
   /**
    * Guardar factura: envía al backend y actualiza listas
+   * @param {Object} facturaCompleta - Factura con datos completos del cliente y DIAN
    */
-  const handleGuardarFactura = async () => {
+  const handleGuardarFactura = async (facturaCompleta) => {
     try {
-      const jsonDataCrudo = JSON.stringify(facturaPreview);
+      // Usar facturaCompleta si se proporciona, sino usar facturaPreview
+      const datosFactura = facturaCompleta || facturaPreview;
+      
+      const jsonDataCrudo = JSON.stringify(datosFactura);
       const response = await facturacionApiService.createFacturacion(jsonDataCrudo);
 
       if (response && (response.success || response.id)) {
         await Swal.fire({
           icon: 'success',
           title: '¡Factura Creada!',
-          text: `La factura ${facturaPreview.numeroFactura} ha sido creada exitosamente.`,
+          text: `La factura ${datosFactura.numeroFactura} ha sido creada exitosamente.`,
           confirmButtonColor: '#10B981',
           timer: 3000,
           timerProgressBar: true,
@@ -320,6 +334,114 @@ const FacturacionPage = () => {
       filtroProcedimiento
     };
     exportarExcel(citasAtendidasFiltradas, filtros);
+  };
+
+  // ============================================================================
+  // FUNCIONES DE DIAN
+  // ============================================================================
+
+  /**
+   * Enviar factura a DIAN (abre modal de preview primero)
+   */
+  const handleEnviarDian = async (factura) => {
+    try {
+      // Guardar factura y abrir modal de preview
+      setFacturaParaDian(factura);
+      setIsDianPreviewModalOpen(true);
+    } catch (error) {
+      console.error('Error en handleEnviarDian:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo abrir la previsualización',
+        confirmButtonColor: '#EF4444'
+      });
+    }
+  };
+
+  /**
+   * Confirmar envío a DIAN después de preview
+   */
+  const handleConfirmarEnvioDian = async () => {
+    try {
+      // Mostrar loading
+      Swal.fire({
+        title: 'Enviando...',
+        text: 'Generando XML y comunicando con DIAN',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Enviar a DIAN (el servicio ya maneja los Swal de éxito/error)
+      await enviarFacturaExistenteADian(facturaParaDian);
+
+      // Recargar facturas para mostrar CUFE actualizado
+      await loadFacturas();
+    } catch (error) {
+      console.error('Error confirmando envío DIAN:', error);
+    }
+  };
+
+  /**
+   * Consultar estado de factura en DIAN
+   */
+  const handleConsultarEstadoDian = async (factura, facturaData) => {
+    try {
+      if (!facturaData.cufe) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Sin CUFE',
+          text: 'Esta factura no tiene CUFE. Primero debe enviarla a DIAN.',
+          confirmButtonColor: '#F59E0B'
+        });
+        return;
+      }
+
+      // El servicio ya maneja la consulta y muestra el resultado con Swal
+      await consultarEstadoFacturaDian(facturaData.cufe);
+    } catch (error) {
+      console.error('Error consultando estado DIAN:', error);
+    }
+  };
+
+  /**
+   * Ver XML de factura electrónica
+   */
+  const handleVerXML = async (factura, facturaData) => {
+    try {
+      // Si ya tiene XML guardado, mostrarlo
+      if (facturaData.xmlFactura) {
+        setXmlContent(facturaData.xmlFactura);
+        setIsXmlModalOpen(true);
+        return;
+      }
+
+      // Si no tiene XML guardado, generarlo
+      Swal.fire({
+        title: 'Generando XML...',
+        text: 'Creando XML UBL 2.1',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const xml = await generarFacturaXML(facturaData);
+      Swal.close();
+
+      setXmlContent(xml);
+      setIsXmlModalOpen(true);
+    } catch (error) {
+      console.error('Error generando XML:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo generar el XML. Verifique los datos de la factura.',
+        confirmButtonColor: '#EF4444'
+      });
+    }
   };
 
   // ============================================================================
@@ -496,6 +618,9 @@ const FacturacionPage = () => {
                     onVerFactura={handleVerFactura}
                     onGenerarPDF={generarFacturaPDFFactura}
                     onProcesarFactura={handleProcesarFactura}
+                    onEnviarDian={handleEnviarDian}
+                    onConsultarEstadoDian={handleConsultarEstadoDian}
+                    onVerXML={handleVerXML}
                     loading={loadingFacturas}
                     limit={10}
                   />
@@ -551,12 +676,13 @@ const FacturacionPage = () => {
             onSave={handleSaveValor}
           />
 
-          {/* Modal: Preview de factura antes de guardar */}
-          <FacturaPreviewModal
+          {/* Modal: Crear factura con datos DIAN */}
+          <FacturaDianModal
             opened={isFacturaModalOpen}
             onClose={() => setIsFacturaModalOpen(false)}
             facturaPreview={facturaPreview}
             onSave={handleGuardarFactura}
+            loading={false}
           />
 
           {/* Modal: Ver detalles de factura guardada */}
@@ -568,6 +694,27 @@ const FacturacionPage = () => {
             }}
             factura={facturaSeleccionada}
             onProcesar={handleProcesarFactura}
+          />
+
+          {/* Modal: Ver XML de factura electr\u00f3nica */}
+          <XMLViewerModal
+            opened={isXmlModalOpen}
+            onClose={() => {
+              setIsXmlModalOpen(false);
+              setXmlContent('');
+            }}
+            xmlContent={xmlContent}
+          />
+
+          {/* Modal: Preview antes de enviar a DIAN */}
+          <DianPreviewModal
+            opened={isDianPreviewModalOpen}
+            onClose={() => {
+              setIsDianPreviewModalOpen(false);
+              setFacturaParaDian(null);
+            }}
+            factura={facturaParaDian}
+            onConfirm={handleConfirmarEnvioDian}
           />
 
         </Stack>

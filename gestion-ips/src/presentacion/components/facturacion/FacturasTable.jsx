@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Text, Badge, Group, ActionIcon, Tooltip, Loader, Paper, Stack } from '@mantine/core';
-import { IconEye, IconPrinter, IconCheck } from '@tabler/icons-react';
+import { IconEye, IconPrinter, IconCheck, IconCloud, IconCloudCheck, IconFileCode } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 
 /**
@@ -26,6 +26,9 @@ const FacturasTable = ({
   onVerFactura,
   onGenerarPDF,
   onProcesarFactura,
+  onEnviarDian,
+  onConsultarEstadoDian,
+  onVerXML,
   loading = false,
   limit = 10
 }) => {
@@ -177,6 +180,43 @@ const FacturasTable = ({
                             aria-label="Procesar factura"
                           >
                             <IconCheck size={18} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+
+                      {/* Botones de integración DIAN */}
+                      {facturaData.cufe ? (
+                        <>
+                          <Tooltip label="Consultar estado en DIAN" position="top">
+                            <ActionIcon
+                              variant="light"
+                              color="teal"
+                              onClick={() => onConsultarEstadoDian && onConsultarEstadoDian(factura, facturaData)}
+                              aria-label="Consultar DIAN"
+                            >
+                              <IconCloudCheck size={18} />
+                            </ActionIcon>
+                          </Tooltip>
+                          <Tooltip label="Ver XML" position="top">
+                            <ActionIcon
+                              variant="light"
+                              color="grape"
+                              onClick={() => onVerXML && onVerXML(factura, facturaData)}
+                              aria-label="Ver XML"
+                            >
+                              <IconFileCode size={18} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <Tooltip label="Enviar a DIAN (Facturación Electrónica)" position="top">
+                          <ActionIcon
+                            variant="light"
+                            color="indigo"
+                            onClick={() => onEnviarDian && onEnviarDian(factura)}
+                            aria-label="Enviar a DIAN"
+                          >
+                            <IconCloud size={18} />
                           </ActionIcon>
                         </Tooltip>
                       )}

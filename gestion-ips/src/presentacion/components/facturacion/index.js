@@ -18,4 +18,8 @@ export { default as CodigosCupsSearch } from './CodigosCupsSearch';
 // Componentes de modales
 export { default as ValorCupsModal } from './ValorCupsModal';
 export { default as FacturaPreviewModal } from './FacturaPreviewModal';
+export { default as FacturaDianModal } from './FacturaDianModal';
 export { default as VerFacturaModal } from './VerFacturaModal';
+export { default as XMLViewerModal } from './XMLViewerModal';
+export { default as DianConfigModal } from './DianConfigModal';
+export { default as DianPreviewModal } from './DianPreviewModal';
