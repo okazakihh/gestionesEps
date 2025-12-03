@@ -149,6 +149,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     // Diagnóstico y plan
     diagnosticoPlan: {
       diagnosticos: [],
+      examenes: [],
       ayudasDiagnosticas: '',
       planTratamiento: '',
       medicamentos: [],
@@ -195,13 +196,16 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
     }
   }, [ipsConfig]);
 
-  // Cargar datos del médico desde citaData (ya incluye licencia)
+  // Cargar datos del médico desde citaData y buscar licencia si no viene en citaData
   useEffect(() => {
     if (isOpen && citaData) {
       const medicoAsignado = citaData.medicoAsignado || '';
       const nombreMedico = medicoAsignado.split(' - ')[0] || '';
-      const licenciaMedica = citaData.licenciaMedica || '';
+      const licenciaMedicaCita = citaData.licenciaMedica || '';
       const especialidad = citaData.especialidad || '';
+      const medicoId = citaData.medicoId || null;
+      
+      console.log('🔍 Buscando licencia - medicoId:', medicoId, 'licencia en cita:', licenciaMedicaCita);
       
       // Actualizar formData con la información del médico de la cita
       setFormData(prev => ({
@@ -209,15 +213,93 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
         procedimiento: {
           ...prev.procedimiento,
           medicoResponsable: nombreMedico,
-          registroMedico: licenciaMedica,
+          registroMedico: licenciaMedicaCita,
           especialidad: especialidad
-        },
-                  firmaDigital: {
-                    ...prev.firmaDigital,
-                    nombreMedico: nombreMedico,
-                    especialidad: especialidad,
-                    numeroCedula: licenciaMedica // Add this line
-                  }      }));
+        }
+      }));
+      
+      // Si no viene licenciaMedica en citaData, buscarla en el servicio de empleados
+      if (!licenciaMedicaCita) {
+        (async () => {
+          try {
+            // Si tenemos medicoId, buscar por ID; si no, buscar por nombre
+            let empleadoResp = null;
+            
+            if (medicoId) {
+              empleadoResp = await empleadosApiService.getEmpleadoById(medicoId);
+            } else if (nombreMedico) {
+              // Buscar por nombre en la lista de empleados
+              const resp = await empleadosApiService.getEmpleados({ size: 1000 });
+              const empleados = Array.isArray(resp?.content) ? resp.content : resp || [];
+              
+              empleadoResp = empleados.find(emp => {
+                try {
+                  const datosEmpleado = typeof emp.jsonData === 'string' 
+                    ? JSON.parse(emp.jsonData) 
+                    : emp.jsonData;
+                  
+                  let datosNivel2 = datosEmpleado;
+                  if (datosEmpleado.jsonData) {
+                    datosNivel2 = typeof datosEmpleado.jsonData === 'string'
+                      ? JSON.parse(datosEmpleado.jsonData)
+                      : datosEmpleado.jsonData;
+                  }
+                  
+                  const infoPersonal = datosNivel2.informacionPersonal || {};
+                  const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
+                  
+                  return nombreCompleto.toUpperCase().includes(nombreMedico.toUpperCase());
+                } catch (e) {
+                  return false;
+                }
+              });
+            }
+            
+            if (empleadoResp) {
+              let licencia = '';
+              
+              // Intentar extraer licencia del jsonData del empleado
+              if (empleadoResp.jsonData) {
+                try {
+                  const datosEmpleado = typeof empleadoResp.jsonData === 'string' 
+                    ? JSON.parse(empleadoResp.jsonData) 
+                    : empleadoResp.jsonData;
+                  
+                  // Buscar en nivel anidado
+                  if (datosEmpleado.jsonData) {
+                    const datosNivel2 = typeof datosEmpleado.jsonData === 'string'
+                      ? JSON.parse(datosEmpleado.jsonData)
+                      : datosEmpleado.jsonData;
+                    
+                    licencia = datosNivel2.informacionLaboral?.numeroLicencia 
+                      || datosNivel2.informacionLaboral?.registroMedico 
+                      || '';
+                  } else {
+                    licencia = datosEmpleado.informacionLaboral?.numeroLicencia
+                      || datosEmpleado.informacionLaboral?.registroMedico
+                      || '';
+                  }
+                } catch (e) {
+                  console.error('Error parsing empleado data:', e);
+                }
+              }
+              
+              if (licencia) {
+                console.log('✅ Licencia encontrada:', licencia);
+                setFormData(prev => ({
+                  ...prev,
+                  procedimiento: {
+                    ...prev.procedimiento,
+                    registroMedico: licencia
+                  }
+                }));
+              }
+            }
+          } catch (err) {
+            console.error('Error cargando licencia del empleado:', err);
+          }
+        })();
+      }
 
       // Intentar cargar la firma del empleado desde el servicio de empleados (solo frontend)
       (async () => {
@@ -286,12 +368,14 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
 
               const nombreEmpleado = (nombreEmpleadoCandidates.find(Boolean) || '').trim();
 
-              if (licenciaMedica && numeroLic && String(numeroLic).trim() === String(licenciaMedica).trim()) {
+              if (licenciaMedicaCita && numeroLic && String(numeroLic).trim() === String(licenciaMedicaCita).trim()) {
+                console.log('🎯 Match por licencia:', numeroLic);
                 matched = { parsed, raw: emp };
                 break;
               }
 
               if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
+                console.log('🎯 Match por nombre:', nombreEmpleado, 'buscando:', nombreMedico);
                 matched = { parsed, raw: emp };
                 break;
               }
@@ -339,6 +423,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
             }
 
             if (signature) {
+              console.log('✅ Firma encontrada y cargada');
               const foundNumeroLic = parsedMatched?.informacionLaboral?.numeroLicencia || parsedMatched?.numeroLicencia || rawMatched?.numeroLicencia || rawMatched?.informacionLaboral?.numeroLicencia || '';
               setFormData(prev => ({
                 ...prev,
@@ -348,6 +433,8 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
                   numeroCedula: prev.firmaDigital?.numeroCedula || foundNumeroLic || ''
                 }
               }));
+            } else {
+              console.log('❌ No se encontró firma para el empleado');
             }
           }
         } catch (err) {

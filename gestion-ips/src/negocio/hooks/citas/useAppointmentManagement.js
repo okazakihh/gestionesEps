@@ -643,6 +643,11 @@ export const useAppointmentManagement = (user = null) => {
     // La actualización del estado de la cita ya se hace en el modal
     // No es necesario hacerlo aquí nuevamente
 
+    // Recargar las citas para reflejar el nuevo estado
+    if (selectedDate) {
+      await loadAllDoctorsData(selectedDate);
+    }
+
     // La historia clínica ya incluye los datos de la primera consulta
     // No es necesario abrir el modal de consulta médica
     setIsHistoriaModalOpen(false);
@@ -657,6 +662,11 @@ export const useAppointmentManagement = (user = null) => {
     // Pero por si acaso el flujo es diferente (consulta sin historia nueva), actualizamos el estado
     if (currentAppointment) {
       await updateAppointmentStatus(currentAppointment.id, 'ATENDIDO');
+    }
+
+    // Recargar las citas para reflejar el nuevo estado
+    if (selectedDate) {
+      await loadAllDoctorsData(selectedDate);
     }
 
     // Cerrar modales y resetear estado

@@ -41,7 +41,8 @@ const DashboardAppointmentsView = ({
               <Table.Th>ID Cita</Table.Th>
               <Table.Th>Paciente</Table.Th>
               <Table.Th>Fecha/Hora</Table.Th>
-              <Table.Th>Especialidad</Table.Th>
+              <Table.Th>Médico</Table.Th>
+              <Table.Th>Motivo</Table.Th>
               <Table.Th>Estado</Table.Th>
               <Table.Th>Acciones</Table.Th>
             </Table.Tr>
@@ -65,7 +66,10 @@ const DashboardAppointmentsView = ({
                     <Text size="sm" c="dimmed">{citaInfo.fechaHoraCita ? new Date(citaInfo.fechaHoraCita).toLocaleString('es-ES') : 'N/A'}</Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c="dimmed">{citaInfo.especialidad || ''}</Text>
+                    <Text size="sm" c="dimmed">{cita._doctorName || citaInfo.nombreMedico || 'N/A'}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm" c="dimmed">{citaInfo.motivo || citaInfo.motivoConsulta || ''}</Text>
                   </Table.Td>
                   <Table.Td>
                     <AgendaStatusBadge status={citaInfo.estado} />

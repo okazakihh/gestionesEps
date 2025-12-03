@@ -8,6 +8,7 @@ import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import SignosVitalesForm from './components/SignosVitalesForm.jsx';
 import DiagnosticosTable from './components/DiagnosticosTable.jsx';
 import MedicamentosTable from './components/MedicamentosTable.jsx';
+import ExamenesTable from './components/ExamenesTable.jsx';
 import ExamenFisicoPorDependencia from './components/ExamenFisicoPorDependencia.jsx';
 import { DEPENDENCIA_MEDICA_OPTIONS, REQUIERE_SIGNOS_VITALES } from '../../../../../negocio/utils/listHelps.js';
 import FirmaDigitalTab from './tabs/FirmaDigitalTab.jsx';
@@ -88,6 +89,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
     // Diagnóstico y tratamiento
     diagnosticoTratamiento: {
       diagnosticos: [],
+      examenes: [],
       planTratamiento: '',
       medicamentos: [],
       procedimientos: ''
@@ -118,15 +120,14 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
     }
   });
 
-  // Cargar datos del médico desde citaData (ya incluye licencia)
+  // Cargar datos del médico desde citaData y buscar licencia si no viene en citaData
   React.useEffect(() => {
     if (isOpen && citaData) {
-      // citaData received
       const medicoAsignado = citaData.medicoAsignado || '';
       const nombreMedico = medicoAsignado.split(' - ')[0] || '';
-      const licenciaMedica = citaData.licenciaMedica || '';
+      const licenciaMedicaCita = citaData.licenciaMedica || '';
       const especialidad = citaData.especialidad || '';
-      // extracted medico info
+      const medicoId = citaData.medicoId || null;
       
       // Actualizar formData con la información del médico de la cita
       setFormData(prev => ({
@@ -134,15 +135,98 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         detalleConsulta: {
           ...prev.detalleConsulta,
           medicoTratante: nombreMedico,
-          especialidad: especialidad
+          especialidad: especialidad,
+          registroMedico: licenciaMedicaCita
         },
         firmaDigital: {
           ...prev.firmaDigital,
           nombreMedico: nombreMedico,
           especialidad: especialidad,
-          numeroCedula: licenciaMedica
+          numeroCedula: licenciaMedicaCita
         }
       }));
+      
+      // Si no viene licenciaMedica en citaData, buscarla en el servicio de empleados
+      if (!licenciaMedicaCita) {
+        (async () => {
+          try {
+            let empleadoResp = null;
+            
+            if (medicoId) {
+              empleadoResp = await empleadosApiService.getEmpleadoById(medicoId);
+            } else if (nombreMedico) {
+              const resp = await empleadosApiService.getEmpleados({ size: 1000 });
+              const empleados = Array.isArray(resp?.content) ? resp.content : resp || [];
+              
+              empleadoResp = empleados.find(emp => {
+                try {
+                  const datosEmpleado = typeof emp.jsonData === 'string' 
+                    ? JSON.parse(emp.jsonData) 
+                    : emp.jsonData;
+                  
+                  let datosNivel2 = datosEmpleado;
+                  if (datosEmpleado.jsonData) {
+                    datosNivel2 = typeof datosEmpleado.jsonData === 'string'
+                      ? JSON.parse(datosEmpleado.jsonData)
+                      : datosEmpleado.jsonData;
+                  }
+                  
+                  const infoPersonal = datosNivel2.informacionPersonal || {};
+                  const nombreCompleto = `${infoPersonal.primerNombre || ''} ${infoPersonal.segundoNombre || ''} ${infoPersonal.primerApellido || ''} ${infoPersonal.segundoApellido || ''}`.trim();
+                  
+                  return nombreCompleto.toUpperCase().includes(nombreMedico.toUpperCase());
+                } catch (e) {
+                  return false;
+                }
+              });
+            }
+            
+            if (empleadoResp) {
+              let licencia = '';
+              
+              if (empleadoResp.jsonData) {
+                try {
+                  const datosEmpleado = typeof empleadoResp.jsonData === 'string' 
+                    ? JSON.parse(empleadoResp.jsonData) 
+                    : empleadoResp.jsonData;
+                  
+                  if (datosEmpleado.jsonData) {
+                    const datosNivel2 = typeof datosEmpleado.jsonData === 'string'
+                      ? JSON.parse(datosEmpleado.jsonData)
+                      : datosEmpleado.jsonData;
+                    
+                    licencia = datosNivel2.informacionLaboral?.numeroLicencia 
+                      || datosNivel2.informacionLaboral?.registroMedico 
+                      || '';
+                  } else {
+                    licencia = datosEmpleado.informacionLaboral?.numeroLicencia
+                      || datosEmpleado.informacionLaboral?.registroMedico
+                      || '';
+                  }
+                } catch (e) {
+                  console.error('Error parsing empleado data:', e);
+                }
+              }
+              
+              if (licencia) {
+                setFormData(prev => ({
+                  ...prev,
+                  detalleConsulta: {
+                    ...prev.detalleConsulta,
+                    registroMedico: licencia
+                  },
+                  firmaDigital: {
+                    ...prev.firmaDigital,
+                    numeroCedula: licencia
+                  }
+                }));
+              }
+            }
+          } catch (err) {
+            console.error('Error cargando licencia del empleado:', err);
+          }
+        })();
+      }
 
       // Intentar cargar la firma del empleado desde el servicio de empleados (solo frontend)
       (async () => {
@@ -233,7 +317,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
               // comparing employee candidates
 
-              if (licenciaMedica && numeroLic && String(numeroLic).trim() === String(licenciaMedica).trim()) {
+              if (licenciaMedicaCita && numeroLic && String(numeroLic).trim() === String(licenciaMedicaCita).trim()) {
                 matched = { parsed, raw: emp };
                 // matched by license
                 break;
@@ -669,6 +753,16 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
                         }))}
                       />
                     </Paper>
+
+                    <Box mt="md">
+                      <ExamenesTable
+                        examenes={formData.diagnosticoTratamiento?.examenes || []}
+                        onChange={(examenes) => setFormData(prev => ({
+                          ...prev,
+                          diagnosticoTratamiento: { ...prev.diagnosticoTratamiento, examenes }
+                        }))}
+                      />
+                    </Box>
 
                     <Paper p="md" withBorder mt="md">
                       <Text size="sm" fw={600} mb="md" style={{ color: tema.primaryColor }}>Plan de Tratamiento</Text>

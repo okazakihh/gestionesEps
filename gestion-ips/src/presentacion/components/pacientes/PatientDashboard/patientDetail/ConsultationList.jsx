@@ -5,7 +5,7 @@ import { useTheme } from '../../../../../negocio/contexts/ThemeContext';
 import { formatDate } from '../../../../../negocio/utils/pacientes/patientModalUtils';
 import { AnamnesisSection, DiagnosisAndTreatmentSection, DigitalSignatureSection, IncapacitySection, PhysicalExamSection, ProcedureDataSection } from './ClinicalHistorySections';
 
-const ConsultationItem = ({ consulta, index, onPreviewConsulta, onPreviewIncapacidad, onPreviewTratamiento }) => {
+const ConsultationItem = ({ consulta, index, onPreviewConsulta, onPreviewIncapacidad, onPreviewTratamiento, onPreviewExamenes }) => {
   const { tema } = useTheme();
   let parsedConsulta = null;
   try {
@@ -33,6 +33,7 @@ const ConsultationItem = ({ consulta, index, onPreviewConsulta, onPreviewIncapac
         <Group gap="sm">
           <Button leftSection={<IconEye size={16} />} onClick={() => onPreviewIncapacidad(consulta)} variant="outline" color={tema.mantineColor} size="xs">Incapacidad</Button>
           <Button leftSection={<IconEye size={16} />} onClick={() => onPreviewTratamiento(consulta)} variant="outline" color={tema.mantineColor} size="xs">Tratamiento</Button>
+          <Button leftSection={<IconEye size={16} />} onClick={() => onPreviewExamenes(consulta)} variant="outline" color={tema.mantineColor} size="xs">Exámenes</Button>
           <Button leftSection={<IconEye size={16} />} onClick={() => onPreviewConsulta(consulta)} variant="outline" color={tema.mantineColor} size="xs">Vista Previa</Button>
         </Group>
       </Group>
@@ -44,8 +45,8 @@ const ConsultationItem = ({ consulta, index, onPreviewConsulta, onPreviewIncapac
           <AnamnesisSection data={parsedConsulta.informacionConsulta} />
           <PhysicalExamSection data={parsedConsulta.examenFisico} />
           <DiagnosisAndTreatmentSection data={parsedConsulta.diagnosticoTratamiento} />
-          <DigitalSignatureSection data={parsedConsulta.firmaDigital} />
           <IncapacitySection data={parsedConsulta.incapacidad} />
+          <DigitalSignatureSection data={parsedConsulta.firmaDigital} />
         </Stack>
       )}
     </Paper>
@@ -59,12 +60,14 @@ const ConsultationItem = ({ consulta, index, onPreviewConsulta, onPreviewIncapac
  * @param {Function} props.onPreviewConsulta - Función para abrir la vista previa de una consulta.
  * @param {Function} props.onPreviewIncapacidad - Función para abrir la vista previa de incapacidad.
  * @param {Function} props.onPreviewTratamiento - Función para abrir la vista previa de tratamiento.
+ * @param {Function} props.onPreviewExamenes - Función para abrir la vista previa de exámenes.
  */
 const ConsultationList = ({
-  consultas,
+  consultas = [],
   onPreviewConsulta,
   onPreviewIncapacidad,
-  onPreviewTratamiento
+  onPreviewTratamiento,
+  onPreviewExamenes
 }) => {
   const { tema } = useTheme();
 
@@ -86,6 +89,7 @@ const ConsultationList = ({
             onPreviewConsulta={onPreviewConsulta}
             onPreviewIncapacidad={onPreviewIncapacidad}
             onPreviewTratamiento={onPreviewTratamiento}
+            onPreviewExamenes={onPreviewExamenes}
           />
         ))
       ) : (

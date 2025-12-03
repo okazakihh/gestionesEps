@@ -284,6 +284,9 @@ const AgendaModal = ({ isOpen, onClose }) => {
       await updateAppointmentStatus(currentCita.id, 'ATENDIDO');
     }
 
+    // Recargar las citas para reflejar el nuevo estado
+    await loadCitasPendientes();
+
     // Volver a la vista de agenda
     setCurrentView('agenda');
     setCurrentCita(null);

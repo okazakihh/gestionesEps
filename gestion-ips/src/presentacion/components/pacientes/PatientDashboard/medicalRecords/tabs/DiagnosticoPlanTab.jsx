@@ -3,6 +3,7 @@ import { Grid, Textarea, Paper, Stack, Group, Text, Checkbox, TextInput } from '
 import { IconStethoscope, IconPill, IconFileText, IconCalendar, IconCheck } from '@tabler/icons-react';
 import DiagnosticosTable from '../components/DiagnosticosTable.jsx';
 import MedicamentosTable from '../components/MedicamentosTable.jsx';
+import ExamenesTable from '../components/ExamenesTable.jsx';
 
 /**
  * Tab 5: Diagnóstico y Plan de Tratamiento
@@ -19,23 +20,14 @@ const DiagnosticoPlanTab = ({ formData, setFormData }) => {
         })}
       />
 
-      {/* Ayudas Diagnósticas */}
-      <Paper p="md" withBorder>
-        <Group gap="xs" mb="md">
-          <IconFileText size={18} color="var(--mantine-color-indigo-6)" />
-          <Text size="sm" fw={600}>Ayudas Diagnósticas Solicitadas</Text>
-        </Group>
-        <Textarea
-          placeholder="Laboratorios: hemograma, glicemia, perfil lipídico, etc.&#10;Imágenes: Rx, ecografía, TAC, RMN, etc.&#10;Otros estudios: electrocardiograma, espirometría, etc."
-          value={formData.diagnosticoPlan.ayudasDiagnosticas}
-          onChange={(e) => setFormData({
-            ...formData,
-            diagnosticoPlan: { ...formData.diagnosticoPlan, ayudasDiagnosticas: e.target.value }
-          })}
-          minRows={4}
-          size="sm"
-        />
-      </Paper>
+      {/* Exámenes y Ayudas Diagnósticas */}
+      <ExamenesTable
+        examenes={formData.diagnosticoPlan.examenes}
+        onChange={(examenes) => setFormData({
+          ...formData,
+          diagnosticoPlan: { ...formData.diagnosticoPlan, examenes }
+        })}
+      />
 
       {/* Plan de Tratamiento */}
       <Paper p="md" withBorder>

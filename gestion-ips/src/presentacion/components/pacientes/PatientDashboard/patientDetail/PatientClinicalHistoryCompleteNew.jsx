@@ -12,7 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { useTheme } from '../../../../../negocio/contexts/ThemeContext.jsx';
 import { getIpsConfig } from '../../../../../data/services/configuracionApiService.js';
-import { generarHistoriaClinicaHTML, generarIncapacidadHTML, generarTratamientoHTML } from '../../HistoriaClinicaHTML.js';
+import { generarHistoriaClinicaHTML, generarIncapacidadHTML, generarTratamientoHTML, generarExamenesHTML } from '../../HistoriaClinicaHTML.js';
 import PatientInfoPreserved from './PatientInfoPreserved.jsx';
 
 // Importar hooks personalizados para limpiar el componente
@@ -143,6 +143,10 @@ const PatientClinicalHistoryCompleteNew = ({
       const historiaData = parsedData || null;
       const initial = {
         incapacidad: historiaData?.diagnosticoPlan?.incapacidad || null,
+        medico: (historiaData?.procedimiento?.medicoResponsable || historiaData?.informacionMedico?.medicoResponsable) || 'N/A',
+        especialidad: (historiaData?.procedimiento?.especialidad || historiaData?.informacionMedico?.especialidad) || 'N/A',
+        registroMedico: (historiaData?.procedimiento?.registroMedico || historiaData?.informacionMedico?.registroMedico) || 'N/A',
+        firmaDigital: historiaData?.firmaDigital || null
       };
       const ipsData = await getIpsConfig();
       const html = generarIncapacidadHTML(initial, historiaClinica, patient, parsedPatientData, ipsData);
@@ -158,7 +162,11 @@ const PatientClinicalHistoryCompleteNew = ({
       diagnosticos: historiaData?.diagnosticoPlan?.diagnosticos || null,
       planTratamiento: historiaData?.diagnosticoPlan?.planTratamiento || null,
       formulaMedica: historiaData?.diagnosticoPlan?.medicamentos || null,
-      medicamentos: historiaData?.diagnosticoPlan?.medicamentos || null
+      medicamentos: historiaData?.diagnosticoPlan?.medicamentos || null,
+      medico: (historiaData?.procedimiento?.medicoResponsable || historiaData?.informacionMedico?.medicoResponsable) || 'N/A',
+      especialidad: (historiaData?.procedimiento?.especialidad || historiaData?.informacionMedico?.especialidad) || 'N/A',
+      registroMedico: (historiaData?.procedimiento?.registroMedico || historiaData?.informacionMedico?.registroMedico) || 'N/A',
+      firmaDigital: historiaData?.firmaDigital || null
     };
     const ipsData = await getIpsConfig();
     const html = generarTratamientoHTML(initial, historiaClinica, patient, parsedPatientData, ipsData);
@@ -168,7 +176,20 @@ const PatientClinicalHistoryCompleteNew = ({
   const openPreviewIncapacidadForConsulta = async (consulta) => {
     try {
       const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
-      const processed = { ...consulta, incapacidad: consultaData.incapacidad || consulta.incapacidad || null };
+      const processed = { 
+        ...consulta, 
+        incapacidad: consultaData.incapacidad || consulta.incapacidad || null,
+        medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+        especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+        registroMedico: consultaData.detalleConsulta?.registroMedico || consultaData.informacionMedico?.registroMedico || 'N/A'
+      };
+      
+      // Buscar firma del médico
+      const firma = medicosConFirma.get(processed.medico);
+      if (firma) {
+        processed.firmaDigital = firma;
+      }
+      
       const ipsData = await getIpsConfig();
       const html = generarIncapacidadHTML(processed, historiaClinica, patient, parsedPatientData, ipsData);
       openPreview(`Incapacidad - Consulta #${consulta.id}`, html);
@@ -185,13 +206,62 @@ const PatientClinicalHistoryCompleteNew = ({
         diagnosticos: consultaData.diagnosticoTratamiento?.diagnosticos || consultaData.diagnosticos || null,
         planTratamiento: consultaData.diagnosticoTratamiento?.planTratamiento || consultaData.planTratamiento || null,
         formulaMedica: consultaData.diagnosticoTratamiento?.medicamentos || consultaData.formulaMedica || null,
-        medicamentos: consultaData.diagnosticoTratamiento?.medicamentos || null
+        medicamentos: consultaData.diagnosticoTratamiento?.medicamentos || null,
+        medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+        especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+        registroMedico: consultaData.detalleConsulta?.registroMedico || consultaData.informacionMedico?.registroMedico || 'N/A'
       };
+      
+      // Buscar firma del médico
+      const firma = medicosConFirma.get(processed.medico);
+      if (firma) {
+        processed.firmaDigital = firma;
+      }
+      
       const ipsData = await getIpsConfig();
       const html = generarTratamientoHTML(processed, historiaClinica, patient, parsedPatientData, ipsData);
       openPreview(`Tratamiento - Consulta #${consulta.id}`, html);
     } catch (e) {
       console.error('Error generating tratamiento preview:', e);
+    }
+  };
+
+  const openPreviewExamenesForHistoria = async () => {
+    const historiaData = parsedData || null;
+    const initial = {
+      examenes: historiaData?.diagnosticoPlan?.examenes || [],
+      medico: (historiaData?.procedimiento?.medicoResponsable || historiaData?.informacionMedico?.medicoResponsable) || 'N/A',
+      especialidad: (historiaData?.procedimiento?.especialidad || historiaData?.informacionMedico?.especialidad) || 'N/A',
+      registroMedico: (historiaData?.procedimiento?.registroMedico || historiaData?.informacionMedico?.registroMedico) || 'N/A',
+      firmaDigital: historiaData?.firmaDigital || null
+    };
+    const ipsData = await getIpsConfig();
+    const html = generarExamenesHTML(initial, historiaClinica, patient, parsedPatientData, ipsData);
+    openPreview(`Exámenes - Historia ${historiaClinica?.numeroHistoria || ''}`, html);
+  };
+
+  const openPreviewExamenesForConsulta = async (consulta) => {
+    try {
+      const consultaData = consulta.datosJson ? JSON.parse(consulta.datosJson) : {};
+      const processed = {
+        ...consulta,
+        examenes: consultaData.diagnosticoTratamiento?.examenes || consultaData.examenes || [],
+        medico: consultaData.detalleConsulta?.medicoTratante || consultaData.informacionMedico?.medicoTratante || 'N/A',
+        especialidad: consultaData.detalleConsulta?.especialidad || consultaData.informacionMedico?.especialidad || 'N/A',
+        registroMedico: consultaData.detalleConsulta?.registroMedico || consultaData.informacionMedico?.registroMedico || 'N/A'
+      };
+      
+      // Buscar firma del médico
+      const firma = medicosConFirma.get(processed.medico);
+      if (firma) {
+        processed.firmaDigital = firma;
+      }
+      
+      const ipsData = await getIpsConfig();
+      const html = generarExamenesHTML(processed, historiaClinica, patient, parsedPatientData, ipsData);
+      openPreview(`Exámenes - Consulta #${consulta.id}`, html);
+    } catch (e) {
+      console.error('Error generating examenes preview:', e);
     }
   };
 
@@ -288,6 +358,15 @@ const PatientClinicalHistoryCompleteNew = ({
             Vista Incapacidad
           </Button>
           <Button
+            leftSection={<IconEye size={14} />}
+            onClick={openPreviewExamenesForHistoria}
+            variant="outline"
+            color={tema.mantineColor}
+            size="xs"
+          >
+            Vista Exámenes
+          </Button>
+          <Button
             leftSection={<IconArrowLeft size={14} />}
             onClick={() => setActiveTab('clinica')}
             variant="default"
@@ -323,11 +402,11 @@ const PatientClinicalHistoryCompleteNew = ({
           {/* Sección 5: Diagnóstico y Tratamiento */}
           <DiagnosisAndTreatmentSection data={parsedData} />
 
-          {/* Firma Digital - Historia Clínica Inicial */}
-          <DigitalSignatureSection data={parsedData?.firmaDigital} />
-
           {/* Incapacidad - Historia Clínica Inicial */}
           <IncapacitySection data={parsedData?.diagnosticoPlan?.incapacidad} />
+
+          {/* Firma Digital - Historia Clínica Inicial */}
+          <DigitalSignatureSection data={parsedData?.firmaDigital} />
 
           {/* Sección 6: Consultas Médicas Detalladas */}
           <ConsultationList
@@ -335,6 +414,7 @@ const PatientClinicalHistoryCompleteNew = ({
             onPreviewConsulta={openPreviewForConsulta}
             onPreviewIncapacidad={openPreviewIncapacidadForConsulta}
             onPreviewTratamiento={openPreviewTratamientoForConsulta}
+            onPreviewExamenes={openPreviewExamenesForConsulta}
           />
 
         </Stack>

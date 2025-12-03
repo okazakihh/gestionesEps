@@ -189,18 +189,16 @@ export const DigitalSignatureSection = ({ data }) => {
         {(
           (typeof data === 'string') || data?.imagen || data?.image || data?.firma
         ) && (
-          <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text size="xs" c="dimmed" mb={4}>Firma digital del médico</Text>
             <Image
               src={typeof data === 'string' ? data : (data.imagen || data.image || data.firma)}
               alt="Firma del médico"
-              width={240}
-              height={80}
+              width={120}
+              height={50}
               fit="contain"
-              style={{ border: '1px solid #e5e7eb', borderRadius: 4, background: '#fff' }}
+              style={{ border: '1px solid #e5e7eb', borderRadius: 4, background: '#fff', maxWidth: '120px', maxHeight: '50px' }}
             />
-            <div>
-              <Text size="xs" c="dimmed">Firma digital del médico</Text>
-            </div>
           </div>
         )}
       </Paper>
