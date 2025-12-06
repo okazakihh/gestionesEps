@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Stack, Group, Button, Text, Paper, Divider, Badge, Tabs, Code, ScrollArea, Alert, LoadingOverlay } from '@mantine/core';
 import { IconCloud, IconX, IconFileCode, IconBuilding, IconUser, IconReceipt, IconAlertCircle } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
-import { generarFacturaXML } from '../../../negocio/services/dianXmlGenerator';
 import { prepararDatosParaDian, getIpsConfig } from '../../../negocio/services/facturacionService';
 import { validarFacturaPreEnvio } from '../../../negocio/services/dianService';
 
@@ -55,9 +54,8 @@ export const DianPreviewModal = ({ opened, onClose, factura, onConfirm }) => {
         setErroresValidacion(validacion.errores);
       }
 
-      // Generar XML preview
-      const xml = await generarFacturaXML(datosDian);
-      setXmlPreview(xml);
+      // El XML se genera automáticamente en el backend (Siigo)
+      setXmlPreview('El XML se generará automáticamente al enviar la factura a Siigo/DIAN');
 
     } catch (error) {
       console.error('Error preparando preview:', error);

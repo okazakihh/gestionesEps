@@ -1,9 +1,12 @@
 import React from 'react';
 import { Modal, Text, Button, Group, Paper, Stack, Table, Badge, Divider } from '@mantine/core';
 import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
-import { IconX, IconCheck, IconInfoCircle, IconPrinter } from '@tabler/icons-react';
+import { IconX, IconCheck, IconInfoCircle, IconPrinter, IconEye } from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 import { generarFacturaHTML } from './FacturaHTML.js';
+import { useFacturaPreviewModal } from '../../../negocio/hooks/useFacturaPreviewModal';
+import { FacturaPrintPreviewModal } from './FacturaPrintPreviewModal';
+import { useIpsConfig } from '../../../negocio/hooks/configuracion/useIpsConfig';
 
 /**
  * VerFacturaModal.jsx
@@ -28,6 +31,9 @@ const VerFacturaModal = ({
   loading = false
 }) => {
   const { tema } = useTheme();
+  const { ipsConfig: ipsData } = useIpsConfig();
+  const { previewOpen, previewHTML, previewTitle, openPreview, closePreview, handlePrint } = useFacturaPreviewModal();
+  
   if (!factura) return null;
 
   // Parsear datos de la factura
@@ -66,21 +72,24 @@ const VerFacturaModal = ({
   };
 
   /**
-   * Abre ventana para imprimir factura
+   * Abre modal de preview de la factura
    */
-  const handlePrintFactura = () => {
-    // Generar HTML de la factura (usa ipsConfig por defecto)
-    const htmlContent = generarFacturaHTML(factura, facturaData);
+  const handleVerFacturaPreview = () => {
+    // Preparar información de la empresa desde la configuración real
+    const empresaInfo = ipsData ? {
+      nombre: ipsData.nombre || 'IPS',
+      nit: ipsData.nit || 'N/A',
+      direccion: `${ipsData.direccion || ''}, ${ipsData.ciudad || ''}`,
+      telefono: ipsData.telefono || '',
+      email: ipsData.email || '',
+      datosBancarios: ipsData.datosBancarios || {}
+    } : null;
     
-    // Abrir ventana nueva con la factura
-    const ventana = window.open('', '_blank', 'width=800,height=1000');
+    // Generar HTML de la factura con configuración real (si está disponible, sino usa default)
+    const htmlContent = generarFacturaHTML(factura, facturaData, empresaInfo);
     
-    if (ventana) {
-      ventana.document.write(htmlContent);
-      ventana.document.close();
-    } else {
-      alert('Por favor, permita las ventanas emergentes para imprimir la factura.');
-    }
+    // Abrir preview modal
+    openPreview(htmlContent, `Vista Previa - Factura ${numeroFactura}`);
   };
 
   return (
@@ -398,10 +407,10 @@ const VerFacturaModal = ({
           <Button
             variant="light"
             color="blue"
-            leftSection={<IconPrinter size={18} />}
-            onClick={handlePrintFactura}
+            leftSection={<IconEye size={18} />}
+            onClick={handleVerFacturaPreview}
           >
-            Imprimir Factura
+            Vista Previa e Imprimir
           </Button>
           
           <Group>
@@ -427,6 +436,15 @@ const VerFacturaModal = ({
           </Group>
         </Group>
       </Stack>
+
+      {/* Modal de Preview para Impresión - Con z-index más alto */}
+      <FacturaPrintPreviewModal
+        opened={previewOpen}
+        onClose={closePreview}
+        htmlContent={previewHTML}
+        title={previewTitle}
+        onPrint={handlePrint}
+      />
     </Modal>
   );
 };

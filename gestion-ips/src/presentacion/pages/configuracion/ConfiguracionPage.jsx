@@ -25,7 +25,7 @@ const ConfiguracionPage = () => {
 
   return (
     <MainLayout title="Configuración del Sistema" subtitle="Gestión de configuraciones generales">
-      <Container size="100%" px="xl" style={{ maxWidth: '100%' }}>
+      <Container size="100%" px={{ base: "sm", sm: "md", lg: "xl" }} style={{ maxWidth: '100%' }}>
         <Stack gap="lg">
           {/* Header */}
           <Group justify="space-between" align="flex-start">

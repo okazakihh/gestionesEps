@@ -9,7 +9,6 @@ import { useState, useEffect } from 'react';
 import { Modal, Group, Stack, Text, Badge, Button, Alert, TextInput, Select, PasswordInput } from '@mantine/core';
 import { IconAlertCircle, IconCheck, IconCloud, IconServer } from '@tabler/icons-react';
 import { obtenerInfoAmbienteDian } from '../../../negocio/services/facturacionService';
-import { setDianEnvironment, clearDianCache } from '../../../negocio/services/dianService';
 
 export const DianConfigModal = ({ opened, onClose }) => {
   const [ambienteInfo, setAmbienteInfo] = useState(null);
@@ -30,8 +29,8 @@ export const DianConfigModal = ({ opened, onClose }) => {
 
   const cambiarAmbiente = async (nuevoAmbiente) => {
     try {
-      setDianEnvironment(nuevoAmbiente);
-      clearDianCache();
+      // El ambiente ahora se configura en application.properties del backend
+      console.info('Para cambiar ambiente, modifica siigo.environment en application.properties');
       await cargarInfoAmbiente();
     } catch (error) {
       console.error('Error cambiando ambiente:', error);

@@ -95,6 +95,13 @@ export const useIpsConfig = () => {
     regimenTributario: "Régimen Común",
     responsabilidadFiscal: "No responsable de IVA",
     actividadEconomica: "8610 - Actividades de hospitales y clínicas con internación",
+    datosBancarios: {
+      banco: "Bancolombia",
+      tipoCuenta: "Cuenta Corriente",
+      numeroCuenta: "123-456789-01",
+      nequi: "300 123 4567",
+      daviplata: "301 234 5678"
+    },
     representanteLegal: {
       nombre: "Dr. Juan Carlos Pérez González",
       cargo: "Director General",

@@ -42,6 +42,15 @@ export const ipsConfig = {
   responsabilidadFiscal: "No responsable de IVA",
   actividadEconomica: "8610 - Actividades de hospitales y clínicas con internación",
   
+  // Información bancaria para pagos
+  datosBancarios: {
+    banco: "Bancolombia",
+    tipoCuenta: "Cuenta Corriente",
+    numeroCuenta: "123-456789-01",
+    nequi: "300 123 4567",
+    daviplata: "301 234 5678"
+  },
+  
   // Representante legal
   representanteLegal: {
     nombre: "Dr. Juan Carlos Pérez González",

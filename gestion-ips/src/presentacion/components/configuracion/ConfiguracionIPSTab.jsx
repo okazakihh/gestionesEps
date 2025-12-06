@@ -55,6 +55,13 @@ export const ConfiguracionIPSTab = () => {
     regimenTributario: '',
     responsabilidadFiscal: '',
     actividadEconomica: '',
+    datosBancarios: {
+      banco: '',
+      tipoCuenta: '',
+      numeroCuenta: '',
+      nequi: '',
+      daviplata: ''
+    },
     representanteLegal: {
       nombre: '',
       cargo: '',
@@ -106,6 +113,13 @@ export const ConfiguracionIPSTab = () => {
           regimenTributario: config.jsonData.regimenTributario || '',
           responsabilidadFiscal: config.jsonData.responsabilidadFiscal || '',
           actividadEconomica: config.jsonData.actividadEconomica || '',
+          datosBancarios: {
+            banco: config.jsonData.datosBancarios?.banco || '',
+            tipoCuenta: config.jsonData.datosBancarios?.tipoCuenta || '',
+            numeroCuenta: config.jsonData.datosBancarios?.numeroCuenta || '',
+            nequi: config.jsonData.datosBancarios?.nequi || '',
+            daviplata: config.jsonData.datosBancarios?.daviplata || ''
+          },
           representanteLegal: {
             nombre: config.jsonData.representanteLegal?.nombre || '',
             cargo: config.jsonData.representanteLegal?.cargo || '',
@@ -144,6 +158,17 @@ export const ConfiguracionIPSTab = () => {
     }));
   };
 
+  // Manejar cambios en datos bancarios
+  const handleDatosBancariosChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      datosBancarios: {
+        ...prev.datosBancarios,
+        [field]: value
+      }
+    }));
+  };
+
   // Guardar configuración
   const handleSave = async () => {
     const result = await Swal.fire({
@@ -162,7 +187,7 @@ export const ConfiguracionIPSTab = () => {
     setSaving(true);
     try {
       // Hacer merge correcto: primero original, luego campos del form (excepto objetos anidados)
-      const { representanteLegal: formRepresentante, ...formDataSinAnidados } = formData;
+      const { representanteLegal: formRepresentante, datosBancarios: formDatosBancarios, ...formDataSinAnidados } = formData;
       
       const updatedConfig = {
         ...(configOriginal || {}),     // 1. Todo lo original (incluye colores, etc)
@@ -171,6 +196,10 @@ export const ConfiguracionIPSTab = () => {
         representanteLegal: {
           ...(configOriginal?.representanteLegal || {}),
           ...formRepresentante
+        },
+        datosBancarios: {
+          ...(configOriginal?.datosBancarios || {}),
+          ...formDatosBancarios
         },
         // 4. Preservar colores si existen (por si acaso formData los sobrescribió)
         colores: configOriginal?.colores || {
@@ -452,6 +481,56 @@ export const ConfiguracionIPSTab = () => {
               placeholder="24 horas / 7 días"
               value={formData.horarioUrgencias}
               onChange={(e) => handleChange('horarioUrgencias', e.target.value)}
+            />
+          </Grid.Col>
+        </Grid>
+      </Paper>
+
+      {/* Datos Bancarios */}
+      <Paper shadow="xs" p="lg" withBorder style={{ backgroundColor: '#fef3c7' }}>
+        <Title order={4} mb="md">💳 Datos Bancarios para Pagos</Title>
+        <Text size="sm" c="dimmed" mb="md">
+          Esta información se mostrará en las facturas impresas
+        </Text>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <TextInput
+              label="Banco"
+              placeholder="Bancolombia"
+              value={formData.datosBancarios.banco}
+              onChange={(e) => handleDatosBancariosChange('banco', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <TextInput
+              label="Tipo de Cuenta"
+              placeholder="Cuenta Corriente"
+              value={formData.datosBancarios.tipoCuenta}
+              onChange={(e) => handleDatosBancariosChange('tipoCuenta', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <TextInput
+              label="Número de Cuenta"
+              placeholder="123-456789-01"
+              value={formData.datosBancarios.numeroCuenta}
+              onChange={(e) => handleDatosBancariosChange('numeroCuenta', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <TextInput
+              label="Nequi"
+              placeholder="300 123 4567"
+              value={formData.datosBancarios.nequi}
+              onChange={(e) => handleDatosBancariosChange('nequi', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <TextInput
+              label="Daviplata"
+              placeholder="301 234 5678"
+              value={formData.datosBancarios.daviplata}
+              onChange={(e) => handleDatosBancariosChange('daviplata', e.target.value)}
             />
           </Grid.Col>
         </Grid>

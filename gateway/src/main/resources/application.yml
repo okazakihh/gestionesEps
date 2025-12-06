@@ -119,7 +119,7 @@ spring:
           predicates:
             - Path=/api/dian/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
         # Ruta general para administrative (debe ir al final)
         - id: administrative_route
           uri: http://localhost:8084

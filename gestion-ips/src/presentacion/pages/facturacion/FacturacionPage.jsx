@@ -17,6 +17,7 @@ import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import { useFacturacionManagement } from '../../../negocio/hooks/facturacion/useFacturacionManagement';
 import { useCodigosCupsManagement } from '../../../negocio/hooks/facturacion/useCodigosCupsManagement';
 import { useFacturaFilters } from '../../../negocio/hooks/facturacion/useFacturaFilters';
+import { useIpsConfig } from '../../../negocio/hooks/configuracion/useIpsConfig';
 
 // Servicios
 import { 
@@ -26,7 +27,6 @@ import {
   enviarFacturaExistenteADian,
   consultarEstadoFacturaDian
 } from '../../../negocio/services/facturacionService';
-import { generarFacturaXML } from '../../../negocio/services/dianXmlGenerator';
 
 // Componentes
 import {
@@ -43,6 +43,9 @@ import {
   XMLViewerModal,
   DianPreviewModal
 } from '../../components/facturacion';
+import { FacturaPrintPreviewModal } from '../../components/facturacion/FacturaPrintPreviewModal';
+import { useFacturaPreviewModal } from '../../../negocio/hooks/useFacturaPreviewModal';
+import { generarFacturaHTML } from '../../components/facturacion/FacturaHTML';
 
 // Service Worker
 import { useServiceWorker } from '../../../serviceWorker.js';
@@ -109,6 +112,9 @@ const FacturacionPage = () => {
     handleSaveValor
   } = useCodigosCupsManagement();
 
+  // Hook de configuración de IPS
+  const { ipsConfig: ipsData } = useIpsConfig();
+
   // Hook de filtros (citas y facturas)
   const {
     // Estados de filtros de citas
@@ -155,6 +161,9 @@ const FacturacionPage = () => {
   const [xmlContent, setXmlContent] = useState('');
   const [isDianPreviewModalOpen, setIsDianPreviewModalOpen] = useState(false);
   const [facturaParaDian, setFacturaParaDian] = useState(null);
+  
+  // Hook para modal de preview de impresión
+  const { previewOpen, previewHTML, previewTitle, openPreview, closePreview, handlePrint } = useFacturaPreviewModal();
 
   // ============================================================================
   // DATOS FILTRADOS
@@ -261,6 +270,40 @@ const FacturacionPage = () => {
         icon: 'error',
         title: 'Error',
         text: 'No se pudo cargar la información de la factura',
+        confirmButtonColor: '#EF4444'
+      });
+    }
+  };
+
+  /**
+   * Generar PDF con vista previa para impresión
+   */
+  const handleGenerarPDFConPreview = (factura) => {
+    try {
+      const facturaData = JSON.parse(factura.jsonData || '{}');
+      const numeroFactura = facturaData.numeroFactura || `FM-${factura.id}`;
+      
+      // Preparar información de la empresa desde la configuración real
+      const empresaInfo = ipsData ? {
+        nombre: ipsData.nombre || 'IPS',
+        nit: ipsData.nit || 'N/A',
+        direccion: `${ipsData.direccion || ''}, ${ipsData.ciudad || ''}`,
+        telefono: ipsData.telefono || '',
+        email: ipsData.email || '',
+        datosBancarios: ipsData.datosBancarios || {}
+      } : null;
+      
+      // Generar HTML de la factura con configuración real (si está disponible, sino usa default)
+      const htmlContent = generarFacturaHTML(factura, facturaData, empresaInfo);
+      
+      // Abrir modal de preview con botón de imprimir
+      openPreview(htmlContent, `Vista Previa - Factura ${numeroFactura}`);
+    } catch (error) {
+      console.error('Error generando preview de factura:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo generar la vista previa de la factura',
         confirmButtonColor: '#EF4444'
       });
     }
@@ -428,17 +471,21 @@ const FacturacionPage = () => {
         }
       });
 
-      const xml = await generarFacturaXML(facturaData);
+      // El XML ahora se genera automáticamente por Siigo al enviar la factura
       Swal.close();
-
-      setXmlContent(xml);
-      setIsXmlModalOpen(true);
+      
+      await Swal.fire({
+        icon: 'info',
+        title: 'XML Automático',
+        html: '<p>El XML se genera automáticamente al enviar la factura a Siigo/DIAN.</p><p>Después del envío, podrás descargarlo desde el botón de detalles de la factura.</p>',
+        confirmButtonColor: '#3B82F6'
+      });
     } catch (error) {
-      console.error('Error generando XML:', error);
+      console.error('Error:', error);
       await Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo generar el XML. Verifique los datos de la factura.',
+        text: 'Ocurrió un error inesperado.',
         confirmButtonColor: '#EF4444'
       });
     }
@@ -454,7 +501,7 @@ const FacturacionPage = () => {
       subtitle={`Gestión de códigos CUPS y facturación médica ${!isOnline ? '(Modo Offline)' : ''}`}
       icon={<IconFileInvoice size={28} />}
     >
-      <Container size="100%" px="xl" py="md" style={{ maxWidth: '100%' }}>
+      <Container size="100%" px={{ base: "sm", sm: "md", lg: "xl" }} py={{ base: "sm", sm: "md" }} style={{ maxWidth: '100%' }}>
         <Stack gap="xl">
           
           {/* ============================================================
@@ -474,8 +521,12 @@ const FacturacionPage = () => {
             </Tabs.List>
 
             {/* ========== PANEL: FACTURACIÓN ========== */}
-            <Tabs.Panel value="facturacion" pt="xl">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <Tabs.Panel value="facturacion" pt={{ base: "md", sm: "xl" }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))', 
+                gap: '1rem'
+              }}>
                 
                 {/* ===== COLUMNA IZQUIERDA: CITAS ATENDIDAS ===== */}
                 <Stack gap="md">
@@ -616,7 +667,7 @@ const FacturacionPage = () => {
                     facturas={facturas}
                     facturasFiltered={facturasFiltradas}
                     onVerFactura={handleVerFactura}
-                    onGenerarPDF={generarFacturaPDFFactura}
+                    onGenerarPDF={handleGenerarPDFConPreview}
                     onProcesarFactura={handleProcesarFactura}
                     onEnviarDian={handleEnviarDian}
                     onConsultarEstadoDian={handleConsultarEstadoDian}
@@ -629,7 +680,7 @@ const FacturacionPage = () => {
             </Tabs.Panel>
 
             {/* ========== PANEL: CÓDIGOS CUPS ========== */}
-            <Tabs.Panel value="cups" pt="xl">
+            <Tabs.Panel value="cups" pt={{ base: "md", sm: "xl" }}>
               <Stack gap="md">
                 {/* Header */}
                 <Paper p="md" withBorder>
@@ -715,6 +766,15 @@ const FacturacionPage = () => {
             }}
             factura={facturaParaDian}
             onConfirm={handleConfirmarEnvioDian}
+          />
+
+          {/* Modal: Vista previa de impresión de factura */}
+          <FacturaPrintPreviewModal
+            opened={previewOpen}
+            onClose={closePreview}
+            htmlContent={previewHTML}
+            title={previewTitle}
+            onPrint={handlePrint}
           />
 
         </Stack>

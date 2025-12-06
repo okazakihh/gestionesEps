@@ -90,3 +90,68 @@
     page-break-inside: avoid;
   }
 }
+
+/* Estilos responsive para móvil */
+@media (max-width: 768px) {
+  /* Mejorar scroll horizontal en tablas */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hacer que los modales ocupen más espacio en móvil */
+  .mantine-Modal-content {
+    max-height: 95vh !important;
+  }
+
+  /* Asegurar que los textos se ajusten */
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  h2 {
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
+  }
+
+  h3 {
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  }
+
+  /* Mejorar padding en contenedores */
+  .mantine-Paper-root {
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+  }
+
+  /* Ajustar botones en móvil */
+  .mantine-Button-root {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem);
+  }
+
+  /* Mejorar inputs en móvil */
+  .mantine-TextInput-input,
+  .mantine-Select-input,
+  .mantine-Textarea-input {
+    font-size: 16px !important; /* Evita zoom en iOS */
+  }
+}
+
+/* Estilos para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Ajustes específicos para tablets */
+  .mantine-Container-root {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Estilos para landscape en móvil */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reducir altura de headers en landscape */
+  header {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}

@@ -12,12 +12,12 @@ export const DashboardPage = () => {
       title="Dashboard"
       subtitle="Bienvenido al Sistema de Gestión IPS"
     >
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Contenido existente */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
                 ¡Login Exitoso!
               </h2>
               <p className="text-gray-600 mb-6">

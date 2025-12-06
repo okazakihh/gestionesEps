@@ -10,7 +10,6 @@ import {
   generarCodigoQR,
   getDianEnvironmentInfo 
 } from './dianService.js';
-import { generarFacturaXML } from './dianXmlGenerator.js';
 
 // Cache de configuración IPS
 let cachedIpsConfig = null;
@@ -625,22 +624,24 @@ export const generarFacturaElectronica = async (facturaData, enviarAutomaticamen
       };
     }
     
-    // Generar XML UBL 2.1
-    const xmlFactura = await generarFacturaXML(datosDian);
+    // FacturaTech genera el XML automáticamente, no necesitamos generarlo aquí
+    // const xmlFactura = await generarFacturaXML(datosDian);
     
     // Si se debe enviar automáticamente
     if (enviarAutomaticamente) {
-      const resultado = await enviarFacturaDian(datosDian, xmlFactura);
+      const resultado = await enviarFacturaDian(datosDian);
       
       if (resultado.success) {
-        // Generar código QR
-        const qrCode = await generarCodigoQR(resultado.cufe, datosDian);
+        // FacturaTech ya incluye el QR, no necesitamos generarlo
+        // const qrCode = await generarCodigoQR(resultado.cufe, datosDian);
         
         return {
           success: true,
           cufe: resultado.cufe,
-          qrCode: qrCode,
-          xmlFactura: xmlFactura,
+          numeroFactura: resultado.numeroFactura,
+          qrCode: resultado.qrCode,
+          pdfUrl: resultado.pdfUrl,
+          xmlUrl: resultado.xmlUrl,
           estadoDian: resultado.statusDescription,
           ambiente: resultado.environment,
           advertencias: validacion.advertencias

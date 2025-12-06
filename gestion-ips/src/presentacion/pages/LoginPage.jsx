@@ -71,10 +71,10 @@ export const LoginPage = () => {
         bottom: 0
       }}
     >
-      <Container size={460}>
+      <Container size={460} px={{ base: "xs", sm: "md" }}>
         <Paper
           shadow="xl"
-          p={40}
+          p={{ base: 24, sm: 40 }}
           radius="lg"
           style={{
             background: 'white',

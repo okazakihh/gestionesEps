@@ -8,8 +8,6 @@
  * - generarFacturaHTML(factura, facturaData, empresa)
  */
 
-import { ipsConfig } from '../../../negocio/utils/ipsConfig.js';
-
 /**
  * Formatea moneda en pesos colombianos
  * @param {number} value - Valor numérico
@@ -60,9 +58,10 @@ const formatDateShort = (dateString) => {
  * Genera el encabezado HTML para facturas
  * @param {Object} empresa - Información de la empresa
  * @param {string} numeroFactura - Número de la factura
+ * @param {string} fechaFactura - Fecha de la factura
  * @returns {string} HTML del encabezado
  */
-const generarEncabezadoHTML = (empresa, numeroFactura) => {
+const generarEncabezadoHTML = (empresa, numeroFactura, fechaFactura) => {
   return `
     <div class="header">
       <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -78,9 +77,156 @@ const generarEncabezadoHTML = (empresa, numeroFactura) => {
           </div>
           <p class="invoice-number">${numeroFactura}</p>
           <p style="margin: 2px 0; font-size: 10px; color: #868e96;">
-            <strong>Fecha:</strong> ${formatDate(new Date())}
+            <strong>Fecha:</strong> ${fechaFactura ? formatDate(fechaFactura) : formatDate(new Date())}
           </p>
         </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Genera sección de información del destinatario
+ * @param {Object} cliente - Información del cliente/destinatario
+ * @param {string} tipoDestinatario - Tipo de destinatario (PACIENTE o ENTIDAD)
+ * @returns {string} HTML con información del destinatario
+ */
+const generarDestinatarioHTML = (cliente, tipoDestinatario) => {
+  const isPaciente = tipoDestinatario === 'PACIENTE';
+  const badgeColor = isPaciente ? '#22b8cf' : '#228be6';
+  const badgeIcon = isPaciente ? '👤' : '🏢';
+  const badgeText = isPaciente ? 'Paciente' : 'Entidad';
+
+  if (isPaciente) {
+    // Información de Paciente (Persona Natural)
+    return `
+      <div class="destinatario-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; color: #495057;">Información del Destinatario</h3>
+          <span class="tipo-badge" style="background: ${badgeColor};">${badgeIcon} ${badgeText}</span>
+        </div>
+        <div class="destinatario-grid">
+          <div class="destinatario-item">
+            <span class="destinatario-label">Nombre Completo</span>
+            <span class="destinatario-value">${cliente.nombreCompleto || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Tipo y Número de Documento</span>
+            <span class="destinatario-value">${cliente.tipoDocumento || 'CC'}: ${cliente.numeroDocumento || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Dirección</span>
+            <span class="destinatario-value">${cliente.direccion || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Ciudad / Departamento</span>
+            <span class="destinatario-value">${cliente.ciudad || 'N/A'}${cliente.departamento ? ` / ${cliente.departamento}` : ''}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Teléfono</span>
+            <span class="destinatario-value">${cliente.telefono || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Email</span>
+            <span class="destinatario-value">${cliente.email || 'N/A'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Información de Entidad (Persona Jurídica)
+    const contactoHtml = (cliente.nombreContacto || cliente.cargoContacto) ? `
+      <div style="border-top: 1px solid #e9ecef; margin-top: 10px; padding-top: 10px;">
+        <div style="text-align: center; margin-bottom: 8px; font-size: 10px; color: #868e96; font-weight: 600;">
+          INFORMACIÓN DE CONTACTO
+        </div>
+        <div class="destinatario-grid">
+          ${cliente.nombreContacto ? `
+            <div class="destinatario-item">
+              <span class="destinatario-label">Nombre del Contacto</span>
+              <span class="destinatario-value">${cliente.nombreContacto}</span>
+            </div>
+          ` : ''}
+          ${cliente.cargoContacto ? `
+            <div class="destinatario-item">
+              <span class="destinatario-label">Cargo</span>
+              <span class="destinatario-value">${cliente.cargoContacto}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="destinatario-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; color: #495057;">Información del Destinatario</h3>
+          <span class="tipo-badge" style="background: ${badgeColor};">${badgeIcon} ${badgeText}</span>
+        </div>
+        <div class="destinatario-grid">
+          <div class="destinatario-item">
+            <span class="destinatario-label">Razón Social</span>
+            <span class="destinatario-value" style="font-weight: 600;">${cliente.razonSocial || cliente.nombreCompleto || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">NIT</span>
+            <span class="destinatario-value">${cliente.numeroDocumento || 'N/A'}${cliente.digitoVerificacion ? `-${cliente.digitoVerificacion}` : ''}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Dirección</span>
+            <span class="destinatario-value">${cliente.direccion || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Ciudad / Departamento</span>
+            <span class="destinatario-value">${cliente.ciudad || 'N/A'}${cliente.departamento ? ` / ${cliente.departamento}` : ''}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Teléfono</span>
+            <span class="destinatario-value">${cliente.telefono || 'N/A'}</span>
+          </div>
+          <div class="destinatario-item">
+            <span class="destinatario-label">Email</span>
+            <span class="destinatario-value">${cliente.email || 'N/A'}</span>
+          </div>
+        </div>
+        ${contactoHtml}
+      </div>
+    `;
+  }
+};
+
+/**
+ * Genera sección de información de pago
+ * @param {string} formaPago - Forma de pago
+ * @param {string} medioPago - Medio de pago
+ * @param {string} observaciones - Observaciones de pago
+ * @returns {string} HTML con información de pago
+ */
+const generarInfoPagoHTML = (formaPago, medioPago, observaciones) => {
+  if (!formaPago && !medioPago) return '';
+
+  return `
+    <div class="info-pago-box">
+      <h3 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #495057;">💳 Información de Pago</h3>
+      <div class="destinatario-grid" style="grid-template-columns: repeat(${observaciones ? '3' : '2'}, 1fr);">
+        ${formaPago ? `
+          <div class="destinatario-item">
+            <span class="destinatario-label">Forma de Pago</span>
+            <span class="pago-badge" style="background: #fff3cd; color: #856404; border: 1px solid #ffeaa7;">${formaPago}</span>
+          </div>
+        ` : ''}
+        ${medioPago ? `
+          <div class="destinatario-item">
+            <span class="destinatario-label">Medio de Pago</span>
+            <span class="pago-badge" style="background: #fff9db; color: #947600; border: 1px solid #ffe066;">${medioPago}</span>
+          </div>
+        ` : ''}
+        ${observaciones ? `
+          <div class="destinatario-item" style="grid-column: span ${formaPago && medioPago ? '3' : '2'};">
+            <span class="destinatario-label">Observaciones</span>
+            <span class="destinatario-value">${observaciones}</span>
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
@@ -171,25 +317,18 @@ const generarTotalesHTML = (subtotal, total) => {
 /**
  * Genera notas y términos
  * @param {Object} facturaData - Datos de la factura
+ * @param {Object} datosBancarios - Información bancaria de la IPS
  * @returns {string} HTML con notas y términos
  */
-const generarNotasHTML = (facturaData) => {
-  const observaciones = facturaData.observaciones || '';
+const generarNotasHTML = (facturaData, datosBancarios = {}) => {
   
   return `
     <div class="notes">
-      ${observaciones ? `
-      <div class="note-box obs-box">
-        <h4>OBSERVACIONES:</h4>
-        <p>${observaciones}</p>
-      </div>
-      ` : ''}
-
       <div class="note-box payment-box">
-        <h4>💳 INFORMACIÓN DE PAGO</h4>
+        <h4>💳 DATOS BANCARIOS PARA TRANSFERENCIAS</h4>
         <p>
-          <strong>Banco:</strong> Bancolombia | <strong>Cuenta Corriente:</strong> 123-456789-01<br>
-          <strong>Nequi:</strong> 300 123 4567 | <strong>Daviplata:</strong> 301 234 5678
+          <strong>Banco:</strong> ${datosBancarios.banco || 'N/A'} | <strong>${datosBancarios.tipoCuenta || 'Cuenta'}:</strong> ${datosBancarios.numeroCuenta || 'N/A'}<br>
+          <strong>Nequi:</strong> ${datosBancarios.nequi || 'N/A'} | <strong>Daviplata:</strong> ${datosBancarios.daviplata || 'N/A'}
         </p>
       </div>
 
@@ -264,18 +403,16 @@ const generarPieHTML = (empresa) => {
  * Genera HTML completo de la factura médica
  * @param {Object} factura - Objeto de la factura
  * @param {Object} facturaData - Datos parseados de la factura
- * @param {Object} empresa - Información de la empresa/IPS (opcional, usa ipsConfig por defecto)
+ * @param {Object} empresa - Información de la empresa/IPS (requerido)
  * @returns {string} HTML completo listo para imprimir
  */
 export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) => {
-  // Usar configuración centralizada de la IPS si no se proporciona empresa
-  const empresaInfo = empresa || {
-    nombre: ipsConfig.nombre,
-    nit: ipsConfig.nit,
-    direccion: `${ipsConfig.direccion}, ${ipsConfig.ciudad}`,
-    telefono: ipsConfig.telefono,
-    email: ipsConfig.email
-  };
+  // Validar que se proporcione la información de la empresa
+  if (!empresa) {
+    throw new Error('La información de la empresa es requerida. Use el hook useIpsConfig para obtenerla.');
+  }
+  
+  const empresaInfo = empresa;
 
   // Parsear datos si vienen como JSON string
   let datosFactura = facturaData;
@@ -290,9 +427,19 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) =>
 
   // Extraer datos
   const numeroFactura = datosFactura.numeroFactura || `FM-${factura.id || '0000'}`;
+  const fechaFactura = datosFactura.fechaFactura || factura.fecha;
   const citas = datosFactura.citas || [];
   const total = datosFactura.total || 0;
   const subtotal = total; // En servicios de salud generalmente no hay IVA
+  
+  // Información del destinatario
+  const tipoDestinatario = datosFactura.tipoDestinatario || 'PACIENTE';
+  const cliente = datosFactura.cliente || {};
+  
+  // Información de pago
+  const formaPago = datosFactura.formaPago || '';
+  const medioPago = datosFactura.medioPago || '';
+  const observaciones = datosFactura.observaciones || '';
 
   // Estilos CSS
   const styles = `
@@ -502,6 +649,53 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) =>
         text-align: center;
         padding-top: 8px;
       }
+      .destinatario-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 12px;
+        margin: 15px 0;
+      }
+      .tipo-badge {
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .destinatario-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .destinatario-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .destinatario-label {
+        font-size: 9px;
+        color: #868e96;
+        margin-bottom: 2px;
+      }
+      .destinatario-value {
+        font-size: 10px;
+        font-weight: 500;
+        color: #212529;
+      }
+      .info-pago-box {
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 4px;
+        padding: 12px;
+        margin: 15px 0;
+      }
+      .pago-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 9px;
+        font-weight: 600;
+      }
       @media print {
         body { 
           padding: 12mm; 
@@ -525,16 +719,18 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) =>
       ${styles}
     </head>
     <body>
-      ${generarEncabezadoHTML(empresaInfo, numeroFactura)}
+      ${generarEncabezadoHTML(empresaInfo, numeroFactura, fechaFactura)}
+      ${generarDestinatarioHTML(cliente, tipoDestinatario)}
+      ${generarInfoPagoHTML(formaPago, medioPago, observaciones)}
       ${generarTablaServiciosHTML(citas)}
       ${generarTotalesHTML(subtotal, total)}
-      ${generarNotasHTML(datosFactura)}
+      ${generarNotasHTML(datosFactura, empresaInfo.datosBancarios)}
       ${generarFirmasHTML(empresaInfo)}
       ${generarPieHTML(empresaInfo)}
 
       <script>
         window.onload = function() {
-          window.print();
+          // No auto-print, user will print from modal
         };
       </script>
     </body>

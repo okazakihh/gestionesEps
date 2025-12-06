@@ -152,6 +152,7 @@ const PatientDashboardContent = () => {
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
                 onPatientClick={handlePatientClick}
+                onScheduleAppointment={handleScheduleAppointment}
                 onEditPatient={handleEditPatient}
                 onNewPatient={handleOpenCreatePatientModal}
                 refreshTrigger={refreshTrigger}
