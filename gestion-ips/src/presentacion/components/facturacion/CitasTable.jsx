@@ -29,14 +29,17 @@ const CitasTable = ({
   totalCitas = 0,
   limit = 10
 }) => {
+  // Validar que citas sea un array
+  const citasArray = Array.isArray(citas) ? citas : [];
+  
   // Calcular si todas las citas visibles están seleccionadas
-  const allSelected = citas.length > 0 && selectedCitas.size === citas.length;
+  const allSelected = citasArray.length > 0 && selectedCitas.size === citasArray.length;
   
   // Calcular el total facturado de las citas filtradas
-  const totalFacturado = citas.reduce((total, cita) => total + (cita.valorCita || 0), 0);
+  const totalFacturado = citasArray.reduce((total, cita) => total + (cita.valorCita || 0), 0);
 
   // Obtener solo las citas a mostrar según el límite
-  const citasToShow = citas.slice(0, limit);
+  const citasToShow = citasArray.slice(0, limit);
 
   // Renderizar estado de carga
   if (loading) {

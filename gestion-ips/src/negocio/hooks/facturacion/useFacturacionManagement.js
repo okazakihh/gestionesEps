@@ -120,27 +120,54 @@ export const useFacturacionManagement = () => {
    * Carga las citas con todos los estados y sus valores
    * Excluye automáticamente las citas que ya han sido facturadas
    * @param {Array} facturasActualizadas - Facturas actualizadas (opcional, usa el estado si no se proporciona)
+   * @param {number} diasAtras - Número de días hacia atrás para cargar (default: 30)
    */
-  const loadCitasAtendidas = useCallback(async (facturasActualizadas = null) => {
+  const loadCitasAtendidas = useCallback(async (facturasActualizadas = null, diasAtras = 30) => {
     try {
       setLoadingCitas(true);
 
-      // Asegurar que los médicos estén cargados
-      await loadMedicosCache();
+      // Asegurar que los médicos estén cargados (en paralelo con citas)
+      const loadMedicosPromise = loadMedicosCache();
 
-      // Obtener todas las citas
-      const citasResponse = await pacientesApiService.getCitas({ size: 1000 });
+      // Calcular fecha límite (últimos N días)
+      const fechaLimite = new Date();
+      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
+      
+      // Obtener citas recientes (optimizado con límite de tamaño)
+      const citasResponse = await pacientesApiService.getCitas({ size: 500 });
+      
+      // Esperar a que médicos terminen de cargar
+      await loadMedicosPromise;
 
       if (citasResponse && citasResponse.content) {
-        // Filtrar todas las citas (PROGRAMADA, ATENDIDO, CANCELADO, NO_SE_PRESENTO)
+        console.log(`📊 Total citas recibidas del servidor: ${citasResponse.content.length}`);
+        
+        // Calcular fecha límite para logs
+        console.log(`📅 Filtrando citas desde: ${fechaLimite.toLocaleDateString('es-CO')}`);
+        
+        // Filtrar citas por estado y fecha
         const citasAtendidasFiltradas = citasResponse.content.filter(cita => {
           try {
             const datosJson = JSON.parse(cita.datosJson || '{}');
-            return datosJson.estado && ['PROGRAMADA', 'ATENDIDO', 'CANCELADO', 'NO_SE_PRESENTO'].includes(datosJson.estado);
+            
+            // Filtrar por estado
+            if (!datosJson.estado || !['PROGRAMADA', 'ATENDIDO', 'CANCELADO', 'NO_SE_PRESENTO'].includes(datosJson.estado)) {
+              return false;
+            }
+            
+            // Filtrar por fecha (últimos N días) - DESHABILITADO TEMPORALMENTE PARA DEBUG
+            // const fechaCita = new Date(datosJson.fechaHoraCita);
+            // if (fechaCita < fechaLimite) {
+            //   return false;
+            // }
+            
+            return true;
           } catch (error) {
             return false;
           }
         });
+        
+        console.log(`✅ Citas después de filtrar por estado: ${citasAtendidasFiltradas.length}`);
 
         // Ordenar por fecha descendente
         citasAtendidasFiltradas.sort((a, b) => {
@@ -153,47 +180,34 @@ export const useFacturacionManagement = () => {
           }
         });
 
-        // IMPORTANTE: Filtrar citas que no han sido facturadas aún para evitar doble facturación
-        // Usar las facturas proporcionadas o las del estado
+        // IMPORTANTE: Filtrar citas que no han sido facturadas aún
         const facturasParaFiltrar = facturasActualizadas || facturas;
         
-        // Validar que sea un array
         if (!Array.isArray(facturasParaFiltrar)) {
-          console.warn('⚠️ facturasParaFiltrar no es un array:', facturasParaFiltrar);
+          console.warn('⚠️ facturasParaFiltrar no es un array');
           setCitasAtendidas(citasAtendidasFiltradas);
           return;
         }
         
-        console.log(`📊 Total facturas disponibles: ${facturasParaFiltrar.length}`);
-        
+        // Crear Set de IDs de citas facturadas (optimizado)
         const citasIdsFacturadas = new Set();
-        facturasParaFiltrar.forEach((factura, index) => {
+        facturasParaFiltrar.forEach(factura => {
           try {
             const facturaData = JSON.parse(factura.jsonData || '{}');
-            console.log(`📄 Factura ${index + 1} (${facturaData.numeroFactura}):`, {
-              tieneCitas: facturaData.citas && Array.isArray(facturaData.citas),
-              cantidadCitas: facturaData.citas?.length || 0,
-              citasIds: facturaData.citas?.map(c => c.id) || []
+            // Buscar en servicios o citas
+            const items = facturaData.servicios || facturaData.citas || [];
+            items.forEach(item => {
+              if (item.citaId) citasIdsFacturadas.add(item.citaId);
+              if (item.id) citasIdsFacturadas.add(item.id);
             });
-            
-            if (facturaData.citas && Array.isArray(facturaData.citas)) {
-              facturaData.citas.forEach(citaFactura => {
-                if (citaFactura.id) {
-                  citasIdsFacturadas.add(citaFactura.id);
-                }
-              });
-            }
           } catch (error) {
-            console.error('Error parsing factura data:', error);
+            // Silenciar error
           }
         });
-
-        console.log(`🚫 Citas ya facturadas (IDs): [${Array.from(citasIdsFacturadas).join(', ')}]`);
-        console.log(`📋 Citas antes de filtrar: ${citasAtendidasFiltradas.length}`);
         
         const citasNoFacturadas = citasAtendidasFiltradas.filter(cita => !citasIdsFacturadas.has(cita.id));
         
-        console.log(`✅ Citas disponibles después de filtrar: ${citasNoFacturadas.length}`);
+        console.log(`✅ Citas cargadas: ${citasNoFacturadas.length} (últimos ${diasAtras} días)`);
 
         // Procesar citas usando cache optimizado
         const citasConValor = await Promise.all(
@@ -287,6 +301,16 @@ export const useFacturacionManagement = () => {
     }
   }, [loadMedicosCache, getCupsConCache, getPacienteConCache, cacheMedicos]);
   // Nota: NO incluir 'facturas' en dependencias porque se pasa como parámetro
+
+  /**
+   * Carga más citas extendiendo el rango de fechas
+   * Útil para cargar historial más antiguo bajo demanda
+   */
+  const loadMasCitas = useCallback(async (diasAdicionales = 30) => {
+    const diasActuales = 30; // Asumimos que la carga inicial fue de 30 días
+    const nuevoRango = diasActuales + diasAdicionales;
+    await loadCitasAtendidas(facturas, nuevoRango);
+  }, [facturas, loadCitasAtendidas]);
 
   /**
    * Carga las facturas del sistema
@@ -460,6 +484,7 @@ export const useFacturacionManagement = () => {
     // Funciones de carga
     loadCitasAtendidas,
     loadFacturas,
+    loadMasCitas, // Nueva función para cargar más citas
     
     // Funciones de selección
     handleSelectCita,

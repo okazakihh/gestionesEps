@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import { Container, Stack, Title, Text, Paper, Alert, Tabs, Button, Group } from '@mantine/core';
-import { IconSettings, IconInfoCircle, IconBuilding, IconBell, IconFileInvoice, IconCash, IconPlus, IconShieldLock, IconPalette } from '@tabler/icons-react';
+import { IconSettings, IconInfoCircle, IconBuilding, IconBell, IconFileInvoice, IconCash, IconPlus, IconShieldLock, IconPalette, IconPlugConnected } from '@tabler/icons-react';
 import { MainLayout } from '../../components/ui/MainLayout.jsx';
 import { ConfiguracionIPSTab } from '../../components/configuracion/ConfiguracionIPSTab.jsx';
 import { ConfiguracionSistemaTab } from '../../components/configuracion/ConfiguracionSistemaTab.jsx';
@@ -18,6 +18,7 @@ import { ConfiguracionFacturacionTab } from '../../components/configuracion/Conf
 import { ConfiguracionNominaTab } from '../../components/configuracion/ConfiguracionNominaTab.jsx';
 import { ConfiguracionPermisosTab } from '../../components/configuracion/ConfiguracionPermisosTab.jsx';
 import { ThemeSelector } from '../../components/configuracion/ThemeSelector.jsx';
+import { SiigoConfigTab } from '../../components/configuracion/SiigoConfigTab.jsx';
 import { CrearConfiguracionModal } from '../../components/configuracion/CrearConfiguracionModal.jsx';
 
 const ConfiguracionPage = () => {
@@ -107,6 +108,12 @@ const ConfiguracionPage = () => {
                 >
                   Tema
                 </Tabs.Tab>
+                <Tabs.Tab 
+                  value="siigo" 
+                  leftSection={<IconPlugConnected size={16} />}
+                >
+                  Siigo API
+                </Tabs.Tab>
               </Tabs.List>
 
               <Tabs.Panel value="ips" pt="lg">
@@ -135,6 +142,10 @@ const ConfiguracionPage = () => {
 
               <Tabs.Panel value="tema" pt="lg">
                 <ThemeSelector />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="siigo" pt="lg">
+                <SiigoConfigTab />
               </Tabs.Panel>
             </Tabs>
           </Paper>
@@ -173,6 +184,9 @@ const ConfiguracionPage = () => {
               </Text>
               <Text size="sm">
                 <strong>Tema:</strong> Personalización de colores y apariencia de la interfaz.
+              </Text>
+              <Text size="sm">
+                <strong>Siigo API:</strong> Integración con Siigo para facturación electrónica y sincronización con DIAN.
               </Text>
             </Stack>
           </Alert>

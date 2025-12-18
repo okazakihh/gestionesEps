@@ -1,7 +1,16 @@
 import React from 'react';
-import { Modal, Text, Button, Group, Paper, Stack, Table, Badge, Divider } from '@mantine/core';
+import { Modal, Text, Button, Group, Paper, Stack, Table, Badge, Divider, Alert } from '@mantine/core';
 import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
-import { IconX, IconCheck, IconInfoCircle, IconPrinter, IconEye } from '@tabler/icons-react';
+import { 
+  IconX, 
+  IconCheck, 
+  IconInfoCircle, 
+  IconPrinter, 
+  IconEye,
+  IconCloudCheck,
+  IconExternalLink,
+  IconFileInvoice
+} from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 import { generarFacturaHTML } from './FacturaHTML.js';
 import { useFacturaPreviewModal } from '../../../negocio/hooks/useFacturaPreviewModal';
@@ -28,7 +37,8 @@ const VerFacturaModal = ({
   onClose,
   factura = null,
   onProcesar,
-  loading = false
+  loading = false,
+  onCrearNota // Nueva prop para abrir modal de notas
 }) => {
   const { tema } = useTheme();
   const { ipsConfig: ipsData } = useIpsConfig();
@@ -40,15 +50,28 @@ const VerFacturaModal = ({
   let facturaData = {};
   try {
     facturaData = JSON.parse(factura.jsonData || '{}');
+    console.log('📋 VerFacturaModal - Factura completa:', factura);
+    console.log('📋 VerFacturaModal - Datos parseados:', facturaData);
   } catch (error) {
-    console.error('Error parsing factura data:', error);
+    console.error('❌ Error parsing factura data:', error);
   }
 
   const numeroFactura = facturaData.numeroFactura || `FM-${factura.id}`;
-  const fechaEmision = facturaData.fechaEmision || factura.fechaCreacion;
+  const fechaEmision = facturaData.fechaEmision || facturaData.fecha || factura.fechaCreacion;
   const total = facturaData.total || 0;
   const estado = facturaData.estado || 'PENDIENTE';
-  const citas = facturaData.citas || [];
+  
+  // Buscar servicios en diferentes propiedades posibles
+  const servicios = facturaData.servicios || facturaData.citas || [];
+  console.log('📋 Servicios encontrados:', servicios);
+  
+  // Información de Siigo
+  const siigoId = facturaData.siigoId;
+  const cufe = facturaData.cufe;
+  const estadoDian = facturaData.estadoDian;
+  const fechaEnvioSiigo = facturaData.fechaEnvioSiigo;
+  const pdfUrl = facturaData.pdfUrl;
+  const xmlUrl = facturaData.xmlUrl;
   
   // Información del destinatario (cliente)
   const cliente = facturaData.cliente || {};
@@ -253,6 +276,104 @@ const VerFacturaModal = ({
           )}
         </Paper>
 
+        {/* Información de Siigo / Facturación Electrónica */}
+        {siigoId && (
+          <Alert
+            icon={<IconCloudCheck size={20} />}
+            title="Facturación Electrónica - Siigo"
+            color="cyan"
+            variant="light"
+          >
+            <Stack gap="sm">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>
+                    ID Siigo
+                  </Text>
+                  <Text size="sm" fw={500} style={{ fontFamily: 'monospace' }}>
+                    {siigoId}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>
+                    Estado DIAN
+                  </Text>
+                  <Badge 
+                    variant="filled" 
+                    color={estadoDian === 'Aceptado' ? 'green' : estadoDian === 'Rechazado' ? 'red' : 'blue'}
+                    size="md"
+                  >
+                    {estadoDian || 'En proceso'}
+                  </Badge>
+                </div>
+                {cufe && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Text size="xs" c="dimmed" mb={4}>
+                      CUFE (Código Único de Facturación Electrónica)
+                    </Text>
+                    <Text 
+                      size="xs" 
+                      fw={500} 
+                      style={{ 
+                        fontFamily: 'monospace', 
+                        wordBreak: 'break-all',
+                        backgroundColor: '#f1f3f5',
+                        padding: '8px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {cufe}
+                    </Text>
+                  </div>
+                )}
+                {fechaEnvioSiigo && (
+                  <div>
+                    <Text size="xs" c="dimmed" mb={4}>
+                      Fecha de Envío
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {formatDate(fechaEnvioSiigo)}
+                    </Text>
+                  </div>
+                )}
+                <div>
+                  <Text size="xs" c="dimmed" mb={4}>
+                    Documentos Electrónicos
+                  </Text>
+                  <Group gap="xs">
+                    {pdfUrl && (
+                      <Button
+                        size="xs"
+                        variant="light"
+                        color="red"
+                        leftSection={<IconExternalLink size={14} />}
+                        component="a"
+                        href={pdfUrl}
+                        target="_blank"
+                      >
+                        PDF
+                      </Button>
+                    )}
+                    {xmlUrl && (
+                      <Button
+                        size="xs"
+                        variant="light"
+                        color="grape"
+                        leftSection={<IconExternalLink size={14} />}
+                        component="a"
+                        href={xmlUrl}
+                        target="_blank"
+                      >
+                        XML
+                      </Button>
+                    )}
+                  </Group>
+                </div>
+              </div>
+            </Stack>
+          </Alert>
+        )}
+
         {/* Información de Pago */}
         {(formaPago || medioPago) && (
           <Paper p="md" withBorder style={{ backgroundColor: '#fef3c7', borderColor: '#fbbf24' }}>
@@ -295,42 +416,42 @@ const VerFacturaModal = ({
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {citas.length > 0 ? (
-                    citas.map((cita, index) => (
+                  {servicios.length > 0 ? (
+                    servicios.map((servicio, index) => (
                       <Table.Tr key={index}>
                         <Table.Td>
                           <div>
                             <Text size="xs" fw={500}>
-                              {cita.paciente?.nombre || 'N/A'}
+                              {servicio.paciente || servicio.paciente?.nombre || 'N/A'}
                             </Text>
                             <Text size="xs" c="dimmed">
-                              Doc: {cita.paciente?.documento || 'N/A'}
+                              Doc: {servicio.documentoPaciente || servicio.paciente?.documento || 'N/A'}
                             </Text>
                           </div>
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" style={{ maxWidth: '150px', whiteSpace: 'normal' }}>
-                            {cita.medico?.nombre || 'N/A'}
+                            {servicio.medico || servicio.medico?.nombre || 'N/A'}
                           </Text>
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" c="dimmed" style={{ maxWidth: '180px', whiteSpace: 'normal' }}>
-                            {cita.procedimiento || 'N/A'}
+                            {servicio.descripcion || servicio.procedimiento || 'N/A'}
                           </Text>
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" style={{ fontFamily: 'monospace' }}>
-                            {cita.codigoCups || 'N/A'}
+                            {servicio.codigoCups || 'N/A'}
                           </Text>
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" c="dimmed">
-                            {formatDate(cita.fechaAtencion)}
+                            {formatDate(servicio.fechaAtencion)}
                           </Text>
                         </Table.Td>
                         <Table.Td style={{ textAlign: 'right' }}>
                           <Text size="xs" fw={600} c="green">
-                            {formatCurrency(cita.valor || 0)}
+                            {formatCurrency(servicio.valorTotal || servicio.valorUnitario || servicio.valor || 0)}
                           </Text>
                         </Table.Td>
                       </Table.Tr>
@@ -404,14 +525,28 @@ const VerFacturaModal = ({
 
         {/* Botones de acción */}
         <Group justify="space-between">
-          <Button
-            variant="light"
-            color="blue"
-            leftSection={<IconEye size={18} />}
-            onClick={handleVerFacturaPreview}
-          >
-            Vista Previa e Imprimir
-          </Button>
+          <Group>
+            <Button
+              variant="light"
+              color="blue"
+              leftSection={<IconEye size={18} />}
+              onClick={handleVerFacturaPreview}
+            >
+              Vista Previa e Imprimir
+            </Button>
+            
+            {/* Botón para crear notas crédito/débito */}
+            {siigoId && onCrearNota && (
+              <Button
+                variant="light"
+                color="orange"
+                leftSection={<IconFileInvoice size={18} />}
+                onClick={() => onCrearNota(factura)}
+              >
+                Notas Crédito/Débito
+              </Button>
+            )}
+          </Group>
           
           <Group>
             <Button

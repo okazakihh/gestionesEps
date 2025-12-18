@@ -69,7 +69,7 @@ const FacturaDianModal = ({
    * Calcular totales cuando cambia facturaPreview
    */
   useEffect(() => {
-    if (facturaPreview && facturaPreview.citas) {
+    if (facturaPreview && facturaPreview.citas && Array.isArray(facturaPreview.citas)) {
       // Calcular subtotal desde las citas
       const subtotal = facturaPreview.citas.reduce((sum, cita) => {
         const valor = cita.valor || 0;
@@ -94,7 +94,7 @@ const FacturaDianModal = ({
    * Cargar datos del paciente cuando se abre el modal
    */
   useEffect(() => {
-    if (opened && facturaPreview && facturaPreview.citas.length > 0) {
+    if (opened && facturaPreview && facturaPreview.citas && Array.isArray(facturaPreview.citas) && facturaPreview.citas.length > 0) {
       const primeraCita = facturaPreview.citas[0];
       const paciente = primeraCita.paciente;
 
@@ -571,7 +571,7 @@ const FacturaDianModal = ({
                 </Group>
                 <Group justify="space-between">
                   <Text size="sm" c="dimmed">Servicios:</Text>
-                  <Badge>{facturaPreview.citas.length} servicio(s)</Badge>
+                  <Badge>{facturaPreview.citas && Array.isArray(facturaPreview.citas) ? facturaPreview.citas.length : 0} servicio(s)</Badge>
                 </Group>
               </Paper>
             </Stack>
@@ -594,7 +594,7 @@ const FacturaDianModal = ({
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
-                    {facturaPreview.citas.map((cita, idx) => {
+                    {facturaPreview.citas && Array.isArray(facturaPreview.citas) && facturaPreview.citas.map((cita, idx) => {
                       const valor = cita.valor || cita.codigoCups?.valor || 0;
                       const codigo = cita.codigoCups?.codigo || cita.codigoCups || 'N/A';
                       const descripcion = cita.procedimiento || cita.codigoCups?.descripcion || 'Servicio médico';

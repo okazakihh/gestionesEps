@@ -28,7 +28,7 @@ const FacturaPreviewModal = ({
   loading = false
 }) => {
   const { tema } = useTheme();
-  if (!facturaPreview) return null;
+  if (!facturaPreview || !facturaPreview.citas || !Array.isArray(facturaPreview.citas)) return null;
 
   return (
     <Modal

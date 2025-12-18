@@ -1,6 +1,18 @@
 import React from 'react';
 import { Table, Text, Badge, Group, ActionIcon, Tooltip, Loader, Paper, Stack } from '@mantine/core';
-import { IconEye, IconPrinter, IconCheck, IconCloud, IconCloudCheck, IconFileCode } from '@tabler/icons-react';
+import { 
+  IconEye, 
+  IconPrinter, 
+  IconCheck, 
+  IconCloud, 
+  IconCloudCheck, 
+  IconFileCode,
+  IconCloudUpload,
+  IconRefresh,
+  IconFileDownload,
+  IconMail,
+  IconFileInvoice
+} from '@tabler/icons-react';
 import { formatDate, formatCurrency } from '../../../negocio/services/facturacionService';
 
 /**
@@ -14,6 +26,15 @@ import { formatDate, formatCurrency } from '../../../negocio/services/facturacio
  * - onVerFactura: función para ver detalles de una factura
  * - onGenerarPDF: función para generar PDF de una factura
  * - onProcesarFactura: función para marcar factura como pagada
+ * - onEnviarDian: función para enviar a DIAN (facturación electrónica)
+ * - onConsultarEstadoDian: función para consultar estado en DIAN
+ * - onVerXML: función para ver XML de factura electrónica
+ * - onEnviarASiigo: función para enviar factura a Siigo
+ * - onConsultarEstadoSiigo: función para consultar estado en Siigo
+ * - onDescargarPDFSiigo: función para descargar PDF desde Siigo
+ * - onEnviarEmailSiigo: función para enviar email desde Siigo
+ * - onCrearNota: función para crear notas crédito/débito (solo si factura está en Siigo)
+ * - siigoConnected: boolean que indica si Siigo está conectado
  * - loading: boolean que indica si se están cargando datos
  * - limit: número máximo de facturas a mostrar (default: 10)
  * 
@@ -29,11 +50,20 @@ const FacturasTable = ({
   onEnviarDian,
   onConsultarEstadoDian,
   onVerXML,
+  onEnviarASiigo,
+  onConsultarEstadoSiigo,
+  onDescargarPDFSiigo,
+  onEnviarEmailSiigo,
+  onCrearNota,
+  siigoConnected = false,
   loading = false,
   limit = 10
 }) => {
+  // Validar que facturasFiltered sea un array
+  const facturasArray = Array.isArray(facturasFiltered) ? facturasFiltered : [];
+  
   // Calcular el total facturado de las facturas filtradas
-  const totalFacturado = facturasFiltered.reduce((total, factura) => {
+  const totalFacturado = facturasArray.reduce((total, factura) => {
     try {
       const facturaData = JSON.parse(factura.jsonData || '{}');
       return total + (facturaData.total || 0);
@@ -44,7 +74,7 @@ const FacturasTable = ({
   }, 0);
 
   // Obtener solo las facturas a mostrar según el límite
-  const facturasToShow = facturasFiltered.slice(0, limit);
+  const facturasToShow = facturasArray.slice(0, limit);
 
   // Función auxiliar para obtener el color del badge según el estado
   const getEstadoBadgeColor = (estado) => {
@@ -84,7 +114,7 @@ const FacturasTable = ({
   }
 
   // Renderizar cuando no hay resultados después de filtrar
-  if (!loading && facturas.length > 0 && facturasFiltered.length === 0) {
+  if (!loading && facturas.length > 0 && facturasArray.length === 0) {
     return (
       <Paper shadow="sm" p="md" withBorder>
         <Stack align="center" py="xl">
@@ -104,6 +134,7 @@ const FacturasTable = ({
               <Table.Th>Fecha Emisión</Table.Th>
               <Table.Th style={{ textAlign: 'right' }}>Total</Table.Th>
               <Table.Th>Estado</Table.Th>
+              <Table.Th>Siigo</Table.Th>
               <Table.Th style={{ textAlign: 'right' }}>Acciones</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -120,6 +151,46 @@ const FacturasTable = ({
               const fechaEmision = facturaData.fechaEmision || factura.fechaCreacion;
               const total = facturaData.total || 0;
               const estado = facturaData.estado || 'PENDIENTE';
+              const siigoId = facturaData.siigoId;
+              const estadoDian = facturaData.estadoDian;
+
+              // Función auxiliar para obtener el badge de estado Siigo
+              const getSiigoBadge = () => {
+                if (!siigoId) {
+                  return (
+                    <Badge variant="light" color="gray" size="sm">
+                      No enviado
+                    </Badge>
+                  );
+                }
+                
+                switch (estadoDian) {
+                  case 'Aceptado':
+                    return (
+                      <Badge variant="light" color="green" size="sm">
+                        Aceptado
+                      </Badge>
+                    );
+                  case 'Rechazado':
+                    return (
+                      <Badge variant="light" color="red" size="sm">
+                        Rechazado
+                      </Badge>
+                    );
+                  case 'Enviado':
+                    return (
+                      <Badge variant="light" color="blue" size="sm">
+                        Enviado
+                      </Badge>
+                    );
+                  default:
+                    return (
+                      <Badge variant="light" color="cyan" size="sm">
+                        En proceso
+                      </Badge>
+                    );
+                }
+              };
 
               return (
                 <Table.Tr key={factura.id}>
@@ -148,6 +219,9 @@ const FacturasTable = ({
                     </Badge>
                   </Table.Td>
                   <Table.Td>
+                    {getSiigoBadge()}
+                  </Table.Td>
+                  <Table.Td>
                     <Group gap="xs" justify="flex-end">
                       <Tooltip label="Ver detalles de la factura" position="top">
                         <ActionIcon
@@ -171,6 +245,20 @@ const FacturasTable = ({
                         </ActionIcon>
                       </Tooltip>
 
+                      {/* Botón de Notas Contables (solo si está en Siigo) */}
+                      {siigoId && onCrearNota && (
+                        <Tooltip label="Crear Nota Crédito/Débito" position="top">
+                          <ActionIcon
+                            variant="light"
+                            color="orange"
+                            onClick={() => onCrearNota(factura)}
+                            aria-label="Crear Nota"
+                          >
+                            <IconFileInvoice size={18} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+
                       {estado === 'PENDIENTE' && (
                         <Tooltip label="Marcar como pagada" position="top">
                           <ActionIcon
@@ -184,41 +272,53 @@ const FacturasTable = ({
                         </Tooltip>
                       )}
 
-                      {/* Botones de integración DIAN */}
-                      {facturaData.cufe ? (
-                        <>
-                          <Tooltip label="Consultar estado en DIAN" position="top">
+                      {/* Botones de integración Siigo (única integración activa) */}
+                      {siigoConnected && (
+                        siigoId ? (
+                          <>
+                            <Tooltip label="Consultar estado en Siigo" position="top">
+                              <ActionIcon
+                                variant="light"
+                                color="cyan"
+                                onClick={() => onConsultarEstadoSiigo && onConsultarEstadoSiigo(factura)}
+                                aria-label="Consultar Siigo"
+                              >
+                                <IconRefresh size={18} />
+                              </ActionIcon>
+                            </Tooltip>
+                            <Tooltip label="Descargar PDF desde Siigo" position="top">
+                              <ActionIcon
+                                variant="light"
+                                color="orange"
+                                onClick={() => onDescargarPDFSiigo && onDescargarPDFSiigo(factura)}
+                                aria-label="Descargar PDF Siigo"
+                              >
+                                <IconFileDownload size={18} />
+                              </ActionIcon>
+                            </Tooltip>
+                            <Tooltip label="Enviar por email desde Siigo" position="top">
+                              <ActionIcon
+                                variant="light"
+                                color="pink"
+                                onClick={() => onEnviarEmailSiigo && onEnviarEmailSiigo(factura)}
+                                aria-label="Enviar email Siigo"
+                              >
+                                <IconMail size={18} />
+                              </ActionIcon>
+                            </Tooltip>
+                          </>
+                        ) : (
+                          <Tooltip label="Enviar a Siigo para facturación electrónica" position="top">
                             <ActionIcon
                               variant="light"
-                              color="teal"
-                              onClick={() => onConsultarEstadoDian && onConsultarEstadoDian(factura, facturaData)}
-                              aria-label="Consultar DIAN"
+                              color="lime"
+                              onClick={() => onEnviarASiigo && onEnviarASiigo(factura)}
+                              aria-label="Enviar a Siigo"
                             >
-                              <IconCloudCheck size={18} />
+                              <IconCloudUpload size={18} />
                             </ActionIcon>
                           </Tooltip>
-                          <Tooltip label="Ver XML" position="top">
-                            <ActionIcon
-                              variant="light"
-                              color="grape"
-                              onClick={() => onVerXML && onVerXML(factura, facturaData)}
-                              aria-label="Ver XML"
-                            >
-                              <IconFileCode size={18} />
-                            </ActionIcon>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        <Tooltip label="Enviar a DIAN (Facturación Electrónica)" position="top">
-                          <ActionIcon
-                            variant="light"
-                            color="indigo"
-                            onClick={() => onEnviarDian && onEnviarDian(factura)}
-                            aria-label="Enviar a DIAN"
-                          >
-                            <IconCloud size={18} />
-                          </ActionIcon>
-                        </Tooltip>
+                        )
                       )}
                     </Group>
                   </Table.Td>
@@ -239,8 +339,8 @@ const FacturasTable = ({
       >
         <Group justify="space-between" wrap="wrap">
           <Text size="sm" c="dimmed">
-            Mostrando las últimas {facturasToShow.length} facturas de {facturasFiltered.length} filtradas
-            {facturasFiltered.length !== facturas.length && (
+            Mostrando las últimas {facturasToShow.length} facturas de {facturasArray.length} filtradas
+            {facturasArray.length !== facturas.length && (
               <Text component="span" size="sm" c="blue" ml={5}>
                 (de {facturas.length} totales)
               </Text>

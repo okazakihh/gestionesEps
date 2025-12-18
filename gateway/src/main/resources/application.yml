@@ -120,6 +120,12 @@ spring:
             - Path=/api/dian/**
           filters:
             - StripPrefix=0
+        - id: notas_contables_route
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/notas-contables/**
+          filters:
+            - StripPrefix=0
         # Ruta general para administrative (debe ir al final)
         - id: administrative_route
           uri: http://localhost:8084

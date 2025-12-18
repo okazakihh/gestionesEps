@@ -234,32 +234,74 @@ const generarInfoPagoHTML = (formaPago, medioPago, observaciones) => {
 
 /**
  * Genera tabla de servicios/procedimientos
- * @param {Array} citas - Lista de citas facturadas
+ * @param {Array} items - Lista de citas o servicios facturados
  * @returns {string} HTML con tabla de servicios
  */
-const generarTablaServiciosHTML = (citas) => {
-  const filas = citas.map((cita, index) => {
-    const valor = cita.valor || 0;
-    const paciente = cita.paciente || {};
+const generarTablaServiciosHTML = (items) => {
+  console.log('🖨️ generarTablaServiciosHTML - Items recibidos:', items);
+  
+  if (!items || items.length === 0) {
+    return `
+      <div class="services-table">
+        <h3>DETALLE DE SERVICIOS</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: center; width: 40px;">Item</th>
+              <th style="text-align: left; width: 160px;">Paciente</th>
+              <th style="text-align: left;">Descripción del Servicio</th>
+              <th style="text-align: left; width: 140px;">Profesional / Fecha</th>
+              <th style="text-align: center; width: 50px;">Cant.</th>
+              <th style="text-align: right; width: 90px;">Valor Unit.</th>
+              <th style="text-align: right; width: 100px;">Valor Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 20px; color: #868e96;">
+                No hay servicios registrados
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+  
+  const filas = items.map((item, index) => {
+    // Manejar ambas estructuras: servicios (nueva) y citas (antigua)
+    const valor = item.valorTotal || item.valorUnitario || item.valor || 0;
+    const paciente = item.paciente || {};
+    const nombrePaciente = typeof paciente === 'string' ? paciente : (paciente.nombre || 'N/A');
+    const documentoPaciente = typeof paciente === 'string' ? 'N/A' : (paciente.documento || 'N/A');
+    const tipoDocPaciente = typeof paciente === 'string' ? 'CC' : (paciente.tipoDocumento || 'CC');
+    
+    const medico = item.medico || {};
+    const nombreMedico = typeof medico === 'string' ? medico : (medico.nombre || 'N/A');
+    
+    const descripcion = item.descripcion || item.procedimiento || 'Consulta Médica';
+    const codigoCups = item.codigoCups || 'N/A';
+    const fechaAtencion = item.fechaAtencion || new Date().toISOString();
+    const cantidad = item.cantidad || 1;
     
     return `
       <tr>
         <td style="text-align: center;">${index + 1}</td>
         <td>
-          <div style="font-weight: 600; font-size: 10px; margin-bottom: 2px;">${paciente.nombre || 'N/A'}</div>
-          <div style="font-size: 9px; color: #868e96;">Doc: ${paciente.tipoDocumento || 'CC'} ${paciente.documento || 'N/A'}</div>
+          <div style="font-weight: 600; font-size: 10px; margin-bottom: 2px;">${nombrePaciente}</div>
+          <div style="font-size: 9px; color: #868e96;">Doc: ${tipoDocPaciente} ${documentoPaciente}</div>
         </td>
         <td>
-          <div class="service-desc">${cita.procedimiento || 'Consulta Médica'}</div>
-          <div class="service-code">Código CUPS: ${cita.codigoCups || 'N/A'}</div>
+          <div class="service-desc">${descripcion}</div>
+          <div class="service-code">Código CUPS: ${codigoCups}</div>
         </td>
         <td>
-          <div style="font-size: 10px;">${cita.medico?.nombre || 'N/A'}</div>
-          <div class="service-code">${formatDateShort(cita.fechaAtencion)}</div>
+          <div style="font-size: 10px;">${nombreMedico}</div>
+          <div class="service-code">${formatDateShort(fechaAtencion)}</div>
         </td>
-        <td style="text-align: center;">1</td>
+        <td style="text-align: center;">${cantidad}</td>
         <td style="text-align: right; font-family: monospace;">${formatCurrency(valor)}</td>
-        <td style="text-align: right; font-weight: 600; font-family: monospace;">${formatCurrency(valor)}</td>
+        <td style="text-align: right; font-weight: 600; font-family: monospace;">${formatCurrency(valor * cantidad)}</td>
       </tr>
     `;
   }).join('');
@@ -426,9 +468,16 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) =>
   }
 
   // Extraer datos
+  console.log('🖨️ FacturaHTML - Factura:', factura);
+  console.log('🖨️ FacturaHTML - DatosFactura:', datosFactura);
+  
   const numeroFactura = datosFactura.numeroFactura || `FM-${factura.id || '0000'}`;
-  const fechaFactura = datosFactura.fechaFactura || factura.fecha;
-  const citas = datosFactura.citas || [];
+  const fechaFactura = datosFactura.fechaFactura || datosFactura.fecha || factura.fecha;
+  
+  // Buscar citas/servicios en diferentes propiedades
+  const citas = datosFactura.servicios || datosFactura.citas || [];
+  console.log('🖨️ FacturaHTML - Servicios/Citas encontrados:', citas);
+  
   const total = datosFactura.total || 0;
   const subtotal = total; // En servicios de salud generalmente no hay IVA
   

@@ -3,13 +3,14 @@ import Swal from 'sweetalert2';
 import { ipsConfig, getEncabezadoDocumento, getPieDocumento } from '../utils/ipsConfig';
 import { generarFacturaHTML } from '../../presentacion/components/facturacion/FacturaHTML.js';
 import { configuracionApiService } from '../../data/services/configuracionApiService.js';
-import { 
-  enviarFacturaDian, 
-  validarFacturaPreEnvio, 
-  consultarEstadoFactura,
-  generarCodigoQR,
-  getDianEnvironmentInfo 
-} from './dianService.js';
+// Funciones DIAN comentadas - ahora se usa solo Siigo
+// import { 
+//   enviarFacturaDian, 
+//   validarFacturaPreEnvio, 
+//   consultarEstadoFactura,
+//   generarCodigoQR,
+//   getDianEnvironmentInfo 
+// } from './dianService.js';
 
 // Cache de configuración IPS
 let cachedIpsConfig = null;
@@ -456,22 +457,24 @@ export const generarFacturaPreview = (citasSeleccionadas) => {
 };
 
 // ============================================================================
-// INTEGRACIÓN FACTURACIÓN ELECTRÓNICA DIAN
+// INTEGRACIÓN FACTURACIÓN ELECTRÓNICA (SIIGO)
 // ============================================================================
 
 /**
- * Preparar datos de factura en formato DIAN
+ * Preparar datos de factura en formato para Siigo
  * @param {Object} facturaData - Datos de factura interna
  * @param {Object} ipsData - Configuración de la IPS
- * @returns {Object} Datos formateados para DIAN
+ * @returns {Object} Datos formateados para Siigo
+ * @deprecated Esta función ya no se usa - se usa siigoAdapters.adaptFacturaToSiigoInvoice
  */
 export const prepararDatosParaDian = async (facturaData, ipsData) => {
+  console.warn('⚠️ prepararDatosParaDian está deprecated. Use siigoAdapters.adaptFacturaToSiigoInvoice');
   const config = await getFacturacionConfig();
   
   // Usar datos del cliente si fueron proporcionados por el modal, sino usar del paciente
   let clienteInfo;
   if (facturaData.cliente) {
-    // Datos capturados desde el modal FacturaDianModal
+    // Datos capturados desde el modal de facturación
     clienteInfo = {
       nombreCompleto: facturaData.cliente.nombreCompleto,
       tipoDocumento: facturaData.cliente.tipoDocumento,
@@ -504,9 +507,25 @@ export const prepararDatosParaDian = async (facturaData, ipsData) => {
     };
   }
   
-  // Calcular totales
-  const subtotal = facturaData.citas.reduce((sum, cita) => {
-    const valor = cita.codigoCups?.valor || cita.valor || 0;
+  // DEBUG: Ver qué hay en facturaData antes de validar
+  console.log('🔍 prepararDatosParaDian - facturaData:', facturaData);
+  console.log('🔍 prepararDatosParaDian - facturaData.citas:', facturaData.citas);
+  console.log('🔍 prepararDatosParaDian - facturaData.servicios:', facturaData.servicios);
+  
+  // Intentar obtener servicios/citas de diferentes posibles ubicaciones
+  const servicios = facturaData.citas || facturaData.servicios || facturaData.items || facturaData.detalles || [];
+  
+  // Validar que existan servicios/citas
+  if (!Array.isArray(servicios) || servicios.length === 0) {
+    console.error('❌ No se encontraron servicios/citas válidos en:', facturaData);
+    throw new Error('La factura no tiene servicios/citas válidos');
+  }
+  
+  console.log('✅ Servicios encontrados:', servicios);
+  
+  // Calcular totales usando los servicios encontrados
+  const subtotal = servicios.reduce((sum, item) => {
+    const valor = item.codigoCups?.valor || item.valor || item.valorUnitario || item.valorCita || 0;
     return sum + valor;
   }, 0);
   const totales = await calculateInvoiceTotals(subtotal);
@@ -564,20 +583,20 @@ export const prepararDatosParaDian = async (facturaData, ipsData) => {
       cargoContacto: clienteInfo.cargoContacto || ''
     },
     
-    // Items de la factura (servicios médicos)
-    items: facturaData.citas.map((cita, index) => {
-      const valor = cita.codigoCups?.valor || cita.valor || 0;
-      const codigoCups = cita.codigoCups?.codigo || cita.codigoCups || 'N/A';
-      const descripcion = cita.codigoCups?.descripcion || cita.procedimiento || 'Servicio Médico';
+    // Items de la factura (servicios médicos) - usar los servicios encontrados
+    items: servicios.map((item, index) => {
+      const valor = item.codigoCups?.valor || item.valor || item.valorUnitario || item.valorCita || 0;
+      const codigoCups = item.codigoCups?.codigo || item.codigoCups || item.codigo_cups || 'N/A';
+      const descripcion = item.codigoCups?.descripcion || item.procedimiento || item.descripcion || item.nombreProcedimiento || 'Servicio Médico';
       
       return {
         numero: index + 1,
         descripcion: descripcion,
         codigoCups: codigoCups,
-        cantidad: 1,
+        cantidad: item.cantidad || 1,
         unidadMedida: 'EA', // Each (unidad)
         valorUnitario: valor,
-        valorTotal: valor,
+        valorTotal: valor * (item.cantidad || 1),
         iva: 0, // Servicios de salud generalmente no tienen IVA
         ivaPercent: 0
       };
@@ -600,190 +619,21 @@ export const prepararDatosParaDian = async (facturaData, ipsData) => {
 };
 
 /**
- * Generar y enviar factura electrónica a la DIAN
+ * Generar y enviar factura electrónica (ahora se usa Siigo directamente)
  * @param {Object} facturaData - Datos de la factura
- * @param {boolean} enviarAutomaticamente - Si debe enviar a DIAN automáticamente
+ * @param {boolean} enviarAutomaticamente - Si debe enviar automáticamente
  * @returns {Promise<Object>} Resultado del proceso
+ * @deprecated Esta función ya no se usa - use contabilidadService.facturacionElectronica.enviarFacturasSiigo
  */
 export const generarFacturaElectronica = async (facturaData, enviarAutomaticamente = false) => {
-  try {
-    // Obtener configuración IPS
-    const ipsData = await getIpsConfig();
-    
-    // Preparar datos en formato DIAN
-    const datosDian = await prepararDatosParaDian(facturaData, ipsData);
-    
-    // Validar factura antes de generar XML
-    const validacion = validarFacturaPreEnvio(datosDian);
-    if (!validacion.valida) {
-      return {
-        success: false,
-        error: 'Validación fallida',
-        errores: validacion.errores,
-        advertencias: validacion.advertencias
-      };
-    }
-    
-    // FacturaTech genera el XML automáticamente, no necesitamos generarlo aquí
-    // const xmlFactura = await generarFacturaXML(datosDian);
-    
-    // Si se debe enviar automáticamente
-    if (enviarAutomaticamente) {
-      const resultado = await enviarFacturaDian(datosDian);
-      
-      if (resultado.success) {
-        // FacturaTech ya incluye el QR, no necesitamos generarlo
-        // const qrCode = await generarCodigoQR(resultado.cufe, datosDian);
-        
-        return {
-          success: true,
-          cufe: resultado.cufe,
-          numeroFactura: resultado.numeroFactura,
-          qrCode: resultado.qrCode,
-          pdfUrl: resultado.pdfUrl,
-          xmlUrl: resultado.xmlUrl,
-          estadoDian: resultado.statusDescription,
-          ambiente: resultado.environment,
-          advertencias: validacion.advertencias
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Error enviando a DIAN',
-          detalles: resultado.validationErrors,
-          xmlFactura: xmlFactura
-        };
-      }
-    }
-    
-    // Si no se envía, solo retornar el XML generado
-    return {
-      success: true,
-      xmlFactura: xmlFactura,
-      advertencias: validacion.advertencias,
-      message: 'XML generado correctamente. Enviar manualmente a DIAN.'
-    };
-    
-  } catch (error) {
-    console.error('Error generando factura electrónica:', error);
-    return {
-      success: false,
-      error: error.message || 'Error desconocido'
-    };
-  }
-};
+  console.warn('⚠️ generarFacturaElectronica está deprecated. Use contabilidadService.facturacionElectronica.enviarFacturasSiigo');
+  
+  return {
+    success: false,
+    error: 'Esta función está deprecada. Use la integración directa con Siigo.',
+    deprecated: true
+  };
+  
 
-/**
- * Enviar factura existente a la DIAN
- * @param {Object} factura - Objeto de factura guardada
- * @returns {Promise<Object>} Resultado del envío
- */
-export const enviarFacturaExistenteADian = async (factura) => {
-  try {
-    const facturaData = JSON.parse(factura.jsonData || '{}');
-    
-    // Verificar si ya tiene CUFE (ya fue enviada)
-    if (facturaData.cufe) {
-      // Consultar estado actual en DIAN
-      const estado = await consultarEstadoFactura(facturaData.cufe);
-      return {
-        success: true,
-        yaEnviada: true,
-        cufe: facturaData.cufe,
-        estado: estado
-      };
-    }
-    
-    // Generar y enviar
-    const resultado = await generarFacturaElectronica(facturaData, true);
-    
-    if (resultado.success) {
-      // Mostrar mensaje de éxito
-      await Swal.fire({
-        icon: 'success',
-        title: '¡Factura Enviada a DIAN!',
-        html: `
-          <p><strong>CUFE:</strong> ${resultado.cufe}</p>
-          <p><strong>Estado:</strong> ${resultado.estadoDian}</p>
-          <p><strong>Ambiente:</strong> ${resultado.ambiente}</p>
-        `,
-        confirmButtonColor: '#10B981'
-      });
-    } else {
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error al Enviar',
-        text: resultado.error,
-        confirmButtonColor: '#EF4444'
-      });
-    }
-    
-    return resultado;
-    
-  } catch (error) {
-    console.error('Error enviando factura a DIAN:', error);
-    await Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'No se pudo enviar la factura a la DIAN',
-      confirmButtonColor: '#EF4444'
-    });
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
 
-/**
- * Consultar estado de factura en la DIAN por CUFE
- * @param {string} cufe - Código Único de Factura Electrónica
- * @returns {Promise<Object>} Estado de la factura
- */
-export const consultarEstadoFacturaDian = async (cufe) => {
-  try {
-    const resultado = await consultarEstadoFactura(cufe);
-    
-    if (resultado.success) {
-      await Swal.fire({
-        icon: 'info',
-        title: 'Estado de Factura',
-        html: `
-          <p><strong>CUFE:</strong> ${cufe}</p>
-          <p><strong>Estado:</strong> ${resultado.estado}</p>
-        `,
-        confirmButtonColor: '#3B82F6'
-      });
-    } else {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'No se pudo consultar',
-        text: resultado.error,
-        confirmButtonColor: '#F59E0B'
-      });
-    }
-    
-    return resultado;
-    
-  } catch (error) {
-    console.error('Error consultando estado:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-/**
- * Obtener información del ambiente DIAN actual
- * @returns {Promise<Object>} Información del ambiente
- */
-export const obtenerInfoAmbienteDian = async () => {
-  try {
-    const info = await getDianEnvironmentInfo();
-    return info;
-  } catch (error) {
-    console.error('Error obteniendo info de ambiente DIAN:', error);
-    return null;
-  }
 };

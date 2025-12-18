@@ -44,6 +44,14 @@ export const DianPreviewModal = ({ opened, onClose, factura, onConfirm }) => {
         ? JSON.parse(factura.jsonData) 
         : factura.jsonData;
 
+      // DEBUG: Ver estructura completa de la factura
+      console.log('🔍 ESTRUCTURA COMPLETA DE FACTURA:', facturaData);
+      console.log('🔍 Claves disponibles:', Object.keys(facturaData));
+      console.log('🔍 facturaData.servicios:', facturaData.servicios);
+      console.log('🔍 facturaData.citas:', facturaData.citas);
+      console.log('🔍 facturaData.items:', facturaData.items);
+      console.log('🔍 facturaData.detalles:', facturaData.detalles);
+
       // Preparar datos para DIAN
       const datosDian = await prepararDatosParaDian(facturaData, ipsConfig);
       setDatosPreparados(datosDian);

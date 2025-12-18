@@ -114,7 +114,9 @@ export const useIpsConfig = () => {
       acento: "#f59e0b",
       texto: "#1f2937",
       textoClaro: "#6b7280"
-    }
+    },
+    // Configuración de Siigo - Modo de operación
+    siigoMode: "DEV" // DEV = Mock (sin costo) | PROD = API Real
   });
 
   // Cargar configuración al montar

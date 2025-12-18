@@ -19,6 +19,7 @@ const DOCUMENTOS_BASE_URL = '/api/documentos';
 const CITAS_BASE_URL = '/api/citas';
 const CODIGOS_CUPS_BASE_URL = '/api/codigos-cups';
 const FACTURACION_BASE_URL = '/api/facturacion';
+const NOTAS_CONTABLES_BASE_URL = '/api/notas-contables';
 
 // Pacientes API Service
 export const pacientesApiService = {
@@ -684,5 +685,90 @@ export const facturacionApiService = {
     if (!response.success) {
       throw new Error(response.error || 'Error al eliminar facturación');
     }
+  }
+};
+
+// Notas Contables API Service
+export const notasContablesApiService = {
+  // Get all notas contables
+  getNotasContables: async () => {
+    const response = await apiClient.get(NOTAS_CONTABLES_BASE_URL);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener notas contables');
+    }
+    return response.data;
+  },
+
+  // Get notas contables with pagination
+  getNotasContablesPaginadas: async (params) => {
+    const response = await apiClient.get(`${NOTAS_CONTABLES_BASE_URL}/paginated`, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener notas contables paginadas');
+    }
+    return response.data;
+  },
+
+  // Get nota contable by ID
+  getNotaContableById: async (id) => {
+    const response = await apiClient.get(`${NOTAS_CONTABLES_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener nota contable');
+    }
+    return response.data;
+  },
+
+  // Get notas by date range
+  getNotasContablesPorRango: async (inicio, fin) => {
+    const response = await apiClient.get(`${NOTAS_CONTABLES_BASE_URL}/rango`, {
+      params: { inicio, fin }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener notas por rango de fechas');
+    }
+    return response.data;
+  },
+
+  // Create new nota contable from JSON
+  createNotaContable: async (jsonData) => {
+    const response = await apiClient.post(NOTAS_CONTABLES_BASE_URL, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al crear nota contable');
+    }
+    return response.data;
+  },
+
+  // Update nota contable
+  updateNotaContable: async (id, jsonData) => {
+    const response = await apiClient.put(`${NOTAS_CONTABLES_BASE_URL}/${id}`, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar nota contable');
+    }
+    return response.data;
+  },
+
+  // Deactivate nota contable
+  deactivateNotaContable: async (id) => {
+    const response = await apiClient.delete(`${NOTAS_CONTABLES_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al desactivar nota contable');
+    }
+    return response.data;
+  },
+
+  // Get statistics
+  getEstadisticas: async () => {
+    const response = await apiClient.get(`${NOTAS_CONTABLES_BASE_URL}/stats`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener estadísticas de notas contables');
+    }
+    return response.data;
   }
 };

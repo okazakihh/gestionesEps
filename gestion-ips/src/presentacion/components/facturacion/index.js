@@ -18,8 +18,14 @@ export { default as CodigosCupsSearch } from './CodigosCupsSearch';
 // Componentes de modales
 export { default as ValorCupsModal } from './ValorCupsModal';
 export { default as FacturaPreviewModal } from './FacturaPreviewModal';
-export { default as FacturaDianModal } from './FacturaDianModal';
+export { default as CrearFacturaElectronicaModal } from './CrearFacturaElectronicaModal';
+// export { default as FacturaDianModal } from './FacturaDianModal'; // Deprecado - Solo Siigo
 export { default as VerFacturaModal } from './VerFacturaModal';
 export { default as XMLViewerModal } from './XMLViewerModal';
-export { default as DianConfigModal } from './DianConfigModal';
-export { default as DianPreviewModal } from './DianPreviewModal';
+// export { default as DianConfigModal } from './DianConfigModal'; // Deprecado - Solo Siigo
+// export { default as DianPreviewModal } from './DianPreviewModal'; // Deprecado - Solo Siigo
+export { default as VistaGruposFacturacionModal } from './VistaGruposFacturacionModal';
+export { default as CrearNotaContableModal } from './CrearNotaContableModal';
+
+// Componentes de utilidad
+export { default as ModoFacturacionSelector } from './ModoFacturacionSelector';
