@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Paper, Stack, Title, Text, Button, Group, Tabs, Divider, Modal } from '@mantine/core';
-import { 
+import {
   IconFileInvoice, 
   IconFilter, 
   IconFileDownload, 
@@ -9,7 +9,8 @@ import {
   IconCode,
   IconBuildingBank,
   IconReportMoney,
-  IconFileDescription
+  IconFileDescription,
+  IconUsers
 } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
@@ -22,6 +23,7 @@ import { useCodigosCupsManagement } from '../../../negocio/hooks/facturacion/use
 import { useFacturaFilters } from '../../../negocio/hooks/facturacion/useFacturaFilters';
 import { useIpsConfig } from '../../../negocio/hooks/configuracion/useIpsConfig';
 import { useSiigoIntegration } from '../../../negocio/hooks/facturacion/useSiigoIntegration';
+import { useClientesFacturacion } from '../../../negocio/hooks/facturacion/useClientesFacturacion';
 
 // Servicios
 import { 
@@ -53,6 +55,8 @@ import VistaGruposFacturacionModal from '../../components/facturacion/VistaGrupo
 import CrearFacturaElectronicaModal from '../../components/facturacion/CrearFacturaElectronicaModal';
 import CrearNotaContableModal from '../../components/facturacion/CrearNotaContableModal';
 import NotasContablesTable from '../../components/facturacion/NotasContablesTable';
+import ClienteFacturacionForm from '../../components/facturacion/ClienteFacturacionForm';
+import ClientesFacturacionTable from '../../components/facturacion/ClientesFacturacionTable';
 import ModoFacturacionSelector from '../../components/facturacion/ModoFacturacionSelector';
 import { FacturaPrintPreviewModal } from '../../components/facturacion/FacturaPrintPreviewModal';
 import { useFacturaPreviewModal } from '../../../negocio/hooks/useFacturaPreviewModal';
@@ -143,6 +147,22 @@ const FacturacionPage = () => {
     sendInvoiceByEmail: sendSiigoEmail
   } = useSiigoIntegration();
 
+  // Hook de gestión de clientes
+  const {
+    clientes,
+    loading: loadingClientes,
+    searchTerm: clienteSearchTerm,
+    selectedCliente,
+    cargarClientes,
+    crearCliente,
+    actualizarCliente,
+    desactivarCliente,
+    reactivarCliente,
+    buscarClientes,
+    seleccionarCliente,
+    limpiarSeleccion
+  } = useClientesFacturacion();
+
   // Hook de filtros (citas y facturas)
   const {
     // Estados de filtros de citas
@@ -196,6 +216,10 @@ const FacturacionPage = () => {
   const [facturaParaNota, setFacturaParaNota] = useState(null);
   const [notasContables, setNotasContables] = useState([]);
   const [loadingNotas, setLoadingNotas] = useState(false);
+
+  // Estados de clientes
+  const [clienteFormOpen, setClienteFormOpen] = useState(false);
+  const [clienteEnEdicion, setClienteEnEdicion] = useState(null);
   
   // Estados de batch facturación
   const [isModoSelectorOpen, setIsModoSelectorOpen] = useState(false);
@@ -233,6 +257,56 @@ const FacturacionPage = () => {
     } finally {
       setLoadingNotas(false);
     }
+  };
+
+  // ============================================================================
+  // FUNCIONES DE MANEJO DE CLIENTES
+  // ============================================================================
+
+  /**
+   * Abrir formulario para nuevo cliente
+   */
+  const handleNuevoCliente = () => {
+    setClienteEnEdicion(null);
+    limpiarSeleccion();
+    setClienteFormOpen(true);
+  };
+
+  /**
+   * Abrir formulario para editar cliente
+   */
+  const handleEditarCliente = (cliente) => {
+    setClienteEnEdicion(cliente);
+    seleccionarCliente(cliente);
+    setClienteFormOpen(true);
+  };
+
+  /**
+   * Guardar cliente (crear o actualizar)
+   */
+  const handleGuardarCliente = async (datosCliente) => {
+    try {
+      if (clienteEnEdicion) {
+        await actualizarCliente(clienteEnEdicion.id, datosCliente);
+      } else {
+        await crearCliente(datosCliente);
+      }
+      setClienteFormOpen(false);
+      setClienteEnEdicion(null);
+      limpiarSeleccion();
+    } catch (error) {
+      console.error('Error guardando cliente:', error);
+      // El error ya se muestra en el hook
+    }
+  };
+
+  /**
+   * Cerrar formulario de cliente
+   */
+  const handleCerrarFormCliente = () => {
+    setClienteFormOpen(false);
+    setClienteEnEdicion(null);
+    limpiarSeleccion();
   };
 
   // ============================================================================
@@ -1059,6 +1133,9 @@ const FacturacionPage = () => {
               <Tabs.Tab value="notas" leftSection={<IconFileDescription size={18} />}>
                 Notas Contables
               </Tabs.Tab>
+              <Tabs.Tab value="clientes" leftSection={<IconUsers size={18} />}>
+                Clientes
+              </Tabs.Tab>
               <Tabs.Tab value="cups" leftSection={<IconCode size={18} />}>
                 Códigos CUPS
               </Tabs.Tab>
@@ -1390,6 +1467,22 @@ const FacturacionPage = () => {
               </Stack>
             </Tabs.Panel>
 
+            {/* ========== PANEL: CLIENTES ========== */}
+            <Tabs.Panel value="clientes" pt={{ base: "md", sm: "xl" }}>
+              <Stack gap="md">
+                <ClientesFacturacionTable
+                  clientes={clientes}
+                  loading={loadingClientes}
+                  onEditar={handleEditarCliente}
+                  onDesactivar={desactivarCliente}
+                  onReactivar={reactivarCliente}
+                  onNuevo={handleNuevoCliente}
+                  searchTerm={clienteSearchTerm}
+                  onSearch={buscarClientes}
+                />
+              </Stack>
+            </Tabs.Panel>
+
             {/* ========== PANEL: CÓDIGOS CUPS ========== */}
             <Tabs.Panel value="cups" pt={{ base: "md", sm: "xl" }}>
               <Stack gap="md">
@@ -1545,6 +1638,15 @@ const FacturacionPage = () => {
             htmlContent={previewHTML}
             title={previewTitle}
             onPrint={handlePrint}
+          />
+
+          {/* Modal: Formulario de clientes */}
+          <ClienteFacturacionForm
+            opened={clienteFormOpen}
+            onClose={handleCerrarFormCliente}
+            onSubmit={handleGuardarCliente}
+            clienteInicial={clienteEnEdicion}
+            loading={loadingClientes}
           />
 
         </Stack>

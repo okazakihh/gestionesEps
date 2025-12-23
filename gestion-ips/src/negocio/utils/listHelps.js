@@ -9,6 +9,27 @@ export const TIPO_DOCUMENTO_OPTIONS = [
   { value: 'RC', label: 'Registro Civil' }
 ];
 
+// Tipos de documento para facturación (incluye NIT)
+export const TIPO_DOCUMENTO_FACTURACION_OPTIONS = [
+  { value: 'CC', label: 'Cédula de Ciudadanía' },
+  { value: 'NIT', label: 'NIT' },
+  { value: 'CE', label: 'Cédula de Extranjería' },
+  { value: 'TI', label: 'Tarjeta de Identidad' },
+  { value: 'PAS', label: 'Pasaporte' }
+];
+
+// Tipos de persona para facturación
+export const TIPO_PERSONA_OPTIONS = [
+  { value: 'NATURAL', label: 'Persona Natural' },
+  { value: 'JURIDICA', label: 'Persona Jurídica' }
+];
+
+// Régimen fiscal
+export const REGIMEN_FISCAL_OPTIONS = [
+  { value: 'COMUN', label: 'Común' },
+  { value: 'SIMPLIFICADO', label: 'Simplificado' }
+];
+
 export const GENERO_OPTIONS = [
   { value: 'M', label: 'Masculino/a' },
   { value: 'F', label: 'Femenino/a' },

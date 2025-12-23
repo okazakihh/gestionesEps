@@ -20,6 +20,7 @@ const CITAS_BASE_URL = '/api/citas';
 const CODIGOS_CUPS_BASE_URL = '/api/codigos-cups';
 const FACTURACION_BASE_URL = '/api/facturacion';
 const NOTAS_CONTABLES_BASE_URL = '/api/notas-contables';
+const CLIENTES_FACTURACION_BASE_URL = '/api/clientes-facturacion';
 
 // Pacientes API Service
 export const pacientesApiService = {
@@ -768,6 +769,127 @@ export const notasContablesApiService = {
     const response = await apiClient.get(`${NOTAS_CONTABLES_BASE_URL}/stats`);
     if (!response.success) {
       throw new Error(response.error || 'Error al obtener estadísticas de notas contables');
+    }
+    return response.data;
+  }
+};
+
+// Clientes Facturación API Service
+export const clientesFacturacionApiService = {
+  // Get all clients
+  getClientes: async () => {
+    const response = await apiClient.get(CLIENTES_FACTURACION_BASE_URL);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener clientes');
+    }
+    return response.data;
+  },
+
+  // Get clients with pagination
+  getClientesPaginados: async (params) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/paginated`, { params });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener clientes paginados');
+    }
+    return response.data;
+  },
+
+  // Get client by ID
+  getClienteById: async (id) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener cliente');
+    }
+    return response.data;
+  },
+
+  // Search client by document number
+  buscarPorDocumento: async (numeroDocumento) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/documento/${numeroDocumento}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar cliente por documento');
+    }
+    return response.data;
+  },
+
+  // Search clients by person type
+  buscarPorTipoPersona: async (tipoPersona) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/tipo/${tipoPersona}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar clientes por tipo de persona');
+    }
+    return response.data;
+  },
+
+  // Search client by Siigo code
+  buscarPorCodigoSiigo: async (codigoSiigo) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/siigo/${codigoSiigo}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar cliente por código Siigo');
+    }
+    return response.data;
+  },
+
+  // Search clients by name
+  buscarPorNombre: async (nombre) => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/nombre`, {
+      params: { q: nombre }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al buscar clientes por nombre');
+    }
+    return response.data;
+  },
+
+  // Create new client
+  createCliente: async (jsonData) => {
+    const response = await apiClient.post(CLIENTES_FACTURACION_BASE_URL, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al crear cliente');
+    }
+    return response.data;
+  },
+
+  // Update client
+  updateCliente: async (id, jsonData) => {
+    const response = await apiClient.put(`${CLIENTES_FACTURACION_BASE_URL}/${id}`, jsonData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.success) {
+      throw new Error(response.error || 'Error al actualizar cliente');
+    }
+    return response.data;
+  },
+
+  // Deactivate client (soft delete)
+  deactivateCliente: async (id) => {
+    const response = await apiClient.delete(`${CLIENTES_FACTURACION_BASE_URL}/${id}`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al desactivar cliente');
+    }
+    return response.data;
+  },
+
+  // Reactivate client
+  reactivateCliente: async (id) => {
+    const response = await apiClient.post(`${CLIENTES_FACTURACION_BASE_URL}/${id}/reactivar`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al reactivar cliente');
+    }
+    return response.data;
+  },
+
+  // Get statistics
+  getEstadisticas: async () => {
+    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/stats`);
+    if (!response.success) {
+      throw new Error(response.error || 'Error al obtener estadísticas de clientes');
     }
     return response.data;
   }
