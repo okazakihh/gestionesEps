@@ -86,7 +86,6 @@ export const NominaForm = ({
     );
 
     if (empleadoSeleccionado && empleadoSeleccionado.empleado) {
-      console.log('🔍 Empleado seleccionado:', empleadoSeleccionado.empleado);
       loadEmpleadoData(empleadoSeleccionado.empleado);
     }
   };
@@ -128,12 +127,12 @@ export const NominaForm = ({
       }
       size="xl"
       closeOnClickOutside={!isDirty}
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          {/* === SECCIÓN 1: INFORMACIÓN DEL EMPLEADO === */}
+          {/* === SECCI�"N 1: INFORMACI�"N DEL EMPLEADO === */}
           <Paper p="md" withBorder>
             <Text size="sm" fw={600} mb="md" c="blue">
               <IconUser size={16} style={{ verticalAlign: 'middle', marginRight: 4 }} />
@@ -195,7 +194,7 @@ export const NominaForm = ({
             </Grid>
           </Paper>
 
-          {/* === SECCIÓN 2: PERIODO Y FECHA === */}
+          {/* === SECCI�"N 2: PERIODO Y FECHA === */}
           <Paper p="md" withBorder>
             <Grid gutter="md">
               <Grid.Col span={6}>
@@ -239,7 +238,7 @@ export const NominaForm = ({
             </Grid>
           </Paper>
 
-          {/* === SECCIÓN 3: DEVENGADOS === */}
+          {/* === SECCI�"N 3: DEVENGADOS === */}
           <Paper p="md" withBorder>
             <Text size="sm" fw={600} mb="md" c="green">
               Devengados
@@ -393,7 +392,7 @@ export const NominaForm = ({
             </Grid>
           </Paper>
 
-          {/* === SECCIÓN 4: DEDUCCIONES === */}
+          {/* === SECCI�"N 4: DEDUCCIONES === */}
           <Paper p="md" withBorder>
             <Text size="sm" fw={600} mb="md" c="red">
               Deducciones
@@ -450,7 +449,7 @@ export const NominaForm = ({
             </Grid>
           </Paper>
 
-          {/* === SECCIÓN 5: RESUMEN === */}
+          {/* === SECCI�"N 5: RESUMEN === */}
           <Paper bg="blue.0" p="md">
             <Text size="sm" fw={600} mb="md">
               <IconCalculator size={16} style={{ verticalAlign: 'middle', marginRight: 4 }} />

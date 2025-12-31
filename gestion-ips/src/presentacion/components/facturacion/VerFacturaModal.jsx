@@ -50,8 +50,6 @@ const VerFacturaModal = ({
   let facturaData = {};
   try {
     facturaData = JSON.parse(factura.jsonData || '{}');
-    console.log('📋 VerFacturaModal - Factura completa:', factura);
-    console.log('📋 VerFacturaModal - Datos parseados:', facturaData);
   } catch (error) {
     console.error('❌ Error parsing factura data:', error);
   }
@@ -63,7 +61,6 @@ const VerFacturaModal = ({
   
   // Buscar servicios en diferentes propiedades posibles
   const servicios = facturaData.servicios || facturaData.citas || [];
-  console.log('📋 Servicios encontrados:', servicios);
   
   // Información de Siigo
   const siigoId = facturaData.siigoId;
@@ -126,7 +123,7 @@ const VerFacturaModal = ({
       }
       size="xl"
       centered
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <Stack gap="md">

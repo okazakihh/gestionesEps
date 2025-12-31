@@ -140,10 +140,8 @@ export const useFacturacionManagement = () => {
       await loadMedicosPromise;
 
       if (citasResponse && citasResponse.content) {
-        console.log(`📊 Total citas recibidas del servidor: ${citasResponse.content.length}`);
         
         // Calcular fecha límite para logs
-        console.log(`📅 Filtrando citas desde: ${fechaLimite.toLocaleDateString('es-CO')}`);
         
         // Filtrar citas por estado y fecha
         const citasAtendidasFiltradas = citasResponse.content.filter(cita => {
@@ -167,7 +165,6 @@ export const useFacturacionManagement = () => {
           }
         });
         
-        console.log(`✅ Citas después de filtrar por estado: ${citasAtendidasFiltradas.length}`);
 
         // Ordenar por fecha descendente
         citasAtendidasFiltradas.sort((a, b) => {
@@ -207,7 +204,6 @@ export const useFacturacionManagement = () => {
         
         const citasNoFacturadas = citasAtendidasFiltradas.filter(cita => !citasIdsFacturadas.has(cita.id));
         
-        console.log(`✅ Citas cargadas: ${citasNoFacturadas.length} (últimos ${diasAtras} días)`);
 
         // Procesar citas usando cache optimizado
         const citasConValor = await Promise.all(
@@ -318,16 +314,13 @@ export const useFacturacionManagement = () => {
   const loadFacturas = useCallback(async () => {
     try {
       setLoadingFacturas(true);
-      console.log('📥 Solicitando facturas al servidor...');
       const facturasResponse = await facturacionApiService.getFacturaciones({ size: 100 });
       
       if (facturasResponse && facturasResponse.content) {
-        console.log(`✅ Facturas recibidas del servidor: ${facturasResponse.content.length}`);
         setFacturas(facturasResponse.content);
         return facturasResponse.content; // Retornar las facturas cargadas
       }
       
-      console.log('⚠️ No se recibieron facturas del servidor');
       setFacturas([]);
       return [];
     } catch (error) {
@@ -404,8 +397,6 @@ export const useFacturacionManagement = () => {
         }))
       };
 
-      console.log('💾 Guardando factura con estas citas (IDs):', facturaData.citas.map(c => c.id));
-      console.log('💾 JSON que se enviará al backend:', JSON.stringify(facturaData, null, 2));
 
       // Guardar factura
       const response = await facturacionApiService.createFacturacion({
@@ -421,19 +412,15 @@ export const useFacturacionManagement = () => {
         timer: 3000
       });
 
-      console.log('🆕 Factura creada con IDs de citas:', facturaData.citas.map(c => c.id));
 
       // Limpiar selección inmediatamente
       setSelectedCitas(new Set());
 
       // Recargar facturas primero y pasar las facturas actualizadas a loadCitasAtendidas
       // Esto asegura que las citas recién facturadas no aparezcan más en la lista
-      console.log('🔄 Recargando facturas...');
       const facturasActualizadas = await loadFacturas();
-      console.log('🔄 Recargando citas atendidas con facturas actualizadas...');
       await loadCitasAtendidas(facturasActualizadas);
 
-      console.log('✅ Factura creada y listas actualizadas correctamente');
 
       return response;
     } catch (error) {
@@ -451,16 +438,13 @@ export const useFacturacionManagement = () => {
   // Cargar datos iniciales solo una vez al montar el componente
   useEffect(() => {
     const initializeData = async () => {
-      console.log('🔄 Inicializando datos de facturación...');
       
       // Primero cargar facturas y obtener el resultado
       const facturasIniciales = await loadFacturas();
-      console.log('📊 Facturas cargadas:', facturasIniciales?.length || 0);
       
       // Luego cargar citas pasando las facturas recién cargadas
       await loadCitasAtendidas(facturasIniciales);
       
-      console.log('✅ Datos de facturación inicializados correctamente');
     };
     
     initializeData();

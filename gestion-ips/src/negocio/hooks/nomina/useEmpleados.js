@@ -18,7 +18,6 @@ export const useEmpleados = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Cargando empleados...');
 
       // Cargar empleados con paginación grande para obtener todos
       const response = await empleadosApiService.getEmpleados({
@@ -26,7 +25,6 @@ export const useEmpleados = () => {
         size: 1000
       });
 
-      console.log('📋 Respuesta de empleados:', response);
 
       // Mapear empleados para el selector
       const empleadosMapeados = (response.content || [])
@@ -101,7 +99,6 @@ export const useEmpleados = () => {
           };
         });
 
-      console.log('✅ Empleados mapeados:', empleadosMapeados);
 
       setEmpleados(empleadosMapeados);
     } catch (err) {

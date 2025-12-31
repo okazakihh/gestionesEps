@@ -2,11 +2,14 @@ import React from 'react';
 import { MantineProvider, createTheme } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
+import { DatesProvider } from '@mantine/dates';
 import { useTheme } from './negocio/contexts/ThemeContext.jsx';
 import AppRouter from './presentacion/routes/AppRouter.jsx';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import '@mantine/dates/styles.css';
 import './styles/checkbox-fix.css';
+import 'dayjs/locale/es';
 
 function AppContent() {
   const { tema } = useTheme();
@@ -34,8 +37,10 @@ function AppContent() {
   return (
     <MantineProvider theme={mantineTheme}>
       <ModalsProvider>
-        <Notifications />
-        <AppRouter />
+        <DatesProvider settings={{ locale: 'es', firstDayOfWeek: 1, weekendDays: [0, 6] }}>
+          <Notifications />
+          <AppRouter />
+        </DatesProvider>
       </ModalsProvider>
     </MantineProvider>
   );

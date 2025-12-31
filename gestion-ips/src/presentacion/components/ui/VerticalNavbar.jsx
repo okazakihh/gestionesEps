@@ -4,54 +4,65 @@ import { Link, useLocation } from 'react-router-dom';
 import { PERMISSIONS } from '../../../negocio/utils/auth/permissions.js';
 import { usePermissionsContext } from '../../../negocio/contexts/PermissionsContext.jsx';
 import { useTheme } from '../../../negocio/contexts/ThemeContext.jsx';
+import {
+  IconDashboard,
+  IconUsers,
+  IconBuilding,
+  IconCash,
+  IconUserDollar,
+  IconReceipt,
+  IconChartLine,
+  IconSettings,
+  IconLogout
+} from '@tabler/icons-react';
 
 const navItems = [
   {
     name: 'Dashboard',
     href: '/dashboard',
-    icon: '📊',
+    icon: IconDashboard,
     module: null, // Siempre visible
   },
   {
     name: 'Usuarios',
     href: '/usuarios',
-    icon: '👥',
+    icon: IconUsers,
     module: PERMISSIONS.USUARIOS,
   },
   {
     name: 'Pacientes',
     href: '/pacientes',
-    icon: '🏥',
+    icon: IconBuilding,
     module: PERMISSIONS.PACIENTES,
   },
   {
     name: 'Facturación',
     href: '/facturacion',
-    icon: '💰',
+    icon: IconCash,
     module: PERMISSIONS.FACTURACION,
   },
   {
     name: 'Empleados',
     href: '/empleados',
-    icon: '👷',
+    icon: IconUsers,
     module: PERMISSIONS.NOMINA,
   },
   {
     name: 'Nómina',
     href: '/nomina',
-    icon: '💵',
+    icon: IconReceipt,
     module: PERMISSIONS.NOMINA,
   },
   {
     name: 'Reportes',
     href: '/reportes',
-    icon: '📈',
+    icon: IconChartLine,
     module: PERMISSIONS.REPORTES,
   },
   {
     name: 'Configuración',
     href: '/configuracion',
-    icon: '⚙️',
+    icon: IconSettings,
     module: PERMISSIONS.CONFIGURACION,
   },
 ];
@@ -149,7 +160,9 @@ export const VerticalNavbar = ({ isOpen = false, onClose }) => {
                 borderRight: `3px solid ${tema.primaryColor}`
               } : {}}
             >
-              <span className="mr-3 text-lg">{item.icon}</span>
+              <span className="mr-3">
+                <item.icon size={20} stroke={1.5} />
+              </span>
               {item.name}
             </Link>
           );
@@ -162,7 +175,9 @@ export const VerticalNavbar = ({ isOpen = false, onClose }) => {
           onClick={handleLogout}
           className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-200"
         >
-          <span className="mr-3 text-lg">🚪</span>
+          <span className="mr-3">
+            <IconLogout size={20} stroke={1.5} />
+          </span>
           Cerrar Sesión
         </button>
       </div>

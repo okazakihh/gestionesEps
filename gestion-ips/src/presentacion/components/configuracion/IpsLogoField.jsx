@@ -85,7 +85,7 @@ const IpsLogoField = ({ config = {}, onSaved = () => {} }) => {
               <Image src={preview} alt="Logo IPS" width={80} height={80} fit="contain" />
             </div>
             <div style={{ marginTop: 8 }}>
-              <Button variant="outline" color="red" leftIcon={<IconTrash size={16} />} onClick={handleRemove} size="sm">Remover</Button>
+              <Button variant="outline" color="red" leftSection={<IconTrash size={16} />} onClick={handleRemove} size="sm">Remover</Button>
             </div>
           </div>
         </Group>

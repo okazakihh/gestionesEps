@@ -153,7 +153,7 @@ export const ThemeSelector = () => {
       <Paper p="md" withBorder style={{ backgroundColor: '#f8f9fa' }}>
         <Stack gap="xs">
           <Text size="sm" fw={600}>
-            💡 Información
+            �'� Información
           </Text>
           <Text size="xs" c="dimmed">
             El tema se aplicará inmediatamente en toda la aplicación y se guardará automáticamente para tus próximas sesiones.

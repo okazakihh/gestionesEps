@@ -119,8 +119,6 @@ export const ConfiguracionFacturacionTab = () => {
         ...formData
       };
 
-      console.log('Config Original (Facturación):', configOriginal);
-      console.log('Updated Config (Facturación):', updatedConfig);
 
       // Enviar solo el objeto de configuración
       const result = await updateConfiguracionByClave('FACTURACION', updatedConfig);

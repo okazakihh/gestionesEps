@@ -102,7 +102,6 @@ export const ClinicalHistoryProvider = ({ children }) => {
           documentosList = await historiasClinicasApiService.obtenerDocumentosPorHistoria(historiaClinica.id);
         }
       } catch (error) {
-        console.log('Paciente no tiene historia clínica registrada:', error.message);
       }
 
       // Establecer datos en el contexto

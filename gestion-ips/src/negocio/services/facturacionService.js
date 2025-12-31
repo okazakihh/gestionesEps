@@ -194,7 +194,7 @@ export const formatCurrency = (amount) => {
 };
 
 // ============================================================================
-// GENERACIÓN DE CONTENIDO HTML PARA FACTURAS
+// GENERACI�"N DE CONTENIDO HTML PARA FACTURAS
 // ============================================================================
 
 /**
@@ -248,7 +248,7 @@ export const createFacturaContentFromFactura = async (facturaData) => {
 };
 
 // ============================================================================
-// FUNCIONES DE IMPRESIÓN (PDF)
+// FUNCIONES DE IMPRESI�"N (PDF)
 // ============================================================================
 
 /**
@@ -296,7 +296,7 @@ export const generarFacturaPDFFactura = async (factura) => {
 };
 
 // ============================================================================
-// EXPORTACIÓN A EXCEL
+// EXPORTACI�"N A EXCEL
 // ============================================================================
 
 /**
@@ -457,7 +457,7 @@ export const generarFacturaPreview = (citasSeleccionadas) => {
 };
 
 // ============================================================================
-// INTEGRACIÓN FACTURACIÓN ELECTRÓNICA (SIIGO)
+// INTEGRACI�"N FACTURACI�"N ELECTR�"NICA (SIIGO)
 // ============================================================================
 
 /**
@@ -508,9 +508,6 @@ export const prepararDatosParaDian = async (facturaData, ipsData) => {
   }
   
   // DEBUG: Ver qué hay en facturaData antes de validar
-  console.log('🔍 prepararDatosParaDian - facturaData:', facturaData);
-  console.log('🔍 prepararDatosParaDian - facturaData.citas:', facturaData.citas);
-  console.log('🔍 prepararDatosParaDian - facturaData.servicios:', facturaData.servicios);
   
   // Intentar obtener servicios/citas de diferentes posibles ubicaciones
   const servicios = facturaData.citas || facturaData.servicios || facturaData.items || facturaData.detalles || [];
@@ -521,7 +518,6 @@ export const prepararDatosParaDian = async (facturaData, ipsData) => {
     throw new Error('La factura no tiene servicios/citas válidos');
   }
   
-  console.log('✅ Servicios encontrados:', servicios);
   
   // Calcular totales usando los servicios encontrados
   const subtotal = servicios.reduce((sum, item) => {

@@ -57,10 +57,10 @@ export const DianConfigModal = ({ opened, onClose }) => {
           <Group position="apart">
             <div>
               <Text size="sm" weight={500}>{ambienteInfo?.name}</Text>
-              <Text size="xs" color="dimmed">{ambienteInfo?.endpoint}</Text>
+              <Text size="xs" c="dimmed">{ambienteInfo?.endpoint}</Text>
             </div>
             <Badge color={ambienteInfo?.isTestMode ? 'blue' : 'green'} size="lg">
-              {ambienteInfo?.isTestMode ? 'PRUEBAS' : 'PRODUCCIÓN'}
+              {ambienteInfo?.isTestMode ? 'PRUEBAS' : 'PRODUCCI�"N'}
             </Badge>
           </Group>
         </Alert>
@@ -69,11 +69,11 @@ export const DianConfigModal = ({ opened, onClose }) => {
         <Stack spacing="xs">
           <Text size="sm" weight={500}>Credenciales Activas:</Text>
           <Group spacing="xs">
-            <Text size="sm" color="dimmed">NIT:</Text>
+            <Text size="sm" c="dimmed">NIT:</Text>
             <Text size="sm">{ambienteInfo?.nit}</Text>
           </Group>
           <Group spacing="xs">
-            <Text size="sm" color="dimmed">Razón Social:</Text>
+            <Text size="sm" c="dimmed">Razón Social:</Text>
             <Text size="sm">{ambienteInfo?.razonSocial}</Text>
           </Group>
         </Stack>
@@ -85,7 +85,7 @@ export const DianConfigModal = ({ opened, onClose }) => {
               Estás usando credenciales públicas de prueba de la DIAN. 
               Las facturas enviadas NO son válidas legalmente.
             </Text>
-            <Text size="xs" color="dimmed">
+            <Text size="xs" c="dimmed">
               Para facturación real, configura el ambiente de producción con las credenciales del cliente.
             </Text>
           </Alert>
@@ -121,14 +121,14 @@ export const DianConfigModal = ({ opened, onClose }) => {
 
         {/* Información adicional */}
         <Stack spacing="xs" mt="md">
-          <Text size="xs" weight={500} color="dimmed">Información Técnica:</Text>
-          <Text size="xs" color="dimmed">
+          <Text size="xs" weight={500} c="dimmed">Información Técnica:</Text>
+          <Text size="xs" c="dimmed">
             • Ambiente de Habilitación: Credenciales públicas de prueba DIAN
           </Text>
-          <Text size="xs" color="dimmed">
+          <Text size="xs" c="dimmed">
             • Ambiente de Producción: Requiere registro previo en DIAN
           </Text>
-          <Text size="xs" color="dimmed">
+          <Text size="xs" c="dimmed">
             • Formato: UBL 2.1 según Resolución 000042 de 2020
           </Text>
         </Stack>

@@ -64,7 +64,7 @@ export const generarTratamientoHTML = (consulta = {}, historiaClinica = {}, pati
       ${generarInfoPacienteHTML(patient, patientData)}
       ${medicoHTML}
 
-      ${diagnosticosHTML ? `<div class="section-title">DIAGNÓSTICOS</div><table style="width:100%; border-collapse: collapse;">${diagnosticosHTML}</table>` : ''}
+      ${diagnosticosHTML ? `<div class="section-title">DIAGNOSTICOS</div><table style="width:100%; border-collapse: collapse;">${diagnosticosHTML}</table>` : ''}
       ${planHTML}
       ${medicamentosHTML ? `<div class="section-title">MEDICAMENTOS</div><table style="width:100%; border-collapse: collapse;">${medicamentosHTML}</table>` : ''}
 

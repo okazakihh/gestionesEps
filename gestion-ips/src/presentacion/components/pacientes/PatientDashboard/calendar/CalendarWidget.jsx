@@ -9,21 +9,21 @@ const CalendarWidget = ({ onDaySelect, onNewPatient, onOpenAgenda, onOpenDisponi
       description: 'Registrar paciente',
       icon: PlusIcon,
       color: 'bg-blue-500',
-      action: onNewPatient || (() => console.log('Nuevo paciente'))
+      action: onNewPatient || (() => {})
     },
     {
       title: 'Agenda',
       description: 'Ver citas pendientes',
       icon: CalendarDaysIcon,
       color: 'bg-green-500',
-      action: onOpenAgenda || (() => console.log('Ver agenda'))
+      action: onOpenAgenda || (() => {})
     }
     ,{
       title: 'Disponibilidad Médico',
       description: 'Gestionar horarios de médicos',
       icon: ClockIcon,
       color: 'bg-indigo-500',
-      action: onOpenDisponibilidad || (() => console.log('Disponibilidad médico'))
+      action: onOpenDisponibilidad || (() => {})
     }
   ];
   const [currentDate, setCurrentDate] = useState(new Date());

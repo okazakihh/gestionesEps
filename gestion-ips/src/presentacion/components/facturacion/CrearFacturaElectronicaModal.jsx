@@ -43,8 +43,14 @@ import {
 } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { useContabilidad } from '../../../negocio/hooks/contabilidad/useContabilidad.js';
+import { useBusquedaCliente } from '../../../negocio/hooks/facturacion/useBusquedaCliente.js';
 import { formatCurrency, formatDate } from '../../../negocio/services/facturacionService';
 import { facturacionElectronicaService } from '../../../negocio/services/contabilidadService.js';
+import { extraerDatosCliente, prepararDatosInicialCliente } from '../../../negocio/services/clienteFacturacionMappers.js';
+import ClienteFacturacionForm from './ClienteFacturacionForm';
+import { BuscarClienteInput } from './BuscarClienteInput';
+import { ClienteEncontradoAlert } from './ClienteEncontradoAlert';
+import { DatosClienteSection } from './DatosClienteSection';
 
 /**
  * Modal para crear factura electrónica completa
@@ -54,13 +60,26 @@ export const CrearFacturaElectronicaModal = ({
   onClose,
   citasSeleccionadas = [],
   onFacturaCreada,
-  grupoBatch = null // Información del grupo si es facturación batch
+  grupoBatch = null, // Información del grupo si es facturación batch
+  clientesDisponibles = [], // Lista de clientes ya cargados
+  onCrearCliente, // Función para crear cliente
+  loadingClientes = false
 }) => {
   const { catalogos, loadingCatalogos, cargarCatalogos } = useContabilidad();
+  const {
+    clienteEncontrado,
+    buscandoCliente,
+    modalNuevoCliente,
+    buscarCliente,
+    crearNuevoCliente,
+    limpiarCliente,
+    cerrarModalNuevoCliente,
+    loading: loadingClientesHook
+  } = useBusquedaCliente(clientesDisponibles, onCrearCliente, loadingClientes);
 
   // Estados del formulario - CLIENTE
-  const [tipoDestinatario, setTipoDestinatario] = useState('PACIENTE'); // PACIENTE o ENTIDAD
-  const [tipoDocumento, setTipoDocumento] = useState('13'); // CC por defecto
+  const [tipoDestinatario, setTipoDestinatario] = useState('PACIENTE');
+  const [tipoDocumento, setTipoDocumento] = useState('13');
   const [numeroDocumento, setNumeroDocumento] = useState('');
   const [digitoVerificacion, setDigitoVerificacion] = useState('');
   
@@ -86,7 +105,7 @@ export const CrearFacturaElectronicaModal = ({
   const [enviarEmail, setEnviarEmail] = useState(true);
   const [facturaElectronica, setFacturaElectronica] = useState(true);
   
-  // Estados de servicios (citas con valores editables)
+  // Estados de servicios
   const [servicios, setServicios] = useState([]);
   
   // Estados de cálculo
@@ -174,6 +193,28 @@ export const CrearFacturaElectronicaModal = ({
   const eliminarServicio = (id) => {
     setServicios(prev => prev.filter(s => s.id !== id));
   };
+
+  // Auto-fill cuando se encuentra un cliente
+  useEffect(() => {
+    if (clienteEncontrado) {
+      const datos = extraerDatosCliente(clienteEncontrado);
+      if (datos) {
+        setTipoDestinatario(datos.tipoDestinatario);
+        setTipoDocumento(datos.tipoDocumento);
+        setNombres(datos.nombres);
+        setApellidos(datos.apellidos);
+        setRazonSocial(datos.razonSocial);
+        setNombreContacto(datos.nombreContacto);
+        setCargoContacto(datos.cargoContacto);
+        setEmail(datos.email);
+        setTelefono(datos.telefono);
+        setDireccion(datos.direccion);
+        setCiudad(datos.ciudad);
+        setDepartamento(datos.departamento);
+        setDigitoVerificacion(datos.digitoVerificacion);
+      }
+    }
+  }, [clienteEncontrado]);
 
   /**
    * Validar formulario
@@ -412,6 +453,7 @@ export const CrearFacturaElectronicaModal = ({
     setEnviarEmail(true);
     setFacturaElectronica(true);
     setServicios([]);
+    limpiarCliente();
     
     onClose();
   };
@@ -444,20 +486,21 @@ export const CrearFacturaElectronicaModal = ({
   ];
 
   return (
-    <Modal
-      opened={opened}
-      onClose={handleClose}
-      title={
-        <Group>
-          <IconFileInvoice size={24} />
-          <Text size="lg" fw={600}>Crear Factura</Text>
-          {facturaElectronica && <Badge color="green" variant="light">Electrónica</Badge>}
-        </Group>
-      }
-      size="xl"
-      centered
-      closeOnClickOutside={false}
-    >
+    <>
+      <Modal
+        opened={opened}
+        onClose={handleClose}
+        title={
+          <Group>
+            <IconFileInvoice size={24} />
+            <Text size="lg" fw={600}>Crear Factura</Text>
+            {facturaElectronica && <Badge color="green" variant="light">Electrónica</Badge>}
+          </Group>
+        }
+        size="xl"
+        centered
+        closeOnClickOutside={false}
+      >
       <Stack gap="md">
         {/* Alerta informativa */}
         <Alert icon={<IconAlertCircle size={18} />} color={facturaElectronica ? 'blue' : 'gray'} variant="light">
@@ -482,7 +525,7 @@ export const CrearFacturaElectronicaModal = ({
           </Alert>
         )}
 
-        {/* SECCIÓN 1: TIPO DE CLIENTE */}
+        {/* SECCI�"N 1: TIPO DE CLIENTE */}
         <Paper p="md" withBorder>
           <Text size="sm" fw={600} mb="md">Tipo de Cliente</Text>
           <Select
@@ -498,7 +541,7 @@ export const CrearFacturaElectronicaModal = ({
           />
         </Paper>
 
-        {/* SECCIÓN 2: DATOS DEL CLIENTE */}
+        {/* SECCI�"N 2: DATOS DEL CLIENTE */}
         <Paper p="md" withBorder>
           <Text size="sm" fw={600} mb="md">Datos del Cliente</Text>
           
@@ -519,12 +562,14 @@ export const CrearFacturaElectronicaModal = ({
                 />
               </Grid.Col>
               <Grid.Col span={tipoDocumento === '31' ? 4 : 6}>
-                <TextInput
-                  label="Número de Documento"
-                  placeholder={tipoDocumento === '31' ? 'Ej: 900123456' : 'Ej: 1234567890'}
+                <BuscarClienteInput
                   value={numeroDocumento}
                   onChange={(e) => setNumeroDocumento(e.target.value)}
-                  withAsterisk
+                  onBuscar={() => buscarCliente(numeroDocumento)}
+                  buscando={buscandoCliente}
+                  placeholder={tipoDocumento === '31' ? 'Ej: 900123456' : 'Ej: 1234567890'}
+                  label="Número de Documento"
+                  required
                 />
               </Grid.Col>
               {tipoDocumento === '31' && (
@@ -541,57 +586,39 @@ export const CrearFacturaElectronicaModal = ({
               )}
             </Grid>
 
+            {/* Alerta de cliente encontrado */}
+            <ClienteEncontradoAlert
+              cliente={clienteEncontrado}
+              onLimpiar={() => {
+                limpiarCliente();
+                setNombres('');
+                setApellidos('');
+                setRazonSocial('');
+                setNombreContacto('');
+                setCargoContacto('');
+                setEmail('');
+                setTelefono('');
+                setDireccion('');
+                setCiudad('');
+                setDepartamento('');
+                setDigitoVerificacion('');
+              }}
+            />
+
             {/* Campos según tipo */}
-            {tipoDestinatario === 'PACIENTE' ? (
-              <Grid>
-                <Grid.Col span={6}>
-                  <TextInput
-                    label="Nombres"
-                    placeholder="Nombres del paciente"
-                    value={nombres}
-                    onChange={(e) => setNombres(e.target.value)}
-                    required
-                  />
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <TextInput
-                    label="Apellidos"
-                    placeholder="Apellidos del paciente"
-                    value={apellidos}
-                    onChange={(e) => setApellidos(e.target.value)}
-                    required
-                  />
-                </Grid.Col>
-              </Grid>
-            ) : (
-              <Stack gap="sm">
-                <TextInput
-                  label="Razón Social"
-                  placeholder="Nombre de la empresa/entidad"
-                  value={razonSocial}
-                  onChange={(e) => setRazonSocial(e.target.value)}
-                  required
-                />
-                <Grid>
-                  <Grid.Col span={6}>
-                    <TextInput
-                      label="Nombre de Contacto"
-                      placeholder="Persona de contacto"
-                      value={nombreContacto}
-                      onChange={(e) => setNombreContacto(e.target.value)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={6}>
-                    <TextInput
-                      label="Cargo"
-                      placeholder="Cargo del contacto"
-                      value={cargoContacto}
-                      onChange={(e) => setCargoContacto(e.target.value)}
-                    />
-                  </Grid.Col>
-                </Grid>
-              </Stack>
-            )}
+            <DatosClienteSection
+              tipoDestinatario={tipoDestinatario}
+              nombres={nombres}
+              apellidos={apellidos}
+              onNombresChange={(e) => setNombres(e.target.value)}
+              onApellidosChange={(e) => setApellidos(e.target.value)}
+              razonSocial={razonSocial}
+              nombreContacto={nombreContacto}
+              cargoContacto={cargoContacto}
+              onRazonSocialChange={(e) => setRazonSocial(e.target.value)}
+              onNombreContactoChange={(e) => setNombreContacto(e.target.value)}
+              onCargoContactoChange={(e) => setCargoContacto(e.target.value)}
+            />
 
             {/* Contacto */}
             <Divider label="Información de Contacto" />
@@ -606,6 +633,7 @@ export const CrearFacturaElectronicaModal = ({
                   leftSection={<IconMail size={18} />}
                   type="email"
                   required
+                  styles={{ input: { paddingLeft: '40px' } }}
                 />
               </Grid.Col>
               <Grid.Col span={6}>
@@ -615,6 +643,7 @@ export const CrearFacturaElectronicaModal = ({
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
                   leftSection={<IconPhone size={18} />}
+                  styles={{ input: { paddingLeft: '40px' } }}
                 />
               </Grid.Col>
             </Grid>
@@ -625,6 +654,7 @@ export const CrearFacturaElectronicaModal = ({
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
               leftSection={<IconMapPin size={18} />}
+              styles={{ input: { paddingLeft: '40px' } }}
             />
 
             <Grid>
@@ -648,7 +678,7 @@ export const CrearFacturaElectronicaModal = ({
           </Stack>
         </Paper>
 
-        {/* SECCIÓN 3: SERVICIOS */}
+        {/* SECCI�"N 3: SERVICIOS */}
         <Paper p="md" withBorder>
           <Text size="sm" fw={600} mb="md">Servicios Facturados</Text>
           
@@ -747,7 +777,7 @@ export const CrearFacturaElectronicaModal = ({
           </Paper>
         </Paper>
 
-        {/* SECCIÓN 4: DATOS DE FACTURACIÓN */}
+        {/* SECCI�"N 4: DATOS DE FACTURACI�"N */}
         <Paper p="md" withBorder>
           <Text size="sm" fw={600} mb="md">Datos de Facturación</Text>
           
@@ -780,7 +810,7 @@ export const CrearFacturaElectronicaModal = ({
                     <Text size="sm" fw={500}>Factura Electrónica (Siigo + DIAN)</Text>
                     <Text size="xs" c="dimmed">
                       {facturaElectronica 
-                        ? '✓ Se enviará automáticamente a Siigo para obtener el CUFE de DIAN' 
+                        ? '�" Se enviará automáticamente a Siigo para obtener el CUFE de DIAN' 
                         : 'Solo se guardará en el sistema local (sin CUFE)'}
                     </Text>
                   </div>
@@ -818,7 +848,17 @@ export const CrearFacturaElectronicaModal = ({
           </Button>
         </Group>
       </Stack>
-    </Modal>
+      </Modal>
+      
+      {/* Modal para crear nuevo cliente */}
+      <ClienteFacturacionForm
+        opened={modalNuevoCliente}
+        onClose={cerrarModalNuevoCliente}
+        onSubmit={crearNuevoCliente}
+        clienteInicial={prepararDatosInicialCliente(tipoDocumento, numeroDocumento, tipoDestinatario)}
+        loading={loadingClientesHook}
+      />
+    </>
   );
 };
 

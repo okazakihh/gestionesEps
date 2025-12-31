@@ -367,7 +367,7 @@ export const useAppointmentManagement = (user = null) => {
             }
           }
 
-          // ¡CORRECCIÓN! Asegurarse de que el doctor exista y esté en la lista de médicos a mostrar.
+          // ¡CORRECCI�"N! Asegurarse de que el doctor exista y esté en la lista de médicos a mostrar.
           if (medicoAsignado && doctor && groupedAppointments[doctor.id]) {
             const doctorId = doctor.id;
 
@@ -492,7 +492,7 @@ export const useAppointmentManagement = (user = null) => {
           'ATENDIDA': 'ATENDIDO',
           'NO_SE_PRESENTO': 'NO_SE_PRESENTO',
           'NO SE PRESENTO': 'NO_SE_PRESENTO',
-          'NO SE PRESENTÓ': 'NO_SE_PRESENTE'
+          'NO SE PRESENT�"': 'NO_SE_PRESENTE'
         };
 
         estado = estadoMapping[estado] || estado;
@@ -638,7 +638,6 @@ export const useAppointmentManagement = (user = null) => {
   };
 
   const handleHistoriaClinicaCreated = async (historiaClinica) => {
-    console.log('Historia clínica creada:', historiaClinica);
 
     // La actualización del estado de la cita ya se hace en el modal
     // No es necesario hacerlo aquí nuevamente
@@ -656,7 +655,6 @@ export const useAppointmentManagement = (user = null) => {
   };
 
   const handleConsultaMedicaCreated = async (consulta) => {
-    console.log('Consulta médica creada:', consulta);
 
     // La cita ya debería estar marcada como ATENDIDO desde la creación de la historia clínica
     // Pero por si acaso el flujo es diferente (consulta sin historia nueva), actualizamos el estado

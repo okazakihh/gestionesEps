@@ -28,7 +28,6 @@ const PatientList = ({ searchTerm, filterStatus, onPatientClick, onScheduleAppoi
       const response = await pacientesApiService.getPacientes(params);
 
       // Debug: Ver qué fechas llegan del backend
-      console.log('Pacientes response:', response.content?.[0]);
 
       // Guardar todos los pacientes
       setAllPatients(response.content || []);

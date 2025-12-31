@@ -253,7 +253,6 @@ export const crearNotaCredito = async (nota, facturaOriginal) => {
     };
 
     // TODO: Guardar en tabla de notas (pendiente crear endpoint en backend)
-    console.log('📝 Nota crédito creada:', notaParaDB);
 
     return {
       success: true,
@@ -304,7 +303,6 @@ export const crearNotaDebito = async (nota, facturaOriginal) => {
     };
 
     // TODO: Guardar en tabla de notas
-    console.log('📝 Nota débito creada:', notaParaDB);
 
     return {
       success: true,

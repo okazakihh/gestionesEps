@@ -19,7 +19,7 @@ import {
 import { notasContablesApiService } from '../../data/services/pacientesApiService.js';
 
 /**
- * Servicio de gestión de clientes (Pacientes → Siigo)
+ * Servicio de gestión de clientes (Pacientes �' Siigo)
  */
 export const clientesContabilidadService = {
   /**
@@ -240,7 +240,7 @@ export const clientesContabilidadService = {
 };
 
 /**
- * Servicio de gestión de productos/servicios (CUPS → Siigo)
+ * Servicio de gestión de productos/servicios (CUPS �' Siigo)
  */
 export const productosContabilidadService = {
   /**
@@ -699,7 +699,6 @@ export const notasContabilidadService = {
    */
   async crearNotaCredito(notaData, facturaOriginal) {
     try {
-      console.log('📝 Creando nota crédito en Siigo...', { notaData, facturaOriginal });
 
       // Validar que la factura tenga siigoId
       const facturaData = typeof facturaOriginal.jsonData === 'string' 
@@ -713,23 +712,23 @@ export const notasContabilidadService = {
       // Llamar al servicio base que ya maneja la creación
       const resultado = await crearNotaCreditoBase(notaData, facturaOriginal);
 
-      console.log('✅ Nota crédito creada exitosamente en Siigo:', resultado);
       
       // Guardar en BD local para consultas rápidas
       try {
         const notaParaBD = {
           tipoNota: 'CREDITO',
-          numeroNota: resultado.numeroSiigo || resultado.numero,
+          numeroNota: resultado.siigoResponse?.number || resultado.nota?.numeroNota,
           facturaId: facturaOriginal.id,
           numeroFacturaRelacionada: facturaData.numeroFactura || facturaData.numero,
-          siigoId: resultado.siigoId,
+          siigoId: resultado.siigoResponse?.id || resultado.nota?.siigoId,
           motivoDian: notaData.motivoDian,
           motivo: notaData.motivo,
           observaciones: notaData.observaciones || '',
           subtotal: notaData.subtotal,
           total: notaData.total,
           serviciosAfectados: notaData.serviciosAfectados || [],
-          estadoSiigo: resultado.estadoSiigo || 'ACEPTADA',
+          estadoSiigo: resultado.siigoResponse?.status || resultado.siigoResponse?.stamp?.status || 'ACEPTADA',
+          cufe: resultado.siigoResponse?.stamp?.electronic_document?.cufe,
           fechaCreacion: new Date().toISOString(),
           cliente: facturaData.cliente
         };
@@ -738,7 +737,6 @@ export const notasContabilidadService = {
           JSON.stringify(notaParaBD)
         );
         
-        console.log('✅ Nota crédito guardada en BD local:', notaGuardada);
       } catch (errorBD) {
         console.warn('⚠️ No se pudo guardar en BD local, pero la nota sí se creó en Siigo:', errorBD);
       }
@@ -759,7 +757,6 @@ export const notasContabilidadService = {
    */
   async crearNotaDebito(notaData, facturaOriginal) {
     try {
-      console.log('📝 Creando nota débito en Siigo...', { notaData, facturaOriginal });
 
       // Validar que la factura tenga siigoId
       const facturaData = typeof facturaOriginal.jsonData === 'string' 
@@ -773,23 +770,23 @@ export const notasContabilidadService = {
       // Llamar al servicio base que ya maneja la creación
       const resultado = await crearNotaDebitoBase(notaData, facturaOriginal);
 
-      console.log('✅ Nota débito creada exitosamente en Siigo:', resultado);
       
       // Guardar en BD local para consultas rápidas
       try {
         const notaParaBD = {
           tipoNota: 'DEBITO',
-          numeroNota: resultado.numeroSiigo || resultado.numero,
+          numeroNota: resultado.siigoResponse?.number || resultado.nota?.numeroNota,
           facturaId: facturaOriginal.id,
           numeroFacturaRelacionada: facturaData.numeroFactura || facturaData.numero,
-          siigoId: resultado.siigoId,
+          siigoId: resultado.siigoResponse?.id || resultado.nota?.siigoId,
           motivoDian: notaData.motivoDian,
           motivo: notaData.motivo,
           observaciones: notaData.observaciones || '',
           subtotal: notaData.subtotal,
           total: notaData.total,
           serviciosAfectados: notaData.serviciosAfectados || [],
-          estadoSiigo: resultado.estadoSiigo || 'ACEPTADA',
+          estadoSiigo: resultado.siigoResponse?.status || resultado.siigoResponse?.stamp?.status || 'ACEPTADA',
+          cufe: resultado.siigoResponse?.stamp?.electronic_document?.cufe,
           fechaCreacion: new Date().toISOString(),
           cliente: facturaData.cliente
         };
@@ -798,7 +795,6 @@ export const notasContabilidadService = {
           JSON.stringify(notaParaBD)
         );
         
-        console.log('✅ Nota débito guardada en BD local:', notaGuardada);
       } catch (errorBD) {
         console.warn('⚠️ No se pudo guardar en BD local, pero la nota sí se creó en Siigo:', errorBD);
       }
@@ -817,7 +813,6 @@ export const notasContabilidadService = {
    */
   async obtenerTodasLasNotas() {
     try {
-      console.log('📋 Obteniendo todas las notas contables desde backend...');
       
       // Consultar endpoint del backend
       const response = await notasContablesApiService.getNotasContables();
@@ -845,7 +840,6 @@ export const notasContabilidadService = {
         }
       }).filter(nota => nota !== null);
       
-      console.log(`✅ ${notasParseadas.length} notas contables obtenidas`);
       return notasParseadas;
 
     } catch (error) {
@@ -861,7 +855,6 @@ export const notasContabilidadService = {
    */
   async obtenerTodasLasNotas() {
     try {
-      console.log('📋 Obteniendo todas las notas contables desde backend...');
       
       const notasResponse = await notasContablesApiService.getNotasContables();
       
@@ -882,7 +875,6 @@ export const notasContabilidadService = {
         }
       }).filter(nota => nota !== null);
 
-      console.log(`✅ ${notasParseadas.length} notas contables obtenidas`);
       return notasParseadas;
 
     } catch (error) {
@@ -896,7 +888,6 @@ export const notasContabilidadService = {
   async obtenerNotasDeFactura(facturaId) {
     try {
       // TODO: Implementar cuando exista tabla de notas en backend
-      console.log('📋 Obteniendo notas de factura:', facturaId);
       
       // Por ahora retornamos array vacío
       return [];

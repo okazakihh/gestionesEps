@@ -4,7 +4,7 @@
  * Servicio REAL de integración con Siigo API
  * Realiza peticiones HTTP reales a los endpoints de Siigo
  * 
- * Este servicio se usa en modo PRODUCCIÓN
+ * Este servicio se usa en modo PRODUCCI�"N
  * 
  * Documentación: https://siigoapi.docs.apiary.io/
  * 
@@ -121,7 +121,6 @@ export const auth = {
    */
   async getToken(credentials) {
     try {
-      console.log('🚀 [PROD] Generando token Siigo real...');
       const response = await axios.post(`${SIIGO_AUTH_URL}`, {
         username: credentials.username,
         access_key: credentials.access_key
@@ -193,7 +192,6 @@ export const customers = {
    */
   async create(customerData) {
     try {
-      console.log('🚀 [PROD] Creando cliente en Siigo:', customerData);
       const response = await siigoClient.post('/customers', customerData);
       return response.data;
     } catch (error) {
@@ -209,7 +207,6 @@ export const customers = {
    */
   async get(customerId) {
     try {
-      console.log('🚀 [PROD] Consultando cliente:', customerId);
       const response = await siigoClient.get(`/customers/${customerId}`);
       return response.data;
     } catch (error) {
@@ -225,7 +222,6 @@ export const customers = {
    */
   async list(filters = {}) {
     try {
-      console.log('🚀 [PROD] Listando clientes con filtros:', filters);
       const response = await siigoClient.get('/customers', { params: filters });
       return response.data;
     } catch (error) {
@@ -242,7 +238,6 @@ export const customers = {
    */
   async update(customerId, customerData) {
     try {
-      console.log('🚀 [PROD] Actualizando cliente:', customerId);
       const response = await siigoClient.put(`/customers/${customerId}`, customerData);
       return response.data;
     } catch (error) {
@@ -263,13 +258,11 @@ export const invoices = {
    */
   async create(invoiceData) {
     try {
-      console.log('🚀 [PROD] Creando factura REAL en Siigo:', invoiceData);
       const response = await siigoClient.post('/invoices', invoiceData, {
         headers: {
           'Idempotency-Key': invoiceData.idempotency_key || `INV-${Date.now()}`
         }
       });
-      console.log('✅ [PROD] Factura creada exitosamente:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ [PROD] Error creando factura:', error);
@@ -284,7 +277,6 @@ export const invoices = {
    */
   async get(invoiceId) {
     try {
-      console.log('🚀 [PROD] Consultando factura:', invoiceId);
       const response = await siigoClient.get(`/invoices/${invoiceId}`);
       return response.data;
     } catch (error) {
@@ -300,7 +292,6 @@ export const invoices = {
    */
   async list(filters = {}) {
     try {
-      console.log('🚀 [PROD] Listando facturas con filtros:', filters);
       const response = await siigoClient.get('/invoices', { params: filters });
       return response.data;
     } catch (error) {
@@ -317,7 +308,6 @@ export const invoices = {
    */
   async update(invoiceId, invoiceData) {
     try {
-      console.log('🚀 [PROD] Actualizando factura:', invoiceId);
       const response = await siigoClient.put(`/invoices/${invoiceId}`, invoiceData);
       return response.data;
     } catch (error) {
@@ -333,7 +323,6 @@ export const invoices = {
    */
   async void(invoiceId) {
     try {
-      console.log('🚀 [PROD] Anulando factura:', invoiceId);
       const response = await siigoClient.delete(`/invoices/${invoiceId}/void`);
       return response.data;
     } catch (error) {
@@ -349,7 +338,6 @@ export const invoices = {
    */
   async delete(invoiceId) {
     try {
-      console.log('🚀 [PROD] Borrando factura:', invoiceId);
       const response = await siigoClient.delete(`/invoices/${invoiceId}`);
       return response.data;
     } catch (error) {
@@ -365,7 +353,6 @@ export const invoices = {
    */
   async getPDF(invoiceId) {
     try {
-      console.log('🚀 [PROD] Obteniendo PDF de factura:', invoiceId);
       const response = await siigoClient.get(`/invoices/${invoiceId}/pdf`, {
         responseType: 'blob'
       });
@@ -383,7 +370,6 @@ export const invoices = {
    */
   async getXML(invoiceId) {
     try {
-      console.log('🚀 [PROD] Obteniendo XML de factura:', invoiceId);
       const response = await siigoClient.get(`/invoices/${invoiceId}/xml`);
       return response.data;
     } catch (error) {
@@ -400,7 +386,6 @@ export const invoices = {
    */
   async sendEmail(invoiceId, emails) {
     try {
-      console.log('🚀 [PROD] Enviando factura por email:', invoiceId, emails);
       const response = await siigoClient.post(`/invoices/${invoiceId}/mail`, {
         emails
       });
@@ -418,7 +403,6 @@ export const invoices = {
    */
   async getErrors(invoiceId) {
     try {
-      console.log('🚀 [PROD] Consultando errores de factura:', invoiceId);
       const response = await siigoClient.get(`/invoices/${invoiceId}/stamp-errors`);
       return response.data;
     } catch (error) {
@@ -434,13 +418,11 @@ export const invoices = {
    */
   async createCreditNote(creditNoteData) {
     try {
-      console.log('🚀 [PROD] Creando nota crédito REAL en Siigo:', creditNoteData);
       const response = await siigoClient.post('/credit-notes', creditNoteData, {
         headers: {
           'Idempotency-Key': creditNoteData.idempotency_key || `CN-${Date.now()}`
         }
       });
-      console.log('✅ [PROD] Nota crédito creada exitosamente:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ [PROD] Error creando nota crédito:', error);
@@ -455,13 +437,11 @@ export const invoices = {
    */
   async createDebitNote(debitNoteData) {
     try {
-      console.log('🚀 [PROD] Creando nota débito REAL en Siigo:', debitNoteData);
       const response = await siigoClient.post('/debit-notes', debitNoteData, {
         headers: {
           'Idempotency-Key': debitNoteData.idempotency_key || `DN-${Date.now()}`
         }
       });
-      console.log('✅ [PROD] Nota débito creada exitosamente:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ [PROD] Error creando nota débito:', error);
@@ -476,7 +456,6 @@ export const invoices = {
    */
   async getCreditNote(creditNoteId) {
     try {
-      console.log('🚀 [PROD] Consultando nota crédito:', creditNoteId);
       const response = await siigoClient.get(`/credit-notes/${creditNoteId}`);
       return response.data;
     } catch (error) {
@@ -492,7 +471,6 @@ export const invoices = {
    */
   async getDebitNote(debitNoteId) {
     try {
-      console.log('🚀 [PROD] Consultando nota débito:', debitNoteId);
       const response = await siigoClient.get(`/debit-notes/${debitNoteId}`);
       return response.data;
     } catch (error) {
@@ -508,7 +486,6 @@ export const invoices = {
    */
   async getCreditNotePDF(creditNoteId) {
     try {
-      console.log('🚀 [PROD] Obteniendo PDF de nota crédito:', creditNoteId);
       const response = await siigoClient.get(`/credit-notes/${creditNoteId}/pdf`, {
         responseType: 'blob'
       });
@@ -526,7 +503,6 @@ export const invoices = {
    */
   async getDebitNotePDF(debitNoteId) {
     try {
-      console.log('🚀 [PROD] Obteniendo PDF de nota débito:', debitNoteId);
       const response = await siigoClient.get(`/debit-notes/${debitNoteId}/pdf`, {
         responseType: 'blob'
       });
@@ -549,7 +525,6 @@ export const products = {
    */
   async createProduct(productData) {
     try {
-      console.log('🚀 [PROD] Creando producto en Siigo:', productData);
       const response = await siigoClient.post('/products', productData);
       return response.data;
     } catch (error) {
@@ -565,7 +540,6 @@ export const products = {
    */
   async get(productId) {
     try {
-      console.log('🚀 [PROD] Consultando producto:', productId);
       const response = await siigoClient.get(`/products/${productId}`);
       return response.data;
     } catch (error) {
@@ -581,7 +555,6 @@ export const products = {
    */
   async list(filters = {}) {
     try {
-      console.log('🚀 [PROD] Listando productos con filtros:', filters);
       const response = await siigoClient.get('/products', { params: filters });
       return response.data;
     } catch (error) {
@@ -598,7 +571,6 @@ export const products = {
    */
   async update(productId, productData) {
     try {
-      console.log('🚀 [PROD] Actualizando producto:', productId);
       const response = await siigoClient.put(`/products/${productId}`, productData);
       return response.data;
     } catch (error) {
@@ -614,7 +586,6 @@ export const products = {
    */
   async delete(productId) {
     try {
-      console.log('🚀 [PROD] Borrando producto:', productId);
       const response = await siigoClient.delete(`/products/${productId}`);
       return response.data;
     } catch (error) {
@@ -635,7 +606,6 @@ export const catalogs = {
    */
   async getDocumentTypes(type = null) {
     try {
-      console.log('🚀 [PROD] Consultando tipos de documento:', type);
       const params = type ? { type } : {};
       const response = await siigoClient.get('/document-types', { params });
       return response.data;
@@ -652,7 +622,6 @@ export const catalogs = {
    */
   async getPaymentTypes(documentType = null) {
     try {
-      console.log('🚀 [PROD] Consultando formas de pago:', documentType);
       const params = documentType ? { document_type: documentType } : {};
       const response = await siigoClient.get('/payment-types', { params });
       return response.data;
@@ -668,7 +637,6 @@ export const catalogs = {
    */
   async getTaxes() {
     try {
-      console.log('🚀 [PROD] Consultando impuestos...');
       const response = await siigoClient.get('/taxes');
       return response.data;
     } catch (error) {
@@ -683,7 +651,6 @@ export const catalogs = {
    */
   async getCostCenters() {
     try {
-      console.log('🚀 [PROD] Consultando centros de costo...');
       const response = await siigoClient.get('/cost-centers');
       return response.data;
     } catch (error) {
@@ -698,7 +665,6 @@ export const catalogs = {
    */
   async getUsers() {
     try {
-      console.log('🚀 [PROD] Consultando usuarios...');
       const response = await siigoClient.get('/users');
       return response.data;
     } catch (error) {
@@ -713,7 +679,6 @@ export const catalogs = {
    */
   async getAccountGroups() {
     try {
-      console.log('🚀 [PROD] Consultando grupos de inventario...');
       const response = await siigoClient.get('/account-groups');
       return response.data;
     } catch (error) {
@@ -728,7 +693,6 @@ export const catalogs = {
    */
   async getWarehouses() {
     try {
-      console.log('🚀 [PROD] Consultando bodegas...');
       const response = await siigoClient.get('/warehouses');
       return response.data;
     } catch (error) {

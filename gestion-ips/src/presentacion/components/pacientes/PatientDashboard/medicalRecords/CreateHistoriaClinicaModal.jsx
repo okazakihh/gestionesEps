@@ -205,7 +205,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       const especialidad = citaData.especialidad || '';
       const medicoId = citaData.medicoId || null;
       
-      console.log('🔍 Buscando licencia - medicoId:', medicoId, 'licencia en cita:', licenciaMedicaCita);
       
       // Actualizar formData con la información del médico de la cita
       setFormData(prev => ({
@@ -285,7 +284,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
               }
               
               if (licencia) {
-                console.log('✅ Licencia encontrada:', licencia);
                 setFormData(prev => ({
                   ...prev,
                   procedimiento: {
@@ -369,13 +367,11 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
               const nombreEmpleado = (nombreEmpleadoCandidates.find(Boolean) || '').trim();
 
               if (licenciaMedicaCita && numeroLic && String(numeroLic).trim() === String(licenciaMedicaCita).trim()) {
-                console.log('🎯 Match por licencia:', numeroLic);
                 matched = { parsed, raw: emp };
                 break;
               }
 
               if (nombreMedico && nombreEmpleado && nombreEmpleado.toLowerCase().includes(nombreMedico.split(' ')[0].toLowerCase())) {
-                console.log('🎯 Match por nombre:', nombreEmpleado, 'buscando:', nombreMedico);
                 matched = { parsed, raw: emp };
                 break;
               }
@@ -423,7 +419,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
             }
 
             if (signature) {
-              console.log('✅ Firma encontrada y cargada');
               const foundNumeroLic = parsedMatched?.informacionLaboral?.numeroLicencia || parsedMatched?.numeroLicencia || rawMatched?.numeroLicencia || rawMatched?.informacionLaboral?.numeroLicencia || '';
               setFormData(prev => ({
                 ...prev,
@@ -434,7 +429,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
                 }
               }));
             } else {
-              console.log('❌ No se encontró firma para el empleado');
             }
           }
         } catch (err) {
@@ -501,7 +495,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
         activa: formData.activa
       };
 
-      console.log('📋 Enviando Historia Clínica:', JSON.stringify(submitData, null, 2));
 
       const result = await historiasClinicasApiService.createHistoriaClinica(formData.pacienteId, submitData);
 
@@ -516,7 +509,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
 
       await Swal.fire({
         icon: 'success',
-        title: '✅ Historia Clínica Creada',
+        title: 'Historia Clínica Creada',
         text: 'La historia clínica ha sido registrada exitosamente.',
         confirmButtonColor: '#10B981',
         timer: 2500,
@@ -555,7 +548,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
       }
       size="xl"
       centered
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{
         content: { maxHeight: '90vh' },
         body: { padding: 0 },

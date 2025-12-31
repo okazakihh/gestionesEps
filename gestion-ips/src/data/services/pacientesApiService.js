@@ -805,11 +805,20 @@ export const clientesFacturacionApiService = {
 
   // Search client by document number
   buscarPorDocumento: async (numeroDocumento) => {
-    const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/documento/${numeroDocumento}`);
-    if (!response.success) {
-      throw new Error(response.error || 'Error al buscar cliente por documento');
+    try {
+      // Limpiar el número de documento: quitar guiones, espacios y caracteres especiales
+      const docLimpio = numeroDocumento.trim().replace(/[-\s]/g, '');
+      
+      const response = await apiClient.get(`${CLIENTES_FACTURACION_BASE_URL}/buscar/documento/${docLimpio}`);
+      // Si success es false (404), retornar null
+      if (response && !response.success) {
+        return null;
+      }
+      return response && response.data ? response.data : null;
+    } catch (error) {
+      // Cualquier error, retornar null sin loguear
+      return null;
     }
-    return response.data;
   },
 
   // Search clients by person type

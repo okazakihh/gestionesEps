@@ -55,8 +55,10 @@ import VistaGruposFacturacionModal from '../../components/facturacion/VistaGrupo
 import CrearFacturaElectronicaModal from '../../components/facturacion/CrearFacturaElectronicaModal';
 import CrearNotaContableModal from '../../components/facturacion/CrearNotaContableModal';
 import NotasContablesTable from '../../components/facturacion/NotasContablesTable';
+import VerDetalleNotaModal from '../../components/facturacion/VerDetalleNotaModal';
 import ClienteFacturacionForm from '../../components/facturacion/ClienteFacturacionForm';
 import ClientesFacturacionTable from '../../components/facturacion/ClientesFacturacionTable';
+import ClienteFacturacionDetalle from '../../components/facturacion/ClienteFacturacionDetalle';
 import ModoFacturacionSelector from '../../components/facturacion/ModoFacturacionSelector';
 import { FacturaPrintPreviewModal } from '../../components/facturacion/FacturaPrintPreviewModal';
 import { useFacturaPreviewModal } from '../../../negocio/hooks/useFacturaPreviewModal';
@@ -216,10 +218,14 @@ const FacturacionPage = () => {
   const [facturaParaNota, setFacturaParaNota] = useState(null);
   const [notasContables, setNotasContables] = useState([]);
   const [loadingNotas, setLoadingNotas] = useState(false);
+  const [isVerDetalleNotaModalOpen, setIsVerDetalleNotaModalOpen] = useState(false);
+  const [notaSeleccionada, setNotaSeleccionada] = useState(null);
 
   // Estados de clientes
   const [clienteFormOpen, setClienteFormOpen] = useState(false);
   const [clienteEnEdicion, setClienteEnEdicion] = useState(null);
+  const [clienteDetalleOpen, setClienteDetalleOpen] = useState(false);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   
   // Estados de batch facturaciÃ³n
   const [isModoSelectorOpen, setIsModoSelectorOpen] = useState(false);
@@ -309,6 +315,22 @@ const FacturacionPage = () => {
     limpiarSeleccion();
   };
 
+  /**
+   * Abrir modal de detalle de cliente
+   */
+  const handleVerDetalleCliente = (cliente) => {
+    setClienteSeleccionado(cliente);
+    setClienteDetalleOpen(true);
+  };
+
+  /**
+   * Cerrar modal de detalle de cliente
+   */
+  const handleCerrarDetalleCliente = () => {
+    setClienteDetalleOpen(false);
+    setClienteSeleccionado(null);
+  };
+
   // ============================================================================
   // DATOS FILTRADOS
   // ============================================================================
@@ -317,7 +339,7 @@ const FacturacionPage = () => {
   const facturasFiltradas = aplicarFiltrosFacturas(facturas);
 
   // ============================================================================
-  // FUNCIONES DE MANEJO DE FACTURACIÃ“N
+  // FUNCIONES DE MANEJO DE FACTURACIÃ"N
   // ============================================================================
 
   /**
@@ -1125,7 +1147,7 @@ const FacturacionPage = () => {
           
           <Tabs defaultValue="facturacion" variant="outline">
             
-            {/* ========== TAB 1: FACTURACIÃ“N ========== */}
+            {/* ========== TAB 1: FACTURACIÃ"N ========== */}
             <Tabs.List>
               <Tabs.Tab value="facturacion" leftSection={<IconFileInvoice size={18} />}>
                 FacturaciÃ³n
@@ -1147,7 +1169,7 @@ const FacturacionPage = () => {
               </Tabs.Tab>
             </Tabs.List>
 
-            {/* ========== PANEL: FACTURACIÃ“N ========== */}
+            {/* ========== PANEL: FACTURACIÃ"N ========== */}
             <Tabs.Panel value="facturacion" pt={{ base: "md", sm: "xl" }}>
               <div style={{ 
                 display: 'grid', 
@@ -1356,8 +1378,8 @@ const FacturacionPage = () => {
                   notas={notasContables}
                   loading={loadingNotas}
                   onVerNota={(nota) => {
-                    console.log('Ver nota:', nota);
-                    // TODO: Implementar modal de detalle
+                    setNotaSeleccionada(nota);
+                    setIsVerDetalleNotaModalOpen(true);
                   }}
                   onDescargarPDF={async (nota) => {
                     try {
@@ -1477,13 +1499,14 @@ const FacturacionPage = () => {
                   onDesactivar={desactivarCliente}
                   onReactivar={reactivarCliente}
                   onNuevo={handleNuevoCliente}
+                  onVerDetalle={handleVerDetalleCliente}
                   searchTerm={clienteSearchTerm}
                   onSearch={buscarClientes}
                 />
               </Stack>
             </Tabs.Panel>
 
-            {/* ========== PANEL: CÃ“DIGOS CUPS ========== */}
+            {/* ========== PANEL: CÃ"DIGOS CUPS ========== */}
             <Tabs.Panel value="cups" pt={{ base: "md", sm: "xl" }}>
               <Stack gap="md">
                 {/* Header */}
@@ -1584,6 +1607,9 @@ const FacturacionPage = () => {
             citasSeleccionadas={facturaPreview || []}
             onFacturaCreada={handleGuardarFactura}
             grupoBatch={grupoActual}
+            clientesDisponibles={clientes}
+            onCrearCliente={crearCliente}
+            loadingClientes={loadingClientes}
           />
 
           {/* Modal: Ver detalles de factura guardada */}
@@ -1647,6 +1673,23 @@ const FacturacionPage = () => {
             onSubmit={handleGuardarCliente}
             clienteInicial={clienteEnEdicion}
             loading={loadingClientes}
+          />
+
+          {/* Modal: Detalle de cliente */}
+          <ClienteFacturacionDetalle
+            cliente={clienteSeleccionado}
+            opened={clienteDetalleOpen}
+            onClose={handleCerrarDetalleCliente}
+          />
+
+          {/* Modal: Ver detalle de nota contable */}
+          <VerDetalleNotaModal
+            nota={notaSeleccionada}
+            opened={isVerDetalleNotaModalOpen}
+            onClose={() => {
+              setIsVerDetalleNotaModalOpen(false);
+              setNotaSeleccionada(null);
+            }}
           />
 
         </Stack>

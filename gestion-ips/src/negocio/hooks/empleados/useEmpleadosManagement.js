@@ -63,7 +63,6 @@ export const useEmpleadosManagement = () => {
       setLoading(true);
       const datosCompletosJson = buildEmpleadoJSON(formData, true);
 
-      console.log('🔍 DEBUG - JSON que se va a enviar:', datosCompletosJson);
 
       await empleadosApiService.createEmpleado(datosCompletosJson);
 

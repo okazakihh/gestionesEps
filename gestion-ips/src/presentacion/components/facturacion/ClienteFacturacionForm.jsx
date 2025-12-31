@@ -50,7 +50,7 @@ const ClienteFacturacionForm = ({ opened, onClose, onSubmit, clienteInicial = nu
   });
 
   const [errors, setErrors] = useState({});
-  const esEdicion = Boolean(clienteInicial);
+  const esEdicion = Boolean(clienteInicial?.id); // Solo es edición si tiene ID
 
   // Cargar datos si es edición
   useEffect(() => {

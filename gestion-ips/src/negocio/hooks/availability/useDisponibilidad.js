@@ -32,7 +32,7 @@ export const useDisponibilidad = () => {
     setLoadingDisponibilidades(true);
     try {
       const response = await disponibilidadApiService.getAllDisponibilidades();
-      // ¡CORRECCIÓN! Guardar solo los datos (el array), no el objeto de respuesta completo.
+      // ¡CORRECCI�"N! Guardar solo los datos (el array), no el objeto de respuesta completo.
       // Esto evita que la referencia del objeto cambie en cada render si los datos son los mismos.
       setDisponibilidades(response.data || []);
     } catch (error) {

@@ -45,9 +45,13 @@ class ApiClient {
   }
 
   async handleResponseError(error) {
-    console.error('Error en response interceptor:', error);
     const originalRequest = error.config || {};
     const status = error.response?.status;
+    
+    // No loguear 404s - son parte del flujo normal de búsqueda
+    if (status !== 404) {
+      console.error('Error en response interceptor:', error);
+    }
 
     // Si es un error de red (sin respuesta del servidor), no redirigir al login
     if (!error.response && error.code) {

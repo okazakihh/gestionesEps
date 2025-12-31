@@ -57,6 +57,12 @@ const MOCK_WAREHOUSES = [
   { id: 2, name: 'Bodega Secundaria', code: 'SECUNDARIA' }
 ];
 
+const MOCK_USERS = [
+  { id: 1, name: 'Juan Pérez', username: 'jperez', email: 'juan.perez@ips.com', active: true },
+  { id: 2, name: 'María García', username: 'mgarcia', email: 'maria.garcia@ips.com', active: true },
+  { id: 3, name: 'Carlos López', username: 'clopez', email: 'carlos.lopez@ips.com', active: true }
+];
+
 /**
  * Servicio Mock de Siigo
  */
@@ -69,7 +75,6 @@ export const siigoMockService = {
      * Crear cliente (mock)
      */
     create: async (clienteData) => {
-      console.log('🧪 [MOCK] Creando cliente:', clienteData);
       await delay(800); // Simular latencia de red
       
       const mockId = `MOCK-CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -94,7 +99,6 @@ export const siigoMockService = {
      * Obtener cliente por ID (mock)
      */
     get: async (customerId) => {
-      console.log('🧪 [MOCK] Obteniendo cliente:', customerId);
       await delay(500);
       
       return {
@@ -110,7 +114,6 @@ export const siigoMockService = {
      * Listar clientes (mock)
      */
     list: async () => {
-      console.log('🧪 [MOCK] Listando clientes');
       await delay(600);
       
       return {
@@ -145,7 +148,6 @@ export const siigoMockService = {
      * Crear factura (mock)
      */
     create: async (facturaData) => {
-      console.log('🧪 [MOCK] Creando factura:', facturaData);
       await delay(1500); // Simular proceso DIAN
       
       const mockId = `MOCK-INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -202,7 +204,6 @@ export const siigoMockService = {
      * Crear nota crédito (mock)
      */
     createCreditNote: async (notaData) => {
-      console.log('🧪 [MOCK] Creando nota crédito:', notaData);
       await delay(1200);
       
       const mockId = `MOCK-NC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -247,7 +248,6 @@ export const siigoMockService = {
      * Crear nota débito (mock)
      */
     createDebitNote: async (notaData) => {
-      console.log('🧪 [MOCK] Creando nota débito:', notaData);
       await delay(1200);
       
       const mockId = `MOCK-ND-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -292,7 +292,6 @@ export const siigoMockService = {
      * Obtener factura por ID (mock)
      */
     get: async (invoiceId) => {
-      console.log('🧪 [MOCK] Obteniendo factura:', invoiceId);
       await delay(500);
       
       return {
@@ -311,7 +310,6 @@ export const siigoMockService = {
      * Descargar PDF (mock)
      */
     getPDF: async (invoiceId) => {
-      console.log('🧪 [MOCK] Descargando PDF:', invoiceId);
       await delay(800);
       
       return {
@@ -325,7 +323,6 @@ export const siigoMockService = {
      * Enviar email (mock)
      */
     sendEmail: async (invoiceId, emailData) => {
-      console.log('🧪 [MOCK] Enviando email:', invoiceId, emailData);
       await delay(1000);
       
       return {
@@ -346,7 +343,6 @@ export const siigoMockService = {
      * Crear producto (mock)
      */
     createProduct: async (productData) => {
-      console.log('🧪 [MOCK] Creando producto:', productData);
       await delay(700);
       
       const mockId = `MOCK-PROD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -367,7 +363,6 @@ export const siigoMockService = {
      * Listar productos (mock)
      */
     list: async () => {
-      console.log('🧪 [MOCK] Listando productos');
       await delay(600);
       
       return {
@@ -402,7 +397,6 @@ export const siigoMockService = {
      * Tipos de documento (mock)
      */
     getDocumentTypes: async () => {
-      console.log('🧪 [MOCK] Obteniendo tipos de documento');
       await delay(300);
       return MOCK_DOCUMENT_TYPES;
     },
@@ -411,7 +405,6 @@ export const siigoMockService = {
      * Tipos de pago (mock)
      */
     getPaymentTypes: async () => {
-      console.log('🧪 [MOCK] Obteniendo tipos de pago');
       await delay(300);
       return MOCK_PAYMENT_TYPES;
     },
@@ -420,7 +413,6 @@ export const siigoMockService = {
      * Impuestos (mock)
      */
     getTaxes: async () => {
-      console.log('🧪 [MOCK] Obteniendo impuestos');
       await delay(300);
       return MOCK_TAXES;
     },
@@ -429,16 +421,22 @@ export const siigoMockService = {
      * Centros de costo (mock)
      */
     getCostCenters: async () => {
-      console.log('🧪 [MOCK] Obteniendo centros de costo');
       await delay(300);
       return MOCK_COST_CENTERS;
+    },
+
+    /**
+     * Usuarios/vendedores (mock)
+     */
+    getUsers: async () => {
+      await delay(300);
+      return MOCK_USERS;
     },
 
     /**
      * Bodegas (mock)
      */
     getWarehouses: async () => {
-      console.log('🧪 [MOCK] Obteniendo bodegas');
       await delay(300);
       return MOCK_WAREHOUSES;
     }
@@ -452,7 +450,6 @@ export const siigoMockService = {
      * Obtener token (mock)
      */
     getToken: async () => {
-      console.log('🧪 [MOCK] Obteniendo token de acceso');
       await delay(400);
       
       return {
@@ -467,7 +464,6 @@ export const siigoMockService = {
      * Renovar token (mock)
      */
     refreshToken: async () => {
-      console.log('🧪 [MOCK] Renovando token de acceso');
       await delay(300);
       
       return {
@@ -483,7 +479,6 @@ export const siigoMockService = {
      * En modo DEV siempre retorna true
      */
     isTokenValid: () => {
-      console.log('🧪 [MOCK] Verificando validez del token (siempre válido en DEV)');
       return true;
     }
   }

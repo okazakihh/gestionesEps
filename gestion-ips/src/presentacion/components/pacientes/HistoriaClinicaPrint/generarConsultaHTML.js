@@ -148,7 +148,7 @@ export const generarConsultaHTML = (consulta, numeroHistoria, config) => {
     }
     
     diagnosticoHTML = `
-    <div class="section-title">DIAGNÓSTICO</div>
+    <div class="section-title">DIAGNOSTICO</div>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; border: 1px solid #ddd;">
       ${diagnosticosFormatted}
     </table>

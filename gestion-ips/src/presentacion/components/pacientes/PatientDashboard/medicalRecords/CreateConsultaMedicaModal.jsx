@@ -481,7 +481,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
 
       await Swal.fire({
         icon: 'success',
-        title: '✅ Consulta Médica Creada',
+        title: 'Consulta Médica Creada',
         text: 'La consulta ha sido registrada exitosamente.',
         confirmButtonColor: '#8B5CF6',
         timer: 2500,
@@ -520,7 +520,7 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
       }
       size="xl"
       centered
-          overlayColor={tema.primaryColor}
+          overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
           styles={{
             content: { maxHeight: '90vh' },
             body: { padding: 0 },

@@ -43,7 +43,6 @@ function getActiveService() {
   const mode = getSiigoMode();
   const service = mode === 'PROD' ? siigoRealService : siigoMockService;
   
-  console.log(`📡 Siigo API Mode: ${mode} ${mode === 'DEV' ? '🧪' : '🚀'}`);
   
   return service;
 }

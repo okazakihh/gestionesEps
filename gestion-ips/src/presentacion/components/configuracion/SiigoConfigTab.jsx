@@ -85,7 +85,7 @@ export const SiigoConfigTab = () => {
     // Si cambia a PROD, mostrar advertencia
     if (newMode === 'PROD') {
       const result = await Swal.fire({
-        title: '⚠️ Activar Modo Producción',
+        title: 'Activar Modo Producción',
         html: `
           <p style="margin-bottom: 12px;">
             Está a punto de activar el modo <strong>PRODUCCIÓN</strong> de Siigo.
@@ -125,7 +125,7 @@ export const SiigoConfigTab = () => {
       await updateIpsConfig(updatedConfig);
       
       Swal.fire({
-        title: newMode === 'DEV' ? '🧪 Modo Desarrollo Activado' : '🚀 Modo Producción Activado',
+        title: newMode === 'DEV' ? 'Modo Desarrollo Activado' : 'Modo Producción Activado',
         text: newMode === 'DEV' 
           ? 'Todas las operaciones se simularán sin costo ni impacto real.'
           : 'Las operaciones ahora se realizarán en el sistema real de Siigo.',
@@ -249,7 +249,7 @@ export const SiigoConfigTab = () => {
                   <Group gap="xs" style={{ padding: '8px' }}>
                     <IconRocket size={20} />
                     <div>
-                      <Text fw={600} size="sm">🚀 Producción (Real)</Text>
+                      <Text fw={600} size="sm">Producción (Real)</Text>
                       <Text size="xs" c="dimmed">API Real • Validez legal</Text>
                     </div>
                   </Group>

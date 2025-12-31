@@ -18,7 +18,7 @@ export const generarAntecedentesHTML = (historiaData) => {
 
   const antecedentes = historiaData.antecedentes;
   let html = `
-    <div class="section-title" style="margin-top: 10px;">📋 ANTECEDENTES</div>
+    <div class="section-title" style="margin-top: 10px;">ANTECEDENTES</div>
     <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; border: 1px solid #ddd;">
   `;
 

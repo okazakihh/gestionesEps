@@ -31,7 +31,6 @@ const UsuariosPage = () => {
   // Check for employee data from navigation state
   useEffect(() => {
     if (location.state?.createUserFromEmployee && location.state?.employeeData) {
-      console.log('📥 Datos del empleado recibidos:', location.state.employeeData);
       setEmployeeData(location.state.employeeData);
       setIsModalOpen(true);
       // Clear the state to prevent re-opening on refresh
@@ -186,7 +185,6 @@ const UsuariosPage = () => {
         const { AuthService } = await import('../../data/services/authService.js');
         const response = await AuthService.register(data);
         
-        console.log('Usuario registrado exitosamente:', response);
 
         // Mostrar SweetAlert de éxito
         await ThemedSwal.fire({
@@ -394,7 +392,7 @@ const UsuariosPage = () => {
           title=""
           size="xl"
           centered
-          overlayColor={tema.primaryColor}
+          overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
           styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
         >
           <CreateUserForm
@@ -412,7 +410,7 @@ const UsuariosPage = () => {
           title="Confirmar eliminación de usuario"
           size="md"
           centered
-          overlayColor={tema.primaryColor}
+          overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
           styles={{ header: { backgroundColor: `${tema.primaryColor} !important`, padding: '10px 16px' }, title: { color: 'white !important' }, close: { color: 'white !important' } }}
         >
           <Stack gap="md">

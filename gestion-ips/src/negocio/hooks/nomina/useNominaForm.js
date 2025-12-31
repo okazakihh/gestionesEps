@@ -146,11 +146,6 @@ export const useNominaForm = (initialData = null) => {
           embargos: Number(formData.embargos) || 0,
           otrasDeducciones: Number(formData.otrasDeducciones) || 0
         });
-        console.log('💰 Cálculo de nómina:', {
-          salarioBase: formData.salarioBase,
-          diasTrabajados: formData.diasTrabajados,
-          resultado
-        });
         setCalculatedValues(resultado);
       } catch (error) {
         console.error('❌ Error calculando nómina:', error);

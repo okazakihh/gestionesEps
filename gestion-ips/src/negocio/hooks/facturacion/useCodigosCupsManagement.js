@@ -33,16 +33,11 @@ export const useCodigosCupsManagement = () => {
         size: 10000 // Número suficientemente grande para obtener todos
       });
 
-      console.log('Response completa:', response);
 
       // Verificar formato de respuesta
       if (response && response.content !== undefined) {
-        console.log('Códigos CUPS cargados:', response.content);
-        console.log('Primer código ejemplo:', response.content[0]);
         setAllCodigosCups(response.content || []);
       } else if (response && response.success) {
-        console.log('Códigos CUPS cargados (con success):', response.data.content);
-        console.log('Primer código ejemplo:', response.data.content[0]);
         setAllCodigosCups(response.data.content || []);
       } else {
         console.error('Unexpected response format:', response);
@@ -66,7 +61,6 @@ export const useCodigosCupsManagement = () => {
    * Filtra los códigos CUPS en el frontend basándose en el término de búsqueda
    */
   const filteredCodigosCups = useMemo(() => {
-    console.log('Filtrando códigos. Total:', allCodigosCups.length, 'Término:', searchTerm);
     
     if (!searchTerm.trim()) {
       return allCodigosCups;
@@ -86,7 +80,6 @@ export const useCodigosCupsManagement = () => {
       return codigoMatch || nombreMatch;
     });
     
-    console.log('Códigos filtrados:', filtered.length);
     return filtered;
   }, [allCodigosCups, searchTerm]);
 

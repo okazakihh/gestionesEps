@@ -132,7 +132,7 @@ export const XMLViewerModal = ({ opened, onClose, xmlContent }) => {
         {/* Información */}
         <Paper p="sm" withBorder style={{ backgroundColor: '#F0F9FF', borderColor: '#3B82F6' }}>
           <Text size="sm" c="blue">
-            📄 Este es el XML UBL 2.1 conforme a la Resolución 000042 de 2020 de la DIAN
+            �"� Este es el XML UBL 2.1 conforme a la Resolución 000042 de 2020 de la DIAN
           </Text>
         </Paper>
 

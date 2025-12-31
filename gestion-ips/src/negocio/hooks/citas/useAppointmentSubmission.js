@@ -140,7 +140,7 @@ export const useAppointmentSubmission = (patientId, patientName, onAppointmentCr
         throw new Error(`Error del servidor: ${errorMessage}`);
       }
     } catch (error) {
-      console.error('💥 Error completo al crear cita:', error);
+      console.error('Error completo al crear cita:', error);
 
       // Determine error type and message
       let errorTitle = 'Error al agendar cita';

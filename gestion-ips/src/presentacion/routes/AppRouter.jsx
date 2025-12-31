@@ -5,6 +5,7 @@ import { ProtectedRoute } from '../components/auth/ProtectedRoute.jsx';
 import { PERMISSIONS } from '../../negocio/utils/auth/permissions.js';
 import { LoginPage } from '../pages/LoginPage.jsx';
 import { DashboardPage } from '../pages/DashboardPage.jsx';
+import { ReportesPage } from '../pages/ReportesPage.jsx';
 import UsuariosPage from '../pages/UsersPage.jsx';
 import PatientDashboard from '../pages/pacientes/PatientDashboard.jsx';
 import EmpleadosPage from '../pages/empleados/EmpleadosPage.jsx';
@@ -78,6 +79,15 @@ const AppRouter = () => {
         element={
           <ProtectedRoute module={PERMISSIONS.NOMINA}>
             <NominaPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/reportes"
+        element={
+          <ProtectedRoute module={PERMISSIONS.REPORTES}>
+            <ReportesPage />
           </ProtectedRoute>
         }
       />

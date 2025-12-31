@@ -98,7 +98,7 @@ const generarDestinatarioHTML = (cliente, tipoDestinatario) => {
   const badgeText = isPaciente ? 'Paciente' : 'Entidad';
 
   if (isPaciente) {
-    // Información de Paciente (Persona Natural)
+    // Informacion de Paciente (Persona Natural)
     return `
       <div class="destinatario-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -134,7 +134,7 @@ const generarDestinatarioHTML = (cliente, tipoDestinatario) => {
       </div>
     `;
   } else {
-    // Información de Entidad (Persona Jurídica)
+    // Informacion de Entidad (Persona Juridica)
     const contactoHtml = (cliente.nombreContacto || cliente.cargoContacto) ? `
       <div style="border-top: 1px solid #e9ecef; margin-top: 10px; padding-top: 10px;">
         <div style="text-align: center; margin-bottom: 8px; font-size: 10px; color: #868e96; font-weight: 600;">
@@ -207,7 +207,7 @@ const generarInfoPagoHTML = (formaPago, medioPago, observaciones) => {
 
   return `
     <div class="info-pago-box">
-      <h3 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #495057;">💳 Información de Pago</h3>
+      <h3 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #495057;">Información de Pago</h3>
       <div class="destinatario-grid" style="grid-template-columns: repeat(${observaciones ? '3' : '2'}, 1fr);">
         ${formaPago ? `
           <div class="destinatario-item">
@@ -238,7 +238,6 @@ const generarInfoPagoHTML = (formaPago, medioPago, observaciones) => {
  * @returns {string} HTML con tabla de servicios
  */
 const generarTablaServiciosHTML = (items) => {
-  console.log('🖨️ generarTablaServiciosHTML - Items recibidos:', items);
   
   if (!items || items.length === 0) {
     return `
@@ -367,7 +366,7 @@ const generarNotasHTML = (facturaData, datosBancarios = {}) => {
   return `
     <div class="notes">
       <div class="note-box payment-box">
-        <h4>💳 DATOS BANCARIOS PARA TRANSFERENCIAS</h4>
+        <h4>DATOS BANCARIOS PARA TRANSFERENCIAS</h4>
         <p>
           <strong>Banco:</strong> ${datosBancarios.banco || 'N/A'} | <strong>${datosBancarios.tipoCuenta || 'Cuenta'}:</strong> ${datosBancarios.numeroCuenta || 'N/A'}<br>
           <strong>Nequi:</strong> ${datosBancarios.nequi || 'N/A'} | <strong>Daviplata:</strong> ${datosBancarios.daviplata || 'N/A'}
@@ -375,7 +374,7 @@ const generarNotasHTML = (facturaData, datosBancarios = {}) => {
       </div>
 
       <div class="note-box terms-box">
-        <h4>📋 TÉRMINOS Y CONDICIONES</h4>
+        <h4>TÉRMINOS Y CONDICIONES</h4>
         <ul>
           <li>Los servicios médicos prestados están sujetos a la regulación colombiana en salud</li>
           <li>Esta factura es válida como soporte de gastos médicos ante EPS y entidades tributarias</li>
@@ -449,7 +448,7 @@ const generarPieHTML = (empresa) => {
  * @returns {string} HTML completo listo para imprimir
  */
 export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) => {
-  // Validar que se proporcione la información de la empresa
+  // Validar que se proporcione la informacion de la empresa
   if (!empresa) {
     throw new Error('La información de la empresa es requerida. Use el hook useIpsConfig para obtenerla.');
   }
@@ -468,24 +467,21 @@ export const generarFacturaHTML = (factura, facturaData = {}, empresa = null) =>
   }
 
   // Extraer datos
-  console.log('🖨️ FacturaHTML - Factura:', factura);
-  console.log('🖨️ FacturaHTML - DatosFactura:', datosFactura);
   
   const numeroFactura = datosFactura.numeroFactura || `FM-${factura.id || '0000'}`;
   const fechaFactura = datosFactura.fechaFactura || datosFactura.fecha || factura.fecha;
   
   // Buscar citas/servicios en diferentes propiedades
   const citas = datosFactura.servicios || datosFactura.citas || [];
-  console.log('🖨️ FacturaHTML - Servicios/Citas encontrados:', citas);
   
   const total = datosFactura.total || 0;
   const subtotal = total; // En servicios de salud generalmente no hay IVA
   
-  // Información del destinatario
+  // Informacion del destinatario
   const tipoDestinatario = datosFactura.tipoDestinatario || 'PACIENTE';
   const cliente = datosFactura.cliente || {};
   
-  // Información de pago
+  // Informacion de pago
   const formaPago = datosFactura.formaPago || '';
   const medioPago = datosFactura.medioPago || '';
   const observaciones = datosFactura.observaciones || '';

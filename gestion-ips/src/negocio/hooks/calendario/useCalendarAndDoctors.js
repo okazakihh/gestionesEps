@@ -243,108 +243,74 @@ export const useCalendarAndDoctors = () => {
           });
 
           // Group appointments by doctor
-          console.log('Processing appointments for date:', today);
           filteredAppointments.forEach(appointment => {
             try {
               const appointmentData = JSON.parse(appointment.datosJson || '{}');
               const medicoAsignado = appointmentData.medicoAsignado;
-              console.log('Processing appointment:', appointment.id, 'assigned to:', medicoAsignado);
 
               if (medicoAsignado && doctorMap[medicoAsignado]) {
                 const doctor = doctorMap[medicoAsignado];
                 const doctorId = doctor.id;
-                console.log('Doctor found for appointment:', doctorId);
 
                 // Get patient name
                 let patientName = appointmentData.motivo || 'Paciente';
                 if (appointment.pacienteId) {
                   const patientData = patientsData.find(p => p.id == appointment.pacienteId);
                   if (patientData) {
-                    console.log('Found patient data for appointment', appointment.id, ':', patientData);
                     try {
                       const datosCompletos = JSON.parse(patientData.datosJson || '{}');
-                      console.log('Parsed patient datosCompletos:', datosCompletos);
 
                       let personalInfo = {};
 
                       // Handle different data structures
-                      console.log('Checking data structures...');
-                      console.log('datosCompletos.informacionPersonalJson exists:', !!datosCompletos.informacionPersonalJson);
-                      console.log('datosCompletos.informacionPersonal exists:', !!datosCompletos.informacionPersonal);
-                      console.log('datosCompletos.datosJson type:', typeof datosCompletos.datosJson);
-                      console.log('datosCompletos.datosJson value:', datosCompletos.datosJson);
 
                       if (datosCompletos.informacionPersonalJson) {
                         // Old structure: informacionPersonalJson as string
                         personalInfo = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
-                        console.log('Using old structure - parsed informacionPersonalJson:', personalInfo);
                       } else if (datosCompletos.informacionPersonal) {
                         // New structure: informacionPersonal as object
                         personalInfo = datosCompletos.informacionPersonal;
-                        console.log('Using new structure - direct informacionPersonal:', personalInfo);
                       } else if (typeof datosCompletos.datosJson === 'string') {
                         // Double nested structure: datosJson is a string that contains another JSON
-                        console.log('Attempting double nested structure...');
                         try {
                           const doubleNestedData = JSON.parse(datosCompletos.datosJson);
-                          console.log('Double nested parsed successfully:', doubleNestedData);
-                          console.log('Double nested has informacionPersonal:', !!doubleNestedData.informacionPersonal);
                           if (doubleNestedData.informacionPersonal) {
                             personalInfo = doubleNestedData.informacionPersonal;
-                            console.log('Found informacionPersonal in double nested structure:', personalInfo);
                           } else {
-                            console.log('No informacionPersonal found in double nested structure');
-                            console.log('Available keys in double nested:', Object.keys(doubleNestedData));
                             // Check if it's nested under another key
                             if (doubleNestedData.datosJson) {
-                              console.log('Found datosJson inside double nested, attempting triple nesting...');
                               try {
                                 const tripleNestedData = JSON.parse(doubleNestedData.datosJson);
-                                console.log('Triple nested parsed:', tripleNestedData);
                                 if (tripleNestedData.informacionPersonal) {
                                   personalInfo = tripleNestedData.informacionPersonal;
-                                  console.log('Found informacionPersonal in triple nested structure:', personalInfo);
                                 }
                               } catch (error) {
-                                console.log('Error parsing triple nested datosJson:', error);
                               }
                             }
                           }
                         } catch (error) {
-                          console.log('Error parsing double nested datosJson:', error);
                         }
                       } else if (datosCompletos.datosJson) {
                         // Nested structure: datosJson contains the actual data
-                        console.log('Attempting single nested structure...');
                         const nestedData = JSON.parse(datosCompletos.datosJson || '{}');
-                        console.log('Single nested parsed:', nestedData);
                         if (nestedData.informacionPersonal) {
                           personalInfo = nestedData.informacionPersonal;
-                          console.log('Found informacionPersonal in nested structure:', personalInfo);
                         } else {
-                          console.log('No informacionPersonal found in nested structure');
                         }
                       } else {
-                        console.log('No informacionPersonal, informacionPersonalJson, or datosJson found');
-                        console.log('Available keys in datosCompletos:', Object.keys(datosCompletos));
                       }
 
                       const fullName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim();
-                      console.log('Constructed fullName:', fullName);
                       if (fullName && fullName !== ' ') {
                         patientName = fullName;
-                        console.log('Using patient name:', patientName);
                       } else {
-                        console.log('FullName is empty or whitespace, keeping motivo:', appointmentData.motivo);
                       }
                     } catch (error) {
                       console.error('Error parsing patient name for appointment:', appointment.id, error);
                     }
                   } else {
-                    console.log('No patient data found for pacienteId:', appointment.pacienteId);
                   }
                 } else {
-                  console.log('No pacienteId found in appointment:', appointment.id);
                 }
 
                 // Handle different date formats for display
@@ -485,27 +451,22 @@ export const useCalendarAndDoctors = () => {
       });
 
       // Group appointments by doctor
-      console.log('Processing appointments for date:', selectedDate);
       filteredAppointments.forEach(appointment => {
         try {
           const appointmentData = JSON.parse(appointment.datosJson || '{}');
           const medicoAsignado = appointmentData.medicoAsignado;
-          console.log('Processing appointment:', appointment.id, 'assigned to:', medicoAsignado);
 
           if (medicoAsignado && doctorMap[medicoAsignado]) {
             const doctor = doctorMap[medicoAsignado];
             const doctorId = doctor.id;
-            console.log('Doctor found for appointment:', doctorId);
 
             // Get patient name
             let patientName = appointmentData.motivo || 'Paciente';
             if (appointment.pacienteId) {
               const patientData = patientsData.find(p => p.id == appointment.pacienteId);
               if (patientData) {
-                console.log('Found patient data for appointment', appointment.id, ':', patientData);
                 try {
                   const datosCompletos = JSON.parse(patientData.datosJson || '{}');
-                  console.log('Parsed patient datosCompletos:', datosCompletos);
 
                   let personalInfo = {};
 
@@ -513,31 +474,23 @@ export const useCalendarAndDoctors = () => {
                   if (datosCompletos.informacionPersonalJson) {
                     // Old structure: informacionPersonalJson as string
                     personalInfo = JSON.parse(datosCompletos.informacionPersonalJson || '{}');
-                    console.log('Using old structure - parsed informacionPersonalJson:', personalInfo);
                   } else if (datosCompletos.informacionPersonal) {
                     // New structure: informacionPersonal as object
                     personalInfo = datosCompletos.informacionPersonal;
-                    console.log('Using new structure - direct informacionPersonal:', personalInfo);
                   } else {
-                    console.log('No informacionPersonal or informacionPersonalJson found');
                   }
 
                   const fullName = `${personalInfo.primerNombre || ''} ${personalInfo.segundoNombre || ''} ${personalInfo.primerApellido || ''} ${personalInfo.segundoApellido || ''}`.trim();
-                  console.log('Constructed fullName:', fullName);
                   if (fullName && fullName !== ' ') {
                     patientName = fullName;
-                    console.log('Using patient name:', patientName);
                   } else {
-                    console.log('FullName is empty or whitespace, keeping motivo:', appointmentData.motivo);
                   }
                 } catch (error) {
                   console.error('Error parsing patient name for appointment:', appointment.id, error);
                 }
               } else {
-                console.log('No patient data found for pacienteId:', appointment.pacienteId);
               }
             } else {
-              console.log('No pacienteId found in appointment:', appointment.id);
             }
 
             // Handle different date formats for display

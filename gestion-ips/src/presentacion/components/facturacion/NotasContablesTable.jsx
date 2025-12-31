@@ -169,9 +169,9 @@ const NotasContablesTable = ({
               value={filtroTipo}
               onChange={setFiltroTipo}
               data={[
-                { value: 'TODOS', label: 'üìã Todos los tipos' },
-                { value: 'CREDITO', label: 'üìâ Notas Cr√©dito' },
-                { value: 'DEBITO', label: 'üìà Notas D√©bito' }
+                { value: 'TODOS', label: 'ü"ã Todos los tipos' },
+                { value: 'CREDITO', label: 'ü"â Notas Cr√©dito' },
+                { value: 'DEBITO', label: 'ü"à Notas D√©bito' }
               ]}
             />
           </Grid.Col>
@@ -248,11 +248,16 @@ const NotasContablesTable = ({
           </Table.Thead>
           <Table.Tbody>
             {notasFiltradas.length > 0 ? (
-              notasFiltradas.map((nota) => (
+              notasFiltradas.map((nota) => {
+                // Generar n√∫mero de nota si no existe
+                const numeroNota = nota.numeroNota || nota.numero || nota.number || 
+                  (nota.id ? `${nota.tipoNota === 'CREDITO' ? 'NC' : 'ND'}-${String(nota.id).padStart(6, '0')}` : 'N/A');
+                
+                return (
                 <Table.Tr key={nota.id}>
                   <Table.Td>
                     <Text size="sm" fw={500} style={{ fontFamily: 'monospace' }}>
-                      {nota.numeroNota || nota.numero || 'N/A'}
+                      {numeroNota}
                     </Text>
                   </Table.Td>
                   <Table.Td>
@@ -337,7 +342,8 @@ const NotasContablesTable = ({
                     </Group>
                   </Table.Td>
                 </Table.Tr>
-              ))
+                );
+              })
             ) : (
               <Table.Tr>
                 <Table.Td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>

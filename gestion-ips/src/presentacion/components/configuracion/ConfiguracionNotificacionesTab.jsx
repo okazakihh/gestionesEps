@@ -56,10 +56,8 @@ export const ConfiguracionNotificacionesTab = () => {
     try {
       const config = await getConfiguracionByClave('NOTIFICACIONES');
       
-      console.log('🔍 Configuración recibida (Notificaciones):', config);
       
       if (config && config.jsonData) {
-        console.log('📦 JSON Data:', config.jsonData);
         setConfigOriginal(config.jsonData);
         
         setFormData({
@@ -110,8 +108,6 @@ export const ConfiguracionNotificacionesTab = () => {
         ...formData
       };
 
-      console.log('Config Original (Notificaciones):', configOriginal);
-      console.log('Updated Config (Notificaciones):', updatedConfig);
 
       // Enviar solo el objeto de configuración
       const result = await updateConfiguracionByClave('NOTIFICACIONES', updatedConfig);

@@ -8,7 +8,6 @@ export const registerServiceWorker = async () => {
         scope: '/'
       });
 
-      console.log('Service Worker registrado correctamente:', registration.scope);
 
       // Manejar actualizaciones
       registration.addEventListener('updatefound', () => {
@@ -26,7 +25,6 @@ export const registerServiceWorker = async () => {
       // Escuchar mensajes del Service Worker
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'CACHE_UPDATED') {
-          console.log('Cache actualizado:', event.data.payload);
         }
       });
 
@@ -89,7 +87,6 @@ export const clearCache = async () => {
       navigator.serviceWorker.controller.postMessage({
         type: 'CLEAR_CACHE'
       });
-      console.log('Solicitud de limpieza de cache enviada');
       return true;
     }
     return false;
@@ -143,7 +140,6 @@ export const updateServiceWorker = async () => {
     if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.ready;
       await registration.update();
-      console.log('Service Worker actualizado');
       return true;
     }
     return false;

@@ -282,7 +282,7 @@ export const ClientesSiigoTab = () => {
           title="Siigo no conectado"
           color="yellow"
         >
-          Debe configurar y conectar Siigo en <strong>Configuración → Siigo API</strong> para sincronizar clientes.
+          Debe configurar y conectar Siigo en <strong>Configuración �' Siigo API</strong> para sincronizar clientes.
         </Alert>
       )}
 

@@ -135,7 +135,6 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
         activa: formData.activa
       };
 
-      console.log('📋 Enviando Historia Clínica:', JSON.stringify(submitData, null, 2));
 
       const result = await historiasClinicasApiService.createHistoriaClinica(formData.pacienteId, submitData);
 
@@ -150,7 +149,7 @@ const CreateHistoriaClinicaModal = ({ isOpen, onClose, onHistoriaCreated, pacien
 
       await Swal.fire({
         icon: 'success',
-        title: '✅ Historia Clínica Creada',
+        title: 'Historia Clínica Creada',
         text: 'La historia clínica ha sido registrada exitosamente.',
         confirmButtonColor: '#10B981',
         timer: 2500,

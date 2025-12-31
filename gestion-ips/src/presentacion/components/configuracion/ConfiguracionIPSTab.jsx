@@ -84,10 +84,8 @@ export const ConfiguracionIPSTab = () => {
     try {
       const config = await getConfiguracionByClave('IPS_INFO');
       
-      console.log('🔍 Configuración recibida (IPS):', config);
       
       if (config && config.jsonData) {
-        console.log('📦 JSON Data (IPS):', config.jsonData);
         // Guardar configuración original completa
         setConfigOriginal(config.jsonData);
         
@@ -128,9 +126,7 @@ export const ConfiguracionIPSTab = () => {
           }
         };
         
-        console.log('🎯 Actualizando formData con:', newFormData);
         setFormData(newFormData);
-        console.log('✅ formData actualizado');
       }
     } catch (error) {
       console.error('Error al cargar configuración de la IPS:', error);
@@ -211,9 +207,6 @@ export const ConfiguracionIPSTab = () => {
         }
       };
 
-      console.log('🔍 Config Original:', configOriginal);
-      console.log('📝 Form Data:', formData);
-      console.log('✅ Updated Config (merged):', updatedConfig);
 
       // Enviar solo el objeto de configuración, no un wrapper con metadata
       // El servicio se encargará de convertirlo a JSON string
@@ -488,7 +481,7 @@ export const ConfiguracionIPSTab = () => {
 
       {/* Datos Bancarios */}
       <Paper shadow="xs" p="lg" withBorder style={{ backgroundColor: '#fef3c7' }}>
-        <Title order={4} mb="md">💳 Datos Bancarios para Pagos</Title>
+        <Title order={4} mb="md">�'� Datos Bancarios para Pagos</Title>
         <Text size="sm" c="dimmed" mb="md">
           Esta información se mostrará en las facturas impresas
         </Text>

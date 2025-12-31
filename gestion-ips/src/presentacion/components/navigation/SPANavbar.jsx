@@ -3,46 +3,56 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useNavigationStore } from '../../stores/navigationStore';
+import {
+  IconDashboard,
+  IconUsers,
+  IconBuilding,
+  IconUserDollar,
+  IconReceipt,
+  IconChartLine,
+  IconSettings,
+  IconLogout
+} from '@tabler/icons-react';
 
 const navItems = [
   {
     name: 'Dashboard',
     view: 'dashboard',
-    icon: '📊',
+    icon: IconDashboard,
   },
   {
     name: 'Usuarios',
     view: 'usuarios',
-    icon: '👥',
+    icon: IconUsers,
     roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Pacientes',
     view: 'pacientes',
-    icon: '🏥',
+    icon: IconBuilding,
     roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Empleados',
     view: 'empleados',
-    icon: '👷',
+    icon: IconUsers,
   },
   {
     name: 'Nómina',
     view: 'nomina',
-    icon: '💰',
+    icon: IconReceipt,
     roles: ['ADMIN'],
   },
   {
     name: 'Reportes',
     view: 'reportes',
-    icon: '📈',
+    icon: IconChartLine,
     roles: ['ADMIN', 'MODERATOR'],
   },
   {
     name: 'Configuración',
     view: 'configuracion',
-    icon: '⚙️',
+    icon: IconSettings,
     roles: ['ADMIN'],
   },
 ];
@@ -156,7 +166,9 @@ export const SPANavbar = () => {
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              <span className="mr-3 text-lg">{item.icon}</span>
+              <span className="mr-3">
+                <item.icon size={20} stroke={1.5} />
+              </span>
               {item.name}
             </button>
           );
@@ -169,7 +181,9 @@ export const SPANavbar = () => {
           onClick={handleLogout}
           className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 transition-colors duration-200"
         >
-          <span className="mr-3 text-lg">🚪</span>
+          <span className="mr-3">
+            <IconLogout size={20} stroke={1.5} />
+          </span>
           Cerrar Sesión
         </button>
       </div>

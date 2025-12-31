@@ -26,7 +26,8 @@ public interface ClienteFacturacionRepository extends JpaRepository<ClienteFactu
     List<ClienteFacturacion> findByActivoTrueOrderByFechaCreacionDesc();
 
     // Buscar cliente por documento (requiere búsqueda en JSON)
-    @Query(value = "SELECT * FROM clientes_facturacion WHERE activo = true AND json_data::jsonb->>'numeroDocumento' = :numeroDocumento", nativeQuery = true)
+    // Busca exactamente el número de documento sin guiones ni espacios
+    @Query(value = "SELECT * FROM clientes_facturacion WHERE activo = true AND REPLACE(REPLACE(json_data::jsonb->>'numeroDocumento', '-', ''), ' ', '') = REPLACE(REPLACE(:numeroDocumento, '-', ''), ' ', '')", nativeQuery = true)
     Optional<ClienteFacturacion> findByNumeroDocumento(@Param("numeroDocumento") String numeroDocumento);
 
     // Buscar clientes por tipo de persona

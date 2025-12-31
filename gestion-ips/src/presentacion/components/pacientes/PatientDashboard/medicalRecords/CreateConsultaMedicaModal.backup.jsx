@@ -69,11 +69,9 @@ const CreateConsultaMedicaModal = ({ isOpen, onClose, onConsultaCreated, histori
         datosJson: datosJson
       };
 
-      console.log('Enviando datos de consulta médica:', JSON.stringify(submitData, null, 2));
 
       const result = await historiasClinicasApiService.crearConsulta(formData.historiaClinicaId, submitData.datosJson);
 
-      console.log('Respuesta del backend:', result);
 
       // Mostrar SweetAlert de éxito
       await Swal.fire({

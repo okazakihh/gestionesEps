@@ -40,22 +40,22 @@ public class ClienteFacturacionController {
             if (jsonData == null || jsonData.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "Datos vacíos");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.ok(response);
             }
 
             ClienteFacturacionDTO nuevoCliente = clienteService.crearClienteDesdeJson(jsonData);
             response.put("success", true);
             response.put("data", nuevoCliente);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
             response.put("error", "Datos inválidos: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
             response.put("success", false);
             response.put("error", "Error interno: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.ok(response);
         }
     }
 
@@ -70,12 +70,11 @@ public class ClienteFacturacionController {
             ClienteFacturacionDTO cliente = clienteService.obtenerClientePorId(id);
             response.put("success", true);
             response.put("data", cliente);
-            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
             response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -117,19 +116,25 @@ public class ClienteFacturacionController {
     /**
      * Buscar cliente por número de documento
      * GET /api/clientes-facturacion/buscar/documento/{numeroDocumento}
+     * SIEMPRE retorna 200 OK con JSON { success, data/error }
      */
     @GetMapping("/buscar/documento/{numeroDocumento}")
     public ResponseEntity<Map<String, Object>> buscarPorDocumento(@PathVariable String numeroDocumento) {
         Map<String, Object> response = new HashMap<>();
-        Optional<ClienteFacturacionDTO> cliente = clienteService.buscarPorNumeroDocumento(numeroDocumento);
-        if (cliente.isPresent()) {
-            response.put("success", true);
-            response.put("data", cliente.get());
+        try {
+            Optional<ClienteFacturacionDTO> cliente = clienteService.buscarPorNumeroDocumento(numeroDocumento);
+            if (cliente.isPresent()) {
+                response.put("success", true);
+                response.put("data", cliente.get());
+            } else {
+                response.put("success", false);
+                response.put("error", "Cliente no encontrado");
+            }
             return ResponseEntity.ok(response);
-        } else {
+        } catch (Exception e) {
             response.put("success", false);
-            response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            response.put("error", "Error al buscar cliente: " + e.getMessage());
+            return ResponseEntity.ok(response);
         }
     }
 
@@ -157,12 +162,11 @@ public class ClienteFacturacionController {
         if (cliente.isPresent()) {
             response.put("success", true);
             response.put("data", cliente.get());
-            return ResponseEntity.ok(response);
         } else {
             response.put("success", false);
             response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -193,22 +197,20 @@ public class ClienteFacturacionController {
             if (jsonData == null || jsonData.trim().isEmpty()) {
                 response.put("success", false);
                 response.put("error", "Datos vacíos");
-                return ResponseEntity.badRequest().body(response);
+                return ResponseEntity.ok(response);
             }
 
             ClienteFacturacionDTO clienteActualizado = clienteService.actualizarCliente(id, jsonData);
             response.put("success", true);
             response.put("data", clienteActualizado);
-            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
             response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", "Error interno: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -222,12 +224,11 @@ public class ClienteFacturacionController {
             clienteService.desactivarCliente(id);
             response.put("success", true);
             response.put("message", "Cliente desactivado correctamente");
-            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
             response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -241,12 +242,11 @@ public class ClienteFacturacionController {
             clienteService.reactivarCliente(id);
             response.put("success", true);
             response.put("message", "Cliente reactivado correctamente");
-            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
             response.put("error", "Cliente no encontrado");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     /**

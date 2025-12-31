@@ -82,7 +82,6 @@ export const useNominaManagement = () => {
         size
       });
 
-      console.log('📋 Nóminas cargadas:', response);
 
       // Parsear jsonData de cada nómina y enriquecer con info del empleado
       const nominasParsed = await Promise.all(
@@ -115,7 +114,6 @@ export const useNominaManagement = () => {
         })
       );
 
-      console.log('✅ Nóminas procesadas:', nominasParsed);
 
       setNominas(nominasParsed);
       setTotalElements(response.totalElements || 0);
@@ -153,7 +151,6 @@ export const useNominaManagement = () => {
         size
       });
 
-      console.log(`📋 Nóminas del empleado ${empleadoId}:`, response);
 
       // Obtener información del empleado una sola vez
       const empleadoInfo = await getEmpleadoInfo(empleadoId);
@@ -203,7 +200,6 @@ export const useNominaManagement = () => {
 
       const nomina = await nominaApiService.getNominaById(id);
       
-      console.log('✅ Nómina obtenida:', nomina);
       
       return nomina;
     } catch (err) {
@@ -224,11 +220,9 @@ export const useNominaManagement = () => {
       setOperationError(null);
       setOperationSuccess(null);
 
-      console.log('➕ Creando nómina:', { empleadoId, nominaData });
 
       const nuevaNomina = await nominaApiService.createNomina(empleadoId, nominaData);
       
-      console.log('✅ Nómina creada:', nuevaNomina);
       
       // Mostrar alerta de éxito
       await Swal.fire({
@@ -274,11 +268,9 @@ export const useNominaManagement = () => {
       setOperationError(null);
       setOperationSuccess(null);
 
-      console.log('✏️ Actualizando nómina:', { id, nominaData });
 
       const nominaActualizada = await nominaApiService.updateNomina(id, nominaData);
       
-      console.log('✅ Nómina actualizada:', nominaActualizada);
       
       // Mostrar alerta de éxito
       await Swal.fire({
@@ -324,11 +316,9 @@ export const useNominaManagement = () => {
       setOperationError(null);
       setOperationSuccess(null);
 
-      console.log('🔒 Desactivando nómina:', id);
 
       await nominaApiService.deactivateNomina(id);
       
-      console.log('✅ Nómina desactivada');
       
       // Mostrar alerta de éxito
       await Swal.fire({
@@ -372,11 +362,9 @@ export const useNominaManagement = () => {
       setOperationError(null);
       setOperationSuccess(null);
 
-      console.log('🗑️ Eliminando nómina:', id);
 
       await nominaApiService.deleteNomina(id);
       
-      console.log('✅ Nómina eliminada');
       
       // Mostrar alerta de éxito
       await Swal.fire({

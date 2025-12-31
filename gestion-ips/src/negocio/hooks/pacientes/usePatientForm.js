@@ -403,10 +403,6 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
       try {
         const patientData = parsePatientDataForEdit(editingPatient);
         
-        console.log('🔍 Paciente para editar:', editingPatient);
-        console.log('📋 Datos parseados:', patientData);
-        console.log('⚖️ Estatura parseada:', patientData.informacionPersonal?.estatura);
-        console.log('🏋️ Peso parseado:', patientData.informacionPersonal?.peso);
 
         setFormData({
           numeroDocumento: editingPatient.numeroDocumento || '',
@@ -493,7 +489,6 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
         consentimientoInformadoJson: stringifyJsonSafely(consentimientoData)
       };
 
-      console.log('Enviando datos del paciente:', JSON.stringify(dataToSend, null, 2));
 
       let result;
       let processedResult;
@@ -512,7 +507,6 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
           })
         };
 
-        console.log('Enviando datos de actualización:', JSON.stringify(updateData, null, 2));
 
         result = await pacientesApiService.updatePaciente(editingPatient.id, updateData);
         processedResult = processApiResponse(result);
@@ -537,7 +531,6 @@ export const usePatientForm = (editingPatient = null, prefillDocumentNumber = ''
         });
       }
 
-      console.log('Respuesta del backend:', result);
 
       // Reset form only for creation, not for editing
       if (!editingPatient) {

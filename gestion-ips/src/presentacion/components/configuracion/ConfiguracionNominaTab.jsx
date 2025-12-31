@@ -107,8 +107,6 @@ export const ConfiguracionNominaTab = () => {
         ...formData
       };
 
-      console.log('Config Original (Nómina):', configOriginal);
-      console.log('Updated Config (Nómina):', updatedConfig);
 
       // Enviar solo el objeto de configuración
       const result = await updateConfiguracionByClave('NOMINA', updatedConfig);

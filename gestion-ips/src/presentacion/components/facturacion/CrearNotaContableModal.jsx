@@ -77,7 +77,7 @@ export const CrearNotaContableModal = ({
       try {
         const facturaData = JSON.parse(factura.jsonData || '{}');
         
-        // ⚠️ VALIDACIÓN: Verificar que la factura esté sincronizada con Siigo
+        // ⚠️ VALIDACI�"N: Verificar que la factura esté sincronizada con Siigo
         if (!facturaData.siigoId) {
           Swal.fire({
             icon: 'warning',
@@ -415,8 +415,8 @@ export const CrearNotaContableModal = ({
           <Alert icon={<IconInfoCircle size={18} />} color={tipoNota === 'CREDITO' ? 'orange' : 'blue'} variant="light">
             <Text size="sm">
               {tipoNota === 'CREDITO' 
-                ? '📉 Nota Crédito: Reduce el valor de la factura (devoluciones, descuentos, correcciones a la baja)'
-                : '📈 Nota Débito: Aumenta el valor de la factura (cargos adicionales, intereses, correcciones al alza)'
+                ? '�"� Nota Crédito: Reduce el valor de la factura (devoluciones, descuentos, correcciones a la baja)'
+                : '�"� Nota Débito: Aumenta el valor de la factura (cargos adicionales, intereses, correcciones al alza)'
               }
             </Text>
           </Alert>

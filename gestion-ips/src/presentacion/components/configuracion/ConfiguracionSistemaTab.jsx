@@ -103,8 +103,6 @@ export const ConfiguracionSistemaTab = () => {
         ...formData
       };
 
-      console.log('Config Original (Sistema):', configOriginal);
-      console.log('Updated Config (Sistema):', updatedConfig);
 
       // Enviar solo el objeto de configuración
       const result = await updateConfiguracionByClave('SISTEMA_GENERAL', updatedConfig);

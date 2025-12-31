@@ -15,7 +15,6 @@ import {
 
 const CreateUserForm = ({ onSubmit, initialData, isEditMode = false, isFromEmployee = false }) => {
   const getInitialValues = () => {
-    console.log('🎯 CreateUserForm - isEditMode:', isEditMode, 'initialData:', initialData, 'isFromEmployee:', isFromEmployee);
     if (isEditMode && initialData) {
       return {
         username: initialData.username || '',

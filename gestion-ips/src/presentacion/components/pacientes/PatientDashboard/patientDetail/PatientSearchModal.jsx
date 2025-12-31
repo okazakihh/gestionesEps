@@ -239,8 +239,8 @@ const PatientSearchModal = ({ isOpen, onClose, onPatientSelected, selectedSlot, 
                               </Badge>
                             </Group>
                             <Group gap="md">
-                              <Text size="xs" c="dimmed">ðŸ“„ {patient.tipoDocumento} {patient.numeroDocumento}</Text>
-                              <Text size="xs" c="dimmed">ðŸ“ž {patientData.telefono !== 'N/A' ? patientData.telefono : 'Sin telÃ©fono'}</Text>
+                              <Text size="xs" c="dimmed">ðŸ"„ {patient.tipoDocumento} {patient.numeroDocumento}</Text>
+                              <Text size="xs" c="dimmed">ðŸ"ž {patientData.telefono !== 'N/A' ? patientData.telefono : 'Sin telÃ©fono'}</Text>
                             </Group>
                           </Stack>
                         </Group>

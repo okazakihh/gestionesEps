@@ -7,7 +7,7 @@
 
 import { configuracionApiService } from '../../../data/services/configuracionApiService.js';
 
-// ========== CACHE DE CONFIGURACIÃ“N ==========
+// ========== CACHE DE CONFIGURACIÃ"N ==========
 
 let cachedNominaConfig = null;
 

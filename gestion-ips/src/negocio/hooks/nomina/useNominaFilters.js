@@ -105,7 +105,6 @@ export const useNominaFilters = (nominas = []) => {
       });
     }
 
-    console.log(`🔍 Filtros aplicados: ${filtered.length} de ${nominas.length} nóminas`);
     return filtered;
   }, [nominas, searchTerm, empleadoFilter, periodoFilter, fechaDesde, fechaHasta, estadoFilter]);
 

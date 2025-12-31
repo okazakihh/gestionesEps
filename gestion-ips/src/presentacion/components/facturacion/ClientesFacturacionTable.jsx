@@ -21,7 +21,8 @@ import {
   IconSearch,
   IconUser,
   IconBuilding,
-  IconPlus
+  IconPlus,
+  IconEye
 } from '@tabler/icons-react';
 import { 
   TIPO_DOCUMENTO_FACTURACION_OPTIONS, 
@@ -39,6 +40,7 @@ const ClientesFacturacionTable = ({
   onDesactivar,
   onReactivar,
   onNuevo,
+  onVerDetalle,
   searchTerm = '',
   onSearch
 }) => {
@@ -66,7 +68,7 @@ const ClientesFacturacionTable = ({
       <Paper p="md" withBorder>
         <Group position="apart" mb="md">
           <Title order={3}>Clientes de Facturación</Title>
-          <Button leftIcon={<IconPlus size={16} />} onClick={onNuevo}>
+          <Button leftSection={<IconPlus size={16} />} onClick={onNuevo}>
             Nuevo Cliente
           </Button>
         </Group>
@@ -110,13 +112,13 @@ const ClientesFacturacionTable = ({
               {loading ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>
-                    <Text color="dimmed">Cargando clientes...</Text>
+                    <Text c="dimmed">Cargando clientes...</Text>
                   </td>
                 </tr>
               ) : clientesFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>
-                    <Text color="dimmed">
+                    <Text c="dimmed">
                       {searchTerm || tipoFiltro !== 'TODOS' 
                         ? 'No se encontraron clientes con los filtros aplicados' 
                         : 'No hay clientes registrados'}
@@ -152,7 +154,7 @@ const ClientesFacturacionTable = ({
                           {datos.nombreCompleto || datos.razonSocial}
                         </Text>
                         {datos.codigoClienteSiigo && (
-                          <Text size="xs" color="dimmed">
+                          <Text size="xs" c="dimmed">
                             Código: {datos.codigoClienteSiigo}
                           </Text>
                         )}
@@ -176,6 +178,15 @@ const ClientesFacturacionTable = ({
                       </td>
                       <td>
                         <Group spacing="xs" position="center">
+                          <Tooltip label="Ver detalle">
+                            <ActionIcon
+                              color="cyan"
+                              variant="light"
+                              onClick={() => onVerDetalle(cliente)}
+                            >
+                              <IconEye size={16} />
+                            </ActionIcon>
+                          </Tooltip>
                           <Tooltip label="Editar">
                             <ActionIcon
                               color="blue"
@@ -219,7 +230,7 @@ const ClientesFacturacionTable = ({
         {/* Resumen */}
         {!loading && clientesFiltrados.length > 0 && (
           <Group position="apart" p="md" style={{ borderTop: '1px solid #e9ecef' }}>
-            <Text size="sm" color="dimmed">
+            <Text size="sm" c="dimmed">
               Mostrando {clientesFiltrados.length} de {clientes.length} clientes
             </Text>
             <Group spacing="xl">

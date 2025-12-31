@@ -34,7 +34,7 @@ export const parseCitaInfo = (cita) => {
         'ATENDIDA': 'ATENDIDO', // feminine form
         'NO_SE_PRESENTO': 'NO_SE_PRESENTO',
         'NO SE PRESENTO': 'NO_SE_PRESENTO',
-        'NO SE PRESENTÃ“': 'NO_SE_PRESENTO'
+        'NO SE PRESENTÃ"': 'NO_SE_PRESENTO'
       };
 
       estado = estadoMapping[estado] || estado;

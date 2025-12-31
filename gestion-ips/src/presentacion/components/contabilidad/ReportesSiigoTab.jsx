@@ -108,7 +108,7 @@ export const ReportesSiigoTab = () => {
           title="Siigo no conectado"
           color="yellow"
         >
-          Debe configurar y conectar Siigo en <strong>Configuración → Siigo API</strong> para usar esta funcionalidad.
+          Debe configurar y conectar Siigo en <strong>Configuración �' Siigo API</strong> para usar esta funcionalidad.
         </Alert>
       )}
 

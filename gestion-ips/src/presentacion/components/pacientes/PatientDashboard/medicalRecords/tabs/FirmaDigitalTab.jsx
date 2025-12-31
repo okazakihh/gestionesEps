@@ -128,8 +128,8 @@ const FirmaDigitalTab = ({ formData, setFormData }) => {
                   style={{ width: 160, height: 'auto', objectFit: 'contain' }}
                 />
                 <Group position="center" mt="sm">
-                  <Button leftIcon={<IconTrash size={14} />} color="red" variant="outline" size="xs" onClick={removeSignature}>Quitar</Button>
-                  <Button leftIcon={<IconRefresh size={14} />} variant="light" size="xs" onClick={updateSignatureFromProfile} loading={uploading}>Actualizar</Button>
+                  <Button leftSection={<IconTrash size={14} />} color="red" variant="outline" size="xs" onClick={removeSignature}>Quitar</Button>
+                  <Button leftSection={<IconRefresh size={14} />} variant="light" size="xs" onClick={updateSignatureFromProfile} loading={uploading}>Actualizar</Button>
                 </Group>
               </Paper>
             </Grid.Col>

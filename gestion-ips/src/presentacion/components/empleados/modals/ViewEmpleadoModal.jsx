@@ -26,14 +26,14 @@ const ViewEmpleadoModal = ({
       title="Información del Empleado"
       size="xl"
       centered
-      overlayColor={tema.primaryColor}
+      overlayProps={{ color: tema.primaryColor, backgroundOpacity: 0.55, blur: 3 }}
       styles={{ header: { backgroundColor: tema.primaryColor, padding: '10px 16px' }, title: { color: 'white' }, close: { color: 'white' } }}
     >
       <div className="space-y-4">
         {/* Información Personal */}
         <Paper shadow="xs" p="md" withBorder>
           <Text size="md" weight={600} className="mb-3 text-blue-700">
-            📋 Información Personal
+            �"� Información Personal
           </Text>
           <Divider className="mb-3" />
           <Grid>
@@ -91,7 +91,7 @@ const ViewEmpleadoModal = ({
         {/* Información de Contacto */}
         <Paper shadow="xs" p="md" withBorder>
           <Text size="md" weight={600} className="mb-3 text-green-700">
-            📞 Información de Contacto
+            �"� Información de Contacto
           </Text>
           <Divider className="mb-3" />
           <Grid>
@@ -119,7 +119,7 @@ const ViewEmpleadoModal = ({
         {/* Información Laboral */}
         <Paper shadow="xs" p="md" withBorder>
           <Text size="md" weight={600} className="mb-3 text-purple-700">
-            💼 Información Laboral
+            �'� Información Laboral
           </Text>
           <Divider className="mb-3" />
           <Grid>

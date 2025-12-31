@@ -90,7 +90,7 @@ export const MainLayout = ({
                   animation: siigoMode === 'PROD' ? 'pulse 2s infinite' : 'none'
                 }}
               >
-                Siigo: {siigoMode === 'DEV' ? '🧪 DEV' : '🚀 PROD'}
+                Siigo: {siigoMode === 'DEV' ? 'DEV' : 'PROD'}
               </Badge>
             </div>
           </header>

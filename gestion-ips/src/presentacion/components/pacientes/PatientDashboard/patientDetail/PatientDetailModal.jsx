@@ -47,7 +47,6 @@ const PatientDetailModal = ({ patientId, isOpen, onClose }) => {
           setConsultas(consultasResponse.content || []);
         }
       } catch (error) {
-        console.log('No clinical history found for patient:', patientId);
         setHistoriaClinica(null);
         setConsultas([]);
       }
